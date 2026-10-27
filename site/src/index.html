@@ -1941,9 +1941,28 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 .sm7-nom { flex: none; max-width: 0; overflow: hidden; white-space: nowrap; opacity: 0; font: 500 1.06rem/1.2 var(--titre); color: var(--encre);
   transition: max-width var(--k-page) var(--k-doux), opacity var(--k-survol) var(--k-doux); }
 .sm7.colle .sm7-nom { max-width: 14rem; opacity: 1; }
-.sm7-l { flex: 1; min-width: 0; display: flex; align-items: center; gap: 4px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; scroll-snap-type: x proximity; padding: 5px 28px 5px 2px;
-  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); }
+/* (la rangée déborde : un fondu au bord où il reste à voir, posé par le défilement (.a-gauche, .a-droite) ; au bureau, deux
+   flèches rondes sur ces bords, chacune cachée quand on est au bout ; elle s'aimante à une vignette ; au clavier, les flèches
+   gauche et droite, Début et Fin, vont d'un spectacle à l'autre) */
+@property --sm7-fg { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@property --sm7-fd { syntax: '<length>'; inherits: false; initial-value: 0px; }
+.sm7-cadre { position: relative; flex: 1; min-width: 0; }
+.sm7-l { --sm7-fondu: 44px; display: flex; align-items: center; gap: 4px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; scroll-snap-type: x mandatory; scroll-padding-inline: 40px; padding: 5px 2px;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 var(--sm7-fg), #000 calc(100% - var(--sm7-fd)), transparent); mask-image: linear-gradient(90deg, transparent, #000 var(--sm7-fg), #000 calc(100% - var(--sm7-fd)), transparent);
+  transition: --sm7-fg var(--k-survol) var(--k-doux), --sm7-fd var(--k-survol) var(--k-doux); }
+.sm7-l.a-gauche { --sm7-fg: var(--sm7-fondu); }
+.sm7-l.a-droite { --sm7-fd: var(--sm7-fondu); }
 .sm7-l::-webkit-scrollbar { display: none; }
+.sm7-f { position: absolute; top: 50%; z-index: 1; display: grid; place-items: center; width: 40px; height: 40px; margin-top: -20px; padding: 0; border: 1px solid color-mix(in srgb, var(--encre) 22%, transparent); border-radius: 50%;
+  background: var(--sm-fond); color: var(--encre); cursor: pointer; box-shadow: 0 6px 16px -8px rgba(0, 0, 0, .8); opacity: 0; visibility: hidden;
+  transition: opacity var(--k-survol) var(--k-doux), border-color var(--k-survol) var(--k-doux), background-color var(--k-survol) var(--k-doux), visibility 0s var(--k-survol); }
+.sm7-f[data-sens="-1"] { left: -6px; }
+.sm7-f[data-sens="1"] { right: -6px; }
+.sm7-f.est-visible { opacity: 1; visibility: visible; transition: opacity var(--k-survol) var(--k-doux), border-color var(--k-survol) var(--k-doux), background-color var(--k-survol) var(--k-doux); }
+.sm7-f:hover { border-color: var(--encre); background: color-mix(in srgb, var(--encre) 10%, var(--sm-fond)); }
+.sm7-f svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+@media (pointer: coarse), (max-width: 759px) { .sm7-f { display: none; } }
+@media (prefers-reduced-motion: reduce) { .sm7-l { transition: none; } }
 .sm7-b { position: relative; flex: none; display: inline-flex; align-items: center; gap: 10px; min-height: 52px; max-width: 16.5rem; padding: 5px 14px 5px 5px; border: 0; border-radius: 999px;
   background: none; color: color-mix(in srgb, var(--encre) 86%, transparent); font: 600 .9rem/1.2 var(--texte); text-align: left; cursor: pointer; scroll-snap-align: start;
   -webkit-tap-highlight-color: transparent; transition: background-color var(--k-survol) var(--k-doux), color var(--k-survol) var(--k-doux); }
@@ -1961,6 +1980,7 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 .sm7--passe { position: static; margin: 0 0 1.4rem; background: none; }
 .sm7--passe .sm7-in { min-height: 0; }
 .sm7--passe .sm7-l { flex-wrap: wrap; overflow: visible; padding-right: 2px; -webkit-mask-image: none; mask-image: none; }
+.sm7--passe .sm7-f { display: none; }
 .fe7-lg .s7-chip { gap: .6rem; }
 .fe7-lg .s7-chip i { width: 22px; height: 12px; border-radius: 999px; }
 /* le fond des saisons, au spectacle choisi */
@@ -2250,11 +2270,11 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
   .s7 { --sm7-h: 58px; }
   .sm7-in { gap: 0; }
   .sm7-nom { display: none; }
-  .sm7-l { margin-inline: calc(-1 * var(--gout)); padding-inline: var(--gout); scroll-padding-inline: var(--gout); }
+  .sm7-l { --sm7-fondu: 28px; margin-inline: calc(-1 * var(--gout)); padding-inline: var(--gout); scroll-padding-inline: var(--gout); scroll-snap-type: x proximity; }
   .sm7-b { min-height: 48px; max-width: 13rem; gap: 8px; padding: 4px 12px 4px 4px; font-size: .8125rem; line-height: 1.15; }
   .sm7-t { display: block; min-width: 0; white-space: nowrap; text-overflow: ellipsis; }
   .sm7-v { width: 36px; height: 36px; }
-  .sm7--passe .sm7-l { flex-wrap: nowrap; overflow-x: auto; padding-right: 28px; -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); }
+  .sm7--passe .sm7-l { flex-wrap: nowrap; overflow-x: auto; padding-right: var(--gout); -webkit-mask-image: linear-gradient(90deg, transparent, #000 var(--sm7-fg), #000 calc(100% - var(--sm7-fd)), transparent); mask-image: linear-gradient(90deg, transparent, #000 var(--sm7-fg), #000 calc(100% - var(--sm7-fd)), transparent); }
 }
 .dates > li.est-allume, .sa-dates > li.est-allume, .prochaines li.est-allume a { background: color-mix(in srgb, var(--saison-texte) 9%, transparent); }
 .carte .carte-lieu.est-allume .point { stroke: var(--encre); stroke-width: 2.4; }
@@ -3262,6 +3282,35 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     if ('ResizeObserver' in window) { roDefile = new ResizeObserver(() => { if (!raf) raf = requestAnimationFrame(maj); }); roDefile.observe(bande); } else maj();
     bande.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(maj); }, { passive: true });
     zone.addEventListener('click', e => { const b = e.target.closest('[data-defile]'); if (b && !b.disabled) bande.scrollBy({ left: +b.dataset.defile * bande.clientWidth * 0.8, behavior: motionOK() ? 'smooth' : 'auto' }); });
+  }
+
+  // une rangée qui défile (le sous-menu d'une saison) : le fondu de chaque bord où il reste à voir, et au bureau la flèche de ce
+  // bord, suivent le défilement et la largeur ; une flèche avance de presque une largeur (l'aimant la pose sur une vignette) ;
+  // au clavier, ←, →, Début et Fin vont d'un bouton à l'autre (le focus l'amène à l'écran). L'observateur part avec la vue
+  function rangee(cadre) {
+    const l = $('.sm7-l', cadre), [g, d] = $$('.sm7-f', cadre); if (!l) return;
+    let raf = 0;
+    const maj = () => { raf = 0; const max = l.scrollWidth - l.clientWidth, x = Math.abs(l.scrollLeft), av = x > 4, ap = max > 4 && x < max - 4;
+      l.classList.toggle('a-gauche', av); l.classList.toggle('a-droite', ap);
+      if (g) g.classList.toggle('est-visible', av); if (d) d.classList.toggle('est-visible', ap); };
+    const plus_tard = () => { if (!raf) raf = requestAnimationFrame(maj); };
+    l.addEventListener('scroll', plus_tard, { passive: true });
+    if ('ResizeObserver' in window) { const ro = new ResizeObserver(plus_tard); ro.observe(l); lecteurs.push(ro); }
+    plus_tard();
+    cadre.addEventListener('click', e => { const b = e.target.closest('.sm7-f'); if (b) l.scrollBy({ left: +b.dataset.sens * l.clientWidth * .8, behavior: motionOK() ? 'smooth' : 'instant' }); });
+    l.addEventListener('keydown', e => {
+      const bs = $$('.sm7-b', l), i = bs.indexOf(document.activeElement); if (i < 0) return;
+      const j = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: bs.length - 1 }[e.key];
+      if (j === undefined || !bs[j]) return;
+      e.preventDefault(); bs[j].focus();
+    });
+    // (le bouton qui prend le focus, au clavier, vient tout entier dans la rangée, hors de ses fondus : la rangée seule défile)
+    l.addEventListener('focusin', e => {
+      const b = e.target.closest('.sm7-b'); if (!b) return;
+      const q = l.getBoundingClientRect(), r = b.getBoundingClientRect(), m = parseFloat(getComputedStyle(l).getPropertyValue('--sm7-fondu')) || 0;
+      const dx = r.left < q.left + m ? r.left - q.left - m : r.right > q.right - m ? r.right - q.right + m : 0;
+      if (Math.abs(dx) > 1) l.scrollBy({ left: dx, behavior: motionOK() ? 'smooth' : 'instant' });
+    });
   }
 
   /* ---------- les frises (FRISE) : le calendrier de chaque page, relu dans D à chaque rendu ---------- */
@@ -4776,7 +4825,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       return `<button class="sm7-b" type="button" data-s="${esc(x.cle)}" aria-pressed="false" style="--c:${x.slug ? couleurDe(x.slug) : 'var(--gris)'}"><span class="sm7-v" aria-hidden="true">${src ? `<img src="${src}" alt="" loading="lazy" decoding="async">` : ''}</span><span class="sm7-t">${esc(x.titre)}</span>${n ? `<small>${n}</small>` : ''}</button>`; };
     const nPasses = new Map();
     passe.forEach(sa => sa.rows.forEach(r => { if (!r.suite && jouee(r)) nPasses.set(r.cle, (nPasses.get(r.cle) || 0) + 1); }));
-    const sousMenu = (xs, n) => `<div class="sm7-l" role="group" aria-label="${esc(L.spectacles)}">${xs.map(x => itemSp(x, n.get(x.cle))).join('')}</div>`;
+    // (la rangée dans son cadre, avec ses deux flèches de défilement, pour la souris : le clavier va de vignette en vignette)
+    const sousMenu = (xs, n) => `<div class="sm7-cadre"><div class="sm7-l" role="group" aria-label="${esc(L.spectacles)}">${xs.map(x => itemSp(x, n.get(x.cle))).join('')}</div>`
+      + `<button type="button" class="sm7-f" data-sens="-1" tabindex="-1" aria-hidden="true">${GAUCHE}</button><button type="button" class="sm7-f" data-sens="1" tabindex="-1" aria-hidden="true">${DROITE}</button></div>`;
     main.innerHTML = `<header class="s7-entete"><div class="wrap">
         <p class="s7-sur"${ed('site.nom')}>${esc(S.nom)}</p>
         <h1 class="s7-titre" tabindex="-1"><span class="fleur">${esc(M0.texte)}</span></h1>
@@ -5371,6 +5422,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       pan.addEventListener('pointerup', lacher); pan.addEventListener('pointercancel', lacher);
       return { maj(x) { fs = x; dessinerBarre(); majPanneau(); } };
     }
+    $$('.sm7-cadre', main).forEach(rangee);
     const puces7 = $('#sm7', main);
     if (puces7) {
       puces7.addEventListener('pointerover', e => isoler(e.target.closest && e.target.closest('.sm7-b[data-s]')), { passive: true });
