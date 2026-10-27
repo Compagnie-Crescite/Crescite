@@ -976,6 +976,49 @@ section.bloc.troupe { padding-top: 0; content-visibility: auto; contain-intrinsi
   .tr6-p { min-width: 0; max-width: 100%; }
   .tr6-qui { min-width: 0; overflow-wrap: anywhere; }
 }
+/* la fiche d'une personne (un clic sur une de ses places) : posée par-dessus sa place, son portrait sur sa vignette, dont
+   elle naît (un cercle qui s'ouvre) ; ses métiers, ses spectacles, les prochaines dates de ceux qui tournent. Au-dessus des
+   catégories, gardée dans la troupe (elle ne déborde ni de l'écran ni de la section) */
+.trf { position: absolute; z-index: 4; left: 0; top: 0; width: min(360px, 100%); max-height: min(78svh, 620px); overflow: auto; overscroll-behavior: contain;
+  box-sizing: border-box; padding: 16px 18px 18px; border-radius: 24px; background: var(--blanc); color: var(--encre); text-align: left;
+  box-shadow: 0 0 0 1.5px var(--saison-texte), 0 26px 60px -24px rgb(0 0 0 / .55); scroll-margin: 12px 0 16px; }
+.trf:focus { outline: none; }
+/* au téléphone, elle tient entre le menu et le sommaire arrimés, en haut, et la barre des onglets, en bas */
+@media (max-width: 899px) { .trf { max-height: calc(100svh - var(--haut) - var(--onglets) - 120px); scroll-margin-bottom: 84px; } }
+.trf:focus-visible { outline: 2px solid var(--saison-texte); outline-offset: 3px; }
+.trf-x { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%;
+  background: transparent; color: var(--encre); cursor: pointer; transition: background-color var(--k-survol) var(--k-doux); }
+.trf-x .croix { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+@media (hover: hover) { .trf-x:hover { background: var(--carte); } }
+.trf-x:focus-visible { outline: 2px solid var(--saison-texte); outline-offset: 1px; }
+.trf-tete { display: flex; align-items: center; gap: 14px; min-height: 40px; padding-right: 32px; }
+.trf-v { flex: none; width: 88px; height: 88px; overflow: hidden; border-radius: 50%; background: var(--carte); box-shadow: 0 0 0 2px var(--blanc), 0 0 0 4px var(--saison-texte); }
+.trf-v img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.trf-qui { min-width: 0; overflow-wrap: anywhere; }
+.trf-nom { margin: 0; font: 500 1.35rem/1.15 var(--titre); }
+.trf-m { margin: 4px 0 0; font-size: .85rem; line-height: 1.35; color: var(--gris); }
+.trf-m span + span::before { content: " · "; }
+.trf-cr { display: block; margin-top: 4px; font-size: .7rem; color: var(--gris); }
+.trf-k { margin: 18px 0 8px; font: 600 .7rem/1.3 var(--etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--saison-texte); }
+.trf-l { list-style: none; display: grid; gap: 4px; margin: 0; padding: 0; }
+.trf-l a { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 4px 8px 4px 4px; border-radius: 12px; color: inherit; text-decoration: none;
+  transition: background-color var(--k-survol) var(--k-doux); }
+@media (hover: hover) { .trf-l a:hover { background: color-mix(in srgb, var(--c, var(--saison-texte)) 12%, var(--blanc)); } }
+.trf-l a:focus-visible { outline: 2px solid var(--c, var(--saison-texte)); outline-offset: 0; }
+.trf-ph { flex: none; width: 44px; height: 44px; overflow: hidden; border-radius: 10px; background: var(--c); }
+.trf-ph img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.trf-sp { display: grid; min-width: 0; line-height: 1.25; }
+.trf-sp b { font: 600 .95rem/1.25 var(--texte); color: var(--c); }
+.trf-sp b .tag { color: var(--encre); }
+.trf-sp small { font-size: .78rem; color: var(--gris); }
+.trf-sp small span + span::before { content: " · "; }
+.trf-q { flex: none; display: grid; place-items: center; align-content: center; width: 78px; padding: 3px 2px; box-sizing: border-box; min-height: 44px; border-radius: 10px; text-align: center;
+  background: color-mix(in srgb, var(--c) 16%, var(--blanc)); box-shadow: inset 3px 0 0 var(--c); }
+.trf-q b { font: 600 .82rem/1.15 var(--titre); }
+.trf-q small { font-size: .66rem; color: var(--gris); }
+.trf-tout { margin: 10px 0 0; font-size: .85rem; }
+.trf-tout a { color: var(--saison-texte); }
+.trf-tout .fleche { width: 14px; height: 14px; margin-left: 4px; vertical-align: -2px; }
 
 /* ———— le contact, les pages légales ———— */
 .champ { margin: 0 0 16px; }
@@ -2148,9 +2191,9 @@ html { view-transition-name: none; }
 .encre-page { position: fixed; inset: 0; z-index: 90; width: 100%; height: 100%; pointer-events: none; }
 .encre-page.couvre { pointer-events: auto; }
 /* une page qui arrive : son titre fleurit (il se dépose), le bras d'encre arrive du bord de l'écran, le souligne et s'enroule */
-.fleur { position: relative; display: inline-block; max-width: 100%; padding-bottom: 22px; --trait: var(--saison-vive); }   /* (max-width : un mot trop long s'y coupe, voir h1) */
-.fleur::after { content: ""; position: absolute; left: -100vw; right: 29px; bottom: 2px; height: 3px; border-radius: 2px; background: var(--trait); }
-.fleur::before { content: ""; position: absolute; right: 0; bottom: -1px; width: 30px; height: 30px; background: var(--trait);
+.fleur { position: relative; display: inline-block; max-width: 100%; padding-bottom: 22px; --trait: var(--saison-vive); }   /* (max-width : un mot trop long s'y coupe, voir h1 ; la boucle est à son échelle 1:1, son trait de 3 px au bas du bloc, dans l'axe du bras) */
+.fleur::after { content: ""; position: absolute; left: -100vw; right: 31px; bottom: 2px; height: 3px; border-radius: 2px; background: var(--trait); }
+.fleur::before { content: ""; position: absolute; right: 0; bottom: 0; width: 32px; height: 32px; background: var(--trait);
   -webkit-mask: var(--boucle) 0 0 / 100% 100% no-repeat; mask: var(--boucle) 0 0 / 100% 100% no-repeat; }
 main.arrive .fleur { animation: k-fleurit .36s var(--k-doux) both; }
 main.arrive .fleur::after { transform-origin: 0 50%; animation: k-bras .42s var(--k-doux) .02s both; }
@@ -2258,7 +2301,7 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 @media (max-width: 759px) {
   .s7-e { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "titre cherche" "rac rac"; align-items: end; gap: 6px 18px; }
   .s7-titre { font-size: 2.5rem; }
-  .s7-titre .fleur { padding-bottom: 14px; }
+  .s7-titre .fleur { padding-bottom: 20px; }   /* (de quoi loger la boucle, 32 px, sous le mot sans qu'elle le touche) */
   .s7-e .s7-cherche { margin-bottom: 8px; }
   .s7-rac { gap: 0 18px; }
   .s7-rac button { font-size: .875rem; }
@@ -4562,15 +4605,15 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // temps (tPres : il paraît quand son bras l'atteint)
     function presenter() {
       const P = pres, V = new Map();
-      // chaque bras part à son instant, par vagues de 70 ms depuis la tête (les deux spirales, les boucles, les spirales
-      // extérieures, les queues : ensemble, mais lisible) vers le premier de ses titres, et y reste ; chaque titre paraît quand
-      // son bras arrive ; les bras sans titre (les longs) s'étirent, puis reviennent
+      // chaque bras part à son instant (PIEUVRE.VAGUE après le précédent, par rang : nul, tous ensemble) vers le premier de
+      // ses titres, et y reste ; chaque titre paraît quand son bras arrive ; les bras sans titre (les longs) s'étirent, puis
+      // reviennent
       const depart = a => P.t0 + PIEUVRE.rang(a.cle) * PIEUVRE.VAGUE;
       let fin = P.t0;
       TIT.forEach(T => { T.tPres = P.t0; });
       for (const a of BRAS) {
         const t0 = depart(a);
-        if (a.T.length) { V.set(a, [{ t0, fin: Infinity, T: a.T[0] }]); a.tenu = a.T[0]; a.T.forEach(T => { T.tPres = t0; }); fin = Math.max(fin, t0 + 1100); }
+        if (a.T.length) { V.set(a, [{ t0, fin: Infinity, T: a.T[0] }]); a.tenu = a.T[0]; a.T.forEach(T => { T.tPres = t0; }); fin = Math.max(fin, t0 + PIEUVRE.DEPLOI); }
         else if (!mobile && !a.t.parent) { V.set(a, [{ t0, fin: t0 + 1500, c: gesteDe(a, t0) }]); fin = Math.max(fin, t0 + 1500); }
       }
       P.plan = V; P.fin = fin + 300;
@@ -4585,7 +4628,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // un titre n'est réécrit que s'il a changé ; il paraît avec son bras (l'éveil), ou à son tour
     function placer(T, allume, now, anime) {
       let em = 0;
-      if (eveil !== null) em = !anime ? 1 : lisse(0, 1, (now - (T.tPres != null ? T.tPres + 600 : eveil + 500)) / 520);
+      // (le titre paraît quand son bras arrive à lui : aux deux tiers du dépliement)
+      if (eveil !== null) em = !anime ? 1 : lisse(0, 1, (now - (T.tPres != null ? T.tPres + PIEUVRE.DEPLOI * .62 : eveil + 500)) / 520);
       T.em = Math.max(T.em, em);
       const tr = `translate(${T.bx.toFixed(1)}px, ${(T.by + (1 - T.em) * 12).toFixed(1)}px)`, op = T.em.toFixed(3);
       if (T.tr !== tr) { T.el.style.transform = tr; T.tr = tr; }
@@ -4637,7 +4681,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         a.tension += ((act && voulu && act === voulu ? .55 : 0) - a.tension) * .15;
         if (a.but !== voulu || a.geste !== g) {
           a.but = voulu; a.geste = g;
-          if (voulu) { a.col = voulu.col; a.t.viser({ ...cibleDe(voulu), tension: a.tension }, anime ? 1100 : 0); }
+          // (le premier dépliement, celui de la présentation, est lent : PIEUVRE.DEPLOI ; les suivants, au geste, plus vifs)
+          if (voulu) { a.col = voulu.col; a.t.viser({ ...cibleDe(voulu), tension: a.tension }, anime ? (pres ? PIEUVRE.DEPLOI : 1100) : 0); }
           else if (g) a.t.viser(g, anime ? 900 : 0);
           else a.t.viser(null, anime ? 760 : 0, true);   // (remontée : un ressort)
         } else if (voulu) a.t.viser({ ...cibleDe(voulu), tension: a.tension });      // (le titre a pu bouger : la forme visée le suit)
@@ -4688,7 +4733,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
           };
           const ab = act && act.bras, trace = a => PIEUVRE.dessiner(ctx, a.t, { encre: ENCRE, vers: `rgb(${a.col.join(',')})`, teinte: a.teinte, lisere: PIEUVRE.lisere, degrade: degradeDe(a) });
           PIEUVRE.palmure(ctx, TS, ENCRE);
-          for (const a of BRAS) if (a !== ab) trace(a);
+          // (les plus enfoncées d'abord : elles passent derrière les autres ; celle qu'on regarde, devant tout)
+          for (const a of [...BRAS].sort((x, y) => x.t.profondeur() - y.t.profondeur())) if (a !== ab) trace(a);
           if (ab) trace(ab);
           // (les tentacules posées flottent, portées par les remous (PIEUVRE, flotter) : c'est ce mouvement qui invite à les
           // remonter ; plus de lueur qui court dessus)
@@ -4784,7 +4830,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         for (const a of BRAS) {
           const d = relais.TS.find(x => x.cle === a.cle), T = d && d.cible && TIT.find(x => x.slug === d.cible.cle);
           if (!T) continue;
-          const t = a.t, cles = ['pose', 'depuis', 'but', 'q', 'duree', 'cible', 'derniere', 'etire', 'elastique', 'rac', 'wmin', 'tourne', 'colle'];
+          const t = a.t, cles = ['pose', 'depuis', 'but', 'q', 'duree', 'cible', 'derniere', 'etire', 'elastique', 'rac', 'wmin', 'tourne', 'colle', 'relie'];
           for (const k of cles) t[k] = d[k];
           t.libreRac = -1; t.poly = null;
           a.but = T; a.tenu = T; a.col = T.col; a.teinte = relais.teinte; repris++;
@@ -6754,13 +6800,13 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   }
   // la troupe prend vie : les liens entre les places d'une personne (au clavier aussi), la créature, les icônes qui s'animent
   // une fois à leur arrivée dans l'écran
-  let troupeCtl = null, troupeIO = null, troupeRO = null, troupeCreature = null, troupeGeo = null;
+  let troupeCtl = null, troupeIO = null, troupeRO = null, troupeCreature = null, troupeGeo = null, troupeFiche = null;
   function finirTroupe() {
     if (troupeCtl) { troupeCtl.detruire(); troupeCtl = null; }
     if (troupeIO) { troupeIO.disconnect(); troupeIO = null; }
     if (troupeRO) { troupeRO.disconnect(); troupeRO = null; }
     if (troupeCreature) { troupeCreature.arreter(); troupeCreature = null; }
-    troupeGeo = null;
+    troupeGeo = null; troupeFiche = null;
   }
   // la pieuvre de la troupe : une créature (CREATURE.creer, les vraies tentacules), dessinée à la place de la pieuvre de tête,
   // toujours en mouvement (ses tentacules battent, elle respire, se balance, sa tête hoche et se tourne au bout d'un ressort, un
@@ -6845,9 +6891,14 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   }
   // quelqu'un est choisi (un clic sur une de ses places) : la créature sursaute, se penche vers la place cliquée, puis ses
   // tentacules, lumineuses, vont tenir toutes ses places ; les fils des liens se taisent. Personne : elle lâche tout
+  // (sa fiche ouverte, elle la tient aussi, avec celles de ses places que la fiche ne couvre pas)
   function tenirPersonne(slug, depuis) {
-    const tr = $('.tr6', main);
+    const tr = $('.tr6', main), f = troupeFiche && troupeFiche.el.isConnected ? troupeFiche.el : null;
     troupeTenues = slug && tr ? $$(`[data-troupe-place][data-troupe-personne="${slug}"]`, tr) : [];
+    if (f && troupeTenues.length) {
+      const b = f.getBoundingClientRect();
+      troupeTenues = [f, ...troupeTenues.filter(p => { const r = p.getBoundingClientRect(); return r.right < b.left || r.left > b.right || r.bottom < b.top || r.top > b.bottom; })];
+    }
     if (!troupeCreature) return;
     if (tr) tr.classList.toggle('est-reliee', troupeTenues.length > 0);
     if (troupeTenues.length) {
@@ -6856,12 +6907,108 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       troupeCreature.tenir(troupeTenues, { lumineux: true, prise: 'pastille' });
     } else troupeCreature.lacher();
   }
+  /* la fiche d'une personne : un clic (ou Entrée) sur une de ses places l'ouvre par-dessus sa photo ; la vignette grandit en
+     portrait et la fiche s'ouvre autour d'elle, en cercle. Son nom, ses métiers, le crédit de sa photo ; ses spectacles (sa
+     fonction, son rôle, son alternance, « En tournée » ou son statut), chacun menant à sa page ; les prochaines dates de ceux
+     qui tournent, s'il y en a (jusqu'à cinq, puis « Toutes les dates »). Rien que D. Elle se ferme quand la personne est
+     relâchée (un second clic, Échap, un clic ailleurs, sa croix) et rend le focus à sa place ; relue dans D à chaque ouverture */
+  const FICHE_DATES = 5;
+  function ficheHTML(slug) {
+    const p = (D.personnes || {})[slug];
+    if (!p) return '';
+    const jeu = ((S.troupe && S.troupe.categories) || []).find(c => c.cle === 'jeu'), jouer = jeu && jeu.metiers && jeu.metiers[0];
+    const sps = D.shows.filter(s => (s.equipe || []).some(e => e.personne === slug)), miens = new Set(sps.map(s => s.slug));
+    // dans chaque spectacle, ce qu'elle y fait : sa fonction (le jeu, sans fonction écrite : son métier), son rôle, son alternance
+    const fait = s => [...new Set((s.equipe || []).filter(e => e.personne === slug).flatMap(e => [e.fonction || (e.categorie === 'jeu' ? jouer : ''), e.role, e.alternance]).filter(Boolean))];
+    const spectacle = s => { const ph = D.photos[s.slug], badge = s.statut || (s.enTournee ? L.enTournee : ''), f = fait(s);
+      return `<li style="--c:${couleurDe(s.slug)}"><a href="${lienSp(s.slug)}"><span class="trf-ph">${ph ? `<img src="${ph}" alt="" width="88" height="88" loading="lazy" decoding="async">` : ''}</span>
+        <span class="trf-sp"><b>${esc(s.titre)}${badge ? ` <em class="tag">${esc(badge)}</em>` : ''}</b>${f.length ? `<small>${f.map(x => `<span>${esc(x)}</span>`).join('')}</small>` : ''}</span></a></li>`; };
+    const ds = D.dates.filter(d => miens.has(d.slug)), vues = ds.slice(0, FICHE_DATES);
+    const date = d => { const s = bySlug[d.slug], [j, m] = coupe(d.ligneDate), k = RS && !d.scolaire ? RS.cle(d) : null, rv = k != null && !!RS.trouver(k);
+      return `<li${dateId(d)} style="--c:${couleurDe(d.slug)}"><a href="${rv ? `#/spectacle/${esc(d.slug)}/voir?date=${encodeURIComponent(k)}` : lienSp(d.slug, 'voir')}"><span class="trf-q"><b>${esc(j)}</b>${m ? `<small>${esc(m)}</small>` : ''}</span>
+        <span class="trf-sp"><b>${esc(s ? s.titre : d.titre)}</b><small><span>${esc(d.ligneLieu)}</span>${d.scolaire ? `<span>${esc(L.scolaire)}</span>` : ''}${d.etat ? `<span>${esc(d.etat)}</span>` : ''}</small></span></a></li>`; };
+    const m = menuDe('saisons') || { href: '#/saisons' };
+    return `<div class="trf-tete">${aPhoto(p) ? `<span class="trf-v"><img src="${esc(p.photo)}" alt="" width="176" height="176" decoding="async" onerror="this.remove()"></span>` : ''}
+        <div class="trf-qui"><h3 class="trf-nom" id="trf-nom">${esc(nomDe(p))}</h3>${(p.metiers || []).length ? `<p class="trf-m">${p.metiers.map(x => `<span>${esc(x)}</span>`).join('')}</p>` : ''}${aPhoto(p) && p.credit ? `<small class="trf-cr">${esc(p.credit)}</small>` : ''}</div></div>
+      ${sps.length ? `<h4 class="trf-k">${esc(L.lesSpectacles)}</h4><ul class="trf-l">${sps.map(spectacle).join('')}</ul>` : ''}
+      ${vues.length ? `<h4 class="trf-k">${esc(L.prochainesDates)}</h4><ul class="trf-l">${vues.map(date).join('')}</ul>${ds.length > vues.length ? `<p class="trf-tout"><a href="${esc(m.href)}">${esc(L.toutesLesDates)}${FLECHE}</a></p>` : ''}` : ''}`;
+  }
+  // la poser par-dessus la place : son portrait (sinon son coin) sur la vignette (sinon le point) de la place, gardée dans la
+  // troupe ; rend le point d'où elle s'ouvre, dans la fiche
+  function placerFiche(f, place) {
+    const tr = f.parentNode;
+    if (!tr || !place.isConnected) return [0, 0];
+    const R = tr.getBoundingClientRect(), a = (place.querySelector('[data-troupe-ancre]') || place).getBoundingClientRect(), v = $('.trf-v', f);
+    const ox = v ? v.offsetLeft + v.offsetWidth / 2 : 30, oy = v ? v.offsetTop + v.offsetHeight / 2 : 34;
+    const cx = a.left + a.width / 2 - R.left, cy = a.top + a.height / 2 - R.top;
+    const x = clamp(cx - ox, 0, Math.max(0, R.width - f.offsetWidth)), y = clamp(cy - oy, 0, Math.max(0, R.height - f.offsetHeight));
+    f.style.left = `${Math.round(x)}px`; f.style.top = `${Math.round(y)}px`;
+    return [clamp(cx - x, 0, f.offsetWidth), clamp(cy - y, 0, f.offsetHeight)];
+  }
+  function ouvrirFiche(tr, slug, place) {
+    const html = ficheHTML(slug);
+    fermerFiche({ anime: false, rendre: false });
+    if (!html || !place) return;
+    const f = document.createElement('div');
+    f.className = 'trf';
+    f.setAttribute('data-troupe-fiche', slug);
+    f.setAttribute('role', 'dialog');
+    f.setAttribute('aria-labelledby', 'trf-nom');
+    f.tabIndex = -1;
+    f.innerHTML = `<button type="button" class="trf-x" data-trf-fermer aria-label="${esc(L.fermer || '')}">${CROIX}</button>${html}`;
+    tr.appendChild(f);
+    troupeFiche = { el: f, slug, place };
+    const [ox, oy] = placerFiche(f, place);
+    f.focus({ preventScroll: true });
+    if (motionOK() && f.animate) {
+      const W = f.offsetWidth, H = f.offsetHeight, r0 = Math.max(6, ((place.querySelector('[data-troupe-ancre]') || place).offsetWidth || 12) / 2), r1 = Math.hypot(Math.max(ox, W - ox), Math.max(oy, H - oy)) + 2;
+      f.animate([{ clipPath: `circle(${r0}px at ${ox}px ${oy}px)` }, { clipPath: `circle(${r1}px at ${ox}px ${oy}px)` }], { duration: 440, easing: 'cubic-bezier(.22, .8, .24, 1)' });
+      const v = $('.trf-v', f);
+      if (v) v.animate([{ transform: `scale(${(r0 * 2 / v.offsetWidth).toFixed(3)})` }, { transform: 'none' }], { duration: 440, easing: 'cubic-bezier(.3, 1.25, .5, 1)' });
+      $$('.trf-qui, .trf-k, .trf-l > li, .trf-tout', f).forEach((e, i) => e.animate([{ opacity: 0, transform: 'translateY(var(--k-monte))' }, { opacity: 1, transform: 'none' }],
+        { duration: 320, delay: 120 + Math.min(i, 10) * 34, easing: 'cubic-bezier(.22, .8, .24, 1)', fill: 'backwards' }));
+    }
+    // (elle reste à portée : si elle dépasse le bas de l'écran, la page descend juste ce qu'il faut)
+    const b = f.getBoundingClientRect();
+    if (b.bottom > innerHeight || b.top < 0) f.scrollIntoView({ block: 'nearest', behavior: motionOK() ? 'smooth' : 'auto' });
+  }
+  // la fermer : elle se referme sur la vignette ; rendre : le focus revient à la place qui l'a ouverte (s'il était dans la fiche)
+  function fermerFiche({ anime = true, rendre = true } = {}) {
+    const F = troupeFiche;
+    troupeFiche = null;
+    if (!F || !F.el.isConnected) return;
+    const f = F.el, dedans = f.contains(document.activeElement);
+    f.removeAttribute('data-troupe-fiche');
+    const h = $('#trf-nom', f); if (h) h.removeAttribute('id');
+    if (rendre && dedans && F.place.isConnected) F.place.focus({ preventScroll: true });
+    if (!anime || !motionOK() || !f.animate) { f.remove(); return; }
+    f.style.pointerEvents = 'none';
+    const [ox, oy] = placerFiche(f, F.place), W = f.offsetWidth, H = f.offsetHeight;
+    f.animate([{ clipPath: `circle(${Math.hypot(Math.max(ox, W - ox), Math.max(oy, H - oy)) + 2}px at ${ox}px ${oy}px)`, opacity: 1 }, { clipPath: `circle(14px at ${ox}px ${oy}px)`, opacity: 0 }],
+      { duration: 240, easing: 'cubic-bezier(.4, 0, .6, 1)', fill: 'forwards' }).onfinish = () => f.remove();
+  }
   function vivreTroupe() {
     finirTroupe();
     const tr = $('.tr6', main);
     if (!tr || typeof TROUPE === 'undefined') return;
     troupeTenues = [];
-    troupeCtl = TROUPE.relier(tr, { liens: true, clavier: true, surChoix: slug => tenirPersonne(slug, $('[data-troupe-place].est-source', tr)) });
+    // la place cliquée (ou validée au clavier) : la fiche s'ouvre sur elle ; un clic dans la troupe, hors des places et de la
+    // fiche, la ferme (comme un clic ailleurs) ; sa croix aussi
+    let cliquee = null;
+    tr.addEventListener('click', e => { cliquee = e.target.closest ? e.target.closest('[data-troupe-place]') : null; }, true);
+    tr.addEventListener('click', e => {
+      if (!troupeFiche || !troupeCtl || cliquee) return;
+      const x = e.target.closest ? e.target.closest('[data-trf-fermer]') : null;
+      if (x || !troupeFiche.el.contains(e.target)) troupeCtl.choisir(null);
+    });
+    const placeDe = slug => { const ps = $$(`[data-troupe-place][data-troupe-personne="${slug}"]`, tr);
+      return ps.find(p => p === cliquee) || ps.find(p => p.classList.contains('est-source')) || ps[0] || null; };
+    troupeCtl = TROUPE.relier(tr, { liens: true, clavier: true, surChoix: slug => {
+      if (!slug) { fermerFiche(); tenirPersonne(null); return; }
+      const place = placeDe(slug);
+      // (la fiche et les tentacules après l'image : le geste se voit d'abord, règle 15 C)
+      troupeCtl.apresImage(() => { if (!troupeCtl || troupeCtl.choisi() !== slug) return; ouvrirFiche(tr, slug, place); tenirPersonne(slug, place); });
+    } });
     // (la créature et la géométrie de la troupe naissent quand la troupe approche de l'écran : les lire à l'arrivée sur la page
     // forçait la mise en forme de la troupe, encore hors de l'écran (content-visibility), dans la tâche de la page : plus de 50 ms)
     let largeur = 0;
@@ -6870,7 +7017,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       troupeCreature = creatureTroupe(tr);
       requestAnimationFrame(() => placerTroupe(tr));
       if ('ResizeObserver' in window) {
-        troupeRO = new ResizeObserver(es => { const w = Math.round(es[0].contentRect.width); if (w !== largeur) { largeur = w; requestAnimationFrame(() => placerTroupe(tr)); } });
+        troupeRO = new ResizeObserver(es => { const w = Math.round(es[0].contentRect.width); if (w !== largeur) { largeur = w; requestAnimationFrame(() => { placerTroupe(tr); if (troupeFiche) placerFiche(troupeFiche.el, troupeFiche.place); }); } });
         troupeRO.observe(tr);
       }
     };

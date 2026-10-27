@@ -115,7 +115,8 @@ hoche et se tourne à part du corps, au bout d'un ressort) : quand la lecture de
 marge, jamais sur la même ligne : elle choisit un point à sa portée (la marge, ou le vide sous le titre d'un métier), y
 file au galop (elle se ramasse, bondit étirée dans le sens du bond, un sillage derrière elle), y flotte, repart ; une
 tentacule attrape le médaillon du métier qu'on lit, qui s'anime. Choisir quelqu'un (un clic sur une de ses places) :
-elle sursaute, puis ses tentacules, lumineuses, vont tenir toutes ses places (`c.tenir`), à la place des fils des liens.
+sa fiche s'ouvre par-dessus sa photo (plus bas) ; la pieuvre sursaute, puis ses tentacules, lumineuses, vont tenir la
+fiche et ses autres places (`c.tenir`), à la place des fils des liens.
 
 `onglets.mjs` compare chaque texte affiché aux sources et signale tout texte qui n'en vient pas ; il vérifie aussi
 le menu (à portée sur chaque vue, un seul élément marqué comme courant), les redirections des anciennes adresses,
@@ -154,7 +155,12 @@ par `build.py` :
   jour/nuit. Les espaces réservés aussi sont de nuit par défaut (plus bas).
 - `troupe.js` (TROUPE) : sur la page de la compagnie, toutes les personnes des équipes, par catégories de métiers (le jeu,
   la mise en scène, l'écriture, les décors et costumes, la lumière et le son, la production), une vignette seulement pour
-  une photo publiée ; survoler ou choisir une personne allume toutes ses places et les relie par des bras.
+  une photo publiée ; survoler ou choisir une personne allume toutes ses places et les relie par des bras. La choisir (un
+  clic, Entrée) ouvre sa fiche par-dessus sa photo : la vignette grandit en portrait et la fiche s'ouvre autour d'elle ; son
+  nom, ses métiers, ses spectacles (sa fonction, son rôle, son alternance, « En tournée » ou son statut), chacun menant à sa
+  page, et les prochaines dates de ceux qui tournent, s'il y en a (cinq au plus, puis « Toutes les dates »). Rien que D
+  (`ficheHTML`, dans `index.html`). Elle se ferme quand la personne est relâchée (un second clic, Échap, un clic ailleurs,
+  sa croix) et rend le focus à sa place.
 - `cadrage.js` (CADRAGE) : chaque photo des spectacles garde dans son cadre sa zone d'intérêt (les comédiens, pas le
   noir du plateau), sur ordinateur comme sur téléphone ; les zones sont dans `data/cadrages.json` (une par photo, posée
   à l'œil sur chacune), et une photo ajoutée y reçoit la sienne.
@@ -338,7 +344,8 @@ compte du projet inscrit dans `crescite_admins`.
   - **Annuler plutôt que confirmer** (`admin/corbeille.js`) : plus de « Êtes-vous sûr ? » pour supprimer (une date, un
     lieu, une séance, un atelier, une piste, une demande de devis, une alerte, un document, une invitation, du matériel,
     une note) ni pour revenir sur une ligne du journal : c'est fait tout de suite, et l'annonce porte « Annuler » (ou
-    « Rétablir ») pendant huit secondes. La **Corbeille** (`#/corbeille`, depuis le journal, la recherche et le téléphone)
+    « Rétablir ») pendant huit secondes. Toute annonce se renvoie avant l'heure, d'une croix ou d'un geste (la glisser
+    de côté ou vers le bas) quand elle couvre un bouton ; survolée ou tenue sous le doigt, elle attend. La **Corbeille** (`#/corbeille`, depuis le journal, la recherche et le téléphone)
     montre ce qui a été supprimé ces trente derniers jours (le journal le garde) et le rétablit, une date avec ses
     séances, son suivi, ses chiffres, son équipe et sa feuille.
   - **Les garde-fous** (`admin/gardefous.js`) : dans la fiche d'une date, en direct, quelqu'un de l'équipe indisponible
@@ -365,7 +372,11 @@ compte du projet inscrit dans `crescite_admins`.
   - **Le téléphone** (`admin/mobile.js`, sous 640 px) : une barre d'onglets en bas (Tableau, Dates, Planning, Équipe,
     Plus : les autres rubriques, la carte, la corbeille, la recherche), un bouton « + » flottant (une date, une fiche, un
     lieu, une opportunité, une proposition, une séance), les rubriques de l'en-tête masquées, les fiches en plein écran,
-    leur pied et les annonces au-dessus de la barre.
+    leur pied et les annonces au-dessus de la barre. L'administration **s'installe sur le téléphone** comme l'espace de
+    l'équipe (`admin/manifest.webmanifest`, `admin/sw.js`, ses icônes) : « Installer », en tête de « Plus », donne
+    l'invite du navigateur, ou sur l'iPhone la marche à suivre dans Safari ; installée, elle s'ouvre en plein écran
+    (« Admin Crescite »). Son service passe toujours d'abord par le réseau (elle écrit dans la base) et ne garde la page
+    et ses scripts que pour s'ouvrir hors connexion ; il ne garde jamais rien de la base.
   - **Les notes internes** (`admin/notes.js`, le quinzième script `supabase/migrations/20261103_crescite_notes.sql`) :
     un fil sur chaque date, lieu, personne et piste ; `@Prénom Nom` mentionne quelqu'un de l'équipe (l'autocomplétion
     propose les fiches) et la base le prévient dans son espace ; épingler, modifier, supprimer avec « Annuler » ; une
@@ -524,7 +535,12 @@ Bérénice dans le stockage privé. L'import n'écrase jamais le travail de l'ad
 - **Équipe** : les fiches (publiques, coordonnées, accès, notes), et les documents de toute la compagnie ; la liste
   trouve aussi les fiches « Sans téléphone », à compléter.
 - **Dans chaque spectacle** : la distribution, le déroulé type d'une journée de représentation et les documents. **Dans
-  chaque date** : son équipe (la distribution « en tournée » cochée ; on décoche qui ne part pas, on ajoute un
+  la distribution**, « Ajouter quelqu'un de la troupe » (ou « Ajouter au jeu », « à la technique »… sous chaque catégorie)
+  ouvre toute la troupe, à chercher par nom, métier ou spectacle, ceux dont le métier va avec la catégorie en tête : un
+  geste ajoute, la fenêtre reste ouverte pour en ajouter d'autres, une personne sans fiche se crée au vol. C'est la même
+  ligne que « Ses spectacles » sur la fiche de la personne, où l'on peut aussi l'ajouter à un spectacle ou l'en retirer ;
+  tout s'enregistre aussitôt. L'onglet « Fiche artistique » (l'ancien « Équipe ») ne garde que le texte libre de la page
+  et du dossier. **Dans chaque date** : son équipe (la distribution « en tournée » cochée ; on décoche qui ne part pas, on ajoute un
   remplaçant).
 - **Feuilles de route** : la feuille d'une date s'écrit directement sur une page A4 à l'écran, dans la forme des
   feuilles de la compagnie (le logo rond noir, la police FdR Sans, dérivée de Carlito et métriquement identique à

@@ -57,8 +57,8 @@ const attendre = (page, fn, ms = 6000) => page.waitForFunction(fn, null, { timeo
   await page.click('#sel-barre [data-sel-action]:has-text("Masquer")');
   await attendre(page, () => !document.querySelector('#sel-barre'));
   const m2 = MODIFS.slice(n2).find(m => m.table === 'crescite_dates' && m.body && m.body.visible === false);
-  ok('2 · « Masquer » écrit les deux dates d’un coup (visible : false), la sélection se vide, l’annonce porte « Annuler »', !!m2 && m2.n === 2 && (await compte(page, '#sel-barre')) === 0 && (await compte(page, '.annonce button')) === 1, JSON.stringify(MODIFS.slice(n2)));
-  await page.click('.annonce button');
+  ok('2 · « Masquer » écrit les deux dates d’un coup (visible : false), la sélection se vide, l’annonce porte « Annuler »', !!m2 && m2.n === 2 && (await compte(page, '#sel-barre')) === 0 && (await compte(page, '.annonce [data-tt="retour"]')) === 1, JSON.stringify(MODIFS.slice(n2)));
+  await page.click('.annonce [data-tt="retour"]');
   await page.waitForTimeout(400);
   ok('2 · « Annuler » remet chaque date comme avant', MODIFS.slice(n2).filter(m => m.table === 'crescite_dates' && m.body && m.body.visible === true).length === 2);
   await page.click('.filtres .sel-bouton');
@@ -119,9 +119,9 @@ const attendre = (page, fn, ms = 6000) => page.waitForFunction(fn, null, { timeo
   await page.waitForSelector('#se-suppr', { timeout: 15000 });
   const n4 = MODIFS.length;
   await page.click('#se-suppr');
-  await attendre(page, () => location.hash === '#/ateliers/seances' && document.querySelector('.annonce button'));
-  ok('4 · « Supprimer » une séance : tout de suite, sans « Êtes-vous sûr ? », l’annonce porte « Annuler »', dialogues === 0 && MODIFS.slice(n4).some(m => m.table === 'crescite_seances' && m.delete) && (await compte(page, '.annonce button')) === 1 && /Séance supprimée/.test(await texte(page, '.annonce')), await texte(page, '.annonce'));
-  await page.click('.annonce button');
+  await attendre(page, () => location.hash === '#/ateliers/seances' && document.querySelector('.annonce [data-tt="retour"]'));
+  ok('4 · « Supprimer » une séance : tout de suite, sans « Êtes-vous sûr ? », l’annonce porte « Annuler »', dialogues === 0 && MODIFS.slice(n4).some(m => m.table === 'crescite_seances' && m.delete) && (await compte(page, '.annonce [data-tt="retour"]')) === 1 && /Séance supprimée/.test(await texte(page, '.annonce')), await texte(page, '.annonce'));
+  await page.click('.annonce [data-tt="retour"]');
   await attendre(page, () => location.hash === '#/ateliers/seances/2');
   ok('4 · « Annuler » la remet (une insertion) et rouvre la séance', MODIFS.slice(n4).some(m => m.table === 'crescite_seances' && m.post) && await page.evaluate(() => location.hash === '#/ateliers/seances/2'));
   await page.goto(`${URL0}#/corbeille`);
@@ -138,7 +138,7 @@ const attendre = (page, fn, ms = 6000) => page.waitForFunction(fn, null, { timeo
   const n6 = MODIFS.length;
   await page.click('#l-journal [data-j="5"]');
   await page.waitForTimeout(600);
-  ok('4 · « Revenir » dans le journal : sans confirmation, et l’annonce porte « Rétablir »', dialogues === 0 && MODIFS.slice(n6).some(m => m.table === 'crescite_dates' && m.body && m.body.statut === 'option') && (await compte(page, '.annonce button')) === 1, JSON.stringify(MODIFS.slice(n6)));
+  ok('4 · « Revenir » dans le journal : sans confirmation, et l’annonce porte « Rétablir »', dialogues === 0 && MODIFS.slice(n6).some(m => m.table === 'crescite_dates' && m.body && m.body.statut === 'option') && (await compte(page, '.annonce [data-tt="retour"]')) === 1, JSON.stringify(MODIFS.slice(n6)));
   ok('4 · le journal mène à la corbeille', (await compte(page, 'a[href="#/corbeille"]')) >= 1);
   ok('4 · aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();
@@ -280,9 +280,9 @@ const attendre = (page, fn, ms = 6000) => page.waitForFunction(fn, null, { timeo
   await page.waitForSelector('#pe-detacher', { timeout: 15000 });
   const n1 = MODIFS.length;
   await page.click('#pe-detacher');
-  await attendre(page, () => document.querySelector('.annonce button') && !document.querySelector('#pe-detacher'));
-  ok('4 bis · « Détacher ce compte » : tout de suite, sans « Êtes-vous sûr ? », l’annonce porte « Annuler »', dialogues === 0 && MODIFS.slice(n1).some(m => m.table === 'crescite_personnes_privees' && m.body && m.body.user_id === null) && /Compte détaché/.test(await texte(page, '.annonce')) && (await compte(page, '.annonce button')) === 1, await texte(page, '.annonce'));
-  await page.click('.annonce button');
+  await attendre(page, () => document.querySelector('.annonce [data-tt="retour"]') && !document.querySelector('#pe-detacher'));
+  ok('4 bis · « Détacher ce compte » : tout de suite, sans « Êtes-vous sûr ? », l’annonce porte « Annuler »', dialogues === 0 && MODIFS.slice(n1).some(m => m.table === 'crescite_personnes_privees' && m.body && m.body.user_id === null) && /Compte détaché/.test(await texte(page, '.annonce')) && (await compte(page, '.annonce [data-tt="retour"]')) === 1, await texte(page, '.annonce'));
+  await page.click('.annonce [data-tt="retour"]');
   await attendre(page, () => !!document.querySelector('#pe-detacher'));
   ok('4 bis · « Annuler » rattache le compte de nouveau', MODIFS.slice(n1).some(m => m.table === 'crescite_personnes_privees' && m.body && m.body.user_id === 'u-camille') && (await compte(page, '#pe-detacher')) === 1);
   // clore une proposition
@@ -290,9 +290,9 @@ const attendre = (page, fn, ms = 6000) => page.waitForFunction(fn, null, { timeo
   await page.waitForSelector('[data-dp="clore"]', { timeout: 15000 });
   const n2 = MODIFS.length;
   await page.click('[data-dp="clore"]');
-  await attendre(page, () => !!document.querySelector('[data-dp="rouvrir"]') && document.querySelector('.annonce button'));
+  await attendre(page, () => !!document.querySelector('[data-dp="rouvrir"]') && document.querySelector('.annonce [data-tt="retour"]'));
   ok('4 bis · « Clore la proposition » : tout de suite, sans question, l’annonce porte « Annuler »', dialogues === 0 && MODIFS.slice(n2).some(m => m.table === 'crescite_propositions' && m.body && m.body.statut === 'close') && (await compte(page, '[data-dp="rouvrir"]')) === 1 && /Proposition close/.test(await texte(page, '#annonces')), await texte(page, '#annonces'));
-  await page.click('.annonce button:has-text("Annuler")');
+  await page.click('.annonce [data-tt="retour"]:has-text("Annuler")');
   await attendre(page, () => !!document.querySelector('[data-dp="clore"]'));
   ok('4 bis · « Annuler » rouvre la proposition', MODIFS.slice(n2).some(m => m.table === 'crescite_propositions' && m.body && m.body.statut === 'ouverte') && (await compte(page, '[data-dp="clore"]')) === 1);
   // fusionner deux lieux : la question d'abord

@@ -11,6 +11,12 @@
 <!-- l'icône d'onglet : celle des espaces réservés, à la couleur de la saison (faite par site/build.py, equipe(dest)) -->
 <link rel="icon" href="../equipe/icones/192.png" type="image/png">
 <link rel="apple-touch-icon" href="../equipe/icones/180.png">
+<!-- l'administration installable sur le téléphone (manifest.webmanifest, sw.js, que mobile.js enregistre) -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Admin Crescite">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <title>Administration · Compagnie Crescite</title>
 <!-- les polices de la compagnie (celles du site) : Ubuntu pour les titres, Open Sans pour le texte, Raleway pour les étiquettes ; sans réseau, le système -->
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
@@ -375,6 +381,12 @@ table.simple tr.cliquable:hover td { background: var(--doux); }
 .annonce { display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 11px; background: #1d1720; color: #fff; box-shadow: 0 8px 30px rgba(0, 0, 0, .25); }
 .annonce.erreur { background: #8c1d16; }
 .annonce button { margin-left: auto; border: 1px solid rgba(255, 255, 255, .4); background: none; color: #fff; border-radius: 7px; padding: 3px 10px; cursor: pointer; font-weight: 700; }
+/* la croix : une cible de 36 px, au bout ; l'annonce se tire du doigt (touch-action : le geste est pour elle) */
+.annonce { touch-action: none; user-select: none; -webkit-user-select: none; }
+.annonce > span { flex: 1; min-width: 0; }
+.annonce .annonce-fermer { flex: none; display: grid; place-items: center; width: 36px; height: 36px; margin: -8px -8px -8px 0; padding: 0; border: 0; border-radius: 50%; color: rgba(255, 255, 255, .75); }
+.annonce [data-tt="retour"] + .annonce-fermer { margin-left: -4px; }
+.annonce .annonce-fermer:hover, .annonce .annonce-fermer:focus-visible { background: rgba(255, 255, 255, .14); color: #fff; }
 @media (prefers-reduced-motion: no-preference) { .annonce { animation: monte .2s ease-out; } @keyframes monte { from { transform: translateY(8px); opacity: 0; } } }
 
 /* à compléter avant la tournée (en tête de Représentations) */
@@ -838,14 +850,53 @@ function effacerFiltres() {
 }
 document.addEventListener('click', e => { if (e.target.closest?.('[data-effacer-filtres]')) { e.preventDefault(); effacerFiltres(); } });
 
+// une annonce en bas de l'écran : elle part seule ; on la renvoie avant d'une croix, ou d'un geste (la glisser de côté ou
+// vers le bas), quand elle couvre un bouton ; tenue sous le doigt ou survolée, elle attend
 function annoncer(msg, { erreur = false, action = null, libelle = 'Annuler', delai = 5000 } = {}) {
   const el = document.createElement('div');
   el.className = 'annonce' + (erreur ? ' erreur' : '');
   el.setAttribute('role', erreur ? 'alert' : 'status');
-  el.innerHTML = `<span>${esc(msg)}</span>${action ? `<button type="button" data-tt="retour">${esc(libelle)}</button>` : ''}`;
-  if (action) $('button', el).addEventListener('click', () => { el.remove(); action(); });
+  el.innerHTML = `<span>${esc(msg)}</span>${action ? `<button type="button" data-tt="retour">${esc(libelle)}</button>` : ''}<button type="button" class="annonce-fermer" aria-label="Fermer l’annonce" title="Fermer"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>`;
+  let partie = false, tenue = false, reste = erreur ? 9000 : delai, depuis = Date.now(), minuteur = null;
+  const partir = (dx = 0, dy = 0) => {
+    if (partie) return; partie = true; clearTimeout(minuteur);
+    if (dx || dy) { el.style.transition = 'transform .18s ease-in, opacity .18s ease-in'; el.style.transform = `translate(${dx}px, ${dy}px)`; el.style.opacity = '0'; }
+    else el.classList.add('part');
+    setTimeout(() => el.remove(), 200);
+  };
+  const attendre = () => { clearTimeout(minuteur); depuis = Date.now(); minuteur = setTimeout(() => { if (!tenue) partir(); }, reste); };
+  const suspendre = () => { tenue = true; clearTimeout(minuteur); reste = Math.max(1500, reste - (Date.now() - depuis)); };
+  const reprendre = () => { tenue = false; if (!partie) attendre(); };
+  if (action) $('[data-tt="retour"]', el).addEventListener('click', () => { el.remove(); partie = true; clearTimeout(minuteur); action(); });
+  $('.annonce-fermer', el).addEventListener('click', () => partir());
+  el.addEventListener('mouseenter', suspendre);
+  el.addEventListener('mouseleave', reprendre);
+  // le geste : on la tire du doigt (ou de la souris) ; au-delà d'un tiers de sa largeur de côté, ou de 40 px vers le bas, elle part
+  let x0 = null, y0 = 0, dx = 0, dy = 0;
+  el.addEventListener('pointerdown', e => {
+    if (e.button || e.target.closest('button')) return;
+    x0 = e.clientX; y0 = e.clientY; dx = dy = 0; suspendre();
+    el.setPointerCapture?.(e.pointerId); el.style.transition = 'none';
+  });
+  el.addEventListener('pointermove', e => {
+    if (x0 === null) return;
+    dx = e.clientX - x0; dy = Math.max(0, e.clientY - y0);
+    const vertical = dy > Math.abs(dx);
+    el.style.transform = vertical ? `translateY(${dy}px)` : `translateX(${dx}px)`;
+    el.style.opacity = String(Math.max(.3, 1 - (vertical ? dy / 80 : Math.abs(dx) / el.offsetWidth)));
+  });
+  const lacher = () => {
+    if (x0 === null) return;
+    x0 = null;
+    const vertical = dy > Math.abs(dx);
+    if (vertical ? dy > 40 : Math.abs(dx) > el.offsetWidth / 3) { partir(vertical ? 0 : Math.sign(dx) * el.offsetWidth, vertical ? 60 : 0); return; }
+    el.style.transition = 'transform .2s, opacity .2s'; el.style.transform = ''; el.style.opacity = '';
+    if (!el.matches(':hover')) reprendre();
+  };
+  el.addEventListener('pointerup', lacher);
+  el.addEventListener('pointercancel', lacher);
   $('#annonces').append(el);
-  setTimeout(() => { el.classList.add('part'); setTimeout(() => el.remove(), 200); }, erreur ? 9000 : delai);
+  attendre();
 }
 const erreur = (e, quoi = 'L’enregistrement a échoué') => { console.error(e); annoncer(`${quoi} : ${e?.message || e}`, { erreur: true }); };
 // les coordonnées écrites dans un champ deviennent des liens : chaque numéro « Appeler le … » (tel:), chaque adresse
@@ -3399,10 +3450,11 @@ const SPEC_SPECTACLE = {
     { k: 'cadre', t: 'texte', l: 'Cadre', aide: 'Pour une création : le lieu et le temps du récit.' },
     { k: 'extraits', t: 'objets', l: 'Extraits', ajout: 'Extrait', champs: [{ k: 'citation', t: 'long', l: 'Extrait' }, { k: 'source', t: 'texte', l: 'Source' }] },
   ],
-  'Équipe': [
-    { k: 'fiche', t: 'objets', l: 'Fiche artistique', ajout: 'Ligne', champs: [{ k: 'libelle', t: 'texte', l: 'Rôle', ph: 'Mise en scène et adaptation :' }, { k: 'valeur', t: 'html', l: 'Nom(s)' }] },
-    { k: 'avec.libelle', t: 'texte', l: 'Libellé de la distribution', ph: 'avec :' },
-    { k: 'avec.valeur', t: 'html', l: 'Distribution' },
+  // le texte libre de la page du spectacle (et de son dossier) ; les personnes de la troupe, avec leur fiche : onglet Distribution
+  'Fiche artistique': [
+    { k: 'fiche', t: 'objets', l: 'Fiche artistique', ajout: 'Ligne', aide: 'Le texte de la page du spectacle et de son dossier. Pour ajouter quelqu’un de la troupe (avec sa fiche, sa photo, ses dates) : onglet Distribution.', champs: [{ k: 'libelle', t: 'texte', l: 'Rôle', ph: 'Mise en scène et adaptation :' }, { k: 'valeur', t: 'html', l: 'Nom(s)' }] },
+    { k: 'avec.libelle', t: 'texte', l: 'Libellé de la ligne « avec »', ph: 'avec :' },
+    { k: 'avec.valeur', t: 'html', l: 'Texte de la ligne « avec »', aide: 'Les noms écrits en toutes lettres, là où la page ne montre pas les portraits de la distribution.' },
     { k: 'production', t: 'paragraphes', l: 'Production et soutiens', ajout: 'Ligne' },
   ],
   'Univers': [
