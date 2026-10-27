@@ -4570,7 +4570,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       TIT.forEach(T => { T.tPres = P.t0; });
       for (const a of BRAS) {
         const t0 = depart(a);
-        if (a.T.length) { V.set(a, [{ t0, fin: Infinity, T: a.T[0] }]); a.tenu = a.T[0]; a.T.forEach(T => { T.tPres = t0; }); fin = Math.max(fin, t0 + 1100); }
+        if (a.T.length) { V.set(a, [{ t0, fin: Infinity, T: a.T[0] }]); a.tenu = a.T[0]; a.T.forEach(T => { T.tPres = t0; }); fin = Math.max(fin, t0 + PIEUVRE.DEPLOI); }
         else if (!mobile && !a.t.parent) { V.set(a, [{ t0, fin: t0 + 1500, c: gesteDe(a, t0) }]); fin = Math.max(fin, t0 + 1500); }
       }
       P.plan = V; P.fin = fin + 300;
@@ -4585,7 +4585,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // un titre n'est réécrit que s'il a changé ; il paraît avec son bras (l'éveil), ou à son tour
     function placer(T, allume, now, anime) {
       let em = 0;
-      if (eveil !== null) em = !anime ? 1 : lisse(0, 1, (now - (T.tPres != null ? T.tPres + 600 : eveil + 500)) / 520);
+      // (le titre paraît quand son bras arrive à lui : aux deux tiers du dépliement)
+      if (eveil !== null) em = !anime ? 1 : lisse(0, 1, (now - (T.tPres != null ? T.tPres + PIEUVRE.DEPLOI * .62 : eveil + 500)) / 520);
       T.em = Math.max(T.em, em);
       const tr = `translate(${T.bx.toFixed(1)}px, ${(T.by + (1 - T.em) * 12).toFixed(1)}px)`, op = T.em.toFixed(3);
       if (T.tr !== tr) { T.el.style.transform = tr; T.tr = tr; }
@@ -4637,7 +4638,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         a.tension += ((act && voulu && act === voulu ? .55 : 0) - a.tension) * .15;
         if (a.but !== voulu || a.geste !== g) {
           a.but = voulu; a.geste = g;
-          if (voulu) { a.col = voulu.col; a.t.viser({ ...cibleDe(voulu), tension: a.tension }, anime ? 1100 : 0); }
+          // (le premier dépliement, celui de la présentation, est lent : PIEUVRE.DEPLOI ; les suivants, au geste, plus vifs)
+          if (voulu) { a.col = voulu.col; a.t.viser({ ...cibleDe(voulu), tension: a.tension }, anime ? (pres ? PIEUVRE.DEPLOI : 1100) : 0); }
           else if (g) a.t.viser(g, anime ? 900 : 0);
           else a.t.viser(null, anime ? 760 : 0, true);   // (remontée : un ressort)
         } else if (voulu) a.t.viser({ ...cibleDe(voulu), tension: a.tension });      // (le titre a pu bouger : la forme visée le suit)
@@ -4688,7 +4690,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
           };
           const ab = act && act.bras, trace = a => PIEUVRE.dessiner(ctx, a.t, { encre: ENCRE, vers: `rgb(${a.col.join(',')})`, teinte: a.teinte, lisere: PIEUVRE.lisere, degrade: degradeDe(a) });
           PIEUVRE.palmure(ctx, TS, ENCRE);
-          for (const a of BRAS) if (a !== ab) trace(a);
+          // (les plus enfoncées d'abord : elles passent derrière les autres ; celle qu'on regarde, devant tout)
+          for (const a of [...BRAS].sort((x, y) => x.t.profondeur() - y.t.profondeur())) if (a !== ab) trace(a);
           if (ab) trace(ab);
           // (les tentacules posées flottent, portées par les remous (PIEUVRE, flotter) : c'est ce mouvement qui invite à les
           // remonter ; plus de lueur qui court dessus)

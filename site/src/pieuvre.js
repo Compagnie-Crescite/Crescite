@@ -409,6 +409,14 @@ const PIEUVRE = (() => {
       this.q = duree > 0 ? 0 : 1; this.duree = duree;
     }
     mouvement() { return this.pose ? this.pose.mu : 0; }
+    // sa profondeur moyenne : 1 au premier plan, moins quand elle s'enfonce (pour la pâlir, et la dessiner derrière les autres)
+    profondeur() {
+      const z = this.pose && this.pose.z;
+      if (!z) return 1;
+      let a = 0, n = 0;
+      for (let k = 0; k < z.length; k += 8) { a += z[k]; n++; }
+      return n ? a / n : 1;
+    }
     avancer(dt, o = {}) {
       this.tourne = o.tourne || 0; this.tps = o.temps || 0;
       const bob = this.bob = o.bob || { x: 0, y: 0 };
@@ -436,7 +444,8 @@ const PIEUVRE = (() => {
       const B = this.cible ? this.but : repos;
       let P = B;
       if (this.q < 1 && this.depuis) {
-        const A = this.depuis, M = this.M, brut = this.q;
+        let A = this.depuis;
+        const M = this.M, brut = this.q;
         const q = !delai ? brut : this.etire ? Math.max(0, (brut - delai) / (1 - delai)) : Math.min(1, brut / (1 - delai));
         // le mouvement part de la racine : une onde parcourt la tentacule du pied à la pointe (quand elle s'allonge : elle se
         // déroule, sa pointe encore lovée emportée au bout, puis déployée la dernière) ou de la pointe au pied (quand elle
@@ -454,15 +463,33 @@ const PIEUVRE = (() => {
         // tournant, segment après segment, au lieu de se déchirer là où les angles repassent par ±π
         const D = deroule(A.sg, B.sg, M), DT = deroule(A.th, B.th, M + 1);
         if (this.cible && !this.elastique) {
-          // vers une cible, en deux temps, lisibles : la tentacule se ramasse d'abord (sa forme du logo rétrécit vers sa
-          // racine, le temps qu'elle glisse sur la tête : au moins 30 % du trajet), puis elle se déroule depuis la tête,
-          // de la racine à la pointe (l'onde) : chaque segment prend l'angle visé à son tour, ce qui reste de boucle
-          // emporté au bout, de plus en plus petit, comme une fougère. Rien ne pivote en grand, rien ne balaie l'écran
-          const Q1 = Math.max(.3, delai), K = lerp(1, .55, ease(Math.min(1, brut / Q1))), q2 = Math.max(0, (brut - Q1) / (1 - Q1));
-          const av = u => Math.min(1, Math.max(0, (q2 - u * ONDE) / (1 - ONDE)));
-          for (let k = 0; k < M; k++) { const w = ease(av((k + .5) / M)); sg[k] = A.sg[k] + w * D[k]; ln[k] = lerp(A.ln[k] * K, B.ln[k], w); }
-          for (let k = 0; k <= M; k++) th[k] = A.th[k] + ease(av(k / M)) * DT[k];
-          qm = q2;
+          // vers une cible : elle se déplie depuis sa forme du logo, lentement, de la racine à la pointe, comme une fougère :
+          // segment après segment (l'onde), la part dépliée prend le chemin visé, la part encore enroulée garde les boucles du
+          // logo, portée au bout, de plus en plus petite, jusqu'à s'ouvrir à son tour ; ses longueurs suivent. Rien ne se
+          // replie, rien ne pivote en bloc. La profondeur : le front du dépliement se soulève vers nous (plus large d'un
+          // septième) puis se pose ; une tentacule dont la place du logo est loin de son attache (la queue, la spirale
+          // extérieure) s'enfonce d'abord, plus fine et plus pâle (dessiner), le temps de passer derrière le corps jusqu'à son
+          // attache, puis revient au premier plan en se dépliant
+          // (un front étroit : la part dépliée est exactement sur le chemin visé ; un front large laisserait tout le bras à demi
+          // courbé, en grands arcs qui balaient. Celle qui a glissé part de sa forme du logo tournée dans le sens de son attache
+          // (repos : elle s'y est tournée en glissant, enfoncée))
+          const q2 = delai ? Math.max(0, (brut - delai) / (1 - delai)) : brut, OND = .82, A0 = A;
+          A = delai ? repos : A;
+          const av = u => lisse(0, 1, (q2 - u * OND) / (1 - OND));
+          const wS = new Float64Array(M), wP = new Float64Array(M + 1);
+          for (let k = 0; k < M; k++) wS[k] = av((k + .5) / M);
+          for (let k = 0; k <= M; k++) wP[k] = av(k / M);
+          // (les angles mêmes, d'un front étroit : la part dépliée suit le chemin visé, la part enroulée garde l'orientation
+          // qu'elle a dans le logo, portée au bout du bras qui grandit sans tourner sur elle-même ; chaque segment tourne au plus
+          // près de son voisin (deroule) : pas de retournement)
+          const Da = A === A0 ? D : deroule(A.sg, B.sg, M), DTa = A === A0 ? DT : deroule(A.th, B.th, M + 1);
+          for (let k = 0; k < M; k++) { sg[k] = A.sg[k] + wS[k] * Da[k]; ln[k] = lerp(A.ln[k], B.ln[k], wS[k]); }
+          for (let k = 0; k <= M; k++) th[k] = A.th[k] + wP[k] * DTa[k];
+          const recul = delai ? 1 - .62 * Math.sin(Math.PI * Math.min(1, Math.max(0, this.gl || 0))) : 1;
+          const zP = new Float64Array(M + 1);
+          for (let k = 0; k <= M; k++) { const w = wP[k]; zP[k] = lerp(A.z ? A.z[k] : 1, B.z ? B.z[k] : 1, w) * (1 + .56 * w * (1 - w)) * recul; }
+          P = { sg, th, ln, z: zP, mu: lerp(A0.mu, B.mu, ease(q2)), prolonge: ens };
+          qm = -1;   // (la pose est faite)
         } else {
           for (let k = 0; k < M; k++) {
             const qk = avance((k + .5) / M), wA = eA(qk), wL = ens ? ease(qk) : allonge ? ease(Math.max(0, (qk - .25) / .75)) : ease(Math.min(1, qk / .75));
@@ -470,9 +497,11 @@ const PIEUVRE = (() => {
           }
           for (let k = 0; k <= M; k++) th[k] = A.th[k] + eA(avance(k / M)) * DT[k];
         }
-        const z = A.z || B.z ? new Float64Array(M + 1) : null;
-        if (z) for (let k = 0; k <= M; k++) { const w = eA(avance(k / M)); z[k] = lerp(A.z ? A.z[k] : 1, B.z ? B.z[k] : 1, w); }
-        P = { sg, th, ln, z, mu: lerp(A.mu, B.mu, ease(qm)), prolonge: ens };
+        if (qm >= 0) {
+          const z = A.z || B.z ? new Float64Array(M + 1) : null;
+          if (z) for (let k = 0; k <= M; k++) { const w = eA(avance(k / M)); z[k] = lerp(A.z ? A.z[k] : 1, B.z ? B.z[k] : 1, w); }
+          P = { sg, th, ln, z, mu: lerp(A.mu, B.mu, ease(qm)), prolonge: ens };
+        }
       }
       this.pose = P;
       if (this.att && this.collant && P.mu > .999) this.colle = true;   // (collant : la pieuvre de l'accueil)
@@ -993,7 +1022,8 @@ const PIEUVRE = (() => {
     // l'ordre de déploiement, par vagues : les deux spirales (0), les boucles (1), les spirales extérieures (2), les queues (3) ;
     // VAGUE : l'écart entre deux vagues (ms) ; ATTENTE : à l'ouverture, ce que la pieuvre met à rejoindre sa place avant la
     // première vague (ms après le geste)
-    VAGUE: 70, ATTENTE: 630,
+    // DEPLOI : la durée du premier dépliement, du logo jusqu'aux titres (ms) : lent, qu'on le suive
+    VAGUE: 110, ATTENTE: 630, DEPLOI: 1900,
     rang(cle) { const m = /^(spiraleExt|spirale|boucle|queue)/.exec(cle || ''); return m ? { spirale: 0, boucle: 1, spiraleExt: 2, queue: 3 }[m[1]] : 0; },
     // ce que la tête occupe, en unités du dessin : le corps vivant s'y limite. Des polygones [x, y, x, y…] (ou des rectangles
     // [x, y, w, h]) : l'arche et ses jambes, coupées là où les tentacules qui les prolongent prennent racine (comme leur peau),
@@ -1004,7 +1034,8 @@ const PIEUVRE = (() => {
 
     dessiner(g, t, o = {}) {
       // (une frange s'efface à mesure que sa spirale se déploie : elle n'en reste pas un morceau qui flotte ; elle revient avec elle)
-      const al = t.parent ? 1 - ease(t.parent.t.mouvement()) : 1;
+      // (enfoncée, elle pâlit : elle passe derrière le corps)
+      const zm = t.profondeur(), al = (t.parent ? 1 - ease(t.parent.t.mouvement()) : 1) * (zm < 1 ? .3 + .7 * zm : 1);
       if (al < .02) return;
       const { xs, ys } = t.contour(), mu = t.mouvement();
       // le liseré : là où elle passe sur la pieuvre, un jour la sépare (comme les tentacules du logo entre elles) ; jamais plus
