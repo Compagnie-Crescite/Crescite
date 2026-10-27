@@ -83,12 +83,15 @@ const MOBILE = (() => {
 @media (max-width: 640px) {
   html.ob-actif .barre .nav { display: none; }
   html.ob-actif main { padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px)); }
+  /* le pied commun après le contenu : c'est lui qui laisse la place à la barre */
+  html.ob-actif main:has(+ .pied-espace) { padding-bottom: 20px; }
+  html.ob-actif .pied-espace { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
   html.ob-actif .pied-ed { bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
   html.ob-actif #annonces { bottom: calc(82px + env(safe-area-inset-bottom, 0px)); }
   .ob-barre { position: fixed; left: 0; right: 0; bottom: 0; z-index: 48; display: grid; grid-template-columns: repeat(5, 1fr); padding: 4px 4px calc(4px + env(safe-area-inset-bottom, 0px)); background: color-mix(in srgb, var(--carte) 94%, transparent); backdrop-filter: blur(10px); border-top: 1px solid var(--trait); }
   .ob-barre a, .ob-barre button { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px 4px; border: 0; border-radius: 12px; background: none; color: var(--gris); text-decoration: none; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; }
   .ob-barre [aria-current="page"] { color: var(--accent); background: var(--accent-doux); }
-  .ob-plus { position: fixed; right: 16px; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); z-index: 48; width: 54px; height: 54px; border-radius: 50%; border: 0; background: var(--principal, var(--accent)); color: #fff; box-shadow: 0 10px 24px -8px rgba(188, 62, 128, .7); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .ob-plus { position: fixed; right: 16px; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); z-index: 48; width: 54px; height: 54px; border-radius: 50%; border: 0; background: var(--principal, var(--accent)); color: #fff; box-shadow: 0 10px 24px -8px color-mix(in srgb, var(--saison, #5f565a) 70%, transparent); display: flex; align-items: center; justify-content: center; cursor: pointer; }
   .ob-plus[hidden] { display: none; }
   html.tiroir-ouvert .ob-plus, html.tiroir-ouvert .ob-barre { display: none; }
 }

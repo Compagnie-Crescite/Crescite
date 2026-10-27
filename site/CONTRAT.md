@@ -1,5 +1,10 @@
 # Contrat « les saisons, un univers par spectacle » (v4 : la règle 21 remplace la navigation par trois entrées)
 
+> Les règles du site. Ce contrat a été écrit pour les dix maquettes (m01 à m10) et la synthèse, au temps où l'on en
+> comparait plusieurs ; il n'en reste qu'un site (`site/src/index.html`, octobre 2026), et les maquettes ont été retirées.
+> Là où il dit « la maquette », « chaque maquette » ou « la synthèse », lire « le site » ; ce qui ne valait que pour les
+> autres maquettes (« ne touche qu'à maquettes/src/mNN.html », la planche, les comparaisons) ne vaut plus.
+
 Le client (Adrien, qui reprend l'informatique de la compagnie Crescite) demande, pour TOUTES les propositions :
 1. « En t'inspirant de ce dossier [le dossier scolaire Bérénice 2026 de la compagnie] et des pages de mon site
    adrienvada.fr, crée des univers par spectacles, adaptés à une communication de compagnie. »
@@ -14,7 +19,7 @@ Tu gardes l'univers, le concept et la qualité visuelle de ta maquette (son accu
 caractère) ; tu en changes la navigation, tu ajoutes les pages des trois entrées et tu refais les pages des spectacles.
 
 ## Les données D (v3) : ce qui change
-Lance `python3 maquettes/build.py mNN` puis lis `maquettes/dist/data.json` pour les valeurs réelles.
+Lance `python3 site/build.py mNN` puis lis `site/dist/data.json` pour les valeurs réelles.
 - `D.site.entrees` (NOUVEAU, remplace `portes`) : `[{cle, texte, court, href, couleur, couleurVive}]`
   - voir : « Je viens voir un spectacle » (court « Voir un spectacle ») → `#/voir`
   - programmer : « Je souhaite programmer » (court « Programmer ») → `#/programmer`
@@ -63,7 +68,7 @@ Lance `python3 maquettes/build.py mNN` puis lis `maquettes/dist/data.json` pour 
   [{titre|null, lignes [HTML]}], alerte, photos}`.
 - `D.dates[]` : NOUVEAU `scolaire` (true : représentation réservée à un établissement). 10 des 31 dates à venir.
 - `CARTE` : NOUVEAU `CARTE.aVenir('public')` (sans les scolaires), `CARTE.aVenir('scolaire')`, `CARTE.tout()` (toutes les
-  communes de toutes les saisons, pour « Je souhaite programmer »). Voir l'en-tête de `maquettes/src/carte.js`.
+  communes de toutes les saisons, pour « Je souhaite programmer »). Voir l'en-tête de `site/src/carte.js`.
 - `D.photos[clé]` : en ligne, c'est une ADRESSE (`photos/berenice/av-2.webp`), en local une data URL : ne l'utilise que
   comme `src` ou dans `url("…")`, jamais en la découpant.
 
@@ -173,7 +178,7 @@ dans un seul `<link>` avec `display=swap`, une ou deux graisses chacune).
 
 ## Règle 9 : prête pour la base de données (temps réel)
 La base de données de la compagnie arrive ensuite : chaque enregistrement dans l'administration changera le site en
-temps réel. Un nouvel outil commun, `DONNEES` (en-tête de `maquettes/src/donnees.js`, injecté comme CARTE), remplace D
+temps réel. Un nouvel outil commun, `DONNEES` (en-tête de `site/src/donnees.js`, injecté comme CARTE), remplace D
 en place puis prévient la maquette. Donc : le rendu de chaque vue relit D à chaque fois (aucune copie figée au
 chargement : pas de `const shows = D.shows.map(...)` gardé au niveau global pour l'affichage), et ta maquette appelle
 `DONNEES.surChangement(() => …)` pour refaire la vue courante en place : sans remonter en haut, sans voler le focus,
@@ -207,7 +212,7 @@ soit encore plus pratique. »
 Le client : « une interface en no code, un peu comme WordPress, où elle peut modifier les paragraphes directement ; la
 page d'administration doit ressembler à la page agenda, avec la possibilité d'ajouter des dates et de modifier des
 dates passées ; chaque maquette permet, dans son style, d'administrer la base de données. »
-L'outil commun `EDITION` (en-tête de `maquettes/src/edition.js`, injecté par build.py) fait tout le travail : connexion,
+L'outil commun `EDITION` (en-tête de `site/src/edition.js`, injecté par build.py) fait tout le travail : connexion,
 mode édition, barre, panneau de date, enregistrement dans la base, temps réel. Ta maquette fournit :
 - un lien ou bouton « Modifier le site » (`D.site.libelles.modifierSite`) qui appelle `EDITION.ouvrir()`, dans le pied
   de page de chaque vue (discret, mais visible) ;
@@ -229,7 +234,7 @@ mode édition, barre, panneau de date, enregistrement dans la base, temps réel.
 - les variables CSS `--ed-fond`, `--ed-encre`, `--ed-accent`, `--ed-sur-accent`, `--ed-police`, `--ed-rayon`, `--ed-trait`
   sur `:root`, choisies dans ta palette et tes polices, pour que la barre, la connexion et le panneau de date aient le
   style de ta maquette ; des règles CSS sur `.ed-barre`, `.ed-panneau`, `.ed-bt`… si tu veux aller plus loin.
-Ne réécris pas l'outil : branche-toi dessus. Le vérificateur (`EDITION=1 node maquettes/onglets.mjs …`) contrôle le lien
+Ne réécris pas l'outil : branche-toi dessus. Le vérificateur (`EDITION=1 node site/onglets.mjs …`) contrôle le lien
 et la présence des annotations ; l'essai réel (connexion, écriture) se fait avec la base.
 
 ## Règle 12 : la distribution, avec les portraits (demande du client)
@@ -346,7 +351,7 @@ l'applique avec cohérence à tous les gestes (pas un effet par endroit) :
   - Synthèse : le meilleur de la 06 et de la 03, en plus sobre et plus rapide encore.
   Écris en tête du <script> un bloc « Mouvement : … » qui décrit ta signature.
 
-C. Réactif, mesuré (maquettes/reactivite.mjs). Budgets, au bureau et avec le processeur ralenti ×4 :
+C. Réactif, mesuré (site/reactivite.mjs). Budgets, au bureau et avec le processeur ralenti ×4 :
   - chaque geste (un lien d'entrée, une carte de spectacle, ouvrir une saison, un filtre, taper dans la recherche) se voit
     à l'image suivante, et sa durée d'événement (INP) reste sous 100 ms au bureau, sous 200 ms ralenti ×4 ;
   - un changement de page montre son contenu en moins de 150 ms (bureau) ; une transition dure 450 ms au plus et
@@ -407,7 +412,7 @@ réserver, avec un effet visuel lié au spectacle qu'on choisit. »
   (sa billetterie) : il prime pour cette séance. Une date sans heure dit `libelles.horaireAPreciser` ; une date sans lien
   dit `libelles.reservationAupresDuLieu` suivi du nom du lieu, sans faux bouton. Rien d'inventé : un lien ne s'affiche que
   s'il est dans les données.
-- L'outil commun `maquettes/src/reserver.js` (RESERVER) fait le travail (les dates réservables, la bande de dates, la carte
+- L'outil commun `site/src/reserver.js` (RESERVER) fait le travail (les dates réservables, la bande de dates, la carte
   de réservation, le clavier) ; chaque maquette l'habille dans son style.
 - Où :
   - la page d'un spectacle (sa partie « voir ») : ses prochaines dates tout public en une bande de boutons, un bouton par
@@ -439,7 +444,7 @@ réserver, avec un effet visuel lié au spectacle qu'on choisit. »
 « Intègre mieux les vidéos dans le site, qu'elles se lisent directement dans le site, avec une option de mettre en plein
 écran, et une qui assombrit l'écran. »
 - Les données : `video` d'un spectacle ({url, titre}) et ses `medias` de type vidéo (Vimeo, YouTube). Rien d'autre.
-- L'outil commun `maquettes/src/lecteur.js` (LECTEUR) : une affiche (la photo du spectacle, prise dans D, jamais une
+- L'outil commun `site/src/lecteur.js` (LECTEUR) : une affiche (la photo du spectacle, prise dans D, jamais une
   image venue de Vimeo ou YouTube), le titre de la vidéo et un bouton de lecture ; au geste, le lecteur se charge sur
   place (YouTube par youtube-nocookie.com, Vimeo avec dnt=1 : rien de tiers n'est chargé avant le geste) et démarre.
 - Deux boutons sous la vidéo, avec leurs libellés de D : « plein écran » (l'API Fullscreen sur le cadre du lecteur ; là où
@@ -456,13 +461,14 @@ comédien. Ne mets que le thème sombre sur le site. » (octobre 2026 ; elle rem
   part ; rien à prévoir pour lui dans l'en-tête ou le menu.
 - `data-theme="nuit"` est posé sur `<html>` avant le premier dessin (pas d'éclair), quel que soit le réglage de l'appareil
   ou un choix « jour » gardé d'une visite d'avant (la clé `crescite-theme` est effacée). Outil commun
-  `maquettes/src/theme.js` (THEME : `actuel()` vaut `'nuit'`, `seul` vaut `true`, `bouton()` ne dessine plus rien).
+  `site/src/theme.js` (THEME : `actuel()` vaut `'nuit'`, `seul` vaut `true`, `bouton()` ne dessine plus rien).
 - Chaque maquette soigne sa nuit, dans son style : une maquette née claire garde son caractère dans le sombre. Les univers
   des spectacles restent lisibles (couleurs sombres de D), les photos et la carte aussi. Contraste AA partout (l'opacité des
   parents d'un texte comprise).
 - Les palettes de jour qui restent dans une maquette ne servent plus : on ne les soigne plus, on peut les retirer.
-- L'administration, l'espace de l'équipe et l'espace des salles gardent le jour et la nuit : ils suivent le réglage de
-  l'appareil (`prefers-color-scheme`).
+- L'administration, l'espace de l'équipe, l'espace des salles et la page de réponse sont de nuit eux aussi, par défaut,
+  quel que soit l'appareil (demande du client, octobre 2026 : « Mettre tout en mode nuit par défaut ») ; leur jour reste
+  dans leurs feuilles de style, sous `data-theme="jour"` seulement.
 
 ## Règle 20 : la troupe, sur la page de la compagnie (demande du client)
 « Ajoute dans la présentation de la compagnie l'ensemble des membres des équipes, avec une vignette seulement s'il y a
@@ -483,7 +489,7 @@ imaginatif. Dans le style de chaque maquette. »
   offset-path, Web Animations), dans ta signature ; « moins d'animations » : composition fixe et lisible. Budgets de la
   règle 15 C ; rien ne déborde à 360 px ; au clavier, chaque personne et chaque catégorie se parcourent.
 - Où : sur la page de la compagnie (`#/compagnie`), entre la présentation et les repères. Outil commun
-  `maquettes/src/troupe.js` (TROUPE) : les catégories, les places des personnes, les liens entre leurs places, les icônes.
+  `site/src/troupe.js` (TROUPE) : les catégories, les places des personnes, les liens entre leurs places, les icônes.
 - Édition sur place : `data-edit="site.troupe.titre"` et les titres des catégories.
 
 ## Règle 21 : la navigation par les saisons (v4, demande du client ; remplace les règles 2 et 3 là où elles diffèrent)
@@ -561,7 +567,7 @@ Partout dans ce contrat, lis désormais `#/saisons` pour `#/voir`, `#/espace-pro
 - `#/compagnie`, `#/contact`, les pages légales et le pied de page (les quatre éléments du menu, contact, liens légaux) :
   comme avant.
 
-**C. Le vérificateur** (`maquettes/onglets.mjs`) contrôle : les quatre éléments du menu à portée sur chaque vue (et au
+**C. Le vérificateur** (`site/onglets.mjs`) contrôle : les quatre éléments du menu à portée sur chaque vue (et au
 téléphone), un seul `aria-current="page"`, l'absence des trois entrées dans l'en-tête, l'accueil et le pied ; sur
 `#/saisons` : une date à venir, les boutons de date (règle 17), la frise (`.frise[data-frise]`) avec des marques de
 plusieurs couleurs et la légende, le titre « Saison 2019-2020 » dans les saisons passées, fermées au départ, chacune avec
@@ -618,16 +624,16 @@ sauge, Cassandre bleu, Cléophène rose saumon, Macbeth rouge sang ; La Folle Id
   de marque) dans une maquette : remplace-les par le thème. Contraste AA comme partout (règle 19, la nuit).
 
 ## Les contrôles des règles 17 à 20
-Le vérificateur (`maquettes/onglets.mjs`) ne contrôle chaque règle que si sa variable d'environnement est posée
+Le vérificateur (`site/onglets.mjs`) ne contrôle chaque règle que si sa variable d'environnement est posée
 (`REGLE17=1`, `REGLE18=1`, `REGLE19=1`, `REGLE20=1`), le temps que toutes les maquettes l'aient.
 
 ## Vérifier (obligatoire), deux tours au plus, sois économe
-  python3 maquettes/build.py mNN
-  node maquettes/onglets.mjs <ton dossier> mNN
+  python3 site/build.py mNN
+  node site/onglets.mjs <ton dossier> mNN
 Le rapport liste chaque vue puis les anomalies : il ne doit en rester aucune (lignes sans « · »), y compris « texte absent
 des sources », « attendu mais absent », « ne devrait pas apparaître », les redirections et « à portée ». Regarde au moins :
 l'intro, l'accueil, les saisons, l'espace pro et ses deux pages, berenice-voir, berenice-etablissement, la page de La
-Folle Idée, cassandres, et les saisons au téléphone. Ne touche à aucun autre fichier que maquettes/src/mNN.html. Ni commit ni push.
+Folle Idée, cassandres, et les saisons au téléphone. Ne touche à aucun autre fichier que site/src/mNN.html. Ni commit ni push.
 
 ## Rendu
 Un message final court : la navigation par les saisons, comment les univers sont rendus, ce qui a été vérifié.

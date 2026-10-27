@@ -28,7 +28,7 @@
 
    Chargés avant ce fichier : ../admin/vendor/supabase.js (supabase-js), ../admin/agenda.js (AGENDA), ../admin/feuille.js
    (FEUILLE), ../admin/tentacules.js (TENTACULES) et carte.js (CRESCITE_CARTE : la France et Rouen, écrit par
-   maquettes/build.py). Sans AGENDA, FEUILLE, TENTACULES ni la carte, la page marche et dit ce qui manque. */
+   site/build.py). Sans AGENDA, FEUILLE, TENTACULES ni la carte, la page marche et dit ce qui manque. */
 (() => {
   'use strict';
 
@@ -190,13 +190,16 @@
     for (let l = l0; l >= 0 && l <= 1; l += clair ? -0.01 : 0.01) { const x = versHexa(t, s, l); if (contraste(x, fond) >= cible) return x; }
     return clair ? '#1d1418' : '#ffffff';
   }
-  const PAPIER = '#fffdf9', NUIT = '#1f1921';
+  // les surfaces où l'univers se lit (la carte du jour, celle de la nuit : index.html, la charte du site public)
+  const PAPIER = '#fffdf9', NUIT = '#2e2128';
+  // la couleur de la saison (posée par site/build.py), pour ce qui n'a pas d'univers ; sans elle, le gris
+  const couleurSaison = () => getComputedStyle(document.documentElement).getPropertyValue('--saison').trim() || '#5f565a';
   const COULEURS = new Map();
   // u : la couleur de l'univers ; fond et texte pour le mode clair, fondS et texteS pour le mode sombre ; et le héros :
   // le fond, le texte et l'accent de l'univers lui-même (une affiche), corrigés s'ils ne se lisent pas assez
   function couleurs(sp) {
     const c = (sp && sp.univers && sp.univers.couleurs) || {};
-    const u = [c.scene, c.accent, c.texte].find(hexa) || '#a3306b';
+    const u = [c.scene, c.accent, c.texte].find(hexa) || couleurSaison();
     const cle = `${u}|${c.fond || ''}|${c.texte || ''}|${c.accent || ''}|${c.accent2 || ''}`;
     if (!COULEURS.has(cle)) {
       const fond = melange(u, PAPIER, 0.13), fondS = melange(u, NUIT, 0.2);
@@ -216,7 +219,7 @@
   function couleurRoute(h) {
     const m = String(h || '').match(/^#\/(?:date|feuille)\/(\d+)/), d = m && E.dates.find(x => x.id === +m[1]);
     if (d) return couleurs(d.spectacle).u;
-    return getComputedStyle(document.documentElement).getPropertyValue('--magenta').trim() || '#a3306b';
+    return getComputedStyle(document.documentElement).getPropertyValue('--magenta').trim() || couleurSaison();
   }
   // la police du titre d'un spectacle (celle de son univers), chargée à la demande pour ce seul titre
   const POLICES = new Set();
@@ -405,12 +408,15 @@
     if (typeof majBadgePlanning === 'function') majBadgePlanning();
   }
 
+  // le pied commun aux quatre espaces réservés (administration, équipe, salles, réponse) : la compagnie, le site public, lui
+  // écrire, ses pages légales ; en fin de contenu, jamais fixé (la barre des onglets reste seule en bas de l'écran)
+  const PIED = `<footer class="pied-espace"><p class="pied-nom">Compagnie Crescite</p><nav aria-label="La compagnie"><a href="../">Le site</a><a href="mailto:contact@crescite.fr">Écrire à la compagnie</a><a href="../#/mentions-legales">Mentions légales</a><a href="../#/politique-de-confidentialite">Politique de confidentialité</a></nav></footer>`;
   // une page seule, centrée : connexion, mot de passe, compte sans fiche, panne
   function seul(html) {
     E.route = null; E.pile = [];
     $('#app').innerHTML = `<main class="seul" id="contenu" tabindex="-1"><div class="porte">
-      <p class="porte-marque"><span class="pieuvre" data-pieuvre aria-hidden="true"></span><span class="marque-nom">Crescite</span> <small>équipe</small></p>
-      ${html}</div></main>`;
+      <p class="porte-marque"><span class="pieuvre" data-pieuvre aria-hidden="true"></span><span class="marque-texte"><span class="marque-nom">Compagnie Crescite</span><small>Équipe</small></span></p>
+      ${html}</div></main>${PIED}`;
     poserPieuvres();
   }
   function poserPieuvres() {
@@ -809,7 +815,7 @@
     const onglet = (k, icone, court, long = court) => `<a class="nav-item" href="#/${k}" data-onglet="${k}"><span class="nav-icone">${icone}${badge(k) ? '<span class="pastille-nb" data-n="0" aria-hidden="true"></span>' : ''}</span><span class="nav-lib">${court === long ? esc(court) : `<span class="nav-lib-court">${esc(court)}</span><span class="nav-lib-long">${esc(long)}</span>`}</span>${badge(k) ? '<span class="sr nb-sr"></span>' : ''}</a>`;
     $('#app').innerHTML = `<div class="appli">
       <nav class="nav-appli" aria-label="Rubriques">
-        <div class="nav-marque" aria-hidden="true"><span class="pieuvre" data-pieuvre></span><span class="nav-marque-texte"><span class="marque-nom">Crescite</span><small>équipe</small></span></div>
+        <div class="nav-marque" aria-hidden="true"><span class="pieuvre" data-pieuvre></span><span class="nav-marque-texte"><span class="marque-nom">Compagnie Crescite</span><small>Équipe</small></span></div>
         <span class="nav-curseur" aria-hidden="true"></span>
         ${onglet('saison', ICONES.agenda, 'Saison', 'Ma saison')}
         ${onglet('feuilles', ICONES.feuille, 'Feuilles', 'Feuilles de route')}
@@ -822,12 +828,13 @@
       <div class="colonne">
         <header class="barre-haut" id="barre-haut">
           <a class="bouton-rond retour" href="#/saison" data-retour data-tt="retour" hidden>${ICONES.retour}<span class="sr">Retour</span></a>
-          <a class="marque-mini" href="#/saison"><span class="pieuvre" data-pieuvre aria-hidden="true"></span><span class="marque-nom">Crescite</span> <small>équipe</small></a>
+          <a class="marque-mini" href="#/saison"><span class="pieuvre" data-pieuvre aria-hidden="true"></span><span class="marque-texte"><span class="marque-nom">Compagnie Crescite</span><small>Équipe</small></span></a>
           <p class="barre-titre" aria-hidden="true"></p>
           <div class="barre-actions"><button type="button" class="installer-barre" data-installer-barre hidden>${ICONES.installer}<span>Installer<span class="sr"> l’application</span></span></button><a class="bouton-rond cloche" href="#/notifications" data-cloche>${ICONES.cloche}<span class="pastille-nb" data-n="0" aria-hidden="true"></span><span class="sr">Notifications<span class="nb-sr"></span></span></a><button type="button" class="bouton-rond" data-actualiser title="Actualiser">${ICONES.actualiser}<span class="sr">Actualiser</span></button></div>
         </header>
         <div class="bandeau-etat" id="bandeau-etat"></div>
         <main id="contenu" tabindex="-1"></main>
+        ${PIED}
       </div>
       <div class="tirer" id="tirer" aria-hidden="true"><span class="pieuvre" data-pieuvre-tirer></span></div>
       <div class="zone-bandeau" id="bandeau-notif" aria-live="polite"></div>
@@ -895,7 +902,7 @@
 
   function majTitre() {
     const n = E.notifs.filter(x => !x.lue_le).length;
-    document.title = `${n ? `(${n}) ` : ''}${E.titre || 'Équipe'} · Crescite`;
+    document.title = `${n ? `(${n}) ` : ''}${E.titre && E.titre !== 'Équipe' ? `${E.titre} · ` : ''}Équipe · Compagnie Crescite`;
   }
   function afficher(r, titre, html, { focus = false, large = false } = {}) {
     if (E.planning) demonterPlanning();
@@ -919,7 +926,7 @@
   }
   // la page d'une date, d'une feuille de route ou d'un spectacle met l'application à la couleur de son univers : le curseur
   // des onglets, le retour, la marque (--accent et --accent-doux, lus par la feuille de style ; les autres vues gardent
-  // le magenta). Les couleurs sont celles de couleurs(sp), déjà ajustées pour se lire sur le papier et la nuit.
+  // la couleur de la saison). Les couleurs sont celles de couleurs(sp), déjà ajustées pour se lire sur le papier et la nuit.
   function teinter(r) {
     const app = $('#app > .appli');
     if (!app) return;
@@ -1364,7 +1371,7 @@
 
   // ================================================================================================ la carte de la tournée
   // la France, et un bras de Rouen jusqu'à chaque lieu (comme la carte des maquettes) : à la couleur du spectacle pour les
-  // lieux à venir, en retrait pour ceux déjà joués. La projection est celle de maquettes/build.py (conique conforme de
+  // lieux à venir, en retrait pour ceux déjà joués. La projection est celle de site/build.py (conique conforme de
   // Lambert, recalée sur les communes connues).
   function projeter(lat, lon) {
     const P = FRANCE && FRANCE.projection;
@@ -1972,7 +1979,7 @@
     if (document.visibilityState === 'visible') return banniere(n);
     try {
       if (window.Notification && Notification.permission === 'granted' && navigator.serviceWorker) {
-        navigator.serviceWorker.ready.then(reg => reg.showNotification(n.titre || 'Crescite', { body: n.texte || '', tag: `crescite-notif-${n.id}`,
+        navigator.serviceWorker.ready.then(reg => reg.showNotification(n.titre || 'Compagnie Crescite', { body: n.texte || '', tag: `crescite-notif-${n.id}`,
           icon: 'icones/192.png', badge: 'icones/badge.png', data: { lien: lienDe(n), id: n.id }, renotify: false, lang: 'fr' })).catch(() => {});
       }
     } catch (e) { /* rien */ }
@@ -2160,7 +2167,7 @@
       $$('[data-zone-push]').forEach(z => { z.dataset.etat = etat; z.innerHTML = cartePush(etat, z.dataset.zonePush); });
     });
   }
-  const ETAPES_IOS = `<ol class="etapes"><li>Dans Safari, touchez <b>Partager</b> <span class="ic-texte">${ICONES.partager}</span> en bas de l’écran.</li><li>Choisissez <b>Sur l’écran d’accueil</b>, puis <b>Ajouter</b>.</li><li>Ouvrez l’application <b>Crescite</b> depuis son icône.</li></ol>`;
+  const ETAPES_IOS = `<ol class="etapes"><li>Dans Safari, touchez <b>Partager</b> <span class="ic-texte">${ICONES.partager}</span> en bas de l’écran.</li><li>Choisissez <b>Sur l’écran d’accueil</b>, puis <b>Ajouter</b>.</li><li>Ouvrez l’application <b>Les Crescite</b> depuis son icône.</li></ol>`;
   function cartePush(etat, ou) {
     const bascule = actif => `<div class="interrupteur"><span class="lib"><span id="lib-push">Recevoir les notifications sur cet appareil</span><small id="aide-push">${actif ? 'Activées : elles arrivent même application fermée.' : 'Feuilles de route, horaires changés, nouvelles dates : même application fermée.'}</small></span>
       <button type="button" role="switch" class="bascule" aria-checked="${actif}" aria-labelledby="lib-push" aria-describedby="aide-push" data-push></button></div>`;
@@ -2181,7 +2188,7 @@
 
   // ================================================================================================ le planning et les disponibilités
   // Le planning commun (../admin/planning.js, PLANNING : la vue Équipe et la vue Mois), mes indisponibilités (à la main),
-  // mes agendas (reliés : leurs heures occupées deviennent des indisponibilités ; et le flux de mes dates Crescite à ajouter
+  // mes agendas (reliés : leurs heures occupées deviennent des indisponibilités ; et le flux de mes dates de la compagnie à ajouter
   // à mon agenda), les propositions de dates de l'administration. Tout passe par le script SQL 5 et la fonction
   // crescite-agenda : sans eux, une phrase claire, et rien d'autre ne change.
   // Le planning s'ouvre sur « Mes projets » (les gens de ses spectacles : voir groupesPlanning) quand la personne en a ;
@@ -2515,11 +2522,11 @@
     return html + '</section>';
   }
 
-  // ———— mes agendas : relier un agenda, et mes dates Crescite dans mon agenda
+  // ———— mes agendas : relier un agenda, et mes dates de la compagnie dans mon agenda
   const nomAgenda = u => (/google\.com/i.test(u) ? 'Google Agenda' : /icloud\.com/i.test(u) ? 'Apple iCloud' : /outlook|office365|live\.com|hotmail/i.test(u) ? 'Outlook' : 'Mon agenda');
   function vueAgendas(r, { focus }) {
-    const entete = '<div class="titre-vue"><h1>Mes agendas</h1><p class="sous">Votre agenda dit quand vous êtes pris ; le vôtre reçoit vos dates Crescite.</p></div>';
-    if (E.dispo.etat === 'absent') return afficher(r, TITRES.agendas, entete + etatVide('calendrier', 'Bientôt dans l’application', 'La compagnie met en place le planning de l’équipe : vous pourrez y relier votre agenda, et recevoir vos dates Crescite dans le vôtre.'), { focus });
+    const entete = '<div class="titre-vue"><h1>Mes agendas</h1><p class="sous">Votre agenda dit quand vous êtes pris ; le vôtre reçoit vos dates de la compagnie.</p></div>';
+    if (E.dispo.etat === 'absent') return afficher(r, TITRES.agendas, entete + etatVide('calendrier', 'Bientôt dans l’application', 'La compagnie met en place le planning de l’équipe : vous pourrez y relier votre agenda, et recevoir vos dates de la compagnie dans le vôtre.'), { focus });
     const html = `${entete}<div id="zone-agendas">${blocAgendas()}</div>${formAgenda()}<div id="zone-flux">${blocFlux()}</div>`;
     afficher(r, TITRES.agendas, html, { focus });
     brancherFormAgenda();
@@ -2632,7 +2639,7 @@
   }
   function blocFlux() {
     const j = E.dispo.jeton;
-    const intro = '<h2 id="t-flux">Mes dates Crescite dans mon agenda</h2><p class="intro">Abonnez votre agenda à vos dates (représentations, répétitions, résidences) : elles s’y ajoutent, avec les horaires et les lieux, et s’y mettent à jour d’elles-mêmes. Les dates que l’administration vous propose y paraissent aussi, « à confirmer », jusqu’à ce que vous répondiez non ou que la proposition soit close.</p>';
+    const intro = '<h2 id="t-flux">Mes dates de la compagnie dans mon agenda</h2><p class="intro">Abonnez votre agenda à vos dates (représentations, répétitions, résidences) : elles s’y ajoutent, avec les horaires et les lieux, et s’y mettent à jour d’elles-mêmes. Les dates que l’administration vous propose y paraissent aussi, « à confirmer », jusqu’à ce que vous répondiez non ou que la proposition soit close.</p>';
     if (j === undefined) return `<section class="carte" aria-labelledby="t-flux">${intro}<p class="chargement" role="status">Lecture de votre lien…</p></section>`;
     if (!j) return `<section class="carte" aria-labelledby="t-flux">${intro}<p class="message conseil">Votre lien personnel n’est pas encore prêt : la compagnie met le service en place.</p></section>`;
     return `<section class="carte flux" aria-labelledby="t-flux">${intro}
@@ -2665,13 +2672,13 @@
 
   // ———— dans « Moi »
   function sectionPlanningMoi() {
-    const intro = '<h2 id="t-dispo">Mon planning</h2><p class="intro">Dites quand vous n’êtes pas libre, reliez votre agenda, recevez vos dates Crescite dans le vôtre.</p>';
+    const intro = '<h2 id="t-dispo">Mon planning</h2><p class="intro">Dites quand vous n’êtes pas libre, reliez votre agenda, recevez vos dates de la compagnie dans le vôtre.</p>';
     if (E.dispo.etat === 'absent') return `<section class="carte" aria-labelledby="t-dispo">${intro}<p class="aide">Bientôt : la compagnie met en place le planning de l’équipe.</p></section>`;
     const n = enAttente().length;
     const lien = (h, ic, titre, sous, badge = '') => `<li><a class="ligne-lien" href="${h}">${ic}<span><b>${titre}</b><small>${sous}</small></span>${badge}${ICONES.chevron}</a></li>`;
     return `<section class="carte" aria-labelledby="t-dispo">${intro}<ul class="liens-moi">
       ${lien('#/indisponibilites', ICONES.indispo, 'Mes indisponibilités', 'Les jours où vous n’êtes pas libre')}
-      ${lien('#/agendas', ICONES.relier, 'Mes agendas', 'Relier mon agenda · mes dates Crescite dans mon agenda')}
+      ${lien('#/agendas', ICONES.relier, 'Mes agendas', 'Relier mon agenda · mes dates de la compagnie dans mon agenda')}
       ${lien('#/propositions', ICONES.question, 'Propositions de dates', n ? `${pluriel(n, 'proposition', 'propositions')} à répondre` : 'Celles de l’administration', n ? `<span class="pastille-nb" data-n="${n}" aria-hidden="true">${n}</span>` : '')}
     </ul></section>`;
   }
@@ -2929,13 +2936,13 @@
 
   // ================================================================================================ l'installation
   window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); E.installer = e; majInstallation(); });
-  window.addEventListener('appinstalled', () => { E.installer = null; majInstallation(); annoncer('L’application est installée : retrouvez Crescite sur votre écran d’accueil.'); });
+  window.addEventListener('appinstalled', () => { E.installer = null; majInstallation(); annoncer('L’application est installée : retrouvez les Crescite sur votre écran d’accueil.'); });
   function zoneInstallation(ou) {
     if (installee()) return ou === 'moi' ? '<p class="aide">L’application est installée sur cet appareil.</p>' : '';
     if (ou === 'accueil' && PREF.installFermee) return '';
     const fermer = ou === 'accueil' ? `<button type="button" class="bouton-rond fermer-install" data-fermer-install>${ICONES.croix}<span class="sr">Ne plus proposer l’installation</span></button>` : '';
     if (E.installer) return `<section class="carte-action installation" aria-labelledby="t-inst-${ou}"><span class="ic-rond" aria-hidden="true">${ICONES.installer}</span>
-      <div class="ca-texte"><h2 id="t-inst-${ou}">L’application Crescite</h2><p class="aide">Sur votre écran d’accueil : elle s’ouvre en un geste, même sans réseau.</p></div>
+      <div class="ca-texte"><h2 id="t-inst-${ou}">L’application des Crescite</h2><p class="aide">Sur votre écran d’accueil : elle s’ouvre en un geste, même sans réseau.</p></div>
       <button type="button" class="btn principal petit" data-installer>Installer</button>${fermer}</section>`;
     if (IOS) return `<section class="carte-action installation" aria-labelledby="t-inst-${ou}"><span class="ic-rond" aria-hidden="true">${ICONES.installer}</span>
       <div class="ca-texte"><h2 id="t-inst-${ou}">L’application sur votre iPhone</h2><p class="aide">Elle s’ouvre en un geste, même sans réseau, et reçoit les notifications.</p>
@@ -3955,7 +3962,7 @@
   function calendrier(id = null) {
     const page = retourUrl(), maintenant = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
     const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Compagnie Crescite//Espace de l equipe//FR', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
-      `X-WR-CALNAME:${texteIcs('Crescite · ma tournée')}`, 'X-WR-TIMEZONE:Europe/Paris', ...FUSEAU];
+      `X-WR-CALNAME:${texteIcs('Compagnie Crescite · ma tournée')}`, 'X-WR-TIMEZONE:Europe/Paris', ...FUSEAU];
     for (const { d, r, n } of evenementsAVenir(id)) {
       const sp = d.spectacle || {}, l = d.lieu, option = d.statut === 'option', nat = natureDe(d), duree = dureeMinutes(sp.duree) || 90;
       const ou = l ? [l.nom, l.adresse, `${l.commune}${l.departement ? ` (${l.departement})` : ''}`].filter(Boolean).join(', ') : (d.intitule || '');

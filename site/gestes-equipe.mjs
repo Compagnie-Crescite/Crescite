@@ -1,7 +1,7 @@
 // Les gestes de l'espace de l'équipe (equipe/equipe.js avec ../admin/gestes.js), vérifiés dans Chromium, hors ligne :
 // l'appui long sur un billet (une feuille d'actions depuis le bas), la date d'avant et d'après (les boutons, le balayage
 // au doigt, ← → au clavier), le clic droit sur une notification.
-//   python3 maquettes/build.py synthese && node maquettes/gestes-equipe.mjs
+//   python3 site/build.py && node site/gestes-equipe.mjs
 // Même saison fictive que mouvement-equipe.mjs (aucune donnée réelle, la base coupée). Demande Playwright et Chromium.
 import http from 'node:http';
 import fs from 'node:fs';
@@ -12,7 +12,7 @@ const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || '/opt/node22/
 const ICI = path.dirname(fileURLToPath(import.meta.url));
 const DIST = path.join(ICI, 'dist');
 const CAPT = path.join(DIST, 'shots-gestes');
-if (!fs.existsSync(path.join(DIST, 'equipe', 'index.html'))) { console.error('maquettes/dist/equipe manque : python3 maquettes/build.py synthese d’abord'); process.exit(2); }
+if (!fs.existsSync(path.join(DIST, 'equipe', 'index.html'))) { console.error('site/dist/equipe manque : python3 site/build.py d’abord'); process.exit(2); }
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.css': 'text/css', '.svg': 'image/svg+xml' };
 const serveur = http.createServer((req, res) => {
   const p = path.join(DIST, decodeURIComponent(new URL(req.url, 'http://x').pathname));

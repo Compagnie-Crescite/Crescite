@@ -1,6 +1,6 @@
 # Audit scrollytelling de la synthèse, et la branche de prévisualisation
 
-Octobre 2026. Périmètre : `maquettes/src/synthese.html` (la proposition retenue, publiée dans `docs/synthese.html`), telle
+Octobre 2026. Périmètre : `site/src/index.html` (la proposition retenue, publiée dans `docs/index.html`), telle
 qu'elle est après la fusion des pages composées (l'univers de la 07, le sommaire de la 08, les saisons de la 07 et de la
 04, l'espace pro de la 05, la troupe de la 06). Méthode : lecture du code (la signature de mouvement, les outils communs
 `mouvement.js`, `frise.js`, `tentacules.js`, `intro.js`, `cadrage.js`), captures au bureau (1440 × 900) et au téléphone
@@ -85,7 +85,7 @@ réactivité, `prefers-reduced-motion`, 360 px) et le vérificateur : l'état de
 
 ## 4. Ce que la branche de prévisualisation implémente
 
-Tout est dans `maquettes/src/synthese.html` (aucun outil commun ni donnée touchés), dans le bloc « Mouvement », point 10,
+Tout est dans `site/src/index.html` (aucun outil commun ni donnée touchés), dans le bloc « Mouvement », point 10,
 et dans la section CSS « le scrollytelling ». Les règles :
 
 - **L'état de base est l'état final.** Sans mouvement (`prefers-reduced-motion`, `?anim=0`, `html.still`), tout est posé et
@@ -114,10 +114,10 @@ Ce qui change page par page :
 
 ## 5. Vérifications
 
-- `python3 maquettes/build.py synthese` puis `EDITION=1 REGLE17=1 REGLE18=1 REGLE19=1 REGLE20=1 node maquettes/onglets.mjs
+- `python3 site/build.py synthese` puis `EDITION=1 REGLE17=1 REGLE18=1 REGLE19=1 REGLE20=1 node site/onglets.mjs
   <sortie> synthese` : 19 vues, **aucune anomalie** (texte des sources, menu, frises, redirections, réservation, vidéos,
   nuit, troupe, 360 px).
-- `node maquettes/reactivite.mjs <sortie> synthese`, la base puis la branche, dans le même environnement (un conteneur
+- `node site/reactivite.mjs <sortie> synthese`, la base puis la branche, dans le même environnement (un conteneur
   partagé, plus lent que le poste de `GRAPHISME.md`, d'où des chiffres qui bougent d'une mesure à l'autre) :
   - bureau : INP max 88 → 80 ms (budget 100 ; « carte de spectacle », l'arrivée sur la page d'un spectacle : 80 → 80 ms),
     contenu max 96 → 102 ms (budget 150), CLS 0 ;

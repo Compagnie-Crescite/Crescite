@@ -1,10 +1,12 @@
 'use strict';
-/* L'habillage de l'administration : la même famille que le site (Ubuntu pour les titres, Open Sans pour le texte, Raleway
-   pour les étiquettes en capitales espacées ; le papier chaud, le magenta de la compagnie), un en-tête de nuit, des cartes
-   douces et colorées, des tuiles à icônes, des boutons en dégradé. Chargé en dernier : ses règles passent après celles
-   d'index.html et des modules (equipe.js, planning.js, disponibilites.js, tableau.js, gestes.js, menus.js), qui gardent
-   la structure et le comportement ; ici, rien que l'apparence, en clair comme en sombre, aux couleurs (--accent, --carte,
-   --trait, --doux…) que tout le monde lit. Les polices viennent de Google Fonts (index.html) ; sans elles, le système. */
+/* L'habillage de l'administration : la charte du site public (Ubuntu pour les titres, Open Sans pour le texte, Raleway
+   pour les étiquettes en capitales espacées ; ses neutres, sa nuit par défaut ; l'accent à la couleur de la saison, que
+   site/build.py pose dans index.html : --saison-*, jamais écrites ici), un en-tête de nuit, des cartes douces et
+   colorées, des tuiles à icônes, des boutons en dégradé. Chargé en dernier : ses règles passent après celles d'index.html
+   et des modules (equipe.js, planning.js, disponibilites.js, tableau.js, gestes.js, menus.js), qui gardent la structure
+   et le comportement ; ici, rien que l'apparence, la nuit (par défaut) comme le jour (data-theme="jour"), aux couleurs
+   (--accent, --carte, --trait, --doux…) que tout le monde lit. Les polices viennent de Google Fonts (index.html) ; sans
+   elles, le système. */
 (() => {
   document.head.insertAdjacentHTML('beforeend', `<style id="styles-habillage">
 /* ===================================================================================================== les couleurs */
@@ -12,30 +14,32 @@
   --police: "Open Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --titres: "Ubuntu", "Open Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --etiq: "Raleway", "Open Sans", system-ui, sans-serif;
-  --fond: #f5efe8; --carte: #fffdf9; --encre: #26191f; --gris: #6e6068; --trait: #e8ddd9; --doux: #f7f0ef;
-  --accent: #bc3e80; --accent-fonce: #9a2d68; --accent-doux: #fae4ee;
+  --fond: #f6f2eb; --carte: #fffdf9; --encre: #1d1418; --gris: #5f565a; --trait: #dcd3c6; --doux: #ece5da;
+  --accent: var(--saison-texte); --accent-fonce: var(--saison-fonce); --accent-doux: var(--saison-doux);
   --prune: #6b2c64; --prune-doux: #f2e4f0; --corail: #d8573a; --corail-doux: #fbe7e1; --ambre: #c4861b; --ambre-doux: #fbf0d8;
   --sauge: #3a8a68; --sauge-doux: #e2f2ea; --indigo: #4456b2; --indigo-doux: #e6e9f8; --ciel: #2b7db5; --ciel-doux: #e1effa;
   --ok: #2b7f56; --ok-doux: #e1f3e8; --alerte: #b73226; --alerte-doux: #fbe6e3; --option: #8a6413; --option-doux: #f9efd6;
   --ombre: 0 1px 2px rgba(70, 30, 55, .05), 0 12px 32px -14px rgba(70, 30, 55, .22);
   --rayon: 16px;
-  --barre-fond: linear-gradient(90deg, #2b1527 0%, #3d1c3a 55%, #4b2147 100%);
-  --principal: linear-gradient(135deg, #bc3e80 0%, #6b2c64 120%);
-  --pieuvre: #f08cc4;
+  /* l'en-tête, de nuit dans les deux thèmes : le papier de la nuit, qui prend vers la droite un peu de la couleur de la
+     saison ; les boutons pleins, de la couleur de la saison vers sa nuit (le blanc s'y lit, 4,5:1 au moins) ; la pieuvre de
+     l'en-tête, à la couleur lisible sur la nuit */
+  --barre-fond: linear-gradient(90deg, #150d12 0%, #1b1117 45%, color-mix(in srgb, var(--saison) 34%, #1b1117) 100%);
+  --principal: linear-gradient(135deg, var(--saison) 0%, var(--saison-profond) 120%);
+  --pieuvre: var(--saison-texte-nuit);
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --fond: #160f17; --carte: #221923; --encre: #f4edf2; --gris: #b6aab4; --trait: #3a2f3d; --doux: #2b2230;
-    --accent: #e67ab2; --accent-fonce: #f39bcb; --accent-doux: #3b2134;
-    --prune: #cf9bcb; --prune-doux: #33253a; --corail: #f28a6c; --corail-doux: #3d2621; --ambre: #e9b55c; --ambre-doux: #3a2d17;
-    --sauge: #82d1aa; --sauge-doux: #1d3329; --indigo: #9cabf0; --indigo-doux: #232a44; --ciel: #7fc2ec; --ciel-doux: #1d2f3e;
-    --ok: #6fd3a0; --ok-doux: #1d3329; --alerte: #ff8a80; --alerte-doux: #3a1f1d; --option: #e9c46a; --option-doux: #352b17;
-    --ombre: 0 1px 2px rgba(0, 0, 0, .35), 0 12px 32px -14px rgba(0, 0, 0, .6);
-    --barre-fond: linear-gradient(90deg, #120a13 0%, #221224 60%, #2c1530 100%);
-    --pieuvre: #f29bcb;
-  }
+/* la nuit, par défaut (data-theme="nuit", ou rien) ; le jour seulement sous data-theme="jour" */
+:root:not([data-theme="jour"]) {
+  --fond: #1b1117; --carte: #2e2128; --encre: #f3eee9; --gris: #b7b0ae; --trait: #3b3036; --doux: #23171e;
+  --accent: var(--saison-texte-nuit); --accent-fonce: var(--saison-fonce-nuit); --accent-doux: var(--saison-doux-nuit);
+  --prune: #cf9bcb; --prune-doux: #33253a; --corail: #f28a6c; --corail-doux: #3d2621; --ambre: #e9b55c; --ambre-doux: #3a2d17;
+  --sauge: #82d1aa; --sauge-doux: #1d3329; --indigo: #9cabf0; --indigo-doux: #232a44; --ciel: #7fc2ec; --ciel-doux: #1d2f3e;
+  --ok: #6fd3a0; --ok-doux: #1d3329; --alerte: #ff8a80; --alerte-doux: #3a1f1d; --option: #e9c46a; --option-doux: #352b17;
+  --ombre: 0 1px 2px rgba(0, 0, 0, .35), 0 12px 32px -14px rgba(0, 0, 0, .6);
+  --barre-fond: linear-gradient(90deg, #120b0f 0%, #170e14 45%, color-mix(in srgb, var(--saison) 30%, #170e14) 100%);
+  --principal: linear-gradient(135deg, var(--saison-porteur) 0%, var(--saison-profond) 120%);
 }
-/* deux halos en haut de page (magenta à gauche, ambre à droite), une fois : sans répétition sous les pages courtes */
+/* deux halos en haut de page (la couleur de la saison à gauche, ambre à droite), une fois : sans répétition sous les pages courtes */
 html { min-height: 100%; }
 body { min-height: 100%; background: radial-gradient(1100px 540px at -5% -10%, color-mix(in srgb, var(--accent) 11%, transparent), transparent 60%), radial-gradient(900px 480px at 105% -5%, color-mix(in srgb, var(--ambre) 13%, transparent), transparent 55%), var(--fond); background-repeat: no-repeat; }
 
@@ -46,7 +50,7 @@ body { min-height: 100%; background: radial-gradient(1100px 540px at -5% -10%, c
 .marque .pieuvre { color: var(--pieuvre); }
 .nav a { color: rgba(255, 255, 255, .8); font-family: var(--etiq); font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: 8px 12px; transition: background .15s, color .15s; }
 .nav a:hover { background: rgba(255, 255, 255, .12); color: #fff; }
-.nav a[aria-current="page"] { color: #fff; box-shadow: 0 6px 16px -6px rgba(188, 62, 128, .8); }
+.nav a[aria-current="page"] { color: #fff; box-shadow: 0 6px 16px -6px color-mix(in srgb, var(--saison) 80%, transparent); }
 .qui { color: rgba(255, 255, 255, .72); }
 .qui a { color: #fff; }
 .barre .btn { background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .22); color: #fff; }
@@ -91,7 +95,7 @@ table.simple th, table.reps th { font-size: 11px; }
 /* ===================================================================================================== les boutons, les badges, les champs */
 .btn { border-radius: 10px; border-color: var(--trait); background: var(--carte); font-weight: 600; transition: transform .12s, box-shadow .12s, border-color .12s, background .12s, filter .12s; }
 .btn:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--trait)); background: color-mix(in srgb, var(--accent-doux) 55%, var(--carte)); }
-.btn.principal, .gf-btn.principal, .seg button[aria-pressed="true"], .nav a[aria-current="page"], .puce[aria-pressed="true"]:not([style*="--c"]) { background: var(--principal); border-color: transparent; color: #fff; }
+.btn.principal, .gf-btn.principal, .seg button[aria-pressed="true"], .seg a[aria-current="page"], .nav a[aria-current="page"], .puce[aria-pressed="true"]:not([style*="--c"]) { background: var(--principal); border-color: transparent; color: #fff; }
 .btn.principal { box-shadow: 0 8px 18px -10px color-mix(in srgb, var(--accent) 80%, transparent); }
 .btn.principal:hover, .gf-btn.principal:hover { background: var(--principal); filter: brightness(1.08); transform: translateY(-1px); color: #fff; }
 .btn.danger:hover { border-color: var(--alerte); background: var(--alerte-doux); color: var(--alerte); }
@@ -168,7 +172,7 @@ dialog.tb-brief { border-radius: var(--rayon); }
 .journal-ligne .quand { font-family: var(--etiq); font-weight: 600; font-size: 12px; }
 table.simple { border-radius: var(--rayon); }
 table.simple tr.cliquable:hover td { background: color-mix(in srgb, var(--accent-doux) 55%, var(--carte)); }
-.annonce { background: #2b1527; border-left: 4px solid var(--accent); border-radius: 12px; box-shadow: 0 16px 44px -12px rgba(30, 10, 30, .55); font-weight: 500; }
+.annonce { background: #23171e; border-left: 4px solid var(--saison-texte-nuit); border-radius: 12px; box-shadow: 0 16px 44px -12px rgba(30, 10, 30, .55); font-weight: 500; }
 .annonce.erreur { background: #7d1d16; border-left-color: #ffb4ab; }
 .annonce button { border-radius: 8px; }
 dialog.recherche, dialog.tab-dialogue, dialog.tb-brief { border-radius: var(--rayon); }
@@ -181,6 +185,10 @@ dialog.recherche, dialog.tab-dialogue, dialog.tb-brief { border-radius: var(--ra
 .avatar { background: linear-gradient(135deg, var(--accent-doux), var(--prune-doux)) center/cover no-repeat; color: var(--prune); font-family: var(--titres); box-shadow: 0 0 0 2px var(--carte), 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent); }
 .connexion form { border-top: 4px solid var(--accent); }
 .connexion h1 { font-size: 26px; }
+/* la marque sur la porte : la même que l'en-tête, sur la carte */
+.connexion .marque { display: flex; align-items: center; margin: 0 0 18px; color: var(--encre); }
+.connexion .marque small { color: var(--gris); }
+.connexion .marque .pieuvre { color: var(--accent); }
 @media (prefers-reduced-motion: reduce) { .ligne, .tb-l, .btn, .tb-tuile { transition: none; } .ligne:hover, .tb-l:hover, .btn.principal:hover { transform: none; } }
 </style>`);
 })();

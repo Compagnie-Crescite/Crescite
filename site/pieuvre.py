@@ -1,7 +1,7 @@
 """Les vraies tentacules du logo 2.0, prêtes à se déployer : écrit marque/crescite-logo-2.0-tentacules.json.
 
-    python3 maquettes/pieuvre.py            refait le fichier (il faut numpy, scipy, scikit-image, Pillow)
-    python3 maquettes/pieuvre.py --voir F   et une image de contrôle (la pieuvre, ses tentacules en couleur, leurs épines)
+    python3 site/pieuvre.py            refait le fichier (il faut numpy, scipy, scikit-image, Pillow)
+    python3 site/pieuvre.py --voir F   et une image de contrôle (la pieuvre, ses tentacules en couleur, leurs épines)
 
 La pieuvre du logo est faite de quatre contours (tentacles-left, head-left, head-right, tentacles-right). Seule la tête
 (l'arche et l'œil) est fixe : tout le reste est tentacule, douze en tout, huit qui vont chercher les spectacles, quatre
@@ -324,7 +324,7 @@ def main():
         print(f"{cle:12s} {h * (len(E) - 1):6.1f} unités, {len(peau):4d} points de peau, écart {ecart:.4f}, racine ({E[0][0]:.0f}, {E[0][1]:.0f})")
     out = {"_note": "Les tentacules du logo 2.0 : épine (de la racine à la pointe) et peau (s, t, d le long de l'épine), "
                     "coordonnées du dessin source ; attache : où la racine va sur la tête en se déployant ; parent : la "
-                    "tentacule suivie. Fait par maquettes/pieuvre.py.",
+                    "tentacule suivie. Fait par site/pieuvre.py.",
            "lisere": LISERE, "tete": TETE, "repos": REPOS, "bras": bras}
     SORTIE.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
     print(f"écrit {SORTIE.relative_to(ROOT)} ({SORTIE.stat().st_size // 1024} Ko)")

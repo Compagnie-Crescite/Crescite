@@ -10,7 +10,7 @@ compagnie, « Cloudflare Pages : Modifier ») et CLOUDFLARE_ACCOUNT_ID. Le proje
 CLOUDFLARE_PROJET. Les adresses ne sont écrites nulle part ici : elles viennent du projet lui-même.
 
 L'envoi passe par wrangler, à une version fixée (WRANGLER). Il se fait sur la branche de production du projet, lue dans
-le projet : sur une autre branche, ce ne serait qu'un aperçu. Les en-têtes (docs/_headers, écrit par maquettes/build.py)
+le projet : sur une autre branche, ce ne serait qu'un aperçu. Les en-têtes (docs/_headers, écrit par site/build.py)
 partent avec le site.
 """
 import hashlib
@@ -66,7 +66,7 @@ def main():
     if manque:
         sys.exit(f"Manque dans l'environnement : {', '.join(manque)} (réglages de l'environnement, jamais la conversation)")
     if not (DOCS / "index.html").exists() or not (DOCS / "_headers").exists():
-        sys.exit("docs/ n'est pas construit : python3 maquettes/build.py --pages")
+        sys.exit("docs/ n'est pas construit : python3 site/build.py --pages")
     compte = os.environ["CLOUDFLARE_ACCOUNT_ID"]
     projets = api(f"/accounts/{compte}/pages/projects")
     nom = os.environ.get("CLOUDFLARE_PROJET") or (projets[0]["name"] if len(projets) == 1 else None)

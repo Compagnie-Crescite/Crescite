@@ -1,10 +1,10 @@
 // Le niveau supérieur de l'administration (admin/index.html et ses modules : corbeille.js, tiroir.js, selection.js,
 // parcours.js, gardefous.js, series.js, modeles.js, notes.js, tournee.js, mobile.js), vérifié dans Chromium, hors ligne,
 // sur la base fictive commune (admin-fictif.mjs).
-//   node maquettes/niveau.mjs
+//   node site/niveau.mjs
 // Dix idées, chacune regardée : les fiches en tiroir, la sélection multiple, le parcours d'une date, annuler plutôt que
 // confirmer (et la corbeille), les garde-fous, la carte de tournée, les documents générés, les séries et modèles, le
-// téléphone, les notes internes. Les captures vont dans maquettes/dist/shots-niveau/. Sort en erreur si une vérification manque.
+// téléphone, les notes internes. Les captures vont dans site/dist/shots-niveau/. Sort en erreur si une vérification manque.
 import fs from 'node:fs';
 import path from 'node:path';
 import { chromium, ICI, URL0, plus, DB, MODIFS, ok, calme, ouvrir, texte, compte, tuile, bilan } from './admin-fictif.mjs';

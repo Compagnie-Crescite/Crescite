@@ -1,6 +1,6 @@
 // Vérifie qu'une maquette se lit par son menu (les saisons, les spectacles, la compagnie, l'espace pro), s'ouvre sur le logo,
 // et n'affiche que le texte de ses sources.
-// Usage : node maquettes/onglets.mjs <dossier de sortie> m03 [m04 …]
+// Usage : node site/onglets.mjs <dossier de sortie> m03 [m04 …]
 // Les visites (une maquette au bureau, une au téléphone), en parties, vont en parallèle, PARALLELE à la fois (4 par défaut).
 // Règle 21 (v4, la navigation par les saisons) : sur chaque vue, au bureau comme au téléphone, les quatre éléments du menu
 // (D.site.menu) sont à portée dans le premier écran, hors du contenu et sans ouvrir de menu ; un seul aria-current="page" (sur
@@ -14,7 +14,7 @@
 // pages de l'espace pro (#/espace-pro/programmer reprend les contrôles de la règle 13). Les anciennes adresses redirigées.
 // Règle 15 : des frises chronologiques (FRISE, .frise[data-frise]) là où il y a un calendrier, aucune tentacule après un
 // clic ordinaire sur un lien du menu (TENTACULES.actives() === 0, sauf un lien déclaré data-moment) ; REACTIVITE=1 ajoute
-// les budgets de maquettes/reactivite.mjs (bureau et téléphone ralenti ×4). Le texte se lit même hors de l'écran
+// les budgets de site/reactivite.mjs (bureau et téléphone ralenti ×4). Le texte se lit même hors de l'écran
 // (content-visibility : auto est forcé à visible, et ce qui apparaît au défilement à son état final, le temps de la lecture).
 // Règle 16 : l'espace pro (#/espace-pro, une page et non plus une redirection) : son h1, ses trois portes et leurs vrais
 // liens vers equipe/, pro/ et admin/ (dans le même onglet), le lien « Espace pro » dans le menu et le pied de page.
@@ -459,7 +459,7 @@ async function regle23(page, tag, log, n = '') {
   const saisons = Object.keys(info.parSaison).sort().reverse();
   const choisies = [...(saisons.includes(info.saison) ? [info.saison] : []), ...saisons.filter(k => k !== info.saison).slice(0, 2)];
   let vues = 0;
-  if (n === 'synthese') {
+  if (n === 'index') {
     // aucune dans les saisons
     for (const k of choisies) {
       await aller(k === info.saison ? '#/saisons' : `#/saisons/${k}`);
@@ -714,7 +714,7 @@ const visite = async (n, tag, vp, mobile, partie) => {
         PERMIS.forEach(p => parts.push(norm(p)));
         window.__corpus = parts.join(' | ');
         window.__norm = norm;
-        window.__sansResidences = document.title !== '' && /synthese\.html/.test(location.pathname);
+        window.__sansResidences = document.title !== '' && /(index\.html|\/)$/.test(location.pathname);
         // les précisions de dates qu'on ne lit que dans une saison (assez longues, absentes des autres saisons et des dates à
         // venir) : de quoi savoir si une saison est ouverte ou fermée sans la confondre avec une autre ; et les précisions des
         // dates passées d'un spectacle, toutes saisons (son bilan)
