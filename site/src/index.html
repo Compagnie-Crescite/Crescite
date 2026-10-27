@@ -1636,6 +1636,9 @@ html:has(.bf7.est-visible) { scroll-padding-bottom: calc(96px + var(--bas)); }
 .lc-lire::after { content: ""; position: absolute; inset: 40% 0 0; background: linear-gradient(transparent, rgba(0, 0, 0, .78)); pointer-events: none; }
 @media (hover: hover) { .lc-lire:hover .lc-affiche { scale: 1.02; filter: brightness(.45) saturate(.9); } }
 .lc-lire:focus-visible { outline: 3px solid var(--u-vif); outline-offset: -3px; }
+/* (chargé, le cadre est le lecteur au clavier, LECTEUR : son anneau de focus passe au-dessus de l'iframe) */
+.lc-cadre:focus-visible { outline: none; }
+.lc-cadre:focus-visible::after { content: ""; position: absolute; inset: 0; z-index: 2; border: 3px solid var(--u-vif); border-radius: inherit; pointer-events: none; }
 .lc-icone { z-index: 1; width: clamp(64px, 8vw, 96px); height: auto; aspect-ratio: 1; background: var(--u-accent); color: var(--u-sur-accent); box-shadow: 0 0 0 10px color-mix(in srgb, var(--u-accent) 30%, transparent); transition: scale var(--k-survol) var(--k-souple); }
 @media (hover: hover) { .lc-lire:hover .lc-icone { scale: 1.06; } }
 .lc-titre { z-index: 1; left: clamp(16px, 3vw, 32px); bottom: clamp(14px, 2.4vw, 26px); font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: clamp(1.15rem, 1rem + 1vw, 1.9rem); line-height: 1.15; text-shadow: 0 2px 18px rgba(0, 0, 0, .7); }

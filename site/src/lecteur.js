@@ -6,6 +6,12 @@
    « assombrir » (la page s'éteint autour de la vidéo, qui reste lumineuse ; Échap, un geste hors de la vidéo ou
    « rallumer » la rallument ; le focus reste dans la vidéo tant que la page est éteinte). Une seule vidéo joue à la fois ;
    changer de page (hashchange) arrête tout et rallume. build.py l'ajoute après reserver.js. Aucune dépendance.
+   Le clavier, quand le lecteur a le focus (son affiche ; chargé, son cadre, qui prend le focus au lieu de l'iframe : Tab
+   mène ensuite aux commandes du fournisseur) : Espace ou K lit et met en pause, F met le cadre en plein écran (et l'en
+   sort), M coupe ou rend le son, Échap rallume la page éteinte. La pause et le son passent par l'API de messages du
+   lecteur (YouTube : enablejsapi ; Vimeo : play, pause, setMuted) ; ce qu'il refuse ne fait rien. Ces touches sont dites
+   dans la bulle (title, D.site.libelles.raccourcisVideo) et dans aria-keyshortcuts ; ailleurs (les boutons sous la
+   vidéo), Espace garde son sens.
 
    LECTEUR.source(url)        { fournisseur: 'youtube'|'vimeo', id, embed } : l'adresse du lecteur (lecture automatique,
                               youtube-nocookie ou dnt=1) ; null si l'adresse n'est pas une vidéo YouTube ou Vimeo
@@ -50,7 +56,9 @@ const LECTEUR = (() => {
   function source(url) {
     const u = String(url || '').trim();
     let m = u.match(/^https?:\/\/(?:www\.|m\.)?(?:youtube(?:-nocookie)?\.com\/(?:embed\/|shorts\/|live\/|watch\?(?:[^#]*&)?v=)|youtu\.be\/)([\w-]{6,})/i);
-    if (m) return { fournisseur: 'youtube', id: m[1], embed: `https://www.youtube-nocookie.com/embed/${m[1]}?autoplay=1&rel=0&playsinline=1` };
+    // (enablejsapi : le lecteur écoute les messages de la page, pour la pause et le son au clavier ; origin, quand la page en a une)
+    const ori = (() => { try { return /^https?:$/.test(location.protocol) ? `&origin=${encodeURIComponent(location.origin)}` : ''; } catch (e) { return ''; } })();
+    if (m) return { fournisseur: 'youtube', id: m[1], embed: `https://www.youtube-nocookie.com/embed/${m[1]}?autoplay=1&rel=0&playsinline=1&enablejsapi=1${ori}` };
     m = u.match(/^https?:\/\/(?:player\.)?vimeo\.com\/(?:video\/)?(\d+)(?:\/([0-9a-f]{6,}))?/i);
     if (m) {
       let h = m[2] || null;
@@ -68,12 +76,14 @@ const LECTEUR = (() => {
   const LUNE = '<svg class="lc-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M19.5 14.5A8 8 0 0 1 9.5 4.5a8 8 0 1 0 10 10z"/></svg>';
   const SOLEIL = '<svg class="lc-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg>';
   const CROIX = '<svg class="lc-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  const TOUCHES = 'Space K F M Escape';
+  const aide = () => (L().raccourcisVideo ? ` title="${esc(L().raccourcisVideo)}"` : '');
   function html(video, o = {}) {
     const Lb = L(), src = video && source(video.url);
     if (!src) return '';
     const titre = String(video.titre || '');
     return `<figure class="lc${o.classe ? ' ' + o.classe : ''}" data-lecteur${o.id ? ` id="${esc(o.id)}"` : ''}${o.style ? ` style="${esc(o.style)}"` : ''}>`
-      + `<div class="lc-cadre"><button type="button" class="lc-lire" data-lecteur-lire data-url="${esc(video.url)}" aria-label="${esc(titre ? `${Lb.lire || ''} : ${titre}` : Lb.lire || '')}">`
+      + `<div class="lc-cadre"><button type="button" class="lc-lire" data-lecteur-lire data-url="${esc(video.url)}" aria-label="${esc(titre ? `${Lb.lire || ''} : ${titre}` : Lb.lire || '')}" aria-keyshortcuts="${TOUCHES}"${aide()}>`
       + `${o.affiche ? `<img class="lc-affiche" src="${esc(o.affiche)}" alt="" width="1600" height="900" loading="lazy" decoding="async">` : ''}`
       + `<span class="lc-icone" aria-hidden="true">${LIRE}</span></button>`
       // le titre, écrit sur l'affiche (hors du bouton, qui le dit déjà : on peut le modifier sur place, règle 11)
@@ -88,7 +98,7 @@ const LECTEUR = (() => {
     if (!fig) return null;
     figures().forEach(f => { if (f !== fig && f.classList.contains('lc-joue')) arreter(f); });   // une seule à la fois
     let ifr = fig.querySelector('iframe.lc-if');
-    if (ifr) { if (focus) ifr.focus(); return ifr; }
+    if (ifr) { if (focus) (fig.querySelector('.lc-cadre') || ifr).focus(); return ifr; }
     const b = fig.querySelector('[data-lecteur-lire]'), src = source(b && b.getAttribute('data-url')), cadre = fig.querySelector('.lc-cadre');
     if (!src || !cadre) return null;
     ifr = document.createElement('iframe');
@@ -101,8 +111,13 @@ const LECTEUR = (() => {
     cadre.appendChild(ifr);
     fig.classList.add('lc-joue');
     b.tabIndex = -1; b.setAttribute('aria-hidden', 'true');
+    // (le cadre devient le lecteur au clavier : il prend le focus, porte le titre et les touches ; l'iframe suit, par Tab)
+    cadre.tabIndex = 0; cadre.setAttribute('role', 'group'); cadre.setAttribute('aria-label', ifr.title); cadre.setAttribute('aria-keyshortcuts', TOUCHES);
+    if (L().raccourcisVideo) cadre.title = L().raccourcisVideo;
+    etats.set(fig, { joue: true, muet: false });
+    ifr.addEventListener('load', () => ecouter(ifr, src), { once: true });
     (reglages.effet.arrivee || arriveeDefaut)(fig, ifr);
-    if (focus) ifr.focus();
+    if (focus) cadre.focus();
     return ifr;
   }
   function arriveeDefaut(fig, ifr) {
@@ -118,8 +133,60 @@ const LECTEUR = (() => {
       const i = f.querySelector('iframe.lc-if'); if (i) i.remove();
       f.classList.remove('lc-joue');
       const b = f.querySelector('[data-lecteur-lire]'); if (b) { b.removeAttribute('tabindex'); b.removeAttribute('aria-hidden'); }
+      const c = f.querySelector('.lc-cadre');
+      if (c) { const dedans = c.contains(document.activeElement); ['tabindex', 'role', 'aria-label', 'aria-keyshortcuts', 'title'].forEach(a => c.removeAttribute(a)); if (dedans && b) b.focus({ preventScroll: true }); }
+      etats.delete(f);
     });
   }
+
+  /* ---------------------------------------------------------------------------------------------- le clavier */
+  // l'état du lecteur (en lecture, muet), tenu par la page et recalé sur ce que le lecteur annonce
+  const etats = new WeakMap();
+  const ORIGINES = { youtube: 'https://www.youtube-nocookie.com', vimeo: 'https://player.vimeo.com' };
+  const envoyer = (ifr, src, msg) => { try { ifr.contentWindow.postMessage(src.fournisseur === 'youtube' ? JSON.stringify(msg) : msg, ORIGINES[src.fournisseur]); } catch (e) { /* refusé : rien */ } };
+  // (le lecteur chargé : on lui demande de dire ce qu'il fait)
+  function ecouter(ifr, src) {
+    if (src.fournisseur === 'youtube') envoyer(ifr, src, { event: 'listening', id: 'lc', channel: 'widget' });
+    else ['play', 'pause', 'ended', 'volumechange'].forEach(v => envoyer(ifr, src, { method: 'addEventListener', value: v }));
+  }
+  addEventListener('message', ev => {
+    if (ev.origin !== ORIGINES.youtube && ev.origin !== ORIGINES.vimeo) return;
+    const fig = figures().find(f => { const i = f.querySelector('iframe.lc-if'); return i && i.contentWindow === ev.source; }), e = fig && etats.get(fig);
+    if (!e) return;
+    let d = ev.data;
+    if (typeof d === 'string') { try { d = JSON.parse(d); } catch (x) { return; } }
+    if (!d || typeof d !== 'object') return;
+    // (des données, rien d'autre : un état de lecture, un booléen)
+    const info = d.event === 'infoDelivery' && d.info && typeof d.info === 'object' ? d.info : d.event === 'onStateChange' ? { playerState: d.info } : null;
+    if (info) { if (typeof info.playerState === 'number') e.joue = info.playerState === 1 || info.playerState === 3; if (typeof info.muted === 'boolean') e.muet = info.muted; return; }
+    if (d.event === 'play') e.joue = true;
+    else if (d.event === 'pause' || d.event === 'ended') e.joue = false;
+    else if (d.event === 'volumechange' && d.data && typeof d.data.volume === 'number') e.muet = d.data.volume === 0;
+  });
+  function commander(fig, quoi) {
+    const ifr = fig.querySelector('iframe.lc-if'), b = fig.querySelector('[data-lecteur-lire]'), src = source(b && b.getAttribute('data-url')), e = etats.get(fig);
+    if (!ifr || !src || !e) return false;
+    const yt = src.fournisseur === 'youtube';
+    if (quoi === 'lecture') { e.joue = !e.joue; envoyer(ifr, src, yt ? { event: 'command', func: e.joue ? 'playVideo' : 'pauseVideo', args: [] } : { method: e.joue ? 'play' : 'pause' }); }
+    else { e.muet = !e.muet; envoyer(ifr, src, yt ? { event: 'command', func: e.muet ? 'mute' : 'unMute', args: [] } : { method: 'setMuted', value: e.muet }); }
+    return true;
+  }
+  const enPlein = () => document.fullscreenElement || document.webkitFullscreenElement || null;
+  document.addEventListener('keydown', e => {
+    if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.isComposing) return;
+    const t = e.target, fig = t && t.closest && t.closest('[data-lecteur]');
+    // (le lecteur seul, son affiche ou son cadre : les boutons sous la vidéo gardent leurs touches)
+    if (!fig || !t.matches('.lc-cadre, [data-lecteur-lire]') || t.closest('[contenteditable="true"]')) return;
+    const k = e.key === ' ' || e.key === 'Spacebar' ? ' ' : e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    if (k === ' ' || k === 'k') { e.preventDefault(); if (!fig.classList.contains('lc-joue')) lire(fig); else commander(fig, 'lecture'); }
+    else if (k === 'f') {
+      if (!pleinPossible()) return;
+      e.preventDefault();
+      const c = fig.querySelector('.lc-cadre');
+      if (enPlein() === c) { const x = document.exitFullscreen || document.webkitExitFullscreen; try { const p = x && x.call(document); if (p && p.catch) p.catch(() => {}); } catch (z) { /* rien */ } }
+      else pleinEcran(fig);
+    } else if (k === 'm') { if (commander(fig, 'son')) e.preventDefault(); }
+  });
   const actif = () => !!document.querySelector('.lc.lc-joue');
 
   /* ---------------------------------------------------------------------------------------------- plein écran */
