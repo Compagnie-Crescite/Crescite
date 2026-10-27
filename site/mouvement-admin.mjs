@@ -77,9 +77,12 @@ async function ouvrir(navigateur, { reduit = false, hash = '#/representations', 
   await page.addInitScript(INIT);
   await page.goto(`${URL0}${hash}`);
   const squelette = await page.waitForSelector('.ad-squelette', { timeout: 4000 }).then(() => true).catch(() => false);
+  // la forme du squelette : l'en-tête (inerte) et sa hauteur, le titre, la liste et la fiche d'une rubrique à liste
+  const forme = squelette ? await page.evaluate(() => { const b = document.querySelector('.barre'), t = document.querySelector('.ad-squelette .sq-titre');
+    return { attente: !!b && b.classList.contains('attente') && b.inert, hBarre: b ? Math.round(b.getBoundingClientRect().height) : 0, titre: t ? Math.round(t.getBoundingClientRect().top) : 0, liste: !!document.querySelector('.ad-squelette .sq-deux .sq-ligne'), fiche: !!document.querySelector('.ad-squelette .sq-fiche') }; }) : null;
   await page.waitForSelector('#vue', { timeout: 20000 });
   await page.evaluate(() => { window.__pret = performance.now(); });
-  return { ctx, page, erreurs, squelette };
+  return { ctx, page, erreurs, squelette, forme };
 }
 
 const navigateur = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined });
@@ -87,9 +90,11 @@ fs.mkdirSync(CAPT, { recursive: true });
 
 // ================================================================================ à l'ordinateur, mouvement permis
 {
-  const { ctx, page, erreurs, squelette } = await ouvrir(navigateur);
+  const { ctx, page, erreurs, squelette, forme } = await ouvrir(navigateur);
   await page.waitForTimeout(300);
   ok('le chargement montre un squelette qui luit, puis le contenu paraît', squelette && await page.evaluate(() => document.querySelector('#vue').classList.contains('fondu')));
+  const vraie = await page.evaluate(() => ({ hBarre: Math.round(document.querySelector('.barre').getBoundingClientRect().height), titre: Math.round(document.querySelector('#vue h1').getBoundingClientRect().top) }));
+  ok('le squelette a la forme de la vue : l’en-tête tel qu’il sera (inerte, à la même hauteur), le titre à sa place (à 6 px près), la liste et la fiche', !!forme && forme.attente && forme.hBarre === vraie.hBarre && Math.abs(forme.titre - vraie.titre) <= 6 && forme.liste && forme.fiche, JSON.stringify({ forme, vraie }));
   ok('les listes arrivent : main.entree au premier rendu, les lignes animées', await page.evaluate(() => { const m = document.querySelector('#vue'), l = document.querySelector('#l-dates .ligne'); return m.classList.contains('entree') && !!l && getComputedStyle(l).animationName === 'ad-arrive'; }));
   await page.waitForTimeout(1000);
   ok('… puis main.entree se retire (les rafraîchissements ne rejouent rien)', await page.evaluate(() => !document.querySelector('#vue').classList.contains('entree')));

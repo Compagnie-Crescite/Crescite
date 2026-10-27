@@ -5,7 +5,9 @@
 //   POST { jeton, document_id }     → { url } : le lien du document (une captation en ligne), ou un lien de téléchargement
 //                                     d'une heure pour un fichier du stockage privé « crescite-pro » ; 404 sinon.
 //                                     L'ouverture est notée au journal (l'administration voit qui a ouvert quoi).
-// Le jeton est la seule clé : il est dans le lien envoyé à la salle (…/pro/#<jeton>), jamais dans une adresse de requête.
+// Le jeton est la clé du lien envoyé à la salle (…/pro/#<jeton>), jamais dans une adresse de requête. Avec le
+// dix-neuvième script, chaque invitation a aussi un code court (dix caractères, « K7QM4-TZPXW ») que la salle tape dans
+// « Code d'accès » : il passe par le même champ « jeton », et la base reconnaît l'un ou l'autre (crescite_pro_acces).
 //
 // Déploiement, une fois : Supabase → Edge Functions → Deploy a new function → Via Editor, nom « crescite-pro », coller ce
 // fichier, Deploy, puis dans les réglages de la fonction décocher « Verify JWT » : la page pro/ s'annonce avec la clé
@@ -42,7 +44,8 @@ Deno.serve(async (req) => {
   let corps: { jeton?: string; document_id?: number };
   try { corps = await req.json(); } catch { return json({ erreur: 'requête' }, 400); }
   const jeton = String(corps.jeton || '');
-  if (jeton.length < 32 || jeton.length > 128) return json({ erreur: 'acces' }, 404);
+  // un code (dix caractères, avec ses tirets ou des espaces) ou un jeton (32 à 128) ; rien d'autre ne va jusqu'à la base
+  if (jeton.length < 10 || jeton.length > 128) return json({ erreur: 'acces' }, 404);
   try {
     if (corps.document_id == null) {
       const [{ r }] = await sql`select public.crescite_pro_ouvrir(${jeton}) as r`;

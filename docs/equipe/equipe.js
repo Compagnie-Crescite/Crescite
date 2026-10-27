@@ -255,6 +255,8 @@
     doc: ic('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>'),
     lien: ic('<path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/>'),
     pdf: ic('<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5"/><path d="M5 19.5h14"/>'),
+    garde: ic('<path d="M7 18.5h10.5a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.6 9.6 4.5 4.5 0 0 0 7 18.5z"/><path d="m9.4 13.9 2 2 3.7-3.8"/>'),
+    reseau: ic('<path d="M7 18.5h10.5M20.6 15.3a4 4 0 0 0-2.5-4.75 6 6 0 0 0-8.4-4.1M6.6 9.6A4.5 4.5 0 0 0 7 18.5"/><path d="m3.5 3.5 17 17"/>'),
     lire: ic('<path d="M4 5.5h6a2 2 0 0 1 2 2V20a1.5 1.5 0 0 0-1.5-1.5H4zM20 5.5h-6a2 2 0 0 0-2 2V20a1.5 1.5 0 0 1 1.5-1.5H20z"/>'),
     feuille: ic('<path d="M9 4.5 3.5 6.5v13l5.5-2 6 2 5.5-2v-13l-5.5 2z"/><path d="M9 4.5v13M15 6.5v13"/>'),
     dossier: ic('<path d="M3.5 7.5a2 2 0 0 1 2-2h3.8l2 2.2h7.2a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/>'),
@@ -322,10 +324,13 @@
     const texte = estReseau(e) ? `${quoi.enLigne} : vérifiez votre connexion, puis réessayez.` : `${quoi.erreur} : ${motsErreur(e) || 'réessayez dans un instant'}.`;
     return `<div class="message erreur echec-lecture" role="alert"><p>${esc(texte)}</p><button type="button" class="btn" data-relire>${ICONES.actualiser}Réessayer</button></div>`;
   }
+  // une lecture en cours dans une vue : la forme de ce qui vient (des cartes, des lignes, la page d'une feuille) qui luit ;
+  // ce qu'on attend (« Lecture de vos indisponibilités… ») reste dit aux lecteurs d'écran, et c'est elle que l'échec remplace
+  const enLecture = (texte, { n = 3, h = 88 } = {}) => `<div class="chargement en-lecture" role="status"><span class="sr">${esc(texte)}</span><div class="squelettes pile" aria-hidden="true">${`<div class="squelette" style="height:${h}px"></div>`.repeat(n)}</div></div>`;
   // la lecture en attente d'une zone (son « Lecture… ») cède la place à l'échec, si la vue est toujours là
   function poserEchec(zone, quoi, e, vue) {
     if (vue && E.vue !== vue) return;
-    const z = typeof zone === 'string' ? $(zone) : zone, attente = z && (z.matches('p.chargement') ? z : $('p.chargement', z));
+    const z = typeof zone === 'string' ? $(zone) : zone, attente = z && (z.matches('.chargement') ? z : $('.chargement', z));
     if (attente) attente.outerHTML = echecLecture(quoi, e);
   }
   const LECTURES = {
@@ -624,6 +629,7 @@
       if (m) {
         if (!(E.pret && E.uid === g.user.id)) { reinitialiser(); appliquer(m); Object.assign(E, { uid: g.user.id, pret: true }); coquille(); router({ arrivee: true }); }
         Object.assign(E, { horsLigne: E.horsLigne || m.quand || 1, sansSession: true, provisoire: false });
+        sonderPdf();
         return bandeauEtat();
       }
       reinitialiser(); return ecranConnexion();
@@ -657,7 +663,8 @@
     Object.assign(E, { ouverture: false, pret: true, provisoire: false, sansSession: false });
     if (garde) await redessiner(); else { coquille(); router({ arrivee: true }); }
     majCoquille();
-    if (!E.horsLigne) ecouter();
+    sonderPdf();
+    if (!E.horsLigne) { ecouter(); setTimeout(() => garderOutilsPdf().catch(() => {}), 4000); }
     if (E.aMarquer != null) { const id = E.aMarquer; E.aMarquer = null; marquerLue(id); }
     if (E.versEspace) { E.versEspace = false; requestAnimationFrame(() => tt('page', couleurRoute(location.hash))); }
   }
@@ -704,17 +711,29 @@
   // téléphone »), une seule voie, pas deux. Les fichiers d'un spectacle, eux, n'ont que la boîte de l'équipe : elle sert à tous
   const modifierDateEnEquipe = () => avecModifier() && !E.admin;
 
-  // en attendant la base : l'application, et la forme de ce qui arrive
+  // en attendant la base : l'application, et la forme de ce qui arrive, vue par vue, dans la même largeur que la vue
+  // (main.large pour la saison et le planning) : la saison, son héros, puis à côté (à l'ordinateur) ou dessous (au
+  // téléphone, dans l'ordre de la page) ses chiffres et sa carte ; le planning, ses boutons et sa grille ; une date, une
+  // feuille, un spectacle, leur affiche puis leurs blocs ; ailleurs, le titre et des cartes. Le contenu prend sa place
+  // sans pousser la page, ni changer sa largeur.
   function squelette() {
     coquille();
     const r = lireRoute();
     majNav(r.redirige ? { onglet: 'saison', profondeur: 0 } : r);
+    if (!r.redirige) try { majBarre(r, ''); } catch (e) { /* (le retour d'une vue plus loin qu'un onglet : posé avec la vue) */ }
+    const k = r.redirige ? (r.redirige === '#/moi' ? 'moi' : 'saison') : r.k;
     const c = $('#contenu');
-    c.className = '';
-    c.innerHTML = `<p class="sr" role="status">Ouverture de votre espace…</p><div aria-hidden="true">
-      <div class="titre-vue"><div class="squelette ligne" style="width:52%;height:30px"></div><div class="squelette ligne" style="width:38%"></div></div>
-      <div class="squelette" style="height:360px;border-radius:26px"></div>
-      <div class="pile" style="margin-top:18px">${'<div class="squelette" style="height:118px"></div>'.repeat(3)}</div></div>`;
+    c.className = k === 'saison' || k === 'planning' ? 'large' : '';
+    const sq = (style, cls = '') => `<div class="squelette${cls ? ` ${cls}` : ''}" style="${style}"></div>`;
+    const titre = (l = 52) => `<div class="titre-vue">${sq(`width:${l}%;height:30px`, 'ligne')}${sq('width:38%', 'ligne')}</div>`;
+    const cartes = n => `<div class="pile">${sq('height:118px').repeat(n)}</div>`;
+    let corps;
+    if (k === 'saison') corps = `${titre()}<div class="accueil"><div class="col-principale"><div class="o-heros">${sq('height:362px;border-radius:26px')}</div><div class="o-suite">${cartes(2)}</div></div>
+      <div class="col-cote"><div class="o-chiffres">${sq('width:46%', 'ligne')}<div class="sq-chiffres">${sq('height:97px').repeat(3)}</div></div><div class="o-carte">${sq('width:40%', 'ligne')}${sq('height:434px')}</div></div></div>`;
+    else if (k === 'planning') corps = `${titre(30)}<div class="sq-boutons">${sq('height:44px;width:200px;border-radius:999px')}${sq('height:44px;width:160px;border-radius:999px')}</div>${sq('height:420px')}`;
+    else if (k === 'date' || k === 'feuille' || k === 'spectacle' || k === 'proposition') corps = `${titre(60)}${sq('height:300px;border-radius:26px')}<div style="margin-top:16px">${cartes(2)}</div>`;
+    else corps = `${titre()}${cartes(4)}`;
+    c.innerHTML = `<p class="sr" role="status">Ouverture de votre espace…</p><div class="squelettes" aria-hidden="true">${corps}</div>`;
   }
 
   const NATURES = { representations: 'Représentations', repetitions: 'Répétitions', residence: 'Résidence', autre: 'Rendez-vous' };
@@ -837,7 +856,7 @@
   function coquille() {
     if ($('#app > .appli')) return false;
     const badge = k => k === 'notifications' || k === 'planning';
-    const onglet = (k, icone, court, long = court) => `<a class="nav-item" href="#/${k}" data-onglet="${k}"><span class="nav-icone">${icone}${badge(k) ? '<span class="pastille-nb" data-n="0" aria-hidden="true"></span>' : ''}</span><span class="nav-lib">${court === long ? esc(court) : `<span class="nav-lib-court">${esc(court)}</span><span class="nav-lib-long">${esc(long)}</span>`}</span>${badge(k) ? '<span class="sr nb-sr"></span>' : ''}</a>`;
+    const onglet = (k, icone, court, long = court) => `<a class="nav-item" href="#/${k}" data-onglet="${k}"><span class="nav-icone">${icone}${badge(k) ? '<span class="pastille-nb" data-n="0" aria-hidden="true"></span>' : ''}${k === 'planning' ? marqueReseau({ court: true }) : ''}</span><span class="nav-lib">${court === long ? esc(court) : `<span class="nav-lib-court">${esc(court)}</span><span class="nav-lib-long">${esc(long)}</span>`}</span>${badge(k) ? '<span class="sr nb-sr"></span>' : ''}</a>`;
     $('#app').innerHTML = `<div class="appli">
       <nav class="nav-appli" aria-label="Rubriques">
         <div class="nav-marque" aria-hidden="true"><span class="pieuvre" data-pieuvre></span><span class="nav-marque-texte"><span class="marque-nom">Compagnie Crescite</span><small>Équipe</small></span></div>
@@ -974,7 +993,7 @@
   function bandeauEtat() {
     const el = $('#bandeau-etat');
     if (!el) return;
-    const html = E.provisoire && !E.horsLigne ? '<p class="attente" role="status">Mise à jour en cours…</p>' : E.horsLigne ? `<p class="message horsligne" role="status"><span>Hors ligne : voici votre espace tel qu’il était ${esc(momentTexte(E.horsLigne))}. La fiche et les documents demandent le réseau${E.sansSession ? ' ; la connexion se renouvellera dès son retour' : ''}.</span>
+    const html = E.provisoire && !E.horsLigne ? '<p class="attente" role="status">Mise à jour en cours…</p>' : E.horsLigne ? `<p class="message horsligne" role="status"><span>Hors ligne : voici votre espace tel qu’il était ${esc(momentTexte(E.horsLigne))}. Le planning, la fiche et les documents demandent le réseau${E.sansSession ? ' ; la connexion se renouvellera dès son retour' : ''}.</span>
       <button type="button" class="lien-btn" data-reessayer>Réessayer</button></p>` : '';
     majTemoin();
     if (el.dataset.h === html) return;                     // le bandeau ne se redessine (et n'entre) que s'il change
@@ -1004,9 +1023,50 @@
     if (lu && Date.now() - lu < 120000) return { k: 'ajour', mot: 'À jour', detail: '', long: `À jour : lu à ${heureCourte(lu)}.` };
     return { k: 'lu', mot: lu ? `Lu ${depuisTexte(lu)}` : 'Actualiser', detail: '', long: lu ? `Lu à ${heureCourte(lu)}.` : '' };
   }
+  // ---- ce qui se lit hors ligne. La mémoire (garder) tient la saison, ses dates, les feuilles de route publiées des dates à
+  // venir (et celles déjà lues), les spectacles et les notifications : ce qui en vient porte « Disponible hors ligne »
+  // (marqueGarde), en ligne comme sans réseau, pour qu'on le sache avant de partir. Ce qui demande le réseau (le planning,
+  // les documents, l'itinéraire ; le PDF tant que son outil n'est pas gardé sur l'appareil) porte « Réseau nécessaire »
+  // (marqueReseau) : posé d'avance dans la page, la feuille de style ne le montre que hors ligne (html[data-reseau="non"],
+  // tenu par majTemoin), avant qu'on l'ouvre ; touché hors ligne, il le redit (reseauNecessaire) au lieu d'échouer.
+  // Court : l'icône seule, son nom pour les lecteurs d'écran et au survol. Rien de plus n'est gardé que ce que garder()
+  // gardait déjà.
+  const marqueGarde = (court = false) => `<span class="hl-garde${court ? ' court' : ''}"${court ? ' title="Disponible hors ligne"' : ''}>${ICONES.garde}<span${court ? ' class="sr"' : ''}>${court ? ' (disponible hors ligne)' : 'Disponible hors ligne'}</span></span>`;
+  const marqueReseau = ({ court = false, pour = '' } = {}) => `<span class="hl-reseau${court ? ' court' : ''}"${pour ? ` data-pour="${pour}"` : ''}${court ? ' title="Réseau nécessaire"' : ''}>${ICONES.reseau}<span${court ? ' class="sr"' : ''}>${court ? ' (réseau nécessaire)' : 'Réseau nécessaire'}</span></span>`;
+  const horsReseau = () => document.documentElement.dataset.reseau === 'non';
+  // le PDF d'une feuille de route se fait sur l'appareil, avec pdfmake et ses polices (../admin/vendor/) : sans réseau, s'ils
+  // sont déjà dans la page ou gardés par le service de l'application (son cache des outils). En ligne, quand une feuille de
+  // route des quatorze prochains jours est publiée, le service les garde d'avance (une fois, sauf en mode économie de
+  // données) : le PDF se fera aussi dans le train.
+  const VENDOR_PDF = ['pdfmake.min.js', 'vfs_fonts.js', 'fdr-sans-regular.ttf', 'fdr-sans-bold.ttf', 'fdr-sans-italic.ttf', 'fdr-sans-bolditalic.ttf'];
+  const urlVendor = f => new URL(`${(outilFeuille() && outilFeuille().vendor) || '../admin/vendor/'}${f}`, location.href).href;
+  let pdfSonde = null;
+  function sonderPdf() {
+    if (pdfSonde) return pdfSonde;
+    pdfSonde = (async () => {
+      let garde = typeof pdfMake !== 'undefined' && !!pdfMake.vfs;
+      if (!garde && 'caches' in window) { try { garde = (await Promise.all(VENDOR_PDF.slice(0, 2).map(f => caches.match(urlVendor(f), { ignoreSearch: true })))).every(Boolean); } catch (e) { garde = false; } }
+      document.documentElement.dataset.outilPdf = garde ? 'garde' : 'reseau';
+      pdfSonde = null;
+      return garde;
+    })();
+    return pdfSonde;
+  }
+  async function garderOutilsPdf() {
+    if (horsReseau() || !navigator.serviceWorker || !navigator.serviceWorker.controller || (navigator.connection && navigator.connection.saveData)) return;
+    const auj = aujourdhui(), lim = new Date(); lim.setDate(lim.getDate() + 14);
+    const bientot = E.dates.some(d => d.feuille && finDe(d) >= auj && d.debut <= iso(lim));
+    if (!bientot || await sonderPdf()) return;
+    await Promise.allSettled(VENDOR_PDF.map(f => fetch(urlVendor(f), { credentials: 'same-origin' }).then(r => r.blob())));
+    setTimeout(sonderPdf, 1500);                               // (le service range sa copie juste après la réponse)
+  }
+  function reseauNecessaire(quoi) {
+    annoncer(`Hors ligne : ${quoi} demande le réseau.`);
+  }
   let etatAnnonce = null;
   function majTemoin() {
     const x = etatConnexion();
+    document.documentElement.dataset.reseau = x.k === 'horsligne' || x.k === 'reconnexion' ? 'non' : 'oui';
     $$('[data-temoin]').forEach(b => {
       b.dataset.etat = x.k;
       $('.temoin-mot', b).textContent = x.mot;
@@ -1213,7 +1273,7 @@
       <button type="button" class="btn" id="b-agenda"${evs.length ? '' : ' disabled'}>Ajouter à mon agenda</button></section>`);
     cote.push(`<div class="o-install" data-zone-installation="accueil">${zoneInstallation('accueil')}</div>`);
     if (!PREF.pushFermee && E.notifsEtat !== 'absent') cote.push(`<div class="o-push" data-zone-push="accueil"${E.push.etat !== 'inconnu' ? ` data-etat="${E.push.etat}"` : ''}>${E.push.etat !== 'inconnu' ? cartePush(E.push.etat, 'accueil') : ''}</div>`);
-    const html = `<div class="titre-vue"><h1>${esc(salut())}${prenom ? ` ${esc(prenom)}` : ''}</h1><p class="sous">${esc(resume)}</p></div>
+    const html = `<div class="titre-vue"><h1>${esc(salut())}${prenom ? ` ${esc(prenom)}` : ''}</h1><p class="sous">${esc(resume)} ${marqueGarde()}</p></div>
       <div class="accueil"><div class="col-principale">${principal.join('')}</div><div class="col-cote">${cote.join('')}</div></div>${piedVue()}`;
     afficher(r, TITRES.saison, html, { focus, large: true });
     majCartePush();
@@ -1612,7 +1672,7 @@
       // une date toute neuve (une notification y mène) : la base est relue une fois
       if (!E.cherche.has(r.id) && E.session && !E.sansSession && !E.horsLigne) {
         E.cherche.add(r.id);
-        afficher(r, 'Date', '<p class="chargement" role="status">Recherche de cette date…</p>', { focus: false });
+        afficher(r, 'Date', enLecture('Recherche de cette date…', { n: 3, h: 118 }), { focus: false });
         rafraichir({ discret: true }).then(() => { if (location.hash === r.hash && E.dates.some(x => x.id === r.id)) router({ rafraichir: true }); else if (location.hash === r.hash) vueDate(r, { focus }); });
         return;
       }
@@ -1622,8 +1682,8 @@
     const f = E.feuilles.get(d.id);
     let html = heros(d, { page: true });
     const gestes = [];
-    if (l && itineraire(l)) gestes.push(`<a class="geste" href="${esc(itineraire(l))}" target="_blank" rel="noopener">${ICONES.route}<span>Itinéraire</span><span class="sr"> jusqu’à ${esc(l.nom || l.commune || '')}, sur une carte, dans un nouvel onglet</span></a>`);
-    if (d.feuille && outilFeuille()) gestes.push(`<a class="geste" href="#/feuille/${d.id}">${ICONES.feuille}<span>Feuille de route</span></a>`, `<button type="button" class="geste" data-pdf="${d.id}">${ICONES.pdf}<span>PDF</span><span class="sr"> de la feuille de route</span></button>`);
+    if (l && itineraire(l)) gestes.push(`<a class="geste" href="${esc(itineraire(l))}" target="_blank" rel="noopener">${ICONES.route}<span>Itinéraire</span><span class="sr"> jusqu’à ${esc(l.nom || l.commune || '')}, sur une carte, dans un nouvel onglet</span>${marqueReseau({ court: true })}</a>`);
+    if (d.feuille && outilFeuille()) gestes.push(`<a class="geste" href="#/feuille/${d.id}">${ICONES.feuille}<span>Feuille de route</span>${E.feuilles.has(d.id) ? marqueGarde(true) : marqueReseau({ court: true })}</a>`, `<button type="button" class="geste" data-pdf="${d.id}">${ICONES.pdf}<span>PDF</span><span class="sr"> de la feuille de route</span>${marqueReseau({ court: true, pour: 'pdf' })}</button>`);
     if (!passee && vive && evenementsAVenir(d.id).length) gestes.push(`<button type="button" class="geste" data-agenda="${d.id}">${ICONES.agenda}<span>Agenda</span><span class="sr"> : ajouter cette date à mon agenda</span></button>`);
     if (!passee && vive) {
       // seulement quand la base a leurs scripts (le neuvième, le quatorzième, le septième : voir sonder)
@@ -1639,7 +1699,7 @@
     if (d.feuille || joursDe(d).includes(auj)) {
       const lignes = f || !d.feuille ? lignesPlanning(d, f) : null;
       if (!lignes || lignes.length) html += `<section class="bloc" id="bloc-planning"${attrU(sp)} aria-labelledby="b-planning"><h2 id="b-planning">${ICONES.feuille}${joursDe(d).includes(auj) ? 'Le jour J' : 'Le planning'}</h2>
-        ${lignes ? frise(lignes) : '<p class="attente-bloc" role="status">Lecture du planning…</p>'}</section>`;
+        ${lignes ? frise(lignes) : `<div class="attente-bloc" role="status"><span class="sr">Lecture du planning…</span><div class="squelettes pile" aria-hidden="true">${'<div class="squelette" style="height:40px"></div>'.repeat(3)}</div></div>`}</section>`;
     }
     html += blocLieu(d) + (avecChiffres() ? blocChiffres(d) : '') + (avecIdeale() ? blocCamion(d) : '') + blocEquipe(d, passee) + blocDocuments(d) + navDates(d, 'date', 'bas');
     afficher(r, sp.titre || 'Date', html, { focus });
@@ -1800,8 +1860,8 @@
     const f = d.feuille, titre = d.spectacle?.titre || '', jour = quandTexte(d);
     const lib = `<span class="f-lib">Feuille de route</span> <span class="f-version" title="${esc(`publiée ${momentTexte(f.publiee_le)}`)}">v${f.version || 1}</span>`;
     if (!outilFeuille()) return `<span class="f-court">${lib} <span class="aide">L’outil qui l’affiche n’a pas pu être chargé : rechargez la page.</span></span>`;
-    return `<span class="f-court">${lib} <a class="btn petit principal" href="#/feuille/${d.id}">${ICONES.lire}Lire<span class="sr"> la feuille de route de ${esc(titre)}, ${esc(jour)}</span></a>
-      <button type="button" class="btn petit" data-pdf="${d.id}">${ICONES.pdf}PDF<span class="sr"> de la feuille de route de ${esc(titre)}, ${esc(jour)}</span></button></span>`;
+    return `<span class="f-court">${lib} <a class="btn petit principal" href="#/feuille/${d.id}">${ICONES.lire}Lire<span class="sr"> la feuille de route de ${esc(titre)}, ${esc(jour)}</span>${E.feuilles.has(d.id) ? marqueGarde(true) : marqueReseau({ court: true })}</a>
+      <button type="button" class="btn petit" data-pdf="${d.id}">${ICONES.pdf}PDF<span class="sr"> de la feuille de route de ${esc(titre)}, ${esc(jour)}</span>${marqueReseau({ court: true, pour: 'pdf' })}</button></span>`;
   }
   // les étiquettes d'une date : la nature (répétitions…), l'état, « mise à jour », le décompte
   function etiquettes(d, decompteTexte = '') {
@@ -1842,7 +1902,7 @@
     const xs = documentsDe(d.spectacle?.id), sp = d.spectacle || {};
     if (!xs.length) return '';
     const libelle = x => (TYPES[x.type] && xs.filter(y => y.type === x.type).length === 1 ? TYPES[x.type] : x.titre);
-    return `<section class="bloc"${attrU(sp)} aria-labelledby="b-docs"><h2 id="b-docs">${ICONES.dossier}Documents</h2><ul class="puces-docs">${xs.map(x => `<li data-doc="${x.id}">${lienDocument(x, `${x.url && !x.fichier ? ICONES.lien : ICONES.doc}<span>${esc(libelle(x))}</span>`, 'puce-doc', libelle(x) !== x.titre ? x.titre : '')}${x.type === 'fiche_technique' ? ` <button type="button" class="puce-doc partage" data-partager="${x.id}">${ICONES.partager}<span>Partager</span><span class="sr"> : ${esc(x.titre)}</span></button>` : ''}</li>`).join('')}</ul></section>`;
+    return `<section class="bloc"${attrU(sp)} aria-labelledby="b-docs"><h2 id="b-docs">${ICONES.dossier}Documents</h2><ul class="puces-docs">${xs.map(x => `<li data-doc="${x.id}">${lienDocument(x, `${x.url && !x.fichier ? ICONES.lien : ICONES.doc}<span>${esc(libelle(x))}</span>${marqueReseau({ court: true })}`, 'puce-doc', libelle(x) !== x.titre ? x.titre : '')}${x.type === 'fiche_technique' ? ` <button type="button" class="puce-doc partage" data-partager="${x.id}">${ICONES.partager}<span>Partager</span><span class="sr"> : ${esc(x.titre)}</span></button>` : ''}</li>`).join('')}</ul></section>`;
   }
   // un document : un lien signé (fichier du stockage privé), un lien direct (public), ou un bouton qui demande le lien au clic
   function lienDocument(x, interieur, cls, titre = '') {
@@ -1883,8 +1943,8 @@
       <span class="ic-rond" aria-hidden="true">${ICONES.feuille}</span>
       <a class="lien-etendu fi-texte" href="#/feuille/${d.id}"><b>${esc(sp.titre || 'Spectacle')}${jourj ? ' <span class="jourj-badge">aujourd’hui</span>' : ''}</b>
         <span>${esc(majuscule(quandTexte(d)))}${l ? ` · ${esc(l.commune || l.nom)}` : ''}</span>
-        <span class="fi-version">Version ${f.version || 1}${f.publiee_le ? `, publiée ${esc(momentTexte(f.publiee_le))}` : ''}</span></a>
-      <button type="button" class="btn petit" data-pdf="${d.id}">${ICONES.pdf}PDF<span class="sr"> de la feuille de route de ${esc(sp.titre || '')}, ${esc(quandTexte(d))}</span></button></li>`;
+        <span class="fi-version">Version ${f.version || 1}${f.publiee_le ? `, publiée ${esc(momentTexte(f.publiee_le))}` : ''}</span>${E.feuilles.has(d.id) ? marqueGarde() : marqueReseau()}</a>
+      <button type="button" class="btn petit" data-pdf="${d.id}">${ICONES.pdf}PDF<span class="sr"> de la feuille de route de ${esc(sp.titre || '')}, ${esc(quandTexte(d))}</span>${marqueReseau({ court: true, pour: 'pdf' })}</button></li>`;
   }
 
   // le contexte d'une feuille (FEUILLE.html, FEUILLE.pdf) : la date telle que la tournée la donne, la personne connectée
@@ -1901,7 +1961,7 @@
     if (E.feuilles.has(id)) return E.feuilles.get(id);
     const { data, error } = await vite(sb.from('crescite_feuilles').select('id, date_id, titre, contenu, statut, version, publiee_le').eq('date_id', id).eq('statut', 'publiee').maybeSingle());
     if (error) throw error;
-    if (data) E.feuilles.set(id, data);
+    if (data) { E.feuilles.set(id, data); if (E.pret && !E.provisoire && !E.horsLigne && !E.sansSession) garder(); }
     return data;
   }
   // la feuille de route, lue dans l'application : FEUILLE.html donne la feuille entière (son en-tête compris) ; la page y
@@ -1916,7 +1976,7 @@
       <p><b>${esc(majuscule(quandTexte(d)))}</b>${l ? ` · ${esc(l.nom || l.commune)}${l.nom ? `, ${esc(l.commune)}` : ''}` : ''}</p></div>`;
     const f = E.feuilles.get(id);
     if (f) return montrerFeuille(r, d, f, { focus, tete });
-    afficher(r, 'Feuille de route', `${tete}<p class="chargement" role="status">Chargement de la feuille de route…</p>`, { focus: false });
+    afficher(r, 'Feuille de route', `${tete}${enLecture('Chargement de la feuille de route…', { n: 1, h: 560 })}`, { focus: false });
     chargerFeuille(id).then(x => {
       if (!ici()) return;
       if (!x) return afficher(r, 'Feuille de route', `${tete}<p class="message erreur" role="alert">Cette feuille de route n’est pas (ou plus) publiée. L’administration la publiera dès qu’elle sera prête.</p>`, { focus });
@@ -1931,7 +1991,7 @@
     let corps = '';
     try { corps = F.html(f, contexte(d)); } catch (e) { console.error(e); }
     if (corps && typeof corps.then === 'function') {
-      afficher(r, 'Feuille de route', `${tete}<p class="chargement" role="status">Mise en page de la feuille de route…</p>`, { focus: false });
+      afficher(r, 'Feuille de route', `${tete}${enLecture('Mise en page de la feuille de route…', { n: 1, h: 560 })}`, { focus: false });
       corps.then(c => { if (location.hash === `#/feuille/${d.id}`) poserFeuille(r, d, f, c, { focus, tete, version }); })
         .catch(e => { console.error(e); if (location.hash === `#/feuille/${d.id}`) poserFeuille(r, d, f, '', { focus, tete, version }); });
       return;
@@ -1940,7 +2000,7 @@
   }
   function poserFeuille(r, d, f, corps, { focus, tete, version }) {
     E.feuilleVue = { id: d.id, version: f.version, publiee_le: f.publiee_le };
-    const barre = `<div class="barre-feuille"><button type="button" class="btn principal" data-pdf="${d.id}">${ICONES.pdf}Télécharger le PDF</button><p class="f-version">${esc(version)}</p></div>`;
+    const barre = `<div class="barre-feuille"><button type="button" class="btn principal" data-pdf="${d.id}">${ICONES.pdf}Télécharger le PDF${marqueReseau({ court: true, pour: 'pdf' })}</button><p class="f-version">${esc(version)}${E.feuilles.has(d.id) ? ` ${marqueGarde()}` : ''}</p></div>`;
     if (!corps) return afficher(r, 'Feuille de route', `${tete}${barre}<p class="message erreur" role="alert">La feuille de route n’a pas pu être mise en page ici. Le PDF reste à votre disposition.</p>`, { focus });
     // la feuille porte d'ordinaire son titre (h1) ; sinon, la page en donne un, pour les lecteurs d'écran
     const titrePage = /<h1[\s>]/i.test(corps) ? '' : `<h1 class="sr">Feuille de route : ${esc(d.spectacle?.titre || '')}, ${esc(quandTexte(d))}</h1>`;
@@ -1961,6 +2021,7 @@
         await F.telecharger(f, contexte(d, { pdf: true }));
       });
       annoncer('La feuille de route est téléchargée en PDF.');
+      sonderPdf();
     } catch (e) {
       console.error(e);
       annoncer(`Le PDF n’a pas pu être préparé : ${motsErreur(e)}.`, { erreur: true });
@@ -1974,7 +2035,7 @@
     if (x.fichier) source = /^[A-Z0-9]{2,4}$/.test(ext) ? ext : 'Fichier';
     else { try { source = new URL(x.url).hostname.replace(/^www\./, '') + ' ↗'; } catch (e) { source = 'Lien'; } }
     return lienDocument(x, `${x.url && !x.fichier ? ICONES.lien : ICONES.doc}<span class="doc-texte"><span class="doc-type">${esc(TYPES_COURTS[x.type] || 'Document')}${POUR[x.pour] ? ` · ${POUR[x.pour]}` : ''}</span>
-      <span class="doc-titre">${esc(x.titre)}</span></span> <span class="doc-src">${esc(source)}</span>`, 'doc');
+      <span class="doc-titre">${esc(x.titre)}</span>${marqueReseau()}</span> <span class="doc-src">${esc(source)}</span>`, 'doc');
   }
   async function copier(url, duree = '', message = '') {
     let ok = false;
@@ -2559,7 +2620,7 @@
     const edition = E.dispo.modifier != null && xs ? xs.find(x => x.id === E.dispo.modifier && x.source !== 'agenda') || null : null;
     const brouillon = E.dispo.brouillon;
     E.dispo.modifier = null; E.dispo.brouillon = null;
-    const html = `${entete}${formIndispo(edition, brouillon)}<div id="zone-indispos">${xs == null ? '<p class="chargement" role="status">Lecture de vos indisponibilités…</p>' : listeIndispos(xs)}</div>
+    const html = `${entete}${formIndispo(edition, brouillon)}<div id="zone-indispos">${xs == null ? enLecture('Lecture de vos indisponibilités…', { n: 3, h: 72 }) : listeIndispos(xs)}</div>
       <section class="carte-action" aria-labelledby="t-relier-i"><span class="ic-rond" aria-hidden="true">${ICONES.relier}</span><div class="ca-texte"><h2 id="t-relier-i">Votre agenda le sait déjà ?</h2>
         <p class="aide">Reliez Google Agenda, Apple ou Outlook : vos heures occupées s’y lisent toutes seules, sans titre ni lieu.</p></div><a class="btn petit" href="#/agendas">Relier mon agenda</a></section>`;
     afficher(r, TITRES.indisponibilites, html, { focus });
@@ -2690,7 +2751,7 @@
   }
   function blocAgendas() {
     const xs = E.dispo.agendas;
-    if (xs == null) return '<p class="chargement" role="status">Lecture de vos agendas…</p>';
+    if (xs == null) return enLecture('Lecture de vos agendas…', { n: 2, h: 72 });
     if (!xs.length) return '';
     return `<section class="carte" aria-labelledby="t-lies"><h2 id="t-lies">${xs.length > 1 ? 'Mes agendas reliés' : 'Mon agenda relié'}</h2><ul class="agendas-lies">${xs.map(a => {
       const e = etatAgenda(a);
@@ -2783,7 +2844,7 @@
   function blocFlux() {
     const j = E.dispo.jeton;
     const intro = '<h2 id="t-flux">Mes dates de la compagnie dans mon agenda</h2><p class="intro">Abonnez votre agenda à vos dates (représentations, répétitions, résidences) : elles s’y ajoutent, avec les horaires et les lieux, et s’y mettent à jour d’elles-mêmes. Les dates que l’administration vous propose y paraissent aussi, « à confirmer », jusqu’à ce que vous répondiez non ou que la proposition soit close.</p>';
-    if (j === undefined) return `<section class="carte" aria-labelledby="t-flux">${intro}<p class="chargement" role="status">Lecture de votre lien…</p></section>`;
+    if (j === undefined) return `<section class="carte" aria-labelledby="t-flux">${intro}${enLecture('Lecture de votre lien…', { n: 1, h: 44 })}</section>`;
     if (!j) return `<section class="carte" aria-labelledby="t-flux">${intro}<p class="message conseil">Votre lien personnel n’est pas encore prêt : la compagnie met le service en place.</p></section>`;
     return `<section class="carte flux" aria-labelledby="t-flux">${intro}
       <div class="flux-boutons"><a class="btn principal" href="${esc(lienGoogle(j))}" target="_blank" rel="noopener">${ICONES.agenda}Ajouter à Google Agenda<span class="sr"> (nouvel onglet)</span></a>
@@ -2845,7 +2906,7 @@
     const carte = p => { const rep = p.jours.filter(j => j.moi && j.moi.reponse).length; return `<li><a class="carte-prop" href="#/proposition/${p.id}"><span class="ic-rond" aria-hidden="true">${ICONES.question}</span>
       <span class="cp-texte"><b>${esc(p.titre)}</b><small>${esc([p.spectacle?.titre, p.jours.length === 1 ? texteJours(p.jours[0]) : `${pluriel(p.jours.length, 'jour')}`, p.statut === 'close' ? 'close' : rep === p.jours.length ? 'répondu' : `${rep}/${p.jours.length} répondu${rep > 1 ? 's' : ''}`].filter(Boolean).join(' · '))}</small></span>
       ${aRepondre(p) ? '<span class="etiquette a-repondre">Répondre</span>' : ''}${ICONES.chevron}</a></li>`; };
-    const html = `${entete}${!E.dispo.propositionsLues ? '<p class="chargement" role="status">Lecture des propositions…</p>' : !xs.length ? etatVide('calendrier', 'Aucune proposition pour l’instant', 'Quand l’administration vous proposera des dates, elles arriveront ici et par courriel.') : ''}
+    const html = `${entete}${!E.dispo.propositionsLues ? enLecture('Lecture des propositions…', { n: 2, h: 88 }) : !xs.length ? etatVide('calendrier', 'Aucune proposition pour l’instant', 'Quand l’administration vous proposera des dates, elles arriveront ici et par courriel.') : ''}
       ${att.length ? `<section aria-labelledby="t-att"><h2 class="titre-section" id="t-att">À répondre</h2><ul class="liste-props">${att.map(carte).join('')}</ul></section>` : ''}
       ${autres.length ? `<section aria-labelledby="t-aut"><h2 class="titre-section" id="t-aut">${att.length ? 'Les autres' : 'Répondues ou closes'}</h2><ul class="liste-props">${autres.map(carte).join('')}</ul></section>` : ''}`;
     afficher(r, TITRES.propositions, html, { focus });
@@ -2856,7 +2917,7 @@
     const p = (E.dispo.propositions || []).find(x => x.id === r.id);
     if (!p) {
       if (!E.dispo.propositionsLues || !E.dispo.relu) {
-        afficher(r, TITRES.proposition, '<div class="titre-vue"><h1>Proposition de dates</h1></div><p class="chargement" role="status">Lecture de la proposition…</p>', { focus });
+        afficher(r, TITRES.proposition, `<div class="titre-vue"><h1>Proposition de dates</h1></div>${enLecture('Lecture de la proposition…', { n: 3, h: 88 })}`, { focus });
         E.dispo.relu = true;
         chargerPropositions().then(() => { if (E.route && E.route.hash === r.hash) vueProposition(r, { focus: false }); }).catch(e => { if (E.route && E.route.hash === r.hash) poserEchec('#contenu', LECTURES.proposition, e); });
         return;
@@ -3157,7 +3218,7 @@
       ${sectionPlanningMoi()}
       ${avecIdeale() ? `<section class="carte" aria-labelledby="t-frais"><h2 id="t-frais">Notes de frais</h2><p class="intro">Déposez vos justificatifs de tournée (repas, carburant, billets, nuitées) et suivez vos remboursements.</p><p><a class="btn" href="#/frais">${ICONES.euro}Mes notes de frais</a></p></section>` : ''}
       <section class="carte" aria-labelledby="t-app"><h2 id="t-app">L’application</h2><div data-zone-installation="moi">${zoneInstallation('moi')}</div></section>`;
-    if (!E.privee) html += `<section class="carte"><h2>Mes coordonnées</h2>${E.provisoire && !E.horsLigne ? '<p class="chargement" role="status">Lecture de vos coordonnées…</p>'
+    if (!E.privee) html += `<section class="carte"><h2>Mes coordonnées</h2>${E.provisoire && !E.horsLigne ? enLecture('Lecture de vos coordonnées…', { n: 3, h: 44 })
       : '<p class="message horsligne" role="status">Vos coordonnées se lisent et s’enregistrent en ligne : reconnectez-vous au réseau, puis actualisez.</p>'}</section>`;
     else html += `<form class="carte" id="f-fiche" novalidate aria-labelledby="t-coord"><h2 id="t-coord">Mes coordonnées</h2>
         <p class="intro">Elles servent aux feuilles de route, aux réservations et aux repas. Seules l’administration et vous les lisez.</p>
@@ -3891,7 +3952,7 @@
 
   async function vueFrais(r, { focus } = {}) {
     // à l'ouverture, la base n'a pas encore dit si elle a les notes de frais (voir router)
-    if (!avecIdeale()) return afficher(r, TITRES.frais, '<div class="titre-vue"><h1>Notes de frais</h1></div><p class="chargement" role="status">Lecture de vos notes de frais…</p>', { focus });
+    if (!avecIdeale()) return afficher(r, TITRES.frais, `<div class="titre-vue"><h1>Notes de frais</h1></div>${enLecture('Lecture de vos notes de frais…', { n: 3, h: 72 })}`, { focus });
     const m = location.hash.match(/[?&]date=(\d+)/);
     const datePre = m ? +m[1] : null;
 
@@ -3952,7 +4013,7 @@
       </form>
       <section class="carte" aria-labelledby="t-mes-frais">
         <h2 id="t-mes-frais">Mes notes de frais</h2>
-        <div id="liste-frais-zone"><p class="chargement" role="status">Lecture de vos notes de frais…</p></div>
+        <div id="liste-frais-zone">${enLecture('Lecture de vos notes de frais…', { n: 3, h: 72 })}</div>
       </section>
     `;
     afficher(r, 'Notes de frais', html, { focus });
@@ -4256,7 +4317,7 @@
     if (i < 0 || xs.length < 2) return '';
     const v = x => (x ? { href: `#/${genre}/${x.id}`, titre: [jourCourt(x.debut), x.lieu ? x.lieu.commune || x.lieu.nom : ''].filter(Boolean).join(' · '), spectacle: x.spectacle?.titre || '' } : null);
     const quoi = genre === 'date' ? { prec: 'Date précédente', suiv: 'Date suivante', aucun: 'aucune' } : { prec: 'Feuille précédente', suiv: 'Feuille suivante', aucun: 'aucune' };
-    return `<nav class="nav-dates${ou === 'bas' ? ' nav-dates-bas' : ''}" aria-label="${genre === 'date' ? 'D’une date à l’autre' : 'D’une feuille à l’autre'}">${GESTES.precSuiv({ prec: v(xs[i - 1]), suiv: v(xs[i + 1]), libelle: x => x.titre, long: x => [x.titre, x.spectacle].filter(Boolean).join(', '), quoi, classe: 'btn petit', axe: 'horizontal', texte: true, nom: genre === 'date' ? 'Date précédente, date suivante' : 'Feuille précédente, feuille suivante' })}</nav>`;
+    return `<nav class="nav-dates${ou === 'bas' ? ' nav-dates-bas' : ''}" aria-label="${genre === 'date' ? 'D’une date à l’autre' : 'D’une feuille à l’autre'}${ou === 'bas' ? ', en bas de page' : ''}">${GESTES.precSuiv({ prec: v(xs[i - 1]), suiv: v(xs[i + 1]), libelle: x => x.titre, long: x => [x.titre, x.spectacle].filter(Boolean).join(', '), quoi, classe: 'btn petit', axe: 'horizontal', texte: true, nom: genre === 'date' ? 'Date précédente, date suivante' : 'Feuille précédente, feuille suivante' })}</nav>`;
   }
   // les gestes (../admin/gestes.js) : un appui long ou un clic droit sur un billet, une notification, un document, une
   // proposition ouvre ce qu'on peut en faire ; ← → et le balayage passent à la date (ou la feuille) d'avant, d'après
@@ -5199,7 +5260,7 @@
   }
   // le réseau tombe : l'espace le dit tout de suite (le bandeau, le témoin), sans attendre qu'une lecture échoue ; il revient :
   // « Reconnexion… », l'espace se relit, puis « À jour »
-  window.addEventListener('offline', () => { if (E.pret && !E.horsLigne) { E.horsLigne = E.chargeLe || Date.now(); bandeauEtat(); } else majTemoin(); });
+  window.addEventListener('offline', () => { if (E.pret && !E.horsLigne) { E.horsLigne = E.chargeLe || Date.now(); bandeauEtat(); } else majTemoin(); sonderPdf(); });
   window.addEventListener('online', async () => {
     if (!E.horsLigne && !E.sansSession) return majTemoin();
     E.reconnexion = true; majTemoin();
@@ -5223,6 +5284,7 @@
     if (inter && !e.target.closest('button')) { $('[data-push]', inter)?.click(); return; }
     const t = e.target.closest('button, a, summary');
     if (!t) return;
+    if (horsReseau() && t.matches('.doc, .puce-doc:not(.partage), .geste[target="_blank"]')) { e.preventDefault(); return reseauNecessaire(t.matches('.geste') ? 'l’itinéraire' : 'ce document'); }
     if (t.matches('.evitement')) { e.preventDefault(); const h = $('#contenu h1') || $('#contenu'); if (h) { h.setAttribute('tabindex', '-1'); h.focus(); } return; }
     if (t.matches('.nav-item')) {
       vibrer(6);
@@ -5260,7 +5322,7 @@
     if (t.matches('[data-phase-camion]')) return changerPhaseCamion(t.dataset.phaseCamion, Number(t.dataset.dateId));
     if (t.id === 'b-agenda') return telechargerAgenda();
     if (t.matches('[data-agenda]')) return telechargerAgenda(Number(t.dataset.agenda));
-    if (t.matches('[data-pdf]')) return telechargerPdf(t);
+    if (t.matches('[data-pdf]')) { if (horsReseau() && document.documentElement.dataset.outilPdf !== 'garde') return reseauNecessaire('le PDF'); return telechargerPdf(t); }
     if (t.matches('[data-partager]')) return partager(t);
     if (t.matches('[data-tout-lu]')) return toutMarquerLu(t);
     if (t.matches('[data-effacer-lues]')) return effacerLues(t);

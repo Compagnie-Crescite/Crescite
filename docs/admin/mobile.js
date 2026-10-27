@@ -36,7 +36,8 @@ const MOBILE = (() => {
   if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js', { scope: './' }).catch(e => { if (navigator.onLine) console.warn('service de l’administration', e); });
   let barre = null, bouton = null, feuilleOuverte = null;
   function poser() {
-    if (!actif() || !E.pret || !$('#vue')) { if (barre) { barre.remove(); barre = null; } if (bouton) { bouton.remove(); bouton = null; } document.documentElement.classList.remove('ob-actif'); return; }
+    // (le squelette du chargement, au téléphone, a déjà l'en-tête du téléphone : il garde html.ob-actif)
+    if (!actif() || !E.pret || !$('#vue')) { if (barre) { barre.remove(); barre = null; } if (bouton) { bouton.remove(); bouton = null; } document.documentElement.classList.toggle('ob-actif', actif() && !!$('.barre.attente')); return; }
     document.documentElement.classList.add('ob-actif');
     if (!barre) {
       barre = document.createElement('nav'); barre.className = 'ob-barre'; barre.setAttribute('aria-label', 'Rubriques');

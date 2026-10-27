@@ -380,6 +380,16 @@ const PLANNING = (() => {
 .pl-legende .l-prop { border: 2px dashed var(--pl-accent); }
 .pl-legende .l-conflit { width: 16px; height: 16px; border-radius: 50%; background: var(--pl-alerte); }
 .pl-corps { position: relative; }
+/* la grille qui attend sa première lecture : l'en-tête des jours puis des lignes, aux mesures de la grille (--pl-ligne) */
+.pl-attente { display: grid; gap: 4px; }
+.pl-attente i { position: relative; display: block; height: var(--pl-ligne); overflow: hidden; border-radius: 8px; background: var(--pl-doux); }
+.pl-attente i:first-child { height: calc(var(--pl-ligne) * 1.6); }
+.pl[data-vue="mois"] .pl-attente i { height: calc(var(--pl-ligne) * 2); }
+.pl-corps[aria-busy="true"] .pl-vue:has(.pl-attente) { opacity: 1; }
+@media (prefers-reduced-motion: no-preference) {
+  .pl-attente i::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--pl-fond) 70%, transparent), transparent); animation: pl-lueur 1.3s infinite; }
+  @keyframes pl-lueur { to { transform: translateX(100%); } }
+}
 .pl-corps[aria-busy="true"]::before { content: ""; position: absolute; z-index: 9; left: 0; right: 0; top: -6px; height: 3px; border-radius: 3px;
   background: linear-gradient(90deg, transparent, var(--pl-accent), transparent); background-size: 40% 100%; background-repeat: no-repeat; animation: pl-charge 1s linear infinite; }
 .pl-corps[aria-busy="true"] .pl-vue { opacity: .55; transition: opacity .2s; }
@@ -435,6 +445,7 @@ details.pl-alerte p { margin: 8px 0 0; }
 .pl-e-jour { position: sticky; top: 26px; z-index: 4; grid-row: 2; background: var(--pl-fond); border-bottom: 1px solid var(--pl-filet); }
 .pl-e-jour button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; width: 100%; height: 100%; padding: 0; border: 0;
   background: transparent; font-size: .7rem; color: var(--pl-sourd); cursor: pointer; }
+.pl-e-jour [data-t]::before { content: attr(data-t); }
 .pl-e-jour b { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; font-size: .82rem; color: var(--pl-texte); font-weight: 650; }
 .pl-e-jour.we { background: color-mix(in srgb, var(--pl-texte) 4%, var(--pl-fond)); }
 .pl-e-jour.lundi, .pl-e-c.lundi { border-left: 1px solid var(--pl-filet); }
@@ -560,7 +571,9 @@ details.pl-alerte p { margin: 8px 0 0; }
 .pl-av-1 { background: color-mix(in srgb, #2f6f9f 22%, var(--pl-fond)); } .pl-av-2 { background: color-mix(in srgb, #c27a1a 24%, var(--pl-fond)); }
 .pl-av-3 { background: color-mix(in srgb, #3d7d5a 22%, var(--pl-fond)); } .pl-av-4 { background: color-mix(in srgb, #6b4fa0 22%, var(--pl-fond)); }
 .pl-av-5 { background: color-mix(in srgb, #1f7a7a 22%, var(--pl-fond)); }
-@media (max-width: 640px) { .pl { --pl-nom: 118px; --pl-col: 34px; --pl-ligne: 40px; } .pl-e-nom .pl-av { display: none; } .pl-e-nom { padding-left: 8px; } }
+@media (max-width: 640px) { .pl { --pl-nom: 118px; --pl-col: 34px; --pl-ligne: 40px; }
+/* au doigt, un jour de la grille est une cible de 44 px (la grille défile de côté un peu plus) */
+@media (pointer: coarse) { .pl { --pl-col: 45px; --pl-ligne: 44px; } }   /* (45 : le filet du lundi en prend un) */ .pl-e-nom .pl-av { display: none; } .pl-e-nom { padding-left: 8px; } }
 @media (prefers-reduced-motion: no-preference) { .pl.pl-premier .pl-e-jour.auj b { animation: pl-auj .6s cubic-bezier(.3, 1.6, .5, 1) both; } @keyframes pl-auj { from { transform: scale(.4); } } }   /* au premier dessin, aujourd'hui se pose */
 @media (prefers-reduced-motion: reduce) { .pl *, .pl *::before, .pl *::after { transition: none !important; animation: none !important; } }
 `;
@@ -734,7 +747,7 @@ details.pl-alerte p { margin: 8px 0 0; }
       html.push('<span role="columnheader" class="pl-sr">Personne</span>');
       for (const j of jours) {
         const r = rang(j), cl = ['pl-e-jour', r >= 5 && 'we', r === 0 && 'lundi', j === A && 'auj', S.selection && S.selection.jour === j && 'choisi'].filter(Boolean).join(' ');
-        html.push(`<div role="columnheader" class="${cl}" style="grid-column:${col(j)}"><button type="button" data-pl-jour="${j}" tabindex="-1" aria-label="${esc(jourLong(j))}${j === A ? ', aujourd’hui' : ''}"><span aria-hidden="true">${INITIALES[r]}</span><b aria-hidden="true">${nombreJour(j)}</b></button></div>`);
+        html.push(`<div role="columnheader" class="${cl}" style="grid-column:${col(j)}"><button type="button" data-pl-jour="${j}" tabindex="-1" aria-label="${esc(jourLong(j))}${j === A ? ', aujourd’hui' : ''}"><span data-t="${INITIALES[r]}" aria-hidden="true"></span><b data-t="${nombreJour(j)}" aria-hidden="true"></b></button></div>`);
       }
       html.push('</div>');
       if (!I.personnes.length) {
@@ -954,7 +967,9 @@ details.pl-alerte p { margin: 8px 0 0; }
         return;
       }
       if (!S.D) {
-        parts.push('<div class="pl-corps" aria-busy="true"><div class="pl-vue"><p class="pl-vide">Lecture du planning…</p></div></div>');
+        // en attendant la première lecture : la grille à sa forme (l'en-tête des jours, des lignes de personnes) qui luit, et
+        // « Lecture du planning… » pour les lecteurs d'écran ; les données prennent sa place sans pousser la page
+        parts.push(`<div class="pl-corps" aria-busy="true"><div class="pl-vue"><div class="pl-attente" aria-hidden="true">${'<i></i>'.repeat(S.vue === 'equipe' ? 6 : 5)}</div><p class="pl-sr" role="status">Lecture du planning…</p></div></div>`);
         el.innerHTML = parts.join('');
         return;
       }

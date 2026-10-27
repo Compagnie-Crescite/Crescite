@@ -6,7 +6,12 @@
 <title>Compagnie Crescite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,400;0,500;0,700;1,500&family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Raleway:wght@600;700&family=Space+Grotesk:wght@500;600&family=Cormorant+Garamond:wght@500;600&family=Bodoni+Moda:wght@700&family=Anton&family=Grenze+Gotisch:wght@600&family=IM+Fell+English:ital@0;1&family=IM+Fell+French+Canon:ital@0;1&display=swap">
+<!-- les polices (Google Fonts, font-display: swap) : leur feuille ne retient plus le premier rendu (media="print", puis
+     "all" une fois chargée ; sans script, la feuille ordinaire). Elles ne sont pas demandées plus tôt que le texte qui
+     les emploie : en 4G lente, la police des titres préchargée prenait sa bande passante à la page elle-même (le HTML
+     fini 150 ms plus tard, le plus grand rendu 250 à 550 ms plus tard) -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,400;0,500;0,700;1,500&family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Raleway:wght@600;700&family=Space+Grotesk:wght@500;600&family=Cormorant+Garamond:wght@500;600&family=Bodoni+Moda:wght@700&family=Anton&family=Grenze+Gotisch:wght@600&family=IM+Fell+English:ital@0;1&family=IM+Fell+French+Canon:ital@0;1&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,400;0,500;0,700;1,500&family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Raleway:wght@600;700&family=Space+Grotesk:wght@500;600&family=Cormorant+Garamond:wght@500;600&family=Bodoni+Moda:wght@700&family=Anton&family=Grenze+Gotisch:wght@600&family=IM+Fell+English:ital@0;1&family=IM+Fell+French+Canon:ital@0;1&display=swap"></noscript>
 <style>
 /* La synthèse : l'accueil et les cartes de la 06 (la tentacule comme thème), l'agenda de la 03 relié à la carte, les
    trois entrées nées des portes de la 04, et pour chaque spectacle un univers de compagnie (le dossier scolaire de
@@ -404,6 +409,23 @@ html.still .sc-pause { display: none; }   /* rien ne bouge de lui-même : rien �
 .sc-t.est-actif .sc-q { opacity: 1; transform: none; }
 .scene.a-actif .sc-t:not(.est-actif) { color: var(--sc-terne); }
 .sc-t:focus-visible { outline: 2px solid #fff; outline-offset: 6px; border-radius: 4px; }
+/* l'indication du premier écran (indiceScene) : en bas de l'écran, au-dessus du menu (au téléphone, de la barre d'onglets),
+   hors de la scène ; une pastille de nuit, le texte blanc (AA sur toute photo). La phrase du geste s'efface au premier geste ;
+   celle du clavier paraît quand un titre de la scène a le focus */
+.sc-indice { position: fixed; z-index: 30; left: 50%; bottom: calc(var(--bas) + 84px); display: grid; width: max-content; max-width: min(40rem, calc(100vw - 32px)); translate: -50% 0; pointer-events: none; }
+.sc-indice p { grid-area: 1 / 1; justify-self: center; margin: 0; padding: 2px 18px; border-radius: 22px; background: color-mix(in srgb, #0b0710 93%, transparent); color: #fff;
+  font: 600 .8rem/1.35 var(--etiq); letter-spacing: .03em; text-align: center; box-shadow: 0 6px 24px rgb(0 0 0 / .35);
+  opacity: 0; visibility: hidden; translate: 0 6px; transition: opacity .24s var(--k-doux), translate .24s var(--k-doux), visibility 0s .24s; }
+.sc-indice p:not(:has(a)) { padding-block: 12px; }
+.sc-ind-g { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; column-gap: .3em; }
+.sc-indice.est-vu:not(.au-clavier) .sc-ind-g, .sc-indice.au-clavier .sc-ind-k { opacity: 1; visibility: visible; translate: none; transition: opacity .24s var(--k-doux), translate .24s var(--k-doux); }
+.sc-ind-g a { display: inline-flex; align-items: center; gap: .35em; min-height: 44px; margin-left: .3em; padding: 0 4px; color: #fff; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; pointer-events: auto; }
+.sc-ind-g a .fleche { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.sc-indice:not(.est-vu) .sc-ind-g a { pointer-events: none; }
+html.intro-active .sc-indice, html.ed-actif .sc-indice { display: none; }
+@media (max-width: 759px) { .sc-indice { bottom: calc(var(--bas) + 12px); } .sc-indice p { padding: 10px 14px 0; border-radius: 16px; font-size: .78rem; } .sc-indice p:not(:has(a)) { padding-block: 12px; } .sc-ind-g a { margin: 0; } }
+@media (prefers-reduced-motion: reduce) { .sc-indice p { transition: none !important; translate: none; } }
+@media (forced-colors: active) { .sc-indice p { border: 1px solid CanvasText; background: Canvas; color: CanvasText; } }
 .scene.mobile .sc-tl { font-size: 1.25rem; }
 .scene.mobile .sc-med { width: 32px; height: 32px; }
 .scene.mobile .sc-q { opacity: 1; transform: none; max-width: calc(100vw - 92px); }
@@ -1238,7 +1260,7 @@ html.ed-actif .ep-a::after { content: none; }
 .alerte-usage { margin: 12px 0 0; font-size: .92rem; color: var(--gris); max-width: 65ch; }
 /* la nuit : les champs de l'alerte et du simulateur sur le papier de la nuit (blancs, leur encre claire ne se lisait pas),
    et les réponses dans un vert et un rouge clairs (AA sur la nuit) */
-html[data-theme="nuit"] :is(.alerte-champs select, .alerte-champs input[type="email"], .alerte-champs input[type="text"], .champ-simu input, .champ-simu select) { background: var(--blanc); }
+html[data-theme="nuit"] :is(.alerte-champs select, .alerte-champs input[type="email"], .alerte-champs input[type="text"], .champ-simu input, .champ-simu select, .conv-champs input, .conv-champs select) { background: var(--blanc); }
 html[data-theme="nuit"] .alerte-msg.ok { color: #7fd6a4; border-color: #7fd6a4; }
 html[data-theme="nuit"] .alerte-msg.err { color: #ff9d94; border-color: #ff9d94; }
 
@@ -1271,7 +1293,15 @@ html[data-theme="nuit"] .alerte-msg.err { color: #ff9d94; border-color: #ff9d94;
 .conv-modal { margin-top: 24px; padding: 22px; border-radius: 10px; background: var(--papier); border: 1.5px solid var(--filet); }
 .conv-modal h3 { margin: 0 0 14px; font: 500 1.4rem/1.2 var(--titre); }
 .conv-champs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
-.conv-champs input, .conv-champs select { width: 100%; padding: 10px 12px; border: 1.5px solid var(--filet); border-radius: 6px; background: #fff; font: 400 .95rem var(--sans); }
+.conv-champs input, .conv-champs select { width: 100%; padding: 10px 12px; border: 1.5px solid var(--filet); border-radius: 6px; background: #fff; font: 400 .95rem var(--sans); color: var(--encre); }
+.cv-champ label { display: block; margin-bottom: 6px; font-weight: 600; font-size: .9rem; }
+/* l'erreur d'un champ, sous lui (verifier) : la couleur de l'erreur du site, un signe devant (pas la couleur seule) ; le champ
+   bordé de même */
+.champ-err { display: block; flex-basis: 100%; grid-column: 1 / -1; margin: 6px 0 0; color: #b3261e; font: 600 .88rem/1.4 var(--texte); }
+.champ-err::before { content: "! " / ""; font-weight: 700; }
+html[data-theme="nuit"] .champ-err { color: #ff9d94; }
+:is(input, select, textarea)[aria-invalid="true"] { border-color: #b3261e; box-shadow: inset 0 0 0 1px #b3261e; }
+.case:has(.champ-err), .calcul:has(.champ-err) { flex-wrap: wrap; }
 
 
 /* ———— le pied de page ———— */
@@ -1290,13 +1320,29 @@ footer :focus-visible { outline-color: var(--saison-vive); }
 .pied-nav a { display: inline-flex; align-items: center; min-height: 44px; font: 600 .8rem/1.3 var(--etiq); letter-spacing: .14em; text-transform: uppercase; text-decoration: none; }
 @media (hover: hover) { .pied-nav a:hover { text-decoration: underline; text-underline-offset: 4px; } }
 @media (max-width: 640px) { .pied-nav ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; } }
+/* au téléphone, avec la barre d'onglets du bas : le plan du site ne répète pas ses quatre rubriques (elles sont à portée du
+   pouce, juste dessous) ; il garde ce qu'elle n'a pas, le contact. Le pied se resserre : moins de marges, ses blocs plus
+   proches ; le corps de la page s'arrête au-dessus de la barre (padding-bottom : --tab), rien n'est caché dessous */
+body:has(#entrees.en-bas) .pied-nav .pied-menu { display: none; }
+@media (max-width: 759px) {
+  footer { padding: 30px 0 22px; }
+  body:has(#entrees.en-bas) .pied-nav { padding-bottom: 6px; }
+  body:has(#entrees.en-bas) .pied-nav ul { display: flex; }
+  .pied { gap: 18px; }
+  footer .liens { gap: 0 20px; }
+}
 /* la page introuvable : sa phrase, puis d'où repartir (l'accueil, le menu, le contact), une large cible chacun */
 .nf { min-height: 32vh; }
 .nf-x { max-width: 40rem; margin: 0 0 24px; font-size: 1.12rem; }
 .nf-liens { display: flex; flex-wrap: wrap; gap: 10px; margin: 0; padding: 0; list-style: none; }
-.nf-liens a { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 10px 18px; border: 1.5px solid color-mix(in srgb, var(--encre) 30%, transparent); border-radius: 999px; color: var(--encre); font: 600 .95rem/1.2 var(--sans); text-decoration: none; }
-@media (hover: hover) { .nf-liens a:hover { border-color: var(--saison-vive); } }
+.nf-t { margin: 0 0 12px; font: 600 .8rem/1.3 var(--etiq); letter-spacing: .08em; text-transform: uppercase; color: var(--encre); }
+.nf-proches { margin-bottom: 28px; }
+.nf-proches i { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--c, var(--saison-vive)); }
+.nf-liens :is(a, button) { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 10px 18px; border: 1.5px solid color-mix(in srgb, var(--encre) 30%, transparent); border-radius: 999px; color: var(--encre); font: 600 .95rem/1.2 var(--sans); text-decoration: none; }
+.nf-liens button { background: none; cursor: pointer; }
+@media (hover: hover) { .nf-liens :is(a, button):hover { border-color: var(--saison-vive); } }
 .nf-liens .fleche { width: 16px; height: 16px; color: var(--saison-vive); }
+.nf-liens button svg { width: 16px; height: 16px; fill: none; stroke: var(--saison-vive); stroke-width: 2; stroke-linecap: round; }
 .petit { font-size: .82rem; color: #b9adb2; }
 /* « Modifier le site » : discret, au pied de chaque vue */
 .modifier { display: inline-flex; align-items: center; gap: 7px; margin: 0; padding: 0; border: 0; background: none; color: #fff; font: inherit; text-decoration: underline; text-decoration-color: rgba(255, 255, 255, .4); text-underline-offset: 3px; cursor: pointer; }
@@ -2166,6 +2212,8 @@ html:not(.still) .une-ph img { transform: translateY(calc(var(--p, 0) * 8%)) sca
 .dos-h4 { margin: 1.5em 0 .45em; font: 700 .86rem/1.4 var(--u-etiq); letter-spacing: .08em; text-transform: uppercase; color: var(--u-accent); }
 .boite > .dos-h4:first-child { margin-top: 0; }
 .table-wrap { overflow-x: auto; border-radius: 8px; background: var(--u-fond2); }
+/* (au téléphone, le tableau des programmes défile de côté : la bande prend le focus du clavier, ses flèches le font défiler) */
+.table-wrap:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px; }
 .dos-table { width: 100%; min-width: 620px; border-collapse: collapse; font-size: .95rem; line-height: 1.5; }
 .dos-table th, .dos-table td { padding: 12px 14px; text-align: left; vertical-align: top; border-bottom: 1px solid color-mix(in srgb, var(--u-accent2) 45%, transparent); }
 .dos-table th[scope="rowgroup"] { width: 4.8rem; background: var(--u-accent); color: #fff; font: 700 1.05rem/1.2 var(--u-titre-f); text-align: center; vertical-align: middle; border-bottom-color: rgba(255, 255, 255, .4); }
@@ -2395,6 +2443,7 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 .ag7 { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); grid-template-areas: "frise carte" "proch carte" "toutes carte"; grid-template-rows: auto auto 1fr;
   gap: 2.75rem clamp(2rem, 4vw, 4rem); align-items: start; margin-top: clamp(1.25rem, 2.5vw, 2rem); }
 .fs7 { grid-area: frise; min-width: 0; }
+.s7 [data-tard], main > [data-tard] { display: none; }
 /* le sous-menu de la saison (comme celui des univers d'un spectacle) : une seule ligne, arrimée sous le menu flottant quand on
    descend ; chaque spectacle qui tourne dans la saison (et lui seul), sa vignette (sa photo, cadrée sur sa zone d'intérêt)
    cerclée de sa couleur, celle de ses dates sur la frise, son titre et le nombre de ses dates. En survoler un isole ses dates,
@@ -3176,7 +3225,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   main .voisins, main .rc-vis, main .rc-fil, main #c-video, main [data-lecteur], main .filet, main svg.trait, main .rs-tete, main .rs-defile, main .rs-plus, main .rs-photo, main .rs-tache,
   main svg.carte, main .carte-sp, main .ag7-carte, main .frise, main [data-frise], main .u-frise, main .v-frise, main .fs7, main .p4-frise, main .ft7, main .fr-legende,
   main .s7-outils, main .s7-rac, main .sm7, main .sf7, main .ag-index, main #v-alerte, main .bf7, main .fe7, main .s7-gel { display: none !important; }
-  main { padding: 0 !important; }
+  main { padding: 0 !important; min-height: 0 !important; }   /* (à l’écran, un écran au moins : sur le papier, une page blanche de plus) */
   main .wrap { width: auto !important; max-width: none !important; margin: 0 !important; padding: 0 !important; }
   main section, main .chap, main .bloc { padding-top: 0 !important; margin-top: 0 !important; min-height: 0 !important; }
   main .chap + .chap, main section + section { margin-top: 10mm !important; }
@@ -3206,7 +3255,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   main .rs-c { max-width: none !important; padding: 4mm !important; }
   main .rs-reserver { display: inline !important; padding: 0 !important; font-weight: 700; text-decoration: none; }
   main .rs-reserver .rs-fleche { display: none; }
-  main .rs-reserver::after, main a.rs-seance::after, main .d7-lieu a::after, main .dl-ou a::after { content: " (" attr(href) ")"; font-weight: 400; font-size: 9pt; overflow-wrap: anywhere; }
+  main .rs-reserver::after, main a.rs-seance::after { content: " (" attr(href) ")"; font-weight: 400; font-size: 9pt; overflow-wrap: anywhere; }
   main .rs-r { display: inline !important; }
   main .rs-r1, main .rs-r2 { display: inline; font-size: 11pt !important; }
   main .rs-r2::before { content: " · "; }
@@ -3214,6 +3263,19 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   main .rs-date--ligne { border: 0 !important; padding: 0 !important; margin: 0 !important; }
   main details:not([open]) > :not(summary) { display: none; }
   main a { text-decoration: underline; }
+  /* les légendes sous leur photo (à l'écran, elles chevauchent son bas), les flèches et les chevrons des boutons, qui ne
+     mènent nulle part sur le papier ; les liens vers un autre site écrits en clair (une seule fois, ceux des dates compris) */
+  main figcaption { position: static !important; inset: auto !important; width: auto !important; max-width: none !important; margin: 1.5mm 0 0 !important; padding: 0 !important; border: 0 !important; white-space: normal !important; font-size: 9pt; }
+  main svg.fleche, main svg.chev, main svg.ext { display: none !important; }
+  main a[href^="http"]::after { content: " (" attr(href) ")"; font-weight: 400; font-size: 9pt; overflow-wrap: anywhere; }
+  main .rs-reserver::after, main a.rs-seance::after { content: " (" attr(href) ")" !important; }
+  /* le contact : les coordonnées et le courriel ; le formulaire, qui ne s'envoie pas d'une feuille, reste à l'écran */
+  main .contact { display: block !important; }
+  main .formulaire { display: none !important; }
+  main .ct-ecrire .bouton { display: inline !important; min-height: 0 !important; padding: 0 !important; border: 0 !important; font-weight: 700; text-decoration: none; }
+  main .ct-ecrire .bouton::after { content: " :"; }
+  main .ct-courriel { font-weight: 700; }
+  main address, main .ct-coord { break-inside: avoid; }
 }
 </style>
 </head>
@@ -3228,6 +3290,19 @@ html.still .sc-image { transition: opacity .35s ease !important; }
 <main id="main" tabindex="-1"></main>
 <footer><div class="wrap pied" id="pied"></div></footer>
 <script>const D = /*__DATA__*/null;</script>
+<script>
+/* la photo principale de la vue, demandée avant le script de la page : celle d'en-tête d'un spectacle (sa plus grande
+   image, celle du premier écran) part dès que D est lu, en priorité, au lieu d'attendre que la page soit dessinée (une
+   seconde et demie plus tard au téléphone, en 4G lente, et alors en concurrence avec les photos de la suite). Le site
+   construit pour l'essai, ses photos dans la page (data:), n'en a pas besoin */
+(() => { try {
+  const m = /^#\/spectacle\/([\w-]+)/.exec(location.hash), u = m && typeof D !== 'undefined' && D && D.photos && D.photos[m[1]];
+  if (!u || /^data:/.test(u)) return;
+  const l = document.createElement('link');
+  l.rel = 'preload'; l.as = 'image'; l.href = u; l.setAttribute('fetchpriority', 'high');
+  document.head.appendChild(l);
+} catch (e) { /* rien : la photo viendra avec la page */ } })();
+</script>
 <script>
 (() => {
   /* Mouvement : l'organique, rangé (la 10). Une seule langue, celle de la pieuvre et de son encre, dans sa version calme : peu
@@ -3297,6 +3372,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const COLLATION = new Intl.Collator('fr');   // (l'ordre alphabétique du français, un seul comparateur pour toute la page)
   const norm = s => String(s || '').replace(/<[^>]+>/g, ' ').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’‘]/g, "'").toLowerCase();
   // ce que la recherche a trouvé, surligné : le texte échappé, le premier passage qui répond à t (déjà passé par norm : sans
   // accents ni capitales) dans un <mark>. La correspondance se lit lettre à lettre, chacune normée à part (une lettre accentuée
@@ -4234,7 +4310,11 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       const a = jourDu(p.jour), b = p.fin && p.fin !== p.jour ? jourDu(p.fin) : a; return b !== a ? `${a}${ENTRE}${b}` : String(a); };
     // (ce que la pastille montre, le lecteur d'écran l'entend : « Scolaire », « Résidence », l'état, et une date jouée, vidée
     // et cochée, « jouée »)
-    const nom = p => [p.quand, p.titre, p.l != null && CARTE.lieux[p.l] ? CARTE.nom(CARTE.lieux[p.l]) : '', p.scolaire && L.scolaire, p.residence && L.residence,
+    // (le nom commence par ce qu'on lit sur la pastille, WCAG 2.5.3 : « 19 – 20 (19 et 20 novembre 2026), … » ; un seul jour,
+    // « 12 novembre 2026 », le contient déjà)
+    const motsLus = t => norm(t).split(/[^a-z0-9]+/).filter(Boolean).join(' ');
+    const quandLu = p => { const e = ecrit(p), q = p.quand || ''; return !q || ` ${motsLus(q)} `.includes(` ${motsLus(e)} `) ? q : `${e} (${q})`; };
+    const nom = p => [quandLu(p), p.titre, p.l != null && CARTE.lieux[p.l] ? CARTE.nom(CARTE.lieux[p.l]) : '', p.scolaire && L.scolaire, p.residence && L.residence,
       p.etat || (p.passe && !p.residence && !p.annulee && L.jouee)].filter(Boolean).join(', ');
     const el = document.createElement('div');
     el.className = 'frise fm7';
@@ -4247,6 +4327,12 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const anime = motionOK() && !immediat && 'IntersectionObserver' in window;
     if (anime) el.classList.add('est-attente');
     const piste = () => $('.fm7-piste', el);
+    // (le nom d'un mois commence par ce qu'on lit sur lui, dans l'ordre, WCAG 2.5.3 : son nom court, l'année quand elle est
+    // écrite, le nombre ; le nom entier et l'année non écrite entre parenthèses : « sept. (septembre) 2026, 1 date »,
+    // « oct. (octobre 2026), 1 date »)
+    const nomMois = (x, n) => { const c = MC[x.m] || MOIS_NOMS[x.m], l = MOIS_NOMS[x.m], vu = x.i === 0 || x.m === 0, long = norm(c) !== norm(l);
+      const t = vu ? `${c}${long ? ` (${l})` : ''} ${x.a}` : `${c} (${long ? `${l} ` : ''}${x.a})`;
+      return `${t}${n && L.uneDate && L.nDates ? `, ${n === 1 ? L.uneDate : L.nDates.replace('{n}', n)}` : ''}`; };
     function rendre() {
       const parM = new Map(ms.map(x => [x.k, []]));
       pts.forEach(p => { let k = String(p.jour || '').slice(0, 7); if (!parM.has(k)) k = k < ms[0].k ? ms[0].k : ms[11].k; parM.get(k).push(p); });
@@ -4256,7 +4342,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         const ps = parM.get(x.k), courant = x.k === kAuj, passe = x.k < kAuj;
         const xa = courant ? `;--x:${((jourDu(auj) - .5) / nbJours(x.a, x.m) * 100).toFixed(1)}%` : '';
         return `<li class="fm7-m${passe ? ' est-passe' : ''}${courant ? ' est-courant' : ''}${ps.length ? '' : ' est-vide'}" data-m="${x.k}" style="--i:${x.i}${xa}">`
-          + `<button class="fm7-tete" type="button" data-mois="${x.k}" aria-pressed="false" tabindex="-1" aria-label="${esc(`${MOIS_NOMS[x.m]} ${x.a}`)}"${ps.length ? '' : ' aria-disabled="true"'}><span class="fm7-nom">${esc(MC[x.m] || MOIS_NOMS[x.m])}</span><span class="fm7-sous"><span class="fm7-an">${x.i === 0 || x.m === 0 ? x.a : ''}</span>${ps.length ? `<span class="fm7-n">${ps.length}</span>` : ''}</span></button>`
+          + `<button class="fm7-tete" type="button" data-mois="${x.k}" aria-pressed="false" tabindex="-1" aria-label="${esc(nomMois(x, ps.length))}"${ps.length ? '' : ' aria-disabled="true"'}><span class="fm7-nom">${esc(MC[x.m] || MOIS_NOMS[x.m])}</span> <span class="fm7-sous"><span class="fm7-an">${x.i === 0 || x.m === 0 ? x.a : ''}</span> ${ps.length ? `<span class="fm7-n">${ps.length}</span>` : ''}</span></button>`
           + `<span class="fm7-axe" aria-hidden="true">${courant ? `<span class="fm7-auj"><span class="fm7-souffle"></span>${L.aujourdhui ? `<span class="fm7-auj-nom">${esc(L.aujourdhui)}</span>` : ''}</span>` : ''}</span>`
           + `<ol class="fm7-jours">${ps.map(p => `<li class="frise-point${p.passe ? ' est-passe' : ''}${p.residence ? ' est-residence' : ''}${p.annulee ? ' est-annule' : ''}" data-id="${esc(p.id)}" data-j="${esc(p.j)}" data-mv-cle="${esc('j:' + p.id)}" style="--fr-c:${p.couleur};--t:${n > 1 ? (p.rang / (n - 1)).toFixed(3) : 0}"><button class="fm7-d" type="button" aria-pressed="false" tabindex="-1" aria-label="${esc(nom(p))}">${esc(ecrit(p))}</button></li>`).join('')}</ol></li>`;
       }).join('')}</ol></div>`;
@@ -4500,7 +4586,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     + '<svg class="b" viewBox="0 0 46 26" focusable="false"><path d="M0 14C9 14 16 9 24 6.5C33 4 42 8 40.5 16C39.3 22 31 23 29 18.5C27.6 15.3 30.5 12.5 33.5 14"/></svg></span>';
   const tetePro = (e, rac, apres = '') => `<section class="ep-tete" style="--e:${esc(e.couleur)}" aria-labelledby="h-ep">
       <div class="ep-tete-ph" aria-hidden="true">${photoEntree(e.cle) ? `<img src="${photoEntree(e.cle)}" alt="">` : ''}</div>
-      <div class="wrap ep-c">${S.espacePro ? `<a class="ep-retour" href="#/espace-pro">${FLECHE}${esc(S.espacePro.titre)}</a>` : ''}<h1 class="ep-h1" id="h-ep" tabindex="-1"><span class="fleur">${esc(e.texte)}</span></h1>
+      <div class="wrap ep-c">${S.espacePro ? `<a class="ep-retour" href="#/espace-pro" data-retour>${FLECHE}${esc(S.espacePro.titre)}</a>` : ''}<h1 class="ep-h1" id="h-ep" tabindex="-1"><span class="fleur">${esc(e.texte)}</span></h1>
         ${apres}</div></section>${sommairePage(rac, e.court, 'psom--ep', `--e:${esc(e.couleur)}`)}`;
   // le sommaire d'une page longue (les deux pages de l'espace pro, la compagnie) : une pièce par section ([id, titre]), arrimée
   // sous le menu quand on descend, la section lue marquée (aria-current, lierSommairePage et defile) ; titre : le nom de la
@@ -4530,8 +4616,10 @@ html.still .sc-image { transition: opacity .35s ease !important; }
      Entrée y mène tout de suite). Survoler un titre, ou sa tentacule, tire un peu dessus (sa pointe se déroule). Sinon les
      photos des spectacles s'enchaînent en fondu. Le
      bouton de pause arrête tout ce qui bouge de lui-même ; moins d'animations : rien ne bouge, les photos changent d'un
-     fondu bref. La scène est faite une fois et replacée dans l'accueil à chaque rendu : quand D change, rien ne se rejoue. */
-  const Scene = (() => {
+     fondu bref. La scène est faite une fois et replacée dans l'accueil à chaque rendu : quand D change, rien ne se rejoue.
+     Elle n'est faite qu'à sa première montée (faireScene) : ses huit tentacules (PIEUVRE.creer) coûtaient 140 ms au téléphone
+     ralenti avant le premier rendu de toute page, même sans accueil ; d'ici là, la façade (Scene) répond pour elle */
+  const faireScene = () => {
     const el = document.createElement('section');
     el.className = 'scene'; el.id = 'scene'; el.setAttribute('aria-labelledby', 'scene-h');
     el.innerHTML = `<div class="sc-diapo" aria-hidden="true"><div class="sc-cadre"></div></div><canvas class="sc-toile" aria-hidden="true"></canvas>
@@ -4551,6 +4639,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     let W = 0, H = 0, dpr = 1, s = .38, ox = 0, oy = 0, mobile = false, gut = 24, ech = 1;
     let raf = 0, visible = true, affiche = false, eveil = null, tPrec = 0, tVie = 0, pres = null, presFaite = false, pause = false, repit = 0;
     let survol = null, brasSurvol = null, pointeur = null, dernierPointeur = '', boite = null, LB = { x0: 0, y0: 0, x1: 0, y1: 0 }, tDessin = 0, actifAvant = null;
+    let tCadence = 0, retard = 0, coutCadre = 0, dessinee = false;   // (la cadence des images, ce que l'une d'elles coûte, lissé)
     let couches = new Map(), montre = null, iAuto = 0, tAuto = 0, dernierActif = null;
     const bob = { x: 0, y: 0 };
     const rgb = h => HEX6.test(h || '') ? [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)) : INK;
@@ -4824,6 +4913,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     }
     function image(now, une) {
       if (!une) raf = 0;
+      // (ce que l'image d'avant a tenu le fil principal, calcul, peinture et le reste compris : l'écart jusqu'à celle-ci)
+      if (!une && dessinee) { const d = now - tDessin; coutCadre = coutCadre ? coutCadre * .7 + d * .3 : d; }
+      if (!une) dessinee = false;
       if (!affiche || (!une && (!visible || document.hidden))) return;
       // un geste en cours : la pieuvre lui laisse la main un instant (suspendre), elle reprend là où elle était
       if (!une && now < repit) { raf = requestAnimationFrame(image); return; }
@@ -4834,10 +4926,20 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       const vif = act || pres || (eveil !== null && now - eveil < 2600) || (secousse && now - secousse < 700) || BRAS.some(a => a.t.q < 1 || Math.abs(a.teinte - (a.but ? 1 : 0)) > .005);
       const tenue = vivant && BRAS.some(a => a.tenu || Math.abs(a.tension) > .005);
       // au repos (rien ne se tend, rien ne s'éveille), l'ondulation lente se contente de trente images par seconde (vingt au
-      // téléphone)
-      if (!une && !vif && vivant && now - tDessin < (mobile ? 46 : 30)) { raf = requestAnimationFrame(image); return; }
-      tDessin = now;
-      if (vivant) tVie += dt / 1000;   // (le temps de la pieuvre : il s'arrête en pause, elle se fige là où elle était)
+      // téléphone). Et elle laisse toujours au fil principal le temps d'un geste : sur un appareil lent (un téléphone modeste,
+      // le processeur ralenti ×4), une image de la pieuvre tient le fil principal 60 à 110 ms (40 de calcul, le reste à
+      // peindre), et les images se suivaient sans répit ; le toucher attendait leur fin, 150 à 200 ms, avant d'être seulement
+      // lu. Ses images s'espacent donc selon ce qu'elles coûtent (coutCadre, lissé) : au repos, plus de la moitié du temps
+      // reste libre ; en plein mouvement, plus d'un tiers. Une machine qui suit (une image en moins de 40 ms, tout
+      // compris : le bureau, un téléphone ordinaire) n'y voit aucun changement ; la lente garde tout le mouvement, en moins d'images, à la
+      // même allure : l'image qui attend garde son temps (retard), celle qui suit le rattrape (tCadence : l'image que la
+      // cadence d'avant aurait dessinée, et son pas de temps, tels qu'ils étaient)
+      if (!une && !vif && vivant && now - tCadence < (mobile ? 46 : 30)) { raf = requestAnimationFrame(image); return; }
+      tCadence = now;
+      if (!une && vivant && coutCadre > 40 && now - tDessin < coutCadre * (vif ? 1.6 : 2.2)) { retard += dt; raf = requestAnimationFrame(image); return; }
+      const dtI = Math.min(250, dt + retard);
+      retard = 0; tDessin = now;
+      if (vivant) tVie += dtI / 1000;   // (le temps de la pieuvre : il s'arrête en pause, elle se fige là où elle était)
       let occupe = vivant;
       // elle flotte, doucement, une fois posée (la relève de l'ouverture se fait sans ce flottement)
       const fl = anime && eveil !== null ? lisse(0, 1, (now - eveil) / 1600) : 0;
@@ -4886,7 +4988,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         }
         a.penche += (pv - a.penche) * .08;
         const tT = a.t.suivreTete(ox, oy, s, theta, dxT, dyT);
-        if (a.t.avancer(dt, { temps: tVie, onde, penche: a.penche, bob, tourne: tT })) occupe = true;
+        if (a.t.avancer(dtI, { temps: tVie, onde, penche: a.penche, bob, tourne: tT })) occupe = true;
         a.em = a.t.mouvement();
       }
       // la région à repeindre : les bras et le logo de cette image, et ceux de la précédente (en px de la toile)
@@ -4934,6 +5036,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         }
       }
       for (const T of TIT) placer(T, allumes.has(T), now, anime);
+      if (!une) dessinee = true;
       if (pres || tenue || (eveil !== null && now - eveil < 2600)) occupe = true;
       if (!une && occupe) raf = requestAnimationFrame(image);
       else if (une && occupe) reveil();
@@ -5070,7 +5173,21 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       // un geste : la pieuvre lui laisse la main (ms)
       suspendre(ms = 600) { repit = performance.now() + ms; },
     };
-  })();
+  };
+  // (la façade : ce qui ne fait que regarder ou retenir la scène, avant qu'elle existe, rend ce qu'elle rendrait cachée ; le
+  // reste la fait d'abord)
+  let sceneFaite = null;
+  const laScene = () => sceneFaite || (sceneFaite = faireScene());
+  const Scene = {
+    monter: (place, surPlace) => laScene().monter(place, surPlace),
+    montrer: oui => { if (oui || sceneFaite) laScene().montrer(oui); else Menu.enHaut(); },
+    eveiller: relais => laScene().eveiller(relais),
+    cible: () => (sceneFaite ? sceneFaite.cible() : null),
+    bras: () => laScene().bras(),
+    cibles: () => (sceneFaite ? sceneFaite.cibles() : []),
+    coeur: () => laScene().coeur(),
+    suspendre: ms => { if (sceneFaite) sceneFaite.suspendre(ms); },
+  };
   window.Scene = Scene;   // (pour les contrôles : l'état des tentacules se lit depuis l'extérieur)
 
   /* ---------- l'accueil, 2 : le menu (règle 21) est le menu flottant, posé sous la pieuvre (Menu, Scene) ---------- */
@@ -5188,6 +5305,35 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   }
 
   /* ---------- l'accueil : la scène (la pieuvre), le menu, les spectacles un par écran, la saison sur la carte, les donateurs ---------- */
+  /* l'indication du premier écran de l'accueil : un nouveau visiteur ne devine ni que les titres de la pieuvre se
+     touchent (une fois, le spectacle se montre ; deux fois, sa page s'ouvre), ni où sont toutes les dates. Une phrase
+     courte (L.indiceScene), et « Toutes les dates » qui mène aux saisons, posées en bas de l'écran, hors de la scène ; elles
+     s'effacent au premier geste (toucher, clic, molette, défilement, touche) et ne reviennent plus de la visite. Au clavier,
+     un titre de la scène qui a le focus montre les siennes (L.indiceClavier : les flèches, Entrée) tant qu'il l'a. Cachée
+     aux lecteurs d'écran : un titre y est un lien qui s'ouvre d'emblée */
+  let indiceVu = false;
+  try { indiceVu = sessionStorage.getItem('crescite-indice') === '1'; } catch (e) { /* sans stockage : la visite seule */ }
+  let indiceFin = null;
+  function indiceScene(surPlace) {
+    if (indiceFin) { indiceFin.abort(); indiceFin = null; }
+    $$('.sc-indice').forEach(x => x.remove());
+    if (!L.indiceScene) return;
+    const ms = menuDe('saisons'), x = document.createElement('div');
+    x.className = 'sc-indice'; x.setAttribute('aria-hidden', 'true');
+    x.innerHTML = `<p class="sc-ind-g">${esc(L.indiceScene)}${ms && L.toutesLesDates ? ` <a href="${esc(ms.href)}" tabindex="-1">${esc(L.toutesLesDates)}${FLECHE}</a>` : ''}</p>${L.indiceClavier ? `<p class="sc-ind-k">${esc(L.indiceClavier)}</p>` : ''}`;
+    main.appendChild(x);
+    if (!indiceVu) x.classList.add('est-vu');
+    const ac = indiceFin = new AbortController(), o = { signal: ac.signal, passive: true, capture: true };
+    const effacer = e => { if (indiceVu || (e && e.target && e.target.closest && e.target.closest('.sc-indice'))) return;
+      indiceVu = true; x.classList.remove('est-vu'); try { sessionStorage.setItem('crescite-indice', '1'); } catch (er) { /* rien */ } };
+    ['pointerdown', 'wheel', 'keydown'].forEach(t => addEventListener(t, effacer, o));
+    addEventListener('scroll', () => { if (scrollY > 40) effacer(); }, o);
+    // (au clavier : le titre de la scène qui a le focus montre les touches, tant qu'il l'a)
+    document.addEventListener('focusin', e => { x.classList.toggle('au-clavier', !!(e.target.closest && e.target.closest('.sc-t') && e.target.matches(':focus-visible'))); }, o);
+    document.addEventListener('focusout', e => { if (!e.relatedTarget || !(e.relatedTarget.closest && e.relatedTarget.closest('.sc-t'))) x.classList.remove('au-clavier'); }, o);
+    // (la page quittée : l'indication part avec elle, ses écoutes aussi)
+    new MutationObserver((_, mo) => { if (!x.isConnected) { ac.abort(); mo.disconnect(); } }).observe(main, { childList: true });
+  }
   function accueil(q, surPlace) {
     vue = 'accueil';
     const lieux = CARTE.aVenir(), vus = new Set(lieux.map(x => x.l)), passe = tous().filter(x => !vus.has(x.l)), ms = menuDe('saisons');
@@ -5201,6 +5347,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       </div></section>
       <section class="merci"><div class="wrap">${trait()}<p${ed('site.donateurs')}>${S.donateurs || ''}</p></div></section></div>`;
     Scene.monter($('#sc-place', main), surPlace);
+    indiceScene(surPlace);
     const svg = $('.une-carte svg', main), ol = $('.prochaines', main);
     const montre = bulleSur(svg, $('#bulle'), l => { const x = lieux.find(y => y.l === l);
       return x ? `<b>${esc(CARTE.nom(x))}</b><ul>${x.dates.map(d => `<li><span class="t">${esc(d.titre)}</span><span>${esc(d.ligneDate)}</span>${d.scolaire ? `<em class="tag">${esc(L.scolaire)}</em>` : ''}</li>`).join('')}</ul>` : ''; },
@@ -5387,8 +5534,47 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   // SQL, la fonction crescite-courriel) ; la page le dit, et ne promet rien d'autre. Le secteur : la position (« Me
   // géolocaliser » : l'alerte vaut alors dans un rayon autour d'elle) avec sa commune, ou un code postal, ou une commune
   // cherchée par son nom (geo.api.gouv.fr) ; la base en déduit le département
+  /* le dernier mot des formulaires publics (l'alerte, la demande de proposition de cession, le contact) : à l'envoi, chaque
+     champ qui ne va pas le dit sous lui (L.champRequis, L.courrielInvalide, L.caseRequise, L.calculFaux ; sinon ce que dit le
+     navigateur), relié à lui (aria-describedby) et marqué (aria-invalid) ; le focus va au premier, qui se lit avec son
+     erreur ; le message part dès que le champ est retouché. Les bulles du navigateur se taisent (noValidate) : une seule
+     façon de dire. Rien ne change de ce que le formulaire envoie. regles : [{ el, ok: el => vrai, msg }] en plus */
+  function verifier(form, regles = []) {
+    form.noValidate = true;
+    let premier = null;
+    for (const el of form.elements) {
+      if (!el.matches || !el.matches('input:not([type="hidden"]), select, textarea') || el.disabled) continue;
+      const v = el.validity, r = regles.find(x => x.el === el);
+      const m = v.valueMissing ? (el.type === 'checkbox' ? L.caseRequise : L.champRequis) || el.validationMessage
+        : v.typeMismatch && el.type === 'email' ? L.courrielInvalide || el.validationMessage
+        : !v.valid ? el.validationMessage
+        : r && !r.ok(el) ? r.msg : '';
+      erreurChamp(el, m);
+      if (m && !premier) premier = el;
+    }
+    if (premier) premier.focus();
+    return !premier;
+  }
+  function erreurChamp(el, m) {
+    const id = `${el.id}-err`;
+    let p = document.getElementById(id);
+    const desc = (el.getAttribute('aria-describedby') || '').split(/\s+/).filter(x => x && x !== id);
+    if (!m) { if (p) p.remove(); el.removeAttribute('aria-invalid'); if (desc.length) el.setAttribute('aria-describedby', desc.join(' ')); else el.removeAttribute('aria-describedby'); return; }
+    if (!p) {
+      p = document.createElement('span'); p.className = 'champ-err'; p.id = id;
+      // (sous le champ : dans son bloc, sinon juste après lui, ou après son groupe)
+      const bloc = el.closest('.champ, .case, .calcul, .champ-simu');
+      if (bloc) bloc.appendChild(p); else (el.closest('.alerte-geo-grp') || el).insertAdjacentElement('afterend', p);
+      el.addEventListener('input', () => erreurChamp(el, ''), { once: true });
+      el.addEventListener('change', () => erreurChamp(el, ''), { once: true });
+    }
+    p.textContent = m;
+    el.setAttribute('aria-invalid', 'true');
+    el.setAttribute('aria-describedby', [...desc, id].join(' '));
+  }
   function initAlerteTournee() {
     const f = $('#f-alerte'); if (!f) return;
+    f.noValidate = true;
     const btnGeo = $('#btn-geo'), cp = $('#alerte-cp'), email = $('#alerte-email'), sp = $('#alerte-spectacle'), msg = $('#alerte-msg');
     let ici = null;      // la position prise, sa commune, son code postal, son département et le texte écrit dans le champ
     const geoTexte = t => { if (btnGeo) btnGeo.querySelector('span').textContent = t; };
@@ -5441,6 +5627,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     };
     f.addEventListener('submit', async e => {
       e.preventDefault();
+      if (!verifier(f)) return;
       const mailVal = email.value.trim(), cpVal = cp.value.trim(), spVal = sp.value;
       if (!mailVal || !cpVal) return;
       const btnSub = $('#btn-inscrire-alerte');
@@ -5449,7 +5636,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       const s = spVal && bySlug[spVal] ? bySlug[spVal] : null;
       const secteur = ici ? { code_postal: ici.code_postal, commune: ici.commune, departement: ici.departement } : await secteurEcrit(cpVal);
       if (!secteur) {
-        dire('err', esc(L.alerteSecteurInconnu || 'Ce secteur est introuvable : indiquez un code postal (5 chiffres), ou utilisez « Me géolocaliser ».'));
+        // (dit sous le champ du secteur, qui reprend le focus)
+        erreurChamp(cp, L.alerteSecteurInconnu || 'Ce secteur est introuvable : indiquez un code postal (5 chiffres), ou utilisez « Me géolocaliser ».');
         if (btnSub) btnSub.disabled = false;
         cp.focus();
         return;
@@ -5497,7 +5685,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const choisi = () => bySlug[spSelect.value] || null, nomChoisi = () => (choisi() || {}).titre || spSelect.value;
     spSelect.addEventListener('change', () => { panneau.innerHTML = accueilSp(choisi()); const h = $('#simu-form-devis h3'); if (h) h.textContent = `${L.demandeCession} — ${nomChoisi()}`; });
     if (!btnOuvrir || !zoneForm) return;
-    const champ = (id, cle, { type = 'text', requis = false, max = 200, auto = '' } = {}) => `<div class="champ"><label for="${id}">${esc(L[cle])}${requis ? '<span aria-hidden="true"> *</span>' : ''}</label><input type="${type}" id="${id}"${requis ? ' required' : ''} maxlength="${max}"${auto ? ` autocomplete="${auto}"` : ''}></div>`;
+    const champ = (id, cle, { type = 'text', requis = false, max = 200, auto = '' } = {}) => `<div class="champ"><label for="${id}">${esc(L[cle])}${requis ? '<span aria-hidden="true"> *</span>' : ''}</label><input type="${type}" id="${id}"${requis ? ' required' : ''} maxlength="${max}"${auto ? ` autocomplete="${auto}"` : ''}${type === 'email' ? ' autocapitalize="off" spellcheck="false"' : ''}></div>`;
     btnOuvrir.addEventListener('click', () => {
       zoneForm.hidden = !zoneForm.hidden;
       btnOuvrir.setAttribute('aria-expanded', String(!zoneForm.hidden));
@@ -5511,7 +5699,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
             <span id="dev-status" class="alerte-msg" hidden></span>
           </div>
         </form>`;
+      $('#f-devis').noValidate = true;
       $('#f-devis').addEventListener('submit', async () => {
+        if (!verifier($('#f-devis'))) return;
         const st = $('#dev-status'), btnEnv = $('#btn-envoyer-devis');
         btnEnv.disabled = true;
         st.hidden = true;
@@ -5552,6 +5742,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     });
   }
 
+  // un champ de la convention : son nom au-dessus de lui (l'indication sans son exemple ; pré-rempli, le champ ne montrait
+  // jamais son indication, et rien ne disait ce qu'il attendait), l'exemple gardé en indication
+  const cvChamp = ([id, ph, val, auto]) => `<div class="cv-champ"><label for="${id}">${esc(ph.replace(/\s*\(ex\.[^)]*\)$/, ''))}</label><input type="text" id="${id}" placeholder="${esc(ph)}" value="${esc(val)}" autocomplete="${auto}"></div>`;
   function initEspaceScolaire() {
     const btnConv = $('#btn-ouvrir-conv'), convModal = $('#conv-modal');
     if (btnConv && convModal) {
@@ -5561,14 +5754,12 @@ html.still .sc-image { transition: opacity .35s ease !important; }
           convModal.innerHTML = `<h3>Générateur de Convention de Partenariat Scolaire</h3>
             <p style="color:var(--gris); margin-bottom:16px;">Générez en un clic la convention officielle d’accueil et d’action culturelle pour signature par le chef d'établissement et vote en Conseil d'Administration.</p>
             <div class="conv-champs">
-              <input type="text" id="cv-etab" placeholder="Nom de l’établissement (ex. Lycée Corneille)" value="Lycée Pierre Corneille">
-              <input type="text" id="cv-ville" placeholder="Commune (ex. Rouen)" value="Rouen (76)">
-              <input type="text" id="cv-chef" placeholder="Nom du Chef d’établissement" value="Le Proviseur">
-              <select id="cv-spectacle">
+              ${[['cv-etab', 'Nom de l’établissement (ex. Lycée Corneille)', 'Lycée Pierre Corneille', 'organization'], ['cv-ville', 'Commune (ex. Rouen)', 'Rouen (76)', 'address-level2'], ['cv-chef', 'Nom du Chef d’établissement', 'Le Proviseur', 'off']]
+                .map(cvChamp).join('')}
+              <div class="cv-champ"><label for="cv-spectacle">${esc(L.devisSpectacle || L.spectacles)}</label><select id="cv-spectacle">
                 ${D.shows.filter(s => s.actionCulturelle).map(s => `<option value="${esc(s.slug)}">${esc(s.titre)}</option>`).join('')}
-              </select>
-              <input type="text" id="cv-classes" placeholder="Classes concernées (ex. 3 classes de 2nde)" value="3 classes de 2nde et 1re">
-              <input type="text" id="cv-ateliers" placeholder="Volume ateliers (ex. 6 ateliers de 1h)" value="6 ateliers d’initiation (6h)">
+              </select></div>
+              ${[['cv-classes', 'Classes concernées (ex. 3 classes de 2nde)', '3 classes de 2nde et 1re', 'off'], ['cv-ateliers', 'Volume ateliers (ex. 6 ateliers de 1h)', '6 ateliers d’initiation (6h)', 'off']].map(cvChamp).join('')}
             </div>
             <button type="button" class="bouton e" id="btn-telecharger-conv" style="--ec:${esc((E.etablissement || {}).couleur || 'var(--saison)')}">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
@@ -5652,6 +5843,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
      l'écran (le h1 ne change pas ; le titre du document prend celui de la saison). */
   function voir(q, surPlace, ouvrir = null) {
     vue = 'saisons';
+    const relu = relecture;
     const M0 = menuDe('saisons') || { texte: L.saisons, href: '#/saisons' }, S0 = S.saisons[0];
     // (demande de la compagnie) une date dont le jour n'est pas encore fixé (« novembre 2026 ») ne paraît pas dans les saisons
     // tant qu'elle n'est pas passée : ni dans les listes, ni sur la frise, ni sur la carte ; elle attend son jour. Une date
@@ -5714,6 +5906,10 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     let pts = [], barre = null;
     // (les mois de la saison, ses noms courts ; une date de la frise que ses filtres gardent)
     const MC = L.moisCourts || [];
+    // (le nom d'un bouton de mois commence par ce qu'on lit sur lui, son nom court, WCAG 2.5.3 ; le nom entier et l'année
+    // entre parenthèses : « sept. (septembre 2026), 1 date »)
+    const nomMoisBouton = (x, n) => { const c = MC[x.m] || MOIS_NOMS[x.m], l = MOIS_NOMS[x.m];
+      return `${c} (${norm(c) !== norm(l) ? `${l} ` : ''}${x.a})${n && L.uneDate && L.nDates ? `, ${n === 1 ? L.uneDate : L.nDates.replace('{n}', n)}` : ''}`; };
     const moisSaison = Array.from({ length: 12 }, (_, i) => { const m = (8 + i) % 12, a = +D.saison.slice(0, 4) + (8 + i >= 12 ? 1 : 0); return { k: `${a}-${String(m + 1).padStart(2, '0')}`, m, a }; });
     const gardeP = p => (!F.jour || p.j === F.jour) && (!F.mois || dansMois(p.d0, p.d1, F.mois));
 
@@ -5742,7 +5938,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
             <div class="alerte-champs">
               <div class="alerte-geo-grp">
                 <input type="text" id="alerte-cp" placeholder="${esc(L.codePostalOuCommune || 'Code postal ou ville')}" aria-label="${esc(L.codePostalOuCommune || 'Code postal ou ville')}" autocomplete="postal-code" required>
-                <button type="button" class="btn-geo" id="btn-geo" title="${esc(L.meGeolocaliser || 'Me géolocaliser')}">
+                <button type="button" class="btn-geo" id="btn-geo">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/><circle cx="12" cy="12" r="2"/></svg>
                   <span>${esc(L.meGeolocaliser || 'Me géolocaliser')}</span>
                 </button>
@@ -5751,7 +5947,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
                 <option value="">${esc(L.tousSpectacles || 'Tous les spectacles')}</option>
                 ${D.shows.map(s => `<option value="${esc(s.slug)}">${esc(s.titre)}</option>`).join('')}
               </select>
-              <input type="email" id="alerte-email" placeholder="${esc(L.adresseElectronique || '')}" aria-label="${esc(L.adresseElectronique || '')}" maxlength="254" required>
+              <input type="email" id="alerte-email" placeholder="${esc(L.adresseElectronique || '')}" aria-label="${esc(L.adresseElectronique || '')}" maxlength="254" autocomplete="email" autocapitalize="off" spellcheck="false" required>
               <button type="submit" class="bouton e" id="btn-inscrire-alerte" style="--ec:var(--saison)">
                 <span>${esc(L.mInscrire || 'M’inscrire à l’alerte')}</span>
                 ${FLECHE}
@@ -5763,6 +5959,12 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const poserAlerte = () => { const bx = $('.alerte-boite', main); if (!bx || !bx.isConnected || $('#f-alerte', bx)) return; bx.insertAdjacentHTML('beforeend', formAlerte()); initAlerteTournee(); };
     // (la tête, resserrée pour que la saison en cours, sa rangée et le haut de sa frise tiennent dans le premier écran : le
     // titre, puis sur une ligne ses raccourcis et la recherche ; au téléphone, la recherche à côté du titre)
+    // (la première image de la page n'a que le premier écran : la tête, la rangée, la frise, la carte. Les listes de dates, les
+    // saisons passées et l'alerte, sous le pli, attendent la tâche d'après, data-tard (display: none) : leur mise en forme
+    // portait cette image au-delà de 50 ms au bureau (règle 15 C). Rien ne bouge à l'écran : ils sont dessous, et la carte,
+    // sur trois rangées, ne change pas la hauteur de la frise. Une adresse qui vise une saison, une date, un filtre, la vue refaite
+    // sur place ou le retour arrière (la position de lecture se rend d'un coup) les posent tout de suite)
+    const tot = !surPlace && !ouvrir && !actif() && !F.date && !F.mois && !relu, tard7 = tot ? ' data-tard' : '';
     main.innerHTML = `<header class="s7-entete"><div class="wrap s7-e">
         <h1 class="s7-titre" tabindex="-1"><span class="fleur">${esc(M0.texte)}</span></h1>
         <ul class="s7-rac">${[['v-saison', S0.titre], ['v-agenda', L.saisonsPassees], ['v-alerte', nAlerte]].map(([id, t]) => `<li><button type="button" data-va="${id}"><span class="s7-lampe" aria-hidden="true"></span>${esc(t)}</button></li>`).join('')}</ul>
@@ -5777,19 +5979,19 @@ html.still .sc-image { transition: opacity .35s ease !important; }
           <div class="fs7"><div class="v-frise" id="v-frise"></div><div class="ft7" id="ft7"></div></div>
           <figure class="ag7-carte">${carte({ lieux, passe: passeC, titre: S0.titre, couleurs: true, loupe: true })}<button type="button" class="ag7-large" hidden></button><figcaption class="s7-legende" aria-hidden="true"></figcaption></figure>
           <div class="ag-listes" id="ag-listes">
-            <div class="ag7-proch"><h3 class="s7-h">${esc(L.prochainesDates)}</h3><div class="ag-liste" id="ag-liste"></div></div>
-            <div class="ag7-toutes"><h3 class="s7-h">${esc(L.toutesLesDates)}</h3><div class="ag-toutes" id="ag-toutes"></div></div>
+            <div class="ag7-proch"${tard7}><h3 class="s7-h">${esc(L.prochainesDates)}</h3><div class="ag-liste" id="ag-liste"></div></div>
+            <div class="ag7-toutes"${tard7}><h3 class="s7-h">${esc(L.toutesLesDates)}</h3><div class="ag-toutes" id="ag-toutes"></div></div>
           </div>
         </div>
       </div></section>
-      <section class="p4" id="v-agenda" aria-labelledby="h-agenda"><div class="sf7" aria-hidden="true"></div><div class="wrap">
+      <section class="p4" id="v-agenda" aria-labelledby="h-agenda"${tard7}><div class="sf7" aria-hidden="true"></div><div class="wrap">
         <h2 class="p4-titre" id="h-agenda" data-mv="monte">${esc(L.saisonsPassees)}</h2>
         ${spPasses.length ? `<div class="sm7 sm7--passe"><div class="sm7-in">${sousMenu(spPasses, nPasses)}</div></div>` : ''}
         <div class="p4-frise" id="idx-frise"></div>
         <nav class="ag-index p4-index" id="ag-index" aria-labelledby="h-agenda"></nav>
         <div class="saisons-ag" id="ag-saisons"></div>
       </div></section>
-      <section class="bloc" id="v-alerte" aria-labelledby="h-alerte"><div class="wrap">
+      <section class="bloc" id="v-alerte" aria-labelledby="h-alerte"${tard7}><div class="wrap">
         <div class="alerte-boite">
           ${L.alerteBadge ? `<span class="alerte-badge">${esc(L.alerteBadge)}</span>` : ''}
           <h2 class="titre-bloc" id="h-alerte">${esc(L.alerteTournee || 'Être prévenu du prochain passage')}</h2>
@@ -5852,6 +6054,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // dans la tâche d'après, sous eux (rien ne bouge à l'écran) ; tous d'un coup quand l'adresse nomme une date
     // (la suite, image après image : chaque morceau se met en page dans sa propre image, aucune ne retient la page)
     const ensuite = f => requestAnimationFrame(() => setTimeout(f, 0));
+    // (ce qui attendait sous le pli paraît, avant tout ce que la vue a demandé pour la suite : la lecture au fil des dates, les
+    // saisons passées les trouvent mises en page)
+    if (tot) ensuite(() => $$('[data-tard]', main).forEach(e => e.removeAttribute('data-tard')));
     let suiteListe = 0;
     function dessineProchaines(tout = false) {
       const Ls = proch.filter(gardeS), groupes = [];
@@ -5860,7 +6065,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       const html = gs => gs.map(g => `<div class="d7-mois"><h4 class="d7-mois-t" data-mv-cle="m:${esc(g.m)}">${esc(g.m)}</h4><ol class="d7s" data-agenda="">${g.rs.map(ligneProchaine).join('')}</ol></div>`).join('');
       const n = tout || F.date ? groupes.length : 2, jeton = ++suiteListe;
       liste.innerHTML = html(groupes.slice(0, n));
-      if (groupes.length > n) ensuite(() => { if (jeton !== suiteListe || !liste.isConnected) return; liste.insertAdjacentHTML('beforeend', html(groupes.slice(n))); if (rsVoir) rsVoir.dessiner(); lireSaison(); });
+      // (la suite se met en forme dans sa propre tâche, comme les morceaux des saisons passées : laissée à l'image d'après, elle
+      // la tenait 150 ms au téléphone ralenti, et ce qui s'y présentait, la mise à jour du survol après la page neuve, attendait)
+      if (groupes.length > n) ensuite(() => { if (jeton !== suiteListe || !liste.isConnected) return; liste.insertAdjacentHTML('beforeend', html(groupes.slice(n))); if (rsVoir) rsVoir.dessiner(); lireSaison(); void liste.offsetHeight; });
       if (rsVoir) rsVoir.dessiner();
       lireSaison();
     }
@@ -5955,7 +6162,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     function dessineIndex(vis) {
       const tousOuverts = vis.length > 0 && vis.every(({ s }) => F.ouv.has(s.k));
       const actifs = [terme() && ['q', F.q.trim()], F.slug && ['s', (puces.find(x => x.cle === F.slug) || {}).titre], F.l !== null && ['l', CARTE.nom(CARTE.lieux[F.l])]].filter(Boolean);
-      index.innerHTML = `<button type="button" class="idx-tout" aria-expanded="${tousOuverts}" aria-label="${esc(L.saisonsPassees)}">${tousOuverts ? DOUBLE_HAUT : DOUBLE}</button>
+      index.innerHTML = `<button type="button" class="idx-tout" aria-expanded="${tousOuverts}" aria-label="${esc(L.saisonsPassees)}" title="${esc(L.saisonsPassees)}">${tousOuverts ? DOUBLE_HAUT : DOUBLE}</button>
         <ul>${actifs.map(([c, t]) => `<li><button type="button" class="idx idx-actif" data-eff="${c}">${retirer()}${esc(t)}${CROIX}</button></li>`).join('')}${vis.map(({ s, rows }) => { const n = nbReps(rows.filter(jouee));   // (ses représentations, comme la frise au-dessus)
           return `<li><button type="button" class="idx" data-k="${s.k}" aria-controls="sai-${s.k}" aria-expanded="${F.ouv.has(s.k)}">${esc(s.k)}${n ? `<small>${n}</small>` : ''}</button></li>`; }).join('')}</ul>`;
     }
@@ -6091,7 +6298,37 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     let suite = false;
     // (saisonSeule : un filtre de la frise, qui ne touche que la saison en cours : ses deux listes glissent ensemble, la loupe suit)
     let jFriseMaj = 0;
+    // l'ancrage du défilement, tenu à la main le temps qu'un geste refasse la page : la ligne lue en haut de l'écran reste à sa
+    // hauteur, image après image, 600 ms (sauf si le visiteur fait défiler lui-même), le navigateur ne déplaçant pas la page de
+    // lui-même pendant ce temps (overflow-anchor: none). Le sien, sur une page de milliers de lignes qui s'effondre sous le
+    // geste (un filtre qui referme les saisons passées), cherchait son repère 30 ms dans l'image même, au-delà de 50 ms
+    let ancrage = null;
+    function tenirAncrage() {
+      // (une lettre tapée dans la recherche : on lit le haut de la page, où est le champ ; le repère n'y sert à rien, et le
+      // chercher à chaque lettre retenait la suivante au téléphone)
+      const act = document.activeElement; if (act && act.matches && act.matches('input[type="search"]')) return;
+      const html = document.documentElement;
+      if (ancrage) { ancrage.t = performance.now(); return; }
+      const haut = (parseFloat(getComputedStyle(html).getPropertyValue('--haut')) || 56) + 40;
+      let el = document.elementFromPoint(innerWidth / 2, Math.min(innerHeight - 1, haut));
+      // (le repère : la partie de la page qui ne se refait pas, celle où l'on lit, la tête, la saison, ses deux listes, les saisons
+      // passées, l'alerte ; ce qui change au-dessus d'elle ne la déplace pas, ce qui change en elle se lit à sa place)
+      el = el && el.closest && el.closest('.ag7-proch, .ag7-toutes, .ag7-carte, .fs7, #v-agenda, #v-alerte, .s7-entete, .s7');
+      if (!el || !main.contains(el)) return;
+      const a = ancrage = { el, top: el.getBoundingClientRect().top, t: performance.now(), bouge: false };
+      const geste = () => { a.bouge = true; }, gestes = ['wheel', 'touchstart', 'keydown'];
+      gestes.forEach(t => addEventListener(t, geste, { passive: true, once: true }));
+      html.style.overflowAnchor = 'none';
+      const suivre = () => {
+        if (ancrage !== a) return;
+        if (!a.bouge && a.el.isConnected && a.el.getClientRects().length) { const d = a.el.getBoundingClientRect().top - a.top; if (Math.abs(d) > 1) scrollBy({ top: d, left: 0, behavior: 'instant' }); }
+        if (!a.bouge && racine.isConnected && performance.now() - a.t < 600) requestAnimationFrame(suivre);
+        else { ancrage = null; html.style.overflowAnchor = ''; gestes.forEach(t => removeEventListener(t, geste)); }
+      };
+      requestAnimationFrame(suivre);
+    }
     function dessine(anime, saisonSeule = false) {
+      if (anime) tenirAncrage();
       pts = pointsSaison(); jAllume = null;
       if (F.jour && !pts.some(p => p.j === F.jour)) F.jour = null;
       annoncer();
@@ -6187,7 +6424,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       const dessiner = () => {
         const t = norm(input.value).trim();
         if (!t) { fermer(); return; }
-        const tri = xs => xs.filter(x => x.n.includes(t)).sort((a, b) => (b.n.startsWith(t) - a.n.startsWith(t)) || a.n.localeCompare(b.n, 'fr'));
+        // (l'ordre alphabétique par un seul comparateur, COLLATION : localeCompare(…, 'fr') en refaisait un à chaque comparaison,
+        // 14 ms par lettre tapée au bureau)
+        const tri = xs => xs.filter(x => x.n.includes(t)).sort((a, b) => (b.n.startsWith(t) - a.n.startsWith(t)) || COLLATION.compare(a.n, b.n));
         const sp = tri(puces.map(x => ({ type: 's', v: x.cle, t: x.titre, n: norm(x.titre), c: x.slug ? couleurDe(x.slug) : '' }))).slice(0, 5);
         const co = tri(communesDe().map(([l, nom]) => ({ type: 'l', v: l, t: nom, n: norm(nom) }))).slice(0, 6);
         if (!sp.length && !co.length) { fermer(); return; }
@@ -6317,7 +6556,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         const b = $(`[data-reserver="${CSS.escape(rsVoir.cle())}"]`, liste), li = b && b.closest('li');
         if (li && li.contains(ev.target)) { ev.preventDefault(); rsVoir.choisir(null); b.focus(); }
       });
-      if (F.date && rsVoir.cle() && !surPlace) bientot(() => { const b = $(`[data-reserver="${CSS.escape(F.date)}"]`, liste); if (b) { b.scrollIntoView({ block: 'center' }); b.focus({ preventScroll: true }); } });
+      if (F.date && rsVoir.cle() && !surPlace && !relu) bientot(() => { const b = $(`[data-reserver="${CSS.escape(F.date)}"]`, liste); if (b) { b.scrollIntoView({ block: 'center' }); b.focus({ preventScroll: true }); } });
     }
     /* la frise des mois (la saison d'un regard) : survoler une date l'écrit sous la loupe, qui s'approche de sa ville, et allume
        sa ligne ; la choisir (un clic) ne garde qu'elle dans les listes, juste dessous (rien ne défile ; sa carte de réservation
@@ -6389,11 +6628,13 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         $('.bf7-n', bt).textContent = fs.length ? String(fs.length) : '';
         bar.classList.toggle('a-filtres', fs.length > 0);
         const ms = moisSaison.filter(x => x.k !== F.mois && nb(x.k));
-        zone.innerHTML = fs.map(puce).join('') + (fs.length > 1 && L.effacerFiltres ? `<button type="button" class="bf7-tout" data-eff="tout">${esc(L.effacerFiltres)}</button>` : '') + ms.map(x => `<button type="button" class="s7-chip bf7-m${x.k < D.aujourdhui.slice(0, 7) ? ' est-passe' : ''}" data-mois="${x.k}" aria-pressed="false" aria-label="${esc(`${MOIS_NOMS[x.m]} ${x.a}`)}">${esc(MC[x.m] || MOIS_NOMS[x.m])}</button>`).join('');
+        zone.innerHTML = fs.map(puce).join('') + (fs.length > 1 && L.effacerFiltres ? `<button type="button" class="bf7-tout" data-eff="tout">${esc(L.effacerFiltres)}</button>` : '') + ms.map(x => `<button type="button" class="s7-chip bf7-m${x.k < D.aujourdhui.slice(0, 7) ? ' est-passe' : ''}" data-mois="${x.k}" aria-pressed="false" aria-label="${esc(nomMoisBouton(x, nb(x.k)))}">${esc(MC[x.m] || MOIS_NOMS[x.m])}</button>`).join('');
         // (les filtres en cours se voient d'abord ; sans eux, la bande se pose sur le premier mois à venir)
         deja = new Set(fs.map(([c]) => c));
         if (fs.length) zone.scrollLeft = 0;
-        else if (avant !== 0) requestAnimationFrame(() => { const b = $('.bf7-m:not(.est-passe)', zone); zone.scrollLeft = b && zone.scrollWidth > zone.clientWidth ? Math.max(0, b.offsetLeft - zone.offsetLeft - 6) : 0; });
+        // (la bande des mois n'est qu'au téléphone : au bureau, la lire forçait la mise en page de la page neuve dans l'image
+        // qui la peint, 40 ms de plus sur le geste « menu saisons »)
+        else if (avant !== 0 && TEL.matches) requestAnimationFrame(() => { const b = $('.bf7-m:not(.est-passe)', zone); zone.scrollLeft = b && zone.scrollWidth > zone.clientWidth ? Math.max(0, b.offsetLeft - zone.offsetLeft - 6) : 0; });
         avant = fs.length;
       }
       // la page va aux dates gardées : celles de la saison en cours, sinon celles des saisons passées
@@ -6402,15 +6643,15 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         if (t) requestAnimationFrame(() => { const y = t.getBoundingClientRect().top - dessous(id === 'ag-listes'); if (Math.abs(y) > 8) scrollBy({ top: y, behavior: motionOK() ? 'smooth' : 'auto' }); }); };
       // le panneau
       const communes = () => [...new Map(ptsSaison(() => true).map(([r, x]) => [x.l, lieuDe(x.l)]).filter(([l, n]) => l != null && n)).entries()]
-        .sort((a, b) => a[1].localeCompare(b[1], 'fr'));
+        .sort((a, b) => COLLATION.compare(a[1], b[1]));
       let ouvert = false, retour = null;
       function dessinerPanneau() {
         const { n } = nVoir();
         pan.innerHTML = `<div class="fe7-prise"><span class="fe7-poignee" aria-hidden="true"></span>
-          <div class="fe7-tete"><h2 class="fe7-t" id="fe7-t" tabindex="-1">${esc(L.filtres)}</h2><button type="button" class="fe7-x" data-fermer aria-label="${esc(L.fermer || '')}">${CROIX}</button></div></div>
+          <div class="fe7-tete"><h2 class="fe7-t" id="fe7-t" tabindex="-1">${esc(L.filtres)}</h2><button type="button" class="fe7-x" data-fermer aria-label="${esc(L.fermer || '')}" title="${esc(L.fermer || '')}">${CROIX}</button></div></div>
           <div class="fe7-corps">
             <div class="s7-cherche-c"><label class="s7-cherche"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5"/><path d="M11 11l4 4"/></svg><input type="search" id="fe7-q" placeholder="${esc(L.rechercher)}" aria-label="${esc(L.rechercher)}" autocomplete="off" value="${esc(F.q)}"></label></div>
-            <section aria-labelledby="fe7-hm"><h3 class="fe7-h" id="fe7-hm">${esc(S0.titre)}</h3><div class="fe7-mois">${moisSaison.map(x => `<button type="button" class="fe7-m" data-mois="${x.k}" aria-pressed="false" aria-label="${esc(`${MOIS_NOMS[x.m]} ${x.a}`)}"><b>${esc(MC[x.m] || MOIS_NOMS[x.m])}</b><small></small></button>`).join('')}</div></section>
+            <section aria-labelledby="fe7-hm"><h3 class="fe7-h" id="fe7-hm">${esc(S0.titre)}</h3><div class="fe7-mois">${moisSaison.map(x => `<button type="button" class="fe7-m" data-mois="${x.k}" aria-pressed="false" aria-label="${esc(nomMoisBouton(x, nb(x.k)))}"><b>${esc(MC[x.m] || MOIS_NOMS[x.m])}</b><small></small></button>`).join('')}</div></section>
             ${spSaison.length ? `<section aria-labelledby="fe7-hs"><h3 class="fe7-h" id="fe7-hs">${esc(L.spectacles)}</h3><div class="fe7-puces fe7-lg">${spSaison.map(x => puceSp(x, nSaison.get(x.cle))).join('')}</div></section>` : ''}
             ${spPasses.some(x => !nSaison.has(x.cle)) ? `<section aria-labelledby="fe7-hp"><h3 class="fe7-h" id="fe7-hp">${esc(L.saisonsPassees)}</h3><div class="fe7-puces" data-passe>${spPasses.filter(x => !nSaison.has(x.cle)).map(x => puceSp(x)).join('')}</div></section>` : ''}
             ${L.communes ? `<section aria-labelledby="fe7-hl"><h3 class="fe7-h" id="fe7-hl">${esc(L.communes)}</h3><div class="fe7-puces">${communes().map(([l, t]) => `<button class="s7-chip" type="button" data-l="${l}" aria-pressed="false">${esc(t)}</button>`).join('')}</div></section>` : ''}
@@ -7387,13 +7628,17 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         </div>
         <form class="formulaire" novalidate>
           ${C.champs.map((c, i) => i === C.champs.length - 1 ? `<p class="champ large"><label for="f${i}">${esc(c)}</label><textarea id="f${i}" rows="6"></textarea></p>`
-            : `<p class="champ"><label for="f${i}">${esc(c)}</label><input id="f${i}" type="${(types[c] || ['text'])[0]}"${types[c] ? ` autocomplete="${types[c][1]}"` : ''}></p>`).join('')}
-          <p class="case"><input id="f-ok" type="checkbox"><label for="f-ok">${k >= 0 ? `${esc(C.consentement.slice(0, k))}<a href="${politique}">${esc(mot)}</a>${esc(C.consentement.slice(k + mot.length))}` : esc(C.consentement)}</label></p>
-          <p class="calcul"><label for="f-calc">${esc(C.calcul)}</label><input id="f-calc" inputmode="numeric" maxlength="2"></p>
+            : `<p class="champ"><label for="f${i}">${esc(c)}</label><input id="f${i}" type="${(types[c] || ['text'])[0]}"${types[c] ? ` autocomplete="${types[c][1]}"` : ''}${(types[c] || [])[0] === 'email' ? ' autocapitalize="off" spellcheck="false"' : ''}></p>`).join('')}
+          <p class="case"><input id="f-ok" type="checkbox" required><label for="f-ok">${k >= 0 ? `${esc(C.consentement.slice(0, k))}<a href="${politique}">${esc(mot)}</a>${esc(C.consentement.slice(k + mot.length))}` : esc(C.consentement)}</label></p>
+          <p class="calcul"><label for="f-calc">${esc(C.calcul)}</label><input id="f-calc" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" required></p>
           <p class="envoi"><button class="bouton" type="submit">${esc(C.bouton)}</button></p>
         </form>
       </div></section>`;
-    $('form', main).addEventListener('submit', e => e.preventDefault());
+    // (le calcul de la question, lu dans son texte, « 2 + 6 = » : la réponse se vérifie avant tout envoi)
+    const op = /(\d+)\s*([+−-]|[×x*])\s*(\d+)/.exec(C.calcul || ''), attendu = op ? (op[2] === '+' ? +op[1] + +op[3] : /[×x*]/.test(op[2]) ? op[1] * op[3] : op[1] - op[3]) : null;
+    const calc = $('#f-calc', main);
+    $('form', main).addEventListener('submit', e => { e.preventDefault();
+      verifier(e.currentTarget, attendu == null ? [] : [{ el: calc, ok: el => +el.value.trim() === attendu, msg: L.calculFaux }]); });
     return { titre: nomC, menu: 'contact' };
   }
   /* ---------- l'espace pro (règles 16 et 21) : sur l'aplat de la saison, la grande capitale et son chapeau ; puis deux
@@ -7433,13 +7678,25 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     return { titre: Lg.titre };
   }
   // une adresse qui ne mène à aucune vue (ni une vue, ni une redirection de D, ni une ancienne adresse) : une vraie page, son
-  // titre, une phrase, et d'où repartir (l'accueil, les éléments du menu, le contact) ; l'adresse reste celle qu'on a tapée
-  function introuvable() {
+  // titre, une phrase, et d'où repartir (l'accueil, les éléments du menu, le contact, la recherche du site) ; l'adresse reste
+  // celle qu'on a tapée. Une adresse périmée ou mal tapée qui nomme un spectacle (#/spectacles/berenic, #/spectacle/macbeth)
+  // propose d'abord ce spectacle, trois au plus ; la recherche s'ouvre sur les mots de l'adresse
+  const MOTS_ROUTE = new Set(['spectacle', 'spectacles', 'saison', 'saisons', 'voir', 'programmer', 'etablissement', 'espace', 'pro', 'agenda', 'compagnie', 'contact', 'html', 'index']);
+  function introuvable(chemin = '') {
     vue = 'introuvable';
     const titre = L.introuvable || S.accueil, liens = [{ href: '#/', texte: S.accueil }, ...(S.menu || []).filter(x => x && x.href), { href: S.ecrire.href, texte: L.contact }];
+    let brut = ''; try { brut = decodeURIComponent(chemin); } catch (e) { brut = chemin; }
+    const mots = norm(brut).split(/[^a-z0-9]+/).filter(t => t.length >= 3 && !MOTS_ROUTE.has(t) && !/^\d+$/.test(t));
+    // (un mot de l'adresse trouvé dans l'adresse ou le titre d'un spectacle ; mal tapé, ses premières lettres)
+    const trouve = (t, h) => h.includes(t) || (t.length >= 5 && h.includes(t.slice(0, Math.max(4, t.length - 2))));
+    const proches = mots.length ? D.shows.map(sp => { const h = norm(`${sp.slug} ${sp.titre}`); return { sp, n: mots.filter(t => trouve(t, h)).length }; })
+      .filter(x => x.n).sort((a, b) => b.n - a.n).slice(0, 3).map(x => x.sp) : [];
+    // (la recherche part d'un seul mot : celui qui a trouvé un spectacle, sinon le plus long ; elle cherche un passage entier)
+    const q = (mots.find(t => proches.some(sp => trouve(t, norm(`${sp.slug} ${sp.titre}`)))) || mots.slice().sort((x, y) => y.length - x.length)[0] || '').slice(0, 40);
     main.innerHTML = `<div class="wrap page-titre"><h1 tabindex="-1"><span class="fleur">${esc(titre)}</span></h1></div>
       <section class="bloc sans-filet"><div class="wrap nf">${L.introuvableTexte ? `<p class="nf-x">${esc(L.introuvableTexte)}</p>` : ''}
-        <ul class="nf-liens">${liens.map(x => `<li><a href="${esc(x.href)}">${esc(x.texte)}${FLECHE}</a></li>`).join('')}</ul></div></section>`;
+        ${proches.length && L.peutEtre ? `<h2 class="nf-t">${esc(L.peutEtre)}</h2><ul class="nf-liens nf-proches">${proches.map(sp => `<li><a href="${lienSp(sp.slug)}" style="--c:${couleurDe(sp.slug)}"><i aria-hidden="true"></i>${esc(sp.titre)}${FLECHE}</a></li>`).join('')}</ul>` : ''}
+        <ul class="nf-liens">${liens.map(x => `<li><a href="${esc(x.href)}">${esc(x.texte)}${FLECHE}</a></li>`).join('')}${L.chercherSite ? `<li><button type="button" class="nf-cherche" data-chercher="${esc(q)}"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg>${esc(L.chercherSite)}</button></li>` : ''}</ul></div></section>`;
     return { titre };
   }
 
@@ -7545,11 +7802,11 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         : `${s.dossier ? `<button type="button" class="bu plein" data-va="c-dossier">${esc(L.dossierScolaire)}${BAS}</button>` : ''}<a class="bu${s.dossier ? '' : ' plein'}" href="${esc(ecrireDepuis(entree, s))}">${esc(L.ecrire)}${FLECHE}</a>`) + partage();
       const etat = s.statut ? `<p class="une-statut"${edS(s, 'statut')}>${esc(s.statut)}</p>` : s.enTournee ? `<p class="une-statut">${esc(L.enTournee)}</p>` : '';
       // (en tête, le retour discret à la liste des spectacles, comme celui des pages de l'espace pro)
-      texte = `<a class="une-retour" href="${esc(sp.href)}">${FLECHE}<span>${esc(sp.texte)}</span></a><p class="une-sur"><span${edS(s, 'creation')}>${esc(s.creation)}</span>${s.lieuTemps ? `<span${edS(s, 'lieuTemps')}>${esc(s.lieuTemps)}</span>` : ''}</p>${titre}${etat}${st}${acc}
+      texte = `<a class="une-retour" href="${esc(sp.href)}" data-retour>${FLECHE}<span>${esc(sp.texte)}</span></a><p class="une-sur"><span${edS(s, 'creation')}>${esc(s.creation)}</span>${s.lieuTemps ? `<span${edS(s, 'lieuTemps')}>${esc(s.lieuTemps)}</span>` : ''}</p>${titre}${etat}${st}${acc}
         ${prochaine ? `<p class="une-date">${esc(prochaine.ligne)}</p>` : ''}<p class="u-cta">${cta}</p>`;
     }
     return `<section class="sp-une sp-une${entree ? 7 : 10}${ouvDeja ? ' deja' : ''}" id="c-une" data-scrolly data-fx="une">
-      <div class="une-ph"${edP(s, 'photo')}><img src="${D.photos[s.slug]}" alt="" style="object-position:${foc}% 38%" decoding="async"></div>
+      <div class="une-ph"${edP(s, 'photo')}><img src="${D.photos[s.slug]}" alt="" style="object-position:${foc}% 38%" fetchpriority="high" decoding="async"></div>
       <div class="une-ombre" aria-hidden="true"></div><div class="une-lueur" aria-hidden="true"></div>
       <div class="une-motif" aria-hidden="true">${motifG(m)}</div>
       <div class="wrap une-corps"><div class="une-texte">${texte}</div></div>
@@ -7833,7 +8090,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
           <div class="boite dos-prod">${(B.production || []).map((l, i) => `<p${edD('production', i)}>${esc(l)}</p>`).join('')}${B.partenaires ? `<p${edD('partenaires')}>${esc(B.partenaires)}</p>` : ''}</div>
         </div>
         ${B.pourquoi ? `<section class="dos-s" aria-labelledby="dos-pq"><h3 class="dos-h3" id="dos-pq"${edD('pourquoi', 'titre')}>${esc(B.pourquoi.titre)}</h3><div class="boite">${B.pourquoi.sections.map((x, i) => `<h4 class="dos-h4"${edD('pourquoi', 'sections', i, 'titre')}>${esc(x.titre)}</h4><p${edD('pourquoi', 'sections', i, 'texte')}>${x.texte}</p>`).join('')}</div></section>` : ''}
-        ${B.programmes ? `<section class="dos-s" aria-labelledby="dos-pg"><h3 class="dos-h3" id="dos-pg"${edD('programmes', 'titre')}>${esc(B.programmes.titre)}</h3><div class="table-wrap"><table class="dos-table" aria-labelledby="dos-pg">
+        ${B.programmes ? `<section class="dos-s" aria-labelledby="dos-pg"><h3 class="dos-h3" id="dos-pg"${edD('programmes', 'titre')}>${esc(B.programmes.titre)}</h3><div class="table-wrap" role="region" tabindex="0" aria-labelledby="dos-pg"><table class="dos-table" aria-labelledby="dos-pg">
           ${B.programmes.niveaux.map((n, ni) => `<tbody>${n.lignes.map((l, i) => { const lg = (...k) => edD('programmes', 'niveaux', ni, 'lignes', i, ...k);
             return `<tr>${i ? '' : `<th scope="rowgroup" rowspan="${n.lignes.length}"${edD('programmes', 'niveaux', ni, 'niveau')}>${esc(n.niveau)}</th>`}<th scope="row"${lg('matiere')}>${esc(l.matiere)}</th><td${lg('intitule')}>${esc(l.intitule)}</td><td${lg('objectif')}>${esc(l.objectif)}</td></tr>`; }).join('')}</tbody>`).join('')}
           </table></div></section>` : ''}
@@ -7981,7 +8238,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     frisesDiffusion(main);
     secs = $$('[data-scrolly]', main);
     chaps = $$('.chap', main); chapK = -1;
-    return { titre: !entree || entree === 'voir' ? s.titre : `${s.titre} - ${E[entree].court}`, lecture: entree || 'voir' };
+    return { titre: !entree || entree === 'voir' ? s.titre : `${s.titre} · ${E[entree].court}`, lecture: entree || 'voir' };
   }
   // d'un onglet à l'autre du même spectacle : l'ouverture reste (sa photo, son motif, son titre, sans rien rejouer), seuls
   // son texte d'appel, la marque de l'onglet et ce qui suit la barre des entrées changent
@@ -8102,7 +8359,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       const enCours = new Set([...CARTE.aVenir(), ...CARTE.saison(D.saison)].map(x => x.l));
       const co = retenu('tout', () => CARTE.tout()).map(x => { const d = D.dates.find(y => y.l === x.l), nom = CARTE.nom(x);
         return { t: nom, s: d ? `${d.ligneDate} · ${d.titre}` : compte(x.n, L.uneDate, L.nDates), h: enCours.has(x.l) ? `${saisons}?l=${x.l}` : `${saisons}?recherche=${encodeURIComponent(x.c)}`, n: norm(nom) }; })
-        .sort((a, b) => a.t.localeCompare(b.t, 'fr'));
+        .sort((a, b) => COLLATION.compare(a.t, b.t));
       const ep = S.espacePro && S.espacePro.titre;
       const pg = [...(S.menu || []).filter(x => x && x.href).map(x => ({ t: x.texte, h: x.href })),
         ...['programmer', 'etablissement'].filter(k => E[k]).map(k => ({ t: E[k].texte, s: ep || '', h: `#/espace-pro/${k}` })),
@@ -8158,19 +8415,20 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     }
     // (le nombre de propositions, dit au lecteur d'écran, seulement quand on a tapé quelque chose)
     const dire = () => { if (!ouverte()) return; annonce.textContent = norm(champ.value).trim() ? (ops.length ? compte(ops.length, L.unResultat, L.nResultats) : L.aucunResultat || '') : ''; };
-    function ouvrir() {
+    function ouvrir(q = '') {
       if (!L.chercherSite) return;
       if (!boite) construire();
       if (ouverte()) { champ.focus(); champ.select(); return; }
       $('#cs-t', boite).textContent = L.chercherSite;
       champ.placeholder = L.rechercher; champ.setAttribute('aria-label', L.chercherSite); liste.setAttribute('aria-label', L.chercherSite);
-      $('.cs-x', boite).setAttribute('aria-label', L.fermer || '');
+      $('.cs-x', boite).setAttribute('aria-label', L.fermer || ''); $('.cs-x', boite).title = L.fermer || '';
       tout = lister(); retour = document.activeElement;
       inertes = [...document.body.children].filter(x => x !== boite && !x.inert && !/^(SCRIPT|STYLE|CANVAS)$/.test(x.tagName));
       inertes.forEach(x => { x.inert = true; });
       boite.hidden = false; html.classList.add('cs-ouvert'); bouton.setAttribute('aria-expanded', 'true');
-      champ.value = ''; annonce.textContent = ''; dessiner();
+      champ.value = typeof q === 'string' ? q : ''; annonce.textContent = ''; dessiner();
       champ.focus({ preventScroll: true });
+      if (champ.value) { champ.select(); clearTimeout(tDire); tDire = setTimeout(dire, 600); }
     }
     function fermer(rendre = true) {
       if (!ouverte()) return;
@@ -8190,7 +8448,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       if (ouverte() ? !k : (!L || !L.chercherSite || html.classList.contains('fe7-ouvert') || (typeof INTRO !== 'undefined' && INTRO.ouverte()))) return;
       e.preventDefault(); ouvrir();
     });
-    return { ouvrir, fermer, ouverte };
+    // (d'où l'on avait ouvert la boîte : ce qui avait le focus, sinon la loupe ; le retour arrière y rend le focus)
+    const depart = () => (retour && retour.isConnected && retour !== document.body ? retour : bouton);
+    return { ouvrir, fermer, ouverte, depart };
   })();
 
   // les phrases s'écrivent et les photos apparaissent quand elles arrivent à l'écran
@@ -8273,7 +8533,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       second: '',
       // (en tête du pied, le plan du site : les éléments du menu et le contact, pour repartir sans remonter ; « Espace pro » y
       // est, il n'est plus parmi les liens légaux)
-      pied: `${M.length ? `<nav class="pied-nav" aria-label="${esc(L.planDuSite || L.menu)}"><ul>${[...M, { href: S.ecrire.href, texte: L.contact }].map(x => `<li><a href="${x.href}">${esc(x.texte)}</a></li>`).join('')}</ul></nav>` : ''}<div><p><strong${ed('site.coordonnees.nom')}>${esc(co.nom)}</strong></p><p>${co.adresse.map((x, i) => `<span${ed(`site.coordonnees.adresse.${i}`)}>${esc(x)}</span>`).join('<br>')}</p>
+      pied: `${M.length ? `<nav class="pied-nav" aria-label="${esc(L.planDuSite || L.menu)}"><ul>${[...M.map(x => ({ ...x, menu: true })), { href: S.ecrire.href, texte: L.contact }].map(x => `<li${x.menu ? ' class="pied-menu"' : ''}><a href="${x.href}">${esc(x.texte)}</a></li>`).join('')}</ul></nav>` : ''}<div><p><strong${ed('site.coordonnees.nom')}>${esc(co.nom)}</strong></p><p>${co.adresse.map((x, i) => `<span${ed(`site.coordonnees.adresse.${i}`)}>${esc(x)}</span>`).join('<br>')}</p>
         <p class="liens"><a href="${S.ecrire.href}">${esc(S.ecrire.texte)}</a>${S.facebook ? (S.facebook.href ? `<a href="${esc(S.facebook.href)}" rel="noopener">${esc(S.facebook.texte)}</a>` : `<span>${esc(S.facebook.texte)}</span>`) : ''}</p></div>
         <div><p${ed('site.partenaires')}>${S.partenaires}</p></div>
         <div><p class="petit">${co.legal.map((x, i) => `<span${ed(`site.coordonnees.legal.${i}`)}>${esc(x)}</span>`).join('<br>')}</p><p class="liens">${S.espacePro && !M.some(x => x.href === '#/espace-pro') ? `<a href="#/espace-pro">${esc(S.espacePro.titre)}</a>` : ''}${S.liensLegaux.map(x => `<a href="${x.href}">${esc(x.texte)}</a>`).join('')}${typeof EDITION !== 'undefined' && L.modifierSite ? `<button type="button" class="modifier" data-modifier>${CRAYON}${esc(L.modifierSite)}</button>` : ''}</p></div>`,
@@ -8352,7 +8612,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       const V = vues();
       if (Object.prototype.hasOwnProperty.call(V, chemin)) return V[chemin](q, surPlace);
       // (une adresse que rien ne connaît : sa page, « Page introuvable »)
-      return introuvable();
+      return introuvable(chemin);
     } finally { surPlaceRendu = false; }
   }
   // les vues simples ; une vue l'emporte sur une redirection de D (#/espace-pro, autrefois redirigé, est une page). Le
@@ -8397,19 +8657,28 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   // clé nouvelle : elle s'ouvre en haut, comme avant
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';   // (le routeur pose la page lui-même)
   const lectures = new Map();
-  let cleCourante = null;
-  const cleEntree = () => { const st = history.state; if (st && st.k) return st.k;
+  let cleCourante = null, relecture = false;   // (relecture : la vue qui se rend est celle d'une lecture retenue)
+  // (une entrée neuve retient aussi l'adresse d'où l'on est venu, p : le retour du site s'en sert, plus bas)
+  const cleEntree = d => { const st = history.state; if (st && st.k) return st.k;
     const k = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
-    try { history.replaceState(Object.assign({}, st, { k }), ''); } catch (e) { return null; }
+    try { history.replaceState(Object.assign({}, st, { k }, d ? { p: d } : {}), ''); } catch (e) { return null; }
     return k; };
   // (le lien retrouvé : par son adresse et son rang parmi les liens de même adresse de la page)
   const repereLien = el => { const a = el && el.closest && el.closest('a[href]'); if (!a || !main.contains(a)) return null;
     const h = a.getAttribute('href'); return { h, i: $$('a[href]', main).filter(x => x.getAttribute('href') === h).indexOf(a) }; };
   const lienDe = r => r ? $$('a[href]', main).filter(x => x.getAttribute('href') === r.h)[r.i] || null : null;
+  // (le focus rendu va à un lien que le clavier atteint : la photo d'une fiche, lien de souris hors du clavier, tabindex -1 et
+  // aria-hidden, le cède au lien de même adresse qui la suit, son titre ; la position, elle, se rend sur la photo)
+  const atteint = x => x.tabIndex >= 0 && !x.closest('[aria-hidden="true"], [inert]');
+  const lienFocus = l => { if (!l || atteint(l)) return l; const h = l.getAttribute('href'), memes = $$('a[href]', main).filter(x => x.getAttribute('href') === h && atteint(x));
+    return memes.find(x => l.compareDocumentPosition(x) & Node.DOCUMENT_POSITION_FOLLOWING) || memes[memes.length - 1] || null; };
+  // (parti par la recherche du site, Ctrl K : le lien d'où l'on était parti est ce qui avait le focus à son ouverture ; hors de
+  // la page, la loupe du menu, l'élément lui-même est retenu)
   function retenirLecture(clic) {
     if (!cleCourante) return;
-    const el = (clic && clic.lien && main.contains(clic.lien)) ? clic.lien : document.activeElement, lien = repereLien(el);
-    lectures.set(cleCourante, { y: scrollY, lien, haut: lien ? el.closest('a[href]').getBoundingClientRect().top : null });
+    const cs = clic && clic.lien && clic.lien.closest('#cs') && CHERCHE.depart();
+    const el = cs || ((clic && clic.lien && main.contains(clic.lien)) ? clic.lien : document.activeElement), lien = repereLien(el);
+    lectures.set(cleCourante, { y: scrollY, lien, haut: lien ? el.closest('a[href]').getBoundingClientRect().top : null, dehors: !lien && cs && !main.contains(cs) ? cs : null });
     if (lectures.size > 60) lectures.delete(lectures.keys().next().value);
   }
   // la position rendue : la page s'allonge encore dans les images qui suivent (ce qui se dessine après le premier rendu, sous
@@ -8429,7 +8698,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       const l = lienDe(m.lien);
       if (!bouge) { const y = Math.max(0, Math.round(l && m.haut != null ? l.getBoundingClientRect().top + scrollY - m.haut : m.y));
         if (Math.abs(scrollY - y) > 1) scrollTo({ top: y, left: 0, behavior: 'instant' }); }
-      if (l && !pris) { pris = true; l.focus({ preventScroll: true }); }
+      // (sans lien retenu, la loupe d'où l'on avait cherché, sinon le titre de la page, tout de suite)
+      const f = !pris && (l ? lienFocus(l) : !m.lien ? (m.dehors && m.dehors.isConnected ? m.dehors : $('h1[tabindex="-1"]', main)) : null);
+      if (f) { pris = true; f.focus({ preventScroll: true }); }
       if (!bouge && performance.now() - t0 < 1000) requestAnimationFrame(viser); else fin();
     };
     viser();
@@ -8470,6 +8741,16 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     if (t) t.focus({ preventScroll: true });
     return true;
   }
+  // l'annonce de la page (hors de <main> : elle survit aux pages), polie, dite après ce que le focus fait dire ; vidée quand le
+  // titre de la page prend le focus (il dit déjà la page : pas de doublon)
+  const annoncePage = document.createElement('p');
+  annoncePage.className = 'sr'; annoncePage.id = 'annonce-page'; annoncePage.setAttribute('aria-live', 'polite');
+  document.body.appendChild(annoncePage);
+  let tAnnoncePage = 0;
+  function annoncerPage(t) {
+    clearTimeout(tAnnoncePage); annoncePage.textContent = '';
+    if (t) tAnnoncePage = setTimeout(() => { annoncePage.textContent = t; }, 250);
+  }
   function route() {
     lire();
     const a = analyse(); if (!a) return;
@@ -8488,8 +8769,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const type = genre(a), clic = dernierClic && performance.now() - dernierClic.t < 1200 ? dernierClic : null;
     dernierClic = null;
     // (la page qu'on quitte est encore là : on retient sa lecture ; celle où l'on arrive, si on l'a déjà lue, rend la sienne)
+    const venu = courant ? `#/${courant.chemin}` : null;
     retenirLecture(clic);
-    cleCourante = cleEntree();
+    cleCourante = cleEntree(venu);
     const relue = cleCourante && lectures.get(cleCourante);
     const avant = courant, premiere = !avant, spAvant = avant && (avant.chemin.match(/^spectacle\/([\w-]+)/) || [])[1];
     // (lu avant le rendu, la mise en page encore propre : la route suit une image)
@@ -8504,6 +8786,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     CHERCHE.fermer(false);   // (le retour du navigateur, la boîte ouverte : elle se referme, la page prend le focus)
     document.documentElement.classList.remove(vers0);
     cadre();
+    relecture = !!relue;
     // (le rideau : une page ouverte par le menu, ou la première hors de l'ouverture de l'accueil ; pas d'un onglet à l'autre
     // d'un spectacle ni en entrant dans un spectacle, que l'encre de son univers ouvre)
     // (fermé avant que la page se fasse : ses changements et ceux de la page se calculent ensemble, à l'image suivante) ; il
@@ -8519,7 +8802,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         composer();
       });
     let r = rendre(a, false), b = a;
-    if (!r) { r = introuvable(); }   // (une adresse inconnue : sa page, l'adresse gardée)
+    relecture = false;
+    if (!r) { r = introuvable(a.chemin); }   // (une adresse inconnue : sa page, l'adresse gardée)
     courant = b;
     decorer(false, avecRideau);
     document.title = titreDoc(r);
@@ -8530,13 +8814,16 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // la vue se pose à l'image suivante (avant d'être peinte : la mise en page se fait une fois, dans la tâche de l'image) : en
     // haut, son titre prend le focus ; #/saisons/<saison>, sa saison ; un onglet, sous les menus. Sous l'encre qui s'ouvre, la
     // page ne se peint qu'à l'image d'après (la première n'a que l'encre à peindre) ; elle prend alors le focus
+    // (la page qui change s'entend une fois : son titre pris au focus ; quand le focus va ailleurs, le lien d'où l'on était
+    // parti au retour, une saison passée, le premier chapitre d'un onglet, son titre se dit en plus, poliment, annoncerPage)
     const poser = () => {
-      if (relue) { rendreLecture(relue, b); return; }
+      if (relue) { rendreLecture(relue, b); annoncerPage(relue.lien || relue.dehors ? r.titre : ''); return; }
       const x = r.ancre && document.getElementById(r.ancre);
-      if (x) { x.scrollIntoView({ block: 'start', behavior: 'instant' }); ($('summary', x) || x).focus({ preventScroll: true }); return; }
-      if (type === 'onglet' && sousLesMenus()) return;
+      if (x) { x.scrollIntoView({ block: 'start', behavior: 'instant' }); ($('summary', x) || x).focus({ preventScroll: true }); annoncerPage(r.titre); return; }
+      if (type === 'onglet' && sousLesMenus()) { annoncerPage(r.titre); return; }
       scrollTo({ top: 0, left: 0, behavior: 'instant' });
       ($('h1[tabindex="-1"]', main) || main).focus({ preventScroll: true });
+      annoncerPage('');
     };
     if (encre) {
       main.style.visibility = 'hidden';
@@ -8567,6 +8854,30 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   const marquerTot = () => { const h = location.hash.split('?')[0], a = $$('#entrees a').find(x => x.getAttribute('href') === h);
     if (a && a.getAttribute('aria-current') !== 'page') { $$('#entrees a[aria-current]').forEach(x => x.removeAttribute('aria-current')); a.setAttribute('aria-current', 'page'); } };
   const routeEnsuite = () => { const j = ++NAV; marquerTot(); ensuite(() => { if (j === NAV) route(); }); };
+  // une rubrique du menu (au téléphone, la barre d'onglets), comme dans une application : touchée, elle se marque à l'image même
+  // du geste (avant que l'adresse change : le hashchange vient une tâche plus tard, une image de plus au téléphone ralenti) ;
+  // touchée quand on y est déjà, sa page revient en haut d'un coup, sans glisser, son titre reprend le focus (sinon rien ne se
+  // passait, la page restait où on l'avait laissée)
+  document.addEventListener('click', e => {
+    const a = e.target.closest && e.target.closest('#entrees a[href^="#/"]');
+    if (!a || e.defaultPrevented || e.button > 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+    const h = a.getAttribute('href');
+    if (location.hash !== h) { if (a.getAttribute('aria-current') !== 'page') { $$('#entrees a[aria-current]').forEach(x => x.removeAttribute('aria-current')); a.setAttribute('aria-current', 'page'); } return; }
+    e.preventDefault();
+    scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    ($('h1[tabindex="-1"]', main) || main).focus({ preventScroll: true });
+  });
+  // le retour du site (« ← Les spectacles » en tête d'un spectacle, « ← Espace pro » en tête de ses pages) : quand il mène à la
+  // page d'où l'on vient (l'entrée d'avant dans l'historique, history.state.p), il en est le « précédent » : la liste revient
+  // où on l'avait laissée, ses filtres et le lien d'où l'on était parti compris ; sinon, c'est un lien, la page s'ouvre en haut
+  document.addEventListener('click', e => {
+    const a = e.target.closest && e.target.closest('a[data-retour]');
+    if (!a || e.defaultPrevented || e.button > 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+    const st = history.state, p = st && st.p, h = a.getAttribute('href');
+    if (!p || p.split('?')[0] !== h.split('?')[0]) return;
+    e.preventDefault();
+    history.back();
+  });
   // la créature de l'en-tête, à chaque page : elle se contracte, ses tentacules s'agitent ; en entrant dans un spectacle, une fois
   // l'encre ouverte et le titre posé, sa tentacule va souligner le titre, à la couleur vive du spectacle, puis revient
   let tCreature = 0;
@@ -8712,6 +9023,13 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     ventouse(e.clientX, e.clientY, c);
   }, { capture: true, passive: true });
   addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') Scene.suspendre(650); }, { capture: true, passive: true });
+  // (un geste dans la page qui la refait sur place, un filtre, une date, une lettre de recherche : les créatures laissent passer
+  // leurs images le temps qu'il se fasse, 450 ms ; la petite pieuvre de l'en-tête dessinait les siennes, 10 ms par image au
+  // bureau, dans les images mêmes du geste, au-delà de 50 ms. Un lien qui change de page a son moment à lui, route())
+  const repitGeste = e => { const t = e.target; if (typeof CREATURE === 'undefined' || !CREATURE.suspendre || !t || !t.closest || !t.closest('main') || t.closest('a[href^="#/"]')) return; CREATURE.suspendre(450); };
+  addEventListener('pointerdown', repitGeste, { capture: true, passive: true });
+  addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ' || e.key.length === 1) repitGeste(e); }, { capture: true, passive: true });
+  addEventListener('input', repitGeste, { capture: true, passive: true });
   if (MV) MV.presse(document);
 
   /* ---------- la langue des titres étrangers ----------
@@ -8727,13 +9045,14 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     if (!racine || !racine.isConnected || !ANGLAIS.test(racine.textContent || '')) return;
     const w = document.createTreeWalker(racine, NodeFilter.SHOW_TEXT, { acceptNode: n => (ANGLAIS.test(n.data) && n.parentElement && !n.parentElement.closest(horsLangue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP) });
     const ns = []; for (let n = w.nextNode(); n; n = w.nextNode()) ns.push(n);
-    ns.forEach(n => {
-      const t = n.data, f = document.createDocumentFragment(); let i = 0, m;
-      ANGLAIS_G.lastIndex = 0;
-      while ((m = ANGLAIS_G.exec(t))) { if (m.index > i) f.append(t.slice(i, m.index)); const s = document.createElement('span'); s.lang = 'en'; s.textContent = m[0]; f.append(s); i = m.index + m[0].length; }
-      if (i < t.length) f.append(t.slice(i));
-      n.replaceWith(f);
-    });
+    ns.forEach(marquerTexte);
+  }
+  function marquerTexte(n) {
+    const t = n.data, f = document.createDocumentFragment(); let i = 0, m;
+    ANGLAIS_G.lastIndex = 0;
+    while ((m = ANGLAIS_G.exec(t))) { if (m.index > i) f.append(t.slice(i, m.index)); const s = document.createElement('span'); s.lang = 'en'; s.textContent = m[0]; f.append(s); i = m.index + m[0].length; }
+    if (i < t.length) f.append(t.slice(i));
+    n.replaceWith(f);
   }
   // (au vrai repos, quatre secondes au plus : jamais en plein geste, et ni la page ni sa lecture n'attendent)
   const auCalme = f => ('requestIdleCallback' in window ? requestIdleCallback(f, { timeout: 4000 }) : setTimeout(f, 600));
@@ -8741,7 +9060,13 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // (par petites tranches du temps de repos : un geste qui arrive n'attend pas la relecture d'une longue liste)
     const lireLangues = dl => {
       tLangues = 0;
-      for (const x of aLire) { aLire.delete(x); marquerLangues(x); if (dl && dl.timeRemaining && !dl.didTimeout && dl.timeRemaining() < 3) break; }
+      // (un grand morceau, la page entière au premier passage, se lit par ses enfants, chacun à son tour : lue d'un coup,
+      // l'accueil tenait le fil principal 100 ms au téléphone ralenti, et un toucher qui tombait dessus l'attendait)
+      for (const x of aLire) { aLire.delete(x);
+        if (x.childElementCount > 1 && x.isConnected && (x.textContent || '').length > 3000) {
+          for (const n of [...x.childNodes]) { if (n.nodeType === 1) aLire.add(n); else if (n.nodeType === 3 && ANGLAIS.test(n.data) && !x.closest(horsLangue)) marquerTexte(n); }
+        } else marquerLangues(x);
+        if (dl && dl.timeRemaining && !dl.didTimeout && dl.timeRemaining() < 3) break; }
       if (aLire.size) tLangues = auCalme(lireLangues);
     };
     new MutationObserver(ms => {
@@ -8755,7 +9080,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   // page (en glissant, si le mouvement est permis) et pose le focus sur son titre, d'où le clavier repart
   const hautPage = document.createElement('button');
   hautPage.type = 'button'; hautPage.className = 'haut-page'; hautPage.innerHTML = HAUT;
-  hautPage.setAttribute('aria-label', L.hautDePage);
+  hautPage.setAttribute('aria-label', L.hautDePage); hautPage.title = L.hautDePage;
   document.body.appendChild(hautPage);
   // (l'indicateur de section d'un spectacle ne se montre qu'à certains moments de la lecture : le bouton se pose au-dessus de
   // lui quand on le voit, relu au défilement et juste après, quand son fondu est fini ; les filtres des saisons : en CSS)
@@ -8778,6 +9103,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
     x.remove(); return ok;
   };
+  // (la page introuvable : « Rechercher sur le site » ouvre la recherche sur les mots de l'adresse)
+  main.addEventListener('click', e => { const b = e.target.closest('[data-chercher]'); if (b) CHERCHE.ouvrir(b.dataset.chercher); });
   main.addEventListener('click', async e => {
     const b = e.target.closest('[data-partager]'); if (!b) return;
     const adresse = `${location.origin}${location.pathname}${location.hash}`;

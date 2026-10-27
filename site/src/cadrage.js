@@ -84,8 +84,14 @@ const CADRAGE = (() => {
     if (suivies.has(img)) { position(img); return; }
     if (!cle(img.getAttribute('src'))) return;
     suivies.add(img);
-    // (sans mesure complète, une photo dans un bloc que la page ne met pas encore en page (content-visibility) : elle relit)
-    img.addEventListener('load', () => { const m = mesures.get(img); if (!(m && m.l && m.h && m.fit === 'cover' && poser(img, m))) position(img); });
+    // (sans mesure complète, une photo dans un bloc que la page ne met pas encore en page (content-visibility) : elle attend
+    // que l'observateur la mesure, quand le bloc se met en page ; la relire ici forçait la mise en page de ce bloc à chaque
+    // photo chargée, 60 à 130 ms au téléphone ralenti pendant le premier affichage. Mesurée, une photo dont le réglage a
+    // changé depuis se relit)
+    img.addEventListener('load', () => { const m = mesures.get(img);
+      if (m && m.l && m.h && m.fit === 'cover' && poser(img, m)) return;
+      if (tailles && !(m && m.l && m.h)) return;
+      position(img); });
     // (déjà chargée : sa première mesure par ResizeObserver, après la mise en page, la cadre ; sans lui, tout de suite)
     if (tailles) tailles.observe(img); else position(img);
     if (img.complete && !tailles) position(img);
