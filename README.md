@@ -15,6 +15,7 @@ L'audit complet, les 10 évolutions proposées et la feuille de route sont dans 
 | `site/` | Le site de la compagnie, une seule page (`site/src/index.html`) et ses outils communs (`site/src/*.js`), assemblés par `site/build.py` ; il lit la base en direct et se modifie sur place. Les contrôles (`onglets.mjs`, `mouvement-*.mjs`, `tableau.mjs`…) et les règles du site (`CONTRAT.md`, `MOUVEMENT.md`, `SCROLLYTELLING.md`) sont à côté. |
 | `admin/` | L'administration du site : tableau de bord, spectacles, dates et représentations, ateliers, lieux, textes, journal. |
 | `equipe/`, `pro/`, `reponse/` | L'espace de l'équipe (une application installable), l'espace des salles (sur invitation), la page de réponse aux propositions de dates et aux alertes. |
+| `guide/` | La Générale : la prise en main de l’espace de l’équipe, pour les comédiens. Une page d’artefact (`guide/src/la-generale.html`), assemblée par `guide/build.py`. |
 | `data/` | Relevé des dates publiées sur crescite.fr de 2016 à 2027 : 464 lignes géolocalisées, en JSON et en CSV. Texte exact des pages publiques de l'ancien site (`site-crescite.json`, relevé par `site_crescite.py`), mentions légales et politique de confidentialité d'aujourd'hui (`textes-legaux.json`), fiche de Cassandres (`cassandres.json`), dossier scolaire de Bérénice (`berenice-dossier.json`), univers et action culturelle de chaque spectacle (`univers-spectacles.json`), zone d'intérêt de chaque photo (`cadrages.json`), projection de la carte des tournées (`carte-projection.json`). |
 | `marque/` | Le logo 2.0 et le tracé de ses bras et de ses tentacules. |
 | `supabase/` | La base de la compagnie : ses scripts (`migrations/`), ses fonctions (`functions/`), ses essais (`tests/`), l'import (`importer.py`) et l'outil d'écriture (`ecrire.py`). |
@@ -189,6 +190,23 @@ fiche et la carte de sa tournée (dessinée à la première ouverture) ; « Déc
 dépliée est tout entière le lien vers sa page. Une seule dépliée à la fois, gardée quand D change ou que la fenêtre change
 de côté de 900 px ; au bureau, le sommaire et son aperçu. L'édition sur place porte sur chaque texte de la tranche et de
 la fiche, la photo et la date, sans déplier.
+
+## La Générale (le guide de l'espace de l'équipe)
+
+```sh
+python3 guide/build.py          # guide/dist/la-generale.html, la page d'artefact (non versionnée)
+python3 guide/build.py --page   # en plus, guide/dist/la-generale-page.html, à ouvrir telle quelle dans un navigateur
+```
+
+La prise en main de l'espace de l'équipe, pour les comédiens, au vouvoiement comme l'application. Deux questions
+(pas à pas ou l'essentiel ; compte ouvert ou non) règlent le niveau de détail. Puis onze étapes en quatre groupes
+(accès, votre saison, organisation, raccourcis), chacune faite sur un téléphone de démonstration aux couleurs de
+l'application : se connecter, installer, la prochaine date, le jour J, équipe et itinéraire, disponibilités, documents de
+travail, notifications, appui long, navigation entre dates, notes de frais. Une étape faite est cochée et propose la
+suivante ; en mode « l'essentiel », une étape connue se passe. La fin donne le lien du vrai espace
+(`crescite.pages.dev/equipe/`) et l'adresse pour demander un compte. Les dates viennent du relevé public ; les horaires,
+les personnes, la proposition et les notes de frais sont des exemples, marqués comme tels. La progression reste dans le
+navigateur ; rien n'est envoyé.
 
 ## Données
 

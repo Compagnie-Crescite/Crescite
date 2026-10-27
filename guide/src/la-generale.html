@@ -1,0 +1,1165 @@
+<title>La Générale Crescite</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Prise en main de l’espace de l’équipe Crescite : onze gestes à faire sur un téléphone de démonstration.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,500;0,600;1,500&family=Work+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Mise en page : la consigne à gauche, le téléphone de démonstration à droite ; une barre fine en tête (l'avancement).
+   Couleurs et polices de l'espace de l'équipe. */
+:root {
+  --papier: #f6f2eb; --surface: #fffdf9; --surface-2: #efe8dd; --surface-3: #e3d9cb;
+  --encre: #1d1418; --gris: #5f565a; --filet: #ded4c6;
+  --magenta: #a3306b; --magenta-fonce: #87245a; --magenta-doux: #f5e4ec; --sur-magenta: #fff;
+  --ok: #1d6f47; --ok-doux: #e3f3ea; --alerte: #a4231b; --alerte-doux: #fbe7e5; --option: #7a5a10; --option-doux: #f8efd9;
+  --chassis: #1d1418; --sur-u: #fff;
+  --u-cyrano: #44464d; --u-cleophene: #b9533f; --u-berenice: #6b3fa0; --u-macbeth: #8e1b1b;
+  --serif: "Spectral", Georgia, "Times New Roman", serif;
+  --sans: "Work Sans", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --papier: #141016; --surface: #1f1921; --surface-2: #2a222d; --surface-3: #3a3040;
+    --encre: #f4eef2; --gris: #b9aeb6; --filet: #3a3140;
+    --magenta: #f08cc0; --magenta-fonce: #f7aed3; --magenta-doux: #3a1f30; --sur-magenta: #1a1014;
+    --ok: #74d6a6; --ok-doux: #19352a; --alerte: #ff8f86; --alerte-doux: #3d1f1d; --option: #f0c66b; --option-doux: #3a2f17;
+    --chassis: #000; --sur-u: #fff;
+    --u-cyrano: #5b5e68; --u-cleophene: #b9533f; --u-berenice: #7a4cb3; --u-macbeth: #a12a2a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --papier: #141016; --surface: #1f1921; --surface-2: #2a222d; --surface-3: #3a3040;
+  --encre: #f4eef2; --gris: #b9aeb6; --filet: #3a3140;
+  --magenta: #f08cc0; --magenta-fonce: #f7aed3; --magenta-doux: #3a1f30; --sur-magenta: #1a1014;
+  --ok: #74d6a6; --ok-doux: #19352a; --alerte: #ff8f86; --alerte-doux: #3d1f1d; --option: #f0c66b; --option-doux: #3a2f17;
+  --chassis: #000; --sur-u: #fff;
+  --u-cyrano: #5b5e68; --u-cleophene: #b9533f; --u-berenice: #7a4cb3; --u-macbeth: #a12a2a;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { background: var(--papier); color: var(--encre); font: 400 1rem/1.55 var(--sans); -webkit-font-smoothing: antialiased; overflow-wrap: break-word; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--surface); }
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: var(--magenta); }
+:focus-visible { outline: 3px solid var(--magenta); outline-offset: 2px; border-radius: 6px; }
+main:focus, main:focus-visible { outline: none; }
+.ecran-lecteur { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+svg.pieuvre { display: inline-block; width: 1.84em; height: 1em; fill: currentColor; vertical-align: -.12em; }
+.ic { width: 1.25em; height: 1.25em; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+/* ------------------------------------------------------------------ la barre */
+.barre { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--surface); border-bottom: 1px solid var(--filet);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.barre-in { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; gap: 12px 24px; padding-block: 12px; }
+.marque { display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--encre); margin-right: auto; }
+.marque svg.pieuvre { color: var(--magenta); font-size: 1.4rem; }
+.marque b { font: 600 1.15rem/1 var(--serif); }
+.marque small { font: 600 .7rem/1 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--gris); }
+.avance { display: flex; align-items: center; gap: 10px; font-size: .85rem; color: var(--gris); font-variant-numeric: tabular-nums; }
+.avance .rail { width: 120px; height: 4px; border-radius: 4px; background: var(--surface-3); overflow: hidden; }
+.avance .rail span { display: block; height: 100%; background: var(--magenta); transition: width .5s ease; }
+.lien-plan { font-weight: 600; text-decoration: none; font-size: .92rem; }
+@media (max-width: 560px) { .avance .rail { width: 64px; } .marque small { display: none; } }
+
+/* ------------------------------------------------------------------ commun */
+main { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 64px; }
+.page { max-width: 1100px; margin: 0 auto; }
+h1, h2, h3 { text-wrap: balance; }
+.surtitre { font: 600 .74rem/1.2 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--gris); margin: 0 0 10px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--filet); background: var(--surface); color: var(--encre);
+  border-radius: 10px; padding: 11px 18px; font-weight: 600; text-decoration: none; transition: background .2s; }
+.btn:hover { background: var(--surface-2); }
+.btn.principal { background: var(--magenta); border-color: var(--magenta); color: var(--sur-magenta); }
+.btn.principal:hover { background: var(--magenta-fonce); border-color: var(--magenta-fonce); }
+.lien-btn { background: none; border: 0; padding: 4px 0; color: var(--magenta); text-decoration: underline; text-underline-offset: 3px; font-weight: 500; }
+.exemple { font: 600 .6rem/1 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--option); background: var(--option-doux); padding: 3px 5px; border-radius: 4px; vertical-align: .15em; }
+.copie { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: .92rem; }
+.copie code { font: 500 .9rem/1.3 ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--surface); padding: 4px 8px; border-radius: 6px; user-select: all; }
+.copie button { font-size: .82rem; border: 1px solid var(--filet); background: var(--surface); border-radius: 8px; padding: 4px 9px; }
+
+/* ------------------------------------------------------------------ l'accueil */
+.accueil { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 340px); gap: 56px; align-items: center; }
+.accueil h1 { font: 600 clamp(2rem, 4.4vw, 3.1rem)/1.08 var(--serif); margin: 0 0 16px; }
+.accueil .chapeau { font-size: 1.1rem; max-width: 32em; margin: 0 0 24px; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.accueil .note { color: var(--gris); font-size: .9rem; margin: 14px 0 0; }
+.plateau-accueil { display: grid; justify-items: center; }
+.legende { font-size: .8rem; color: var(--gris); text-align: center; margin: 10px auto 0; max-width: 24em; }
+.atouts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin: 56px 0 0; padding-top: 24px; border-top: 1px solid var(--filet); }
+.atouts h3 { font: 600 1.05rem/1.25 var(--sans); margin: 0 0 4px; }
+.atouts p { margin: 0; color: var(--gris); font-size: .95rem; }
+@media (max-width: 900px) { .accueil { grid-template-columns: minmax(0, 1fr); gap: 32px; } .atouts { grid-template-columns: minmax(0, 1fr); gap: 16px; } }
+
+/* ------------------------------------------------------------------ le plan */
+.plan { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 48px; align-items: start; }
+.plan h1, .profil h1, .fin h1 { font: 600 clamp(1.8rem, 3.6vw, 2.4rem)/1.1 var(--serif); margin: 0 0 8px; }
+.plan .aide { color: var(--gris); margin: 0 0 28px; }
+.groupe { margin: 0 0 28px; }
+.groupe h2 { font: 600 .74rem/1.2 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--gris); margin: 0 0 6px; }
+.etapes { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--filet); }
+.etapes a { display: grid; grid-template-columns: 2.4em minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px 4px; border-bottom: 1px solid var(--filet); text-decoration: none; color: var(--encre); }
+.etapes a:hover { background: var(--surface); }
+.etapes .num { font: 500 .9rem/1 var(--sans); color: var(--gris); font-variant-numeric: tabular-nums; }
+.etapes .t { font-weight: 600; display: block; }
+.etapes .s { font-size: .88rem; color: var(--gris); }
+.etapes .etat { font-size: .82rem; color: var(--gris); display: flex; align-items: center; gap: 4px; }
+.etapes .fait .etat { color: var(--ok); }
+.etapes .suivante .num { color: var(--magenta); font-weight: 700; }
+.cote { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 72px); display: grid; gap: 16px; }
+.encart { padding: 18px; border-radius: 12px; background: var(--surface); border: 1px solid var(--filet); }
+.encart p { margin: 0 0 12px; }
+.encart p:last-child { margin: 0; }
+.encart .chiffre { font: 600 1.6rem/1 var(--serif); margin: 0 0 4px; }
+@media (max-width: 900px) { .plan { grid-template-columns: minmax(0, 1fr); } .cote { position: static; } }
+
+/* ------------------------------------------------------------------ le profil */
+.profil { max-width: 640px; margin: 0 auto; }
+.profil fieldset { border: 0; padding: 0; margin: 0 0 24px; }
+.profil legend { font-weight: 600; margin: 0 0 10px; padding: 0; }
+.options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.options button { text-align: left; padding: 14px 16px; border-radius: 10px; border: 1.5px solid var(--filet); background: var(--surface); display: grid; gap: 2px; }
+.options button:hover { border-color: var(--gris); }
+.options button[aria-pressed="true"] { border-color: var(--magenta); background: var(--magenta-doux); }
+.options b { font-weight: 600; }
+.options small { color: var(--gris); font-size: .88rem; }
+@media (max-width: 480px) { .options { grid-template-columns: minmax(0, 1fr); } }
+
+/* ------------------------------------------------------------------ une étape */
+.scene-vue { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 340px); grid-template-areas: "tete plateau" "defi plateau" "detail plateau"; gap: 0 56px; align-items: start; }
+.sv-tete { grid-area: tete; }
+.sv-defi { grid-area: defi; }
+.sv-detail { grid-area: detail; }
+.sv-plateau { grid-area: plateau; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 72px); display: grid; justify-items: center; gap: 10px; }
+.retour { display: inline-flex; gap: 6px; align-items: center; text-decoration: none; font-weight: 500; margin: 0 0 16px; }
+.sv-tete h1 { font: 600 clamp(1.8rem, 3.8vw, 2.5rem)/1.1 var(--serif); margin: 0 0 10px; }
+.essentiel { font-size: 1.08rem; margin: 0 0 22px; max-width: 34em; }
+.defi { padding: 18px 20px; border-radius: 12px; background: var(--surface); border: 1px solid var(--filet); margin: 0 0 14px; }
+.defi h2 { margin: 0 0 6px; font: 600 .74rem/1 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--gris); }
+.defi .consigne { font-weight: 600; font-size: 1.05rem; margin: 0 0 12px; }
+.coches { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+.coches li { display: flex; gap: 10px; align-items: center; color: var(--gris); font-size: .95rem; }
+.coches li .case { width: 18px; height: 18px; flex: none; border-radius: 50%; border: 1.5px solid var(--surface-3); display: grid; place-items: center; transition: background .2s, border-color .2s; }
+.coches li .case svg { width: 11px; height: 11px; stroke: var(--sur-magenta); stroke-width: 3; fill: none; opacity: 0; transition: opacity .2s; }
+.coches li.fait { color: var(--encre); }
+.coches li.fait .case { background: var(--ok); border-color: var(--ok); }
+.coches li.fait .case svg { opacity: 1; }
+.question { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--filet); }
+.question p { margin: 0 0 10px; font-weight: 600; }
+.reponses { display: flex; flex-wrap: wrap; gap: 8px; }
+.reponses button { border: 1.5px solid var(--filet); background: var(--surface); border-radius: 8px; padding: 8px 14px; font-weight: 600; }
+.reponses button:hover { border-color: var(--gris); }
+.reponses button.juste { background: var(--ok-doux); border-color: var(--ok); color: var(--ok); }
+.reponses button.non { background: var(--alerte-doux); border-color: var(--alerte); color: var(--alerte); }
+.etapes-chips { display: grid; gap: 8px; margin-top: 12px; }
+.etapes-chips button { text-align: left; border: 1.5px solid var(--filet); background: var(--surface); border-radius: 8px; padding: 9px 12px; display: flex; gap: 10px; align-items: center; }
+.etapes-chips button .n { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2); font: 700 .78rem/1 var(--sans); flex: none; }
+.etapes-chips button.fait { border-color: var(--ok); color: var(--ok); }
+.etapes-chips button.fait .n { background: var(--ok); color: var(--surface); }
+.segment { display: inline-flex; padding: 3px; border-radius: 10px; background: var(--surface-2); gap: 3px; margin-top: 4px; }
+.segment button { border: 0; background: transparent; border-radius: 8px; padding: 7px 14px; font-weight: 600; color: var(--gris); }
+.segment button[aria-pressed="true"] { background: var(--surface); color: var(--encre); box-shadow: 0 1px 3px rgba(0, 0, 0, .12); }
+.termine { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--filet); }
+.termine .ok { display: flex; gap: 6px; align-items: center; color: var(--ok); font-weight: 600; }
+.aides { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; margin: 0 0 14px; }
+.indice { margin: 0 0 18px; padding: 12px 14px; border-left: 3px solid var(--option); background: var(--option-doux); border-radius: 0 8px 8px 0; font-size: .95rem; }
+.sv-detail p { margin: 0 0 10px; max-width: 38em; color: var(--gris); }
+.sv-detail details { margin-top: 6px; }
+.sv-detail summary { cursor: pointer; font-weight: 600; color: var(--magenta); padding: 4px 0; }
+.pasapas { margin: 6px 0 14px; padding-left: 1.3em; display: grid; gap: 4px; max-width: 38em; }
+.navig { display: flex; justify-content: space-between; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
+@media (max-width: 900px) {
+  .scene-vue { grid-template-columns: minmax(0, 1fr); grid-template-areas: "tete" "defi" "plateau" "detail"; }
+  .sv-plateau { position: static; margin: 0 0 24px; }
+}
+
+/* ------------------------------------------------------------------ la fin */
+.fin { max-width: 640px; margin: 0 auto; }
+.fin .chapeau { font-size: 1.08rem; margin: 0 0 24px; }
+.fin .encart { margin: 0 0 16px; }
+
+/* ------------------------------------------------------------------ le téléphone (l'espace de l'équipe, en petit) */
+.tel { width: 320px; max-width: 100%; height: 620px; border-radius: 44px; background: var(--chassis); padding: 11px; box-shadow: 0 30px 60px -20px rgba(29, 20, 24, .5), inset 0 0 0 2px #3b2c33; position: relative; }
+.tel::before { content: ""; position: absolute; top: 19px; left: 50%; width: 92px; height: 24px; margin-left: -46px; border-radius: 20px; background: #000; z-index: 5; }
+.ecran { position: relative; height: 100%; border-radius: 34px; overflow: hidden; background: var(--papier); isolation: isolate; }
+.app { --u: var(--magenta); position: absolute; inset: 0; display: flex; flex-direction: column; font-size: 13px; line-height: 1.4; color: var(--encre); background: var(--papier); user-select: none; -webkit-user-select: none; }
+.app input, .app textarea { user-select: text; -webkit-user-select: text; }
+.app-statut { display: flex; justify-content: space-between; padding: 14px 26px 0; height: 40px; font: 600 12px/1 var(--sans); font-variant-numeric: tabular-nums; flex: none; }
+.app-statut .barres { letter-spacing: 1px; font-size: 9px; }
+.app-haut { display: flex; align-items: center; justify-content: space-between; padding: 6px 14px 8px; flex: none; border-bottom: 1px solid var(--filet); }
+.app-marque { display: flex; gap: 6px; align-items: center; }
+.app-marque svg.pieuvre { color: var(--u); font-size: 17px; transition: color .5s; }
+.app-marque b { font: 600 15px/1 var(--serif); }
+.app-marque small { font: 700 8px/1 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--u); transition: color .5s; }
+.app-cloche { position: relative; border: 0; background: transparent; padding: 4px; color: var(--encre); display: grid; }
+.app-cloche .badge { position: absolute; top: -2px; right: -4px; min-width: 16px; height: 16px; border-radius: 9px; background: var(--magenta); color: var(--sur-magenta); font: 700 9px/16px var(--sans); text-align: center; padding: 0 4px; }
+.app-zone { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 12px 14px 16px; position: relative; overscroll-behavior: contain; }
+.app-onglets { flex: none; display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid var(--filet); background: var(--surface); padding: 6px 4px 18px; }
+.app-onglets span { display: grid; justify-items: center; gap: 2px; font-size: 9.5px; color: var(--gris); font-weight: 500; position: relative; }
+.app-onglets span .ic { width: 20px; height: 20px; }
+.app-onglets span.actif { color: var(--u); font-weight: 700; }
+.app-onglets span.actif::before { content: ""; position: absolute; top: -7px; width: 24px; height: 3px; border-radius: 3px; background: var(--u); }
+.app-onglets span.vise { animation: vise 1.2s ease-in-out infinite; }
+@keyframes vise { 50% { color: var(--magenta); transform: translateY(-2px); } }
+.a-h { font: 600 18px/1.15 var(--serif); margin: 2px 0 10px; }
+.a-sous { font: 700 9px/1 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--gris); margin: 14px 0 8px; }
+.a-btn { display: flex; width: 100%; justify-content: center; align-items: center; gap: 6px; border: 1px solid var(--filet); background: var(--surface); border-radius: 12px; padding: 10px; font-weight: 600; font-size: 13px; }
+.a-btn.principal { background: var(--magenta); color: var(--sur-magenta); border-color: var(--magenta); }
+.a-btn.petit { width: auto; padding: 6px 10px; font-size: 12px; border-radius: 9px; }
+.a-lien { border: 0; background: none; color: var(--magenta); text-decoration: underline; font-size: 12px; padding: 4px 0; }
+.a-msg { font-size: 12px; padding: 8px 10px; border-radius: 10px; margin: 0 0 10px; }
+.a-msg.info { background: var(--magenta-doux); }
+.a-msg.erreur { background: var(--alerte-doux); color: var(--alerte); }
+.a-toast { position: absolute; left: 12px; right: 12px; bottom: 72px; z-index: 8; background: var(--encre); color: var(--papier); padding: 10px 12px; border-radius: 12px; font-size: 12px; box-shadow: 0 8px 20px rgba(0, 0, 0, .3); animation: monte .3s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes monte { from { transform: translateY(14px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes pose { from { transform: translateY(10px) scale(.98); opacity: 0; } to { transform: none; opacity: 1; } }
+.pose { animation: pose .35s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes glisseg { from { transform: translateX(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes glissed { from { transform: translateX(-40px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* la porte */
+.porte { padding: 22px 20px; flex: 1; overflow-y: auto; }
+.porte .pm { display: flex; gap: 6px; align-items: center; margin: 4px 0 16px; }
+.porte .pm svg.pieuvre { color: var(--magenta); font-size: 22px; }
+.porte .pm b { font: 600 17px/1 var(--serif); }
+.porte .pm small { font: 700 8px/1 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--magenta); }
+.porte h3 { font: 600 21px/1.12 var(--serif); margin: 0 0 6px; }
+.porte .intro { color: var(--gris); margin: 0 0 14px; font-size: 12.5px; }
+.porte label { display: block; font-weight: 600; font-size: 12px; margin: 8px 0 4px; }
+.porte input { width: 100%; border: 1px solid var(--filet); background: var(--surface); border-radius: 10px; padding: 9px 10px; font-size: 13px; }
+.porte input.faux { border-color: var(--alerte); }
+.porte .ou { text-align: center; color: var(--gris); font-size: 11px; margin: 10px 0; }
+.porte .a-btn.principal { margin-top: 12px; }
+.secoue { animation: secoue .4s cubic-bezier(.36, .07, .19, .97); }
+@keyframes secoue { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+.mail { position: absolute; top: 44px; left: 10px; right: 10px; z-index: 9; text-align: left; border: 0; border-radius: 18px; padding: 10px 12px; background: var(--surface); box-shadow: 0 12px 30px rgba(0, 0, 0, .28); display: grid; grid-template-columns: 34px 1fr; gap: 2px 10px; animation: descend .5s cubic-bezier(.2, 1.3, .4, 1) both; }
+@keyframes descend { from { transform: translateY(-120%); } to { transform: none; } }
+.mail .ico { grid-row: span 3; width: 34px; height: 34px; border-radius: 9px; background: #2f7cf6; color: #fff; display: grid; place-items: center; }
+.mail small { color: var(--gris); font-size: 10.5px; }
+.mail b { font-size: 12.5px; }
+.mail span { font-size: 12px; color: var(--gris); }
+
+/* la saison */
+.heros { --u: var(--u-cyrano); position: relative; display: grid; gap: 2px; width: 100%; text-align: left; border: 0; border-radius: 18px; padding: 14px 14px 12px; color: var(--sur-u); overflow: hidden;
+  background: radial-gradient(120% 90% at 100% 0%, rgba(255, 255, 255, .22), transparent 55%), var(--u); box-shadow: 0 10px 22px -10px var(--u); }
+.heros::after { content: ""; position: absolute; right: -30px; bottom: -40px; width: 140px; height: 140px; border-radius: 50%; border: 18px solid rgba(255, 255, 255, .08); }
+.heros .et { font: 700 8.5px/1 var(--sans); letter-spacing: .16em; text-transform: uppercase; opacity: .85; }
+.heros .ti { font: 600 21px/1.1 var(--serif); margin: 4px 0 2px; }
+.heros .qd { font-weight: 600; }
+.heros .ou { opacity: .9; font-size: 12px; }
+.heros .compte { display: flex; gap: 10px; align-items: baseline; margin-top: 10px; font-variant-numeric: tabular-nums; }
+.heros .compte b { font: 700 26px/1 var(--sans); letter-spacing: -.02em; }
+.heros .compte span { font: 600 12px/1 var(--sans); opacity: .9; }
+.heros .lampe { position: absolute; top: 14px; right: 14px; width: 8px; height: 8px; border-radius: 50%; background: #ffd56a; box-shadow: 0 0 10px #ffd56a; animation: respire 2.4s ease-in-out infinite; }
+@keyframes respire { 50% { opacity: .45; } }
+.roule { display: inline-block; animation: roule .35s cubic-bezier(.2, .8, .2, 1); }
+@keyframes roule { from { transform: translateY(-60%); opacity: 0; } to { transform: none; opacity: 1; } }
+.billet { --u: var(--u-cyrano); position: relative; display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 10px; width: 100%; text-align: left; align-items: center; border: 1px solid var(--filet); border-radius: 14px; background: var(--surface); padding: 9px 10px 9px 14px; margin: 0 0 8px; overflow: hidden; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: manipulation; }
+.billet::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--u); }
+.billet::after { content: ""; position: absolute; right: 54px; top: -6px; width: 12px; height: 12px; border-radius: 50%; background: var(--papier); border: 1px solid var(--filet); }
+.billet .bd { text-align: center; line-height: 1; }
+.billet .bd b { display: block; font: 700 18px/1 var(--sans); }
+.billet .bd small { font-size: 10px; color: var(--gris); text-transform: uppercase; letter-spacing: .06em; }
+.billet .bs { font-weight: 700; display: block; }
+.billet .bl { display: block; color: var(--gris); font-size: 11.5px; }
+.billet .be { display: inline-block; font-size: 10px; font-weight: 600; margin-top: 3px; padding: 2px 6px; border-radius: 6px; background: var(--surface-2); color: var(--gris); }
+.billet.presse { transform: scale(.98); }
+.anneau { position: absolute; inset: 0; pointer-events: none; border-radius: 14px; background: conic-gradient(var(--magenta) calc(var(--p, 0) * 1turn), transparent 0); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; padding: 2.5px; }
+
+/* une date */
+.d-tete { --u: var(--u-cyrano); margin: -12px -14px 12px; padding: 12px 14px 14px; background: var(--u); color: var(--sur-u); transition: background .5s; }
+.d-tete .ti { font: 600 19px/1.1 var(--serif); margin: 2px 0; }
+.d-tete small { font: 700 8.5px/1 var(--sans); letter-spacing: .14em; text-transform: uppercase; opacity: .85; }
+.d-tete .qd { font-weight: 600; font-size: 12.5px; }
+.ligne { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--filet); }
+.ligne:last-child { border-bottom: 0; }
+.carte-mini { position: relative; border-radius: 14px; overflow: hidden; background: var(--surface); border: 1px solid var(--filet); }
+.carte-mini svg { display: block; width: 100%; height: auto; }
+.km { position: absolute; left: 10px; bottom: 8px; background: var(--surface); border-radius: 8px; padding: 4px 8px; font: 700 12px/1 var(--sans); font-variant-numeric: tabular-nums; box-shadow: 0 2px 8px rgba(0, 0, 0, .12); }
+.qui { display: flex; gap: 10px; flex-wrap: wrap; }
+.qui span { display: grid; justify-items: center; gap: 2px; font-size: 10px; color: var(--gris); }
+.qui i { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font: 700 11px/1 var(--sans); font-style: normal; background: var(--surface-2); color: var(--encre); }
+.qui span:first-child i { background: var(--magenta); color: var(--sur-magenta); }
+.nav-dates { display: flex; justify-content: space-between; gap: 8px; margin: 12px 0 0; }
+
+/* le jour J */
+.frise { position: relative; list-style: none; margin: 0; padding: 0 0 0 18px; }
+.frise::before { content: ""; position: absolute; left: 5px; top: 6px; bottom: 6px; width: 2px; background: var(--surface-3); }
+.frise li { position: relative; padding: 6px 8px 6px 8px; border-radius: 10px; transition: background .3s, opacity .3s; }
+.frise li::before { content: ""; position: absolute; left: -17px; top: 11px; width: 10px; height: 10px; border-radius: 50%; background: var(--surface); border: 2px solid var(--surface-3); }
+.frise li b { font-variant-numeric: tabular-nums; margin-right: 6px; }
+.frise li.passee { opacity: .5; }
+.frise li.encours { background: var(--magenta-doux); }
+.frise li.encours::before { border-color: var(--magenta); background: var(--magenta); box-shadow: 0 0 0 4px var(--magenta-doux); }
+.frise li .dans { display: block; font-size: 10.5px; color: var(--magenta-fonce); font-weight: 600; }
+.horloge { display: grid; gap: 6px; padding: 10px 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--filet); margin: 0 0 12px; }
+.horloge b { font: 700 20px/1 var(--sans); font-variant-numeric: tabular-nums; }
+.horloge input { width: 100%; accent-color: var(--magenta); }
+
+/* planning */
+.prop { border: 1.5px solid var(--u-macbeth); border-radius: 14px; padding: 10px 12px; background: var(--surface); margin: 0 0 10px; }
+.prop .ti { font: 600 15px/1.2 var(--serif); }
+.prop .boutons { display: flex; gap: 6px; margin-top: 8px; }
+.prop .boutons .a-btn { padding: 7px; font-size: 12px; }
+.prop.repondue { border-color: var(--ok); }
+.cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; text-align: center; }
+.cal .j { font-size: 9px; color: var(--gris); font-weight: 700; padding: 2px 0; }
+.cal button { aspect-ratio: 1; max-width: 100%; border: 0; border-radius: 8px; background: var(--surface); font-size: 11.5px; font-variant-numeric: tabular-nums; position: relative; padding: 0; }
+.cal button.tournee { background: var(--u-cyrano); color: #fff; font-weight: 700; }
+.cal button.pris { background: repeating-linear-gradient(-45deg, var(--alerte-doux) 0 4px, var(--surface) 4px 8px); color: var(--alerte); font-weight: 700; outline: 1.5px solid var(--alerte); outline-offset: -1.5px; }
+.cal button.vide { visibility: hidden; }
+.feuille { position: absolute; left: 0; right: 0; bottom: 0; z-index: 7; background: var(--surface); border-radius: 20px 20px 0 0; padding: 8px 14px 20px; box-shadow: 0 -10px 30px rgba(0, 0, 0, .25); animation: monteFeuille .32s cubic-bezier(.2, .8, .2, 1) both; max-height: 86%; overflow-y: auto; }
+.feuille::before { content: ""; display: block; width: 36px; height: 4px; border-radius: 4px; background: var(--surface-3); margin: 0 auto 10px; }
+@keyframes monteFeuille { from { transform: translateY(100%); } to { transform: none; } }
+.voile { position: absolute; inset: 0; z-index: 6; background: rgba(20, 12, 16, .35); animation: fondu .25s both; }
+@keyframes fondu { from { opacity: 0; } }
+.feuille .act { display: flex; width: 100%; gap: 10px; align-items: center; border: 0; background: transparent; padding: 10px 4px; border-bottom: 1px solid var(--filet); text-align: left; font-size: 13px; }
+.feuille .act:last-child { border-bottom: 0; }
+.feuille .act .ic { color: var(--magenta); }
+.feuille .act.vise { background: var(--option-doux); border-radius: 10px; }
+.feuille input, .feuille textarea { width: 100%; border: 1px solid var(--filet); border-radius: 10px; padding: 8px 10px; background: var(--papier); font-size: 13px; }
+.feuille textarea { min-height: 70px; resize: none; }
+.feuille .cpt { text-align: right; font-size: 10.5px; color: var(--gris); font-variant-numeric: tabular-nums; }
+.puces { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 10px; }
+.puces button { border: 1px solid var(--filet); background: var(--papier); border-radius: 99px; padding: 5px 10px; font-size: 12px; }
+.puces button[aria-pressed="true"] { background: var(--magenta); color: var(--sur-magenta); border-color: var(--magenta); }
+
+/* spectacles et fichiers */
+.spec { --u: var(--u-cyrano); display: flex; width: 100%; gap: 10px; align-items: center; text-align: left; border: 0; border-radius: 14px; padding: 12px; margin: 0 0 8px; color: var(--sur-u); background: var(--u); }
+.spec .ti { font: 600 16px/1.1 var(--serif); display: block; }
+.spec small { opacity: .88; font-size: 11px; }
+.fic { display: flex; gap: 10px; align-items: center; padding: 9px 10px; border-radius: 12px; background: var(--surface); border: 1px solid var(--filet); margin: 0 0 6px; }
+.fic .ic { color: var(--magenta); }
+.fic div { flex: 1; min-width: 0; }
+.fic b { display: block; font-size: 12.5px; }
+.fic small { color: var(--gris); font-size: 10.5px; }
+.partage-apps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 10px 0; text-align: center; font-size: 10.5px; }
+.partage-apps button { border: 0; background: transparent; display: grid; justify-items: center; gap: 4px; font-size: 10.5px; }
+.partage-apps i { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--surface-2); color: var(--encre); font-style: normal; }
+
+/* notifications */
+.notif { position: relative; border-radius: 14px; margin: 0 0 8px; overflow: hidden; touch-action: pan-y; }
+.notif .fond { position: absolute; inset: 0; background: var(--ok); color: #fff; display: flex; align-items: center; padding-left: 14px; font-weight: 700; font-size: 12px; }
+.notif .corps { position: relative; display: grid; grid-template-columns: 30px 1fr; gap: 2px 10px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--filet); border-radius: 14px; transition: transform .25s, opacity .3s; user-select: none; -webkit-user-select: none; }
+.notif .corps .pt { grid-row: span 2; width: 30px; height: 30px; border-radius: 50%; background: var(--magenta-doux); color: var(--magenta-fonce); display: grid; place-items: center; }
+.notif .corps b { font-size: 12.5px; }
+.notif .corps span { font-size: 11.5px; color: var(--gris); }
+.notif.non-lue .corps::after { content: ""; position: absolute; right: 10px; top: 12px; width: 8px; height: 8px; border-radius: 50%; background: var(--magenta); }
+.notif.lue .corps { opacity: .55; }
+
+/* moi : les notes de frais */
+.fiche-moi { display: flex; gap: 10px; align-items: center; margin: 0 0 12px; }
+.fiche-moi i { width: 44px; height: 44px; border-radius: 50%; background: var(--magenta); color: var(--sur-magenta); display: grid; place-items: center; font: 700 15px/1 var(--sans); font-style: normal; }
+.total { display: flex; justify-content: space-between; align-items: baseline; padding: 12px; border-radius: 14px; background: var(--surface); border: 1px solid var(--filet); margin: 0 0 8px; }
+.total b { font: 700 20px/1 var(--sans); font-variant-numeric: tabular-nums; }
+.total.luit { box-shadow: 0 0 0 3px var(--ampoule-lueur); transition: box-shadow .4s; }
+.ticket { width: 70px; height: 86px; margin: 6px auto 10px; background: #fff; color: #333; border-radius: 3px; box-shadow: 0 4px 12px rgba(0, 0, 0, .2); font: 9px/1.3 ui-monospace, Menlo, monospace; padding: 6px; transform: rotate(-4deg);
+  -webkit-mask: radial-gradient(circle at 50% 100%, transparent 3px, #000 3.5px) 0 0 / 8px 100%; mask: radial-gradient(circle at 50% 100%, transparent 3px, #000 3.5px) 0 0 / 8px 100%; }
+.ticket.vole { position: absolute; z-index: 12; margin: 0; transition: transform .8s cubic-bezier(.5, -.3, .4, 1), opacity .8s; }
+
+/* l'écran d'accueil du téléphone et le navigateur */
+.navigateur { display: flex; flex-direction: column; height: 100%; }
+.url { margin: 0 12px 8px; padding: 7px 10px; border-radius: 10px; background: var(--surface-2); font-size: 11.5px; color: var(--gris); display: flex; justify-content: space-between; align-items: center; }
+.barre-safari { display: flex; justify-content: space-around; padding: 8px 0 22px; border-top: 1px solid var(--filet); background: var(--surface); color: #2f7cf6; }
+.barre-safari .vise, .vise-ici { animation: vise 1.2s ease-in-out infinite; color: var(--magenta) !important; }
+.accueil-tel { position: absolute; inset: 0; padding: 60px 22px; background: linear-gradient(170deg, #5b3a6e, #a3306b 60%, #e0806b); display: grid; grid-template-columns: repeat(4, 1fr); align-content: start; gap: 20px 12px; }
+.accueil-tel span { display: grid; justify-items: center; gap: 4px; color: #fff; font-size: 9.5px; }
+.accueil-tel i { width: 48px; height: 48px; border-radius: 13px; background: rgba(255, 255, 255, .28); display: grid; place-items: center; }
+.accueil-tel .crescite i { background: #fffdf9; color: #a3306b; animation: pose .4s cubic-bezier(.2, .8, .2, 1) .2s both; font-size: 24px; }
+.dialogue { position: absolute; left: 18px; right: 18px; top: 34%; z-index: 9; background: var(--surface); border-radius: 18px; padding: 16px; box-shadow: 0 14px 40px rgba(0, 0, 0, .35); animation: pose .3s both; }
+.dialogue p { margin: 0 0 10px; }
+
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001s !important; animation-iteration-count: 1 !important; transition-duration: .001s !important; }
+}
+</style>
+
+<!--PIEUVRE-->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-saison" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+    <symbol id="i-feuilles" viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></symbol>
+    <symbol id="i-planning" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="7" cy="18" r="1.6"/></symbol>
+    <symbol id="i-spectacles" viewBox="0 0 24 24"><path d="M4 5c3 1.5 6 1.5 8 0v7a4 4 0 0 1-8 0z"/><path d="M12 9c2.5 1.2 5.5 1.2 8 0v6a4 4 0 0 1-8 0"/><path d="M6.5 10h1.5M15 13h1.5"/></symbol>
+    <symbol id="i-moi" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20c1.2-4 4-5.5 7.5-5.5s6.3 1.5 7.5 5.5"/></symbol>
+    <symbol id="i-cloche" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/></symbol>
+    <symbol id="i-cle" viewBox="0 0 24 24"><circle cx="8" cy="12" r="4"/><path d="M12 12h9M18 12v3M21 12v2.5"/></symbol>
+    <symbol id="i-badge" viewBox="0 0 24 24"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M10.5 18.5h3"/><path d="M12 7.5v5M9.5 10h5"/></symbol>
+    <symbol id="i-chrono" viewBox="0 0 24 24"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 13.5V9.5M10 2.5h4M12 2.5V6M18.5 6.5l1.5-1.5"/></symbol>
+    <symbol id="i-feuille" viewBox="0 0 24 24"><path d="M6 3h12v18H6z"/><path d="M9 8h6M9 12h6M9 16h3"/></symbol>
+    <symbol id="i-valise" viewBox="0 0 24 24"><rect x="3.5" y="7.5" width="17" height="12" rx="2.5"/><path d="M9 7.5V5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 5v2.5M3.5 12.5h17"/></symbol>
+    <symbol id="i-agenda" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4M8.5 15l2 2 4-4"/></symbol>
+    <symbol id="i-texte" viewBox="0 0 24 24"><path d="M6 4h9a3 3 0 0 1 3 3v13H9a3 3 0 0 1-3-3z"/><path d="M6 17a3 3 0 0 1 3-3h9M10 8h4"/></symbol>
+    <symbol id="i-main" viewBox="0 0 24 24"><path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V11M12 10V4.5a1.5 1.5 0 0 1 3 0V11M15 10.5V6a1.5 1.5 0 0 1 3 0v8a7 7 0 0 1-7 7h-.5a6 6 0 0 1-4.6-2.2L3.5 15.5a1.6 1.6 0 0 1 2.4-2.1L9 16V8a1.5 1.5 0 0 1 3 0"/></symbol>
+    <symbol id="i-balai" viewBox="0 0 24 24"><path d="M3 12h18M7 8l-4 4 4 4M17 8l4 4-4 4"/></symbol>
+    <symbol id="i-ticket" viewBox="0 0 24 24"><path d="M5 3h14v18l-2.3-1.5L14.3 21 12 19.5 9.7 21l-2.4-1.5L5 21z"/><path d="M8.5 8h7M8.5 12h7M8.5 16h4"/></symbol>
+    <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><path d="M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5"/></symbol>
+    <symbol id="i-partage" viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></symbol>
+    <symbol id="i-retard" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-euro" viewBox="0 0 24 24"><path d="M17 6.5a6.5 6.5 0 1 0 0 11"/><path d="M4 10.5h9M4 13.5h9"/></symbol>
+    <symbol id="i-pdf" viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 15h1.5a1.5 1.5 0 0 0 0-3H10v5"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-fleche-g" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="i-fleche-d" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-photo" viewBox="0 0 24 24"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="M3.5 6.5 12 13l8.5-6.5"/></symbol>
+    <symbol id="i-message" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></symbol>
+    <symbol id="i-lien" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+    <symbol id="i-son" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></symbol>
+    <symbol id="i-masque" viewBox="0 0 24 24"><path d="M4 5c5 2 11 2 16 0v6a8 8 0 0 1-16 0z"/><path d="M8 10h2M14 10h2M9 15c2 1.3 4 1.3 6 0"/></symbol>
+    <symbol id="i-boussole" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></symbol>
+  </defs>
+</svg>
+
+<header class="barre">
+  <div class="barre-in">
+    <a class="marque" href="#"><svg class="pieuvre" aria-hidden="true"><use href="#pieuvre"/></svg><b>Crescite</b><small>Prise en main</small></a>
+    <div class="avance" aria-live="polite"><span id="avance-txt">0 / 11</span><span class="rail" aria-hidden="true"><span id="avance-barre"></span></span></div>
+    <a class="lien-plan" href="#plan">Plan</a>
+  </div>
+</header>
+<main id="vue" tabindex="-1"></main>
+
+<script>
+(() => {
+  'use strict';
+  // ============================================================================================ les données
+  // Les dates viennent du relevé public de crescite.fr (data/representations-site-2016-2027.json) ; les horaires, les
+  // personnes, la proposition et les notes de frais sont des exemples, marqués comme tels.
+  const ESPACE = 'https://crescite.pages.dev/equipe/';
+  const CONTACT = 'contact@crescite.fr';
+  const ROUEN = { nom: 'Rouen', lat: 49.4431, lon: 1.0993 };
+  const DATES = [
+    { spec: 'Ci-gisait Cyrano', u: 'cyrano', jours: ['2026-11-12'], commune: 'Eu', lieu: 'Collège Louis Philippe', public: 'Scolaire', detail: '2 représentations au Collège Louis Philippe', lat: 50.042, lon: 1.4303 },
+    { spec: 'Ci-gisait Cyrano', u: 'cyrano', jours: ['2026-11-16'], commune: 'Saint-Valery-en-Caux', lieu: 'Collège Jehan Le Povremoyne', public: 'Scolaire', detail: '2 représentations scolaires au Collège Jehan Le Povremoyne', lat: 49.8582, lon: 0.7094 },
+    { spec: 'Ci-gisait Cyrano', u: 'cyrano', jours: ['2026-11-19', '2026-11-20'], commune: 'Eu', lieu: 'Théâtre des Charmes', public: 'Tout public', detail: '3 représentations au Théâtre des Charmes', lat: 50.042, lon: 1.4303 },
+    { spec: 'Ci-gisait Cyrano', u: 'cyrano', jours: ['2026-12-08', '2026-12-10', '2026-12-11'], commune: 'Charleville-Mézières', lieu: 'Hors les murs', public: 'Scolaire', detail: '6 représentations hors les murs, Théâtre de Charleville-Mézières', lat: 49.7802, lon: 4.7304 },
+    { spec: 'Cléophène', u: 'cleophene', jours: ['2026-12-18'], commune: 'Pont-Audemer', lieu: 'L’Eclat', public: 'Tout public', detail: '14 h et 20 h : représentations à L’Eclat de Pont-Audemer', lat: 49.3476, lon: 0.5259 },
+  ];
+
+  const fmtJour = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Paris' });
+  const jourDe = iso => new Date(iso + 'T12:00:00+01:00');
+  const quand = d => {
+    if (d.jours.length === 1) return cap(fmtJour.format(jourDe(d.jours[0])));
+    const nums = d.jours.map(j => +j.slice(8));
+    const mois = new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(jourDe(d.jours[0]));
+    return nums.length === 2 ? `Les ${nums[0]} et ${nums[1]} ${mois}` : `Les ${nums.slice(0, -1).join(', ')} et ${nums.at(-1)} ${mois}`;
+  };
+  const moisCourt = iso => new Intl.DateTimeFormat('fr-FR', { month: 'short' }).format(jourDe(iso)).replace('.', '');
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const ic = (n, cls = 'ic') => `<svg class="${cls}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+  const pieuvre = () => '<svg class="pieuvre" aria-hidden="true"><use href="#pieuvre"/></svg>';
+  const km = (a, b) => { const R = 6371, r = x => x * Math.PI / 180; const dLa = r(b.lat - a.lat), dLo = r(b.lon - a.lon);
+    const h = Math.sin(dLa / 2) ** 2 + Math.cos(r(a.lat)) * Math.cos(r(b.lat)) * Math.sin(dLo / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); };
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const reduit = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+
+  // ============================================================================================ la mémoire de l'appareil
+  const CLE = 'crescite-generale-v2';
+  const neuf = () => ({ niveau: null, compte: null, faits: {} });
+  let S = neuf();
+  try { const t = localStorage.getItem(CLE); if (t) S = Object.assign(neuf(), JSON.parse(t)); } catch (e) { /* sans mémoire : le guide marche quand même */ }
+  const sauver = () => { try { localStorage.setItem(CLE, JSON.stringify(S)); } catch (e) { /* idem */ } };
+  const nbFaits = () => Object.keys(S.faits).length;
+
+  // ============================================================================================ les étapes
+  const GROUPES = ['Accès', 'Votre saison', 'Organisation', 'Raccourcis'];
+  const SCENES = [
+    { id: 'porte', groupe: 0, titre: 'Se connecter', sous: 'Mot de passe ou lien par courriel',
+      essentiel: 'Votre compte est ouvert par l’administration, avec votre adresse électronique. Pour entrer : un mot de passe, ou un lien reçu par courriel.',
+      detail: ['À la première connexion, le compte se rattache à votre fiche : vos spectacles, vos dates et vos documents sont déjà là.', 'Le lien ne sert qu’une fois. S’il n’arrive pas, vérifiez les indésirables.'],
+      pasapas: ['Saisissez votre adresse électronique.', 'Touchez « Recevoir un lien de connexion ».', 'Ouvrez le courriel et touchez le lien.'],
+      consigne: 'Entrez sans mot de passe.',
+      coches: ['Demander un lien de connexion', 'Ouvrir le courriel'],
+      indice: 'Saisissez une adresse, puis touchez « Recevoir un lien de connexion ». Le courriel apparaît en haut de l’écran.' },
+    { id: 'installer', groupe: 0, titre: 'Installer l’application', sous: 'Une icône sur l’écran d’accueil',
+      essentiel: 'L’espace s’installe comme une application, sans passer par un magasin d’applications.',
+      detail: ['Installée, elle garde la dernière saison consultée : horaires et feuille de route restent lisibles sans réseau.'],
+      pasapas: ['Ouvrez l’adresse de l’espace dans le navigateur.', 'iPhone : bouton Partager de Safari. Android : bouton « Installer » en haut de l’espace.', 'Confirmez.'],
+      consigne: 'Choisissez votre téléphone, puis remettez les étapes dans l’ordre.',
+      coches: ['Choisir le téléphone', 'Ordonner les étapes'],
+      indice: 'On commence par ouvrir l’espace dans le navigateur. Ensuite, suivez ce qui est signalé sur le téléphone.' },
+    { id: 'date', groupe: 1, titre: 'La prochaine date', sous: 'Onglet Saison',
+      essentiel: 'L’onglet Saison s’ouvre sur votre prochaine date, avec le compte à rebours, puis la suite de la tournée.',
+      detail: ['Chaque date ouvre sa page : lieu, séances, équipe, feuille de route.', 'Les dates sont celles de la saison 2026-2027. Les horaires sont des exemples.'],
+      pasapas: ['Repérez le bandeau en haut : la prochaine date.', 'Touchez-le.', 'Lisez les séances.'],
+      consigne: 'Ouvrez la prochaine date et trouvez le nombre de représentations.',
+      coches: ['Ouvrir la date', 'Trouver le nombre de représentations'],
+      indice: 'Touchez le bandeau Ci-gisait Cyrano, en haut de l’écran.' },
+    { id: 'jourj', groupe: 1, titre: 'Le jour J', sous: 'La feuille de route en direct',
+      essentiel: 'Le jour J, la feuille de route suit l’heure : l’étape en cours est signalée, la suivante indique le temps restant.',
+      detail: ['Elle existe en version web et en PDF. Chaque publication ou mise à jour vous est notifiée.'],
+      pasapas: ['Ouvrez l’onglet Feuilles.', 'Faites glisser le curseur de l’heure.', 'Observez l’étape en cours.'],
+      consigne: 'Avancez l’heure jusqu’à la deuxième représentation.',
+      coches: ['Avancer l’heure', 'S’arrêter sur la deuxième représentation'],
+      indice: 'Faites glisser le curseur au-delà de 14 h.' },
+    { id: 'route', groupe: 1, titre: 'Équipe et itinéraire', sous: 'Qui part, et comment y aller',
+      essentiel: 'La page d’une date indique qui part, le lieu et l’itinéraire depuis Rouen.',
+      detail: ['L’itinéraire ouvre votre application de cartes sur le lieu. Un appui long sur une personne donne ses coordonnées.'],
+      pasapas: ['Ouvrez la date.', 'Repérez « Qui part ».', 'Touchez « Itinéraire ».'],
+      consigne: 'Affichez l’itinéraire jusqu’au collège d’Eu.',
+      coches: ['Toucher « Itinéraire »', 'Afficher le trajet'],
+      indice: 'Le bouton « Itinéraire » est sous la carte.' },
+    { id: 'planning', groupe: 2, titre: 'Disponibilités', sous: 'Planning et propositions de dates',
+      essentiel: 'L’onglet Planning réunit votre saison, celle de vos partenaires, vos indisponibilités et les dates que l’administration vous propose.',
+      detail: ['Le motif d’une indisponibilité reste privé. Votre agenda peut être relié : vos dates Crescite s’y ajoutent.'],
+      pasapas: ['Répondez à la proposition.', 'Touchez un jour où vous n’êtes pas disponible.', 'Enregistrez.'],
+      consigne: 'Répondez à la proposition, puis indiquez un jour d’indisponibilité.',
+      coches: ['Répondre à la proposition', 'Indiquer une indisponibilité'],
+      indice: 'Les jours foncés sont des dates de tournée. Choisissez un jour clair.' },
+    { id: 'textes', groupe: 2, titre: 'Documents de travail', sous: 'Textes et fichiers par spectacle',
+      essentiel: 'L’onglet Spectacles regroupe vos spectacles, leurs dates et leurs fichiers de travail.',
+      detail: ['Chaque fichier se partage par un lien valable 30 jours, y compris un fichier privé.'],
+      pasapas: ['Ouvrez Ci-gisait Cyrano.', 'Repérez le texte.', 'Touchez « Partager ».'],
+      consigne: 'Partagez le texte de Ci-gisait Cyrano.',
+      coches: ['Ouvrir Ci-gisait Cyrano', 'Partager le texte'],
+      indice: 'Ouvrez Ci-gisait Cyrano, puis touchez « Partager » à côté du texte.' },
+    { id: 'cloche', groupe: 2, titre: 'Notifications', sous: 'Les changements, en temps réel',
+      essentiel: 'Horaire modifié, feuille de route publiée, document ajouté : une notification arrive dans l’application et sur le téléphone, même application fermée.',
+      detail: ['Plusieurs changements simultanés ne produisent qu’une notification. Chacune ouvre la page concernée.'],
+      pasapas: ['Posez le doigt sur une notification.', 'Faites-la glisser vers la droite.', 'Ou touchez « Tout marquer comme lu ».'],
+      consigne: 'Marquez les notifications comme lues.',
+      coches: ['Faire glisser une notification', 'Tout lire'],
+      indice: 'Faites glisser une notification vers la droite, ou touchez « Tout marquer comme lu ».' },
+    { id: 'appui', groupe: 3, titre: 'Appui long', sous: 'Les actions d’une date',
+      essentiel: 'Un appui long sur une date ouvre ses actions : itinéraire, feuille de route, agenda, retard, note de frais, partage.',
+      detail: ['Le geste fonctionne aussi sur un horaire, un lieu, une personne ou un document. Sur ordinateur : clic droit.', '« Signaler un retard » prévient l’équipe de la date et l’administration.'],
+      pasapas: ['Maintenez le doigt sur la date du 12 novembre.', 'Choisissez « Signaler un retard ».', 'Envoyez.'],
+      consigne: 'Signalez un retard sur la date du 12 novembre.',
+      coches: ['Appui long sur la date', 'Choisir « Signaler un retard »', 'Envoyer'],
+      indice: 'Maintenez l’appui une demi-seconde sur la première date. Sur ordinateur, clic droit.' },
+    { id: 'balayage', groupe: 3, titre: 'Navigation entre dates', sous: 'D’une date à l’autre',
+      essentiel: 'Sur la page d’une date, balayez vers la gauche pour la suivante, vers la droite pour la précédente.',
+      detail: ['Les boutons et les flèches du clavier font de même.'],
+      pasapas: ['Posez le doigt sur la page.', 'Faites-le glisser vers la gauche.', 'Recommencez jusqu’à Cléophène.'],
+      consigne: 'Allez jusqu’à Cléophène à Pont-Audemer et trouvez l’heure de la séance du soir.',
+      coches: ['Atteindre Cléophène', 'Trouver l’heure du soir'],
+      indice: 'Balayez quatre fois vers la gauche, ou touchez « Date suivante ».' },
+    { id: 'frais', groupe: 3, titre: 'Notes de frais', sous: 'Onglet Moi',
+      essentiel: 'Une note de frais : la nature, le montant, la photo du justificatif. Elle part à l’administration pour validation.',
+      detail: ['Tant qu’elle n’est pas validée, vous pouvez la modifier ou la retirer.'],
+      pasapas: ['Touchez « Nouvelle note de frais ».', 'Choisissez « Péage », saisissez 12,40.', 'Photographiez le justificatif, puis envoyez.'],
+      consigne: 'Déclarez un péage de 12,40 €.',
+      coches: ['Nature : péage', 'Montant : 12,40 €', 'Photo du justificatif', 'Envoyer'],
+      indice: 'Touchez « Nouvelle note de frais », sous le total.' },
+  ];
+  const parId = id => SCENES.find(s => s.id === id);
+  const indexDe = id => SCENES.findIndex(s => s.id === id);
+  const prochaine = (apres = -1) => SCENES.find((s, i) => i > apres && !S.faits[s.id]) || SCENES.find(s => !S.faits[s.id]);
+
+  // ============================================================================================ la barre
+  function majBarre() {
+    const n = nbFaits();
+    $('#avance-txt').textContent = `${n} / ${SCENES.length}`;
+    $('#avance-barre').style.width = `${(n / SCENES.length) * 100}%`;
+  }
+
+  // ============================================================================================ le téléphone
+  const ONGLETS = [['saison', 'Saison'], ['feuilles', 'Feuilles'], ['planning', 'Planning'], ['spectacles', 'Spectacles'], ['moi', 'Moi']];
+  const heure = () => new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(new Date());
+  const statut = () => `<div class="app-statut"><span>${heure()}</span><span class="barres">▂▄▆█ ◔</span></div>`;
+  function appli(onglet, corps, o = {}) {
+    return `<div class="app" style="--u:${o.u || 'var(--magenta)'}">${statut()}
+      <div class="app-haut"><span class="app-marque">${pieuvre()}<b>Crescite</b><small>équipe</small></span>
+        <span class="app-cloche" aria-label="Notifications">${ic('cloche')}${o.badge ? `<span class="badge">${o.badge}</span>` : ''}</span></div>
+      <div class="app-zone" data-zone>${corps}</div>
+      <nav class="app-onglets" aria-hidden="true">${ONGLETS.map(([k, l]) => `<span class="${k === onglet ? 'actif' : ''}${o.vise === k ? ' vise' : ''}">${ic(k)}${l}</span>`).join('')}</nav>
+    </div>`;
+  }
+  function toast(t, msg, duree = 2600) {
+    const ancien = $('.a-toast', t); if (ancien) ancien.remove();
+    const d = document.createElement('div'); d.className = 'a-toast'; d.setAttribute('role', 'status'); d.innerHTML = msg;
+    $('.app', t)?.appendChild(d) || t.appendChild(d);
+    setTimeout(() => d.remove(), duree);
+  }
+  function feuille(t, html) {
+    fermerFeuille(t);
+    const app = $('.app', t) || t;
+    app.insertAdjacentHTML('beforeend', `<div class="voile" data-voile></div><div class="feuille" role="dialog" aria-label="Actions">${html}</div>`);
+    $('[data-voile]', app).addEventListener('click', () => fermerFeuille(t));
+    return $('.feuille', app);
+  }
+  function fermerFeuille(t) { $$('.voile, .feuille', t).forEach(e => e.remove()); }
+  function vibrer() { try { navigator.vibrate && navigator.vibrate(12); } catch (e) { /* refusé : pas grave */ } }
+
+  // un appui long (ou un clic droit) sur un élément
+  function appuiLong(el, fait, { duree = 520 } = {}) {
+    let minuterie = null, debut = 0, raf = 0, anneau = null, dernier = 0;
+    const lancer = () => { if (performance.now() - dernier < 900) return; dernier = performance.now(); vibrer(); fait(); };
+    const stop = () => { clearTimeout(minuterie); cancelAnimationFrame(raf); el.classList.remove('presse'); anneau?.remove(); anneau = null; };
+    const tourne = () => { if (!anneau) return; anneau.style.setProperty('--p', Math.min(1, (performance.now() - debut) / duree)); raf = requestAnimationFrame(tourne); };
+    el.addEventListener('pointerdown', e => {
+      if (e.button > 0) return;
+      debut = performance.now(); el.classList.add('presse');
+      anneau = document.createElement('span'); anneau.className = 'anneau'; el.appendChild(anneau); tourne();
+      minuterie = setTimeout(() => { stop(); lancer(); }, duree);
+    });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(t => el.addEventListener(t, () => { if (minuterie && performance.now() - debut < duree) el.dataset.court = '1'; stop(); }));
+    el.addEventListener('contextmenu', e => { e.preventDefault(); stop(); lancer(); });
+  }
+  // un balayage horizontal
+  function balayer(el, gauche, droite) {
+    let x0 = null, y0 = null;
+    el.addEventListener('pointerdown', e => { if (e.target.closest('button')) return; x0 = e.clientX; y0 = e.clientY; try { el.setPointerCapture(e.pointerId); } catch (er) { /* sans capture */ } });
+    el.addEventListener('pointerup', e => {
+      if (x0 === null) return; const dx = e.clientX - x0, dy = e.clientY - y0; x0 = null;
+      if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) (dx < 0 ? gauche : droite)();
+    });
+    el.addEventListener('pointercancel', () => { x0 = null; });
+  }
+
+  function billet(d, o = {}) {
+    const j = d.jours[0];
+    return `<button type="button" class="billet" style="--u:var(--u-${d.u})" ${o.attr || ''}><span class="bd"><b>${+j.slice(8)}</b><small>${moisCourt(j)}</small></span>
+      <span><span class="bs">${esc(d.spec)}</span><span class="bl">${esc(d.commune)} · ${esc(d.lieu)}</span><span class="be">${esc(d.public)}</span></span></button>`;
+  }
+  function heros(d, o = {}) {
+    return `<button type="button" class="heros" style="--u:var(--u-${d.u})" ${o.attr || ''}><span class="lampe"></span><span class="et">Prochaine date · En scène</span>
+      <span class="ti">${esc(d.spec)}</span><span class="qd">${quand(d)}</span><span class="ou">${esc(d.commune)} · ${esc(d.lieu)}</span>
+      <span class="compte"><b data-j>J-${joursAvant(d)}</b><span data-rebours></span></span></button>`;
+  }
+  function joursAvant(d) {
+    const cible = new Date(d.jours[0] + 'T10:00:00+01:00'), now = new Date();
+    return Math.max(0, Math.ceil((cible - now) / 864e5));
+  }
+  function saison(o = {}) {
+    return `<p class="a-sous" style="margin-top:2px">Ma saison</p>${heros(DATES[0], o.heros)}
+      <p class="a-sous">Ensuite</p>${DATES.slice(1).map(d => billet(d)).join('')}`;
+  }
+  // le compte à rebours qui roule (sur le héros présent dans le téléphone)
+  function rebours(t) {
+    const maj = () => {
+      const el = $('[data-rebours]', t); if (!el) return;
+      const cible = new Date(DATES[0].jours[0] + 'T10:00:00+01:00'); let s = Math.max(0, Math.floor((cible - new Date()) / 1000));
+      const h = Math.floor(s / 3600) % 24, m = Math.floor(s / 60) % 60; s = s % 60;
+      const txt = `${String(h).padStart(2, '0')} h ${String(m).padStart(2, '0')} min <span class="roule">${String(s).padStart(2, '0')}</span> s`;
+      el.innerHTML = txt;
+    };
+    maj(); minuteries.push(setInterval(maj, 1000));
+  }
+
+  function pageDate(d, o = {}) {
+    const exemple = '<span class="exemple">exemple</span>';
+    const nb = +((d.detail.match(/(\d+) représentations/) || [])[1] || 1);
+    const seances = d.u === 'cleophene'
+      ? `<div class="ligne"><span>Séance 1</span><b>14 h</b></div><div class="ligne"><span>Séance 2</span><b>20 h</b></div>`
+      : nb <= 2 ? ['10 h', '14 h'].slice(0, nb).map((h, k) => `<div class="ligne"><span>Séance ${k + 1} ${exemple}</span><b>${h}</b></div>`).join('')
+      : `<div class="ligne"><span>${nb} séances sur ${d.jours.length} jours ${exemple}</span><b>${d.public === 'Scolaire' ? '10 h, 14 h' : '20 h 30'}</b></div>`;
+    return `<div class="d-tete" style="--u:var(--u-${d.u})"><small>${esc(d.public)}</small><div class="ti">${esc(d.spec)}</div><div class="qd">${quand(d)}</div><div>${esc(d.commune)} · ${esc(d.lieu)}</div></div>
+      ${o.seances === false ? '' : `<p class="a-sous">Les séances</p>${seances}<p style="margin:8px 0 0;color:var(--gris);font-size:11.5px">${esc(d.detail)}</p>`}
+      ${o.suite || ''}`;
+  }
+
+  // ============================================================================================ les scènes, jouées dans le téléphone
+  const MONTER = {
+    porte(t, a) {
+      t.innerHTML = `<div class="app">${statut()}<div class="porte">
+        <p class="pm">${pieuvre()}<b>Crescite</b><small>équipe</small></p>
+        <h3>L’espace de l’équipe</h3>
+        <p class="intro">Votre tournée, les horaires, les feuilles de route et les documents de vos spectacles, dans une application.</p>
+        <div data-msg aria-live="polite"></div>
+        <form data-f novalidate>
+          <label for="p-mel">Adresse électronique</label><input id="p-mel" type="email" inputmode="email" autocapitalize="none" spellcheck="false" placeholder="prenom.nom@exemple.fr" value="">
+          <label for="p-mdp">Mot de passe</label><input id="p-mdp" type="password">
+          <button class="a-btn principal" type="submit">Se connecter</button>
+        </form>
+        <div class="ou">ou</div>
+        <button class="a-btn" type="button" data-lien>Recevoir un lien de connexion</button>
+        <p style="margin:6px 0 0;font-size:11px;color:var(--gris)">Sans mot de passe : un lien arrive dans votre messagerie et vous ouvre l’espace.</p>
+        <button class="a-lien" type="button" data-oubli>Mot de passe oublié ?</button>
+      </div></div>`;
+      const mel = $('#p-mel', t), msg = $('[data-msg]', t);
+      const dire = (txt, genre = 'info') => { msg.innerHTML = `<p class="a-msg ${genre}">${txt}</p>`; };
+      const adresse = () => {
+        const v = mel.value.trim(); mel.classList.remove('faux');
+        if (!v) { mel.classList.add('faux'); dire('Indiquez votre adresse électronique.', 'erreur'); secouer(); return null; }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)) { mel.classList.add('faux'); dire('Cette adresse électronique n’est pas complète (par exemple : prenom.nom@exemple.fr).', 'erreur'); secouer(); return null; }
+        return v;
+      };
+      const secouer = () => { const f = $('[data-f]', t); f.classList.remove('secoue'); void f.offsetWidth; f.classList.add('secoue'); };
+      const entrer = () => { t.innerHTML = appli('saison', saison()); $('.app-zone', t).classList.add('pose'); rebours(t); setTimeout(() => a.gagne(), 900); };
+      $('[data-lien]', t).addEventListener('click', () => {
+        const v = adresse(); if (!v) return;
+        dire(`Un lien de connexion vient de partir vers <b>${esc(v)}</b>. Ouvrez-le depuis votre messagerie : il vous ramène ici, dans votre espace, et ne sert qu’une fois.`);
+        a.coche(0);
+        setTimeout(() => {
+          const m = document.createElement('button'); m.type = 'button'; m.className = 'mail';
+          m.innerHTML = `<span class="ico">${ic('mail')}</span><small>Messagerie · maintenant</small><b>Crescite</b><span>Votre lien de connexion à l’espace de l’équipe. Touchez pour l’ouvrir.</span>`;
+          $('.app', t).appendChild(m); m.focus({ preventScroll: true });
+          m.addEventListener('click', () => { a.coche(1); entrer(); });
+        }, 1100);
+      });
+      $('[data-f]', t).addEventListener('submit', e => {
+        e.preventDefault(); const v = adresse(); if (!v) return;
+        if (!$('#p-mdp', t).value) { dire('Indiquez votre mot de passe, ou demandez plus bas un lien de connexion.', 'erreur'); secouer(); return; }
+        a.coche(0); a.coche(1); entrer();
+      });
+      $('[data-oubli]', t).addEventListener('click', () => { if (adresse()) dire('Un courriel pour choisir un nouveau mot de passe vient de partir. Pour cette étape, utilisez le lien de connexion.'); });
+    },
+
+    installer(t, a, extra) {
+      const ETAPES = {
+        ios: ['Ouvrir l’espace dans Safari', 'Toucher Partager (le carré et sa flèche)', 'Choisir « Sur l’écran d’accueil »', 'Toucher « Ajouter »'],
+        android: ['Ouvrir l’espace dans Chrome', 'Toucher « Installer » en haut de l’espace', 'Confirmer « Installer »'],
+      };
+      let os = null, k = 0;
+      extra.innerHTML = `<div class="segment" role="group" aria-label="Votre téléphone"><button type="button" data-os="ios" aria-pressed="false">iPhone</button><button type="button" data-os="android" aria-pressed="false">Android</button></div><div class="etapes-chips" data-chips></div>`;
+      const ecranVide = () => { t.innerHTML = `<div class="app">${statut()}<div class="accueil-tel">${['Messages', 'Photos', 'Plans', 'Agenda', 'Mail', 'Réglages', 'Météo', 'Notes'].map(n => `<span><i></i>${n}</span>`).join('')}</div></div>`; };
+      const navigateur = () => {
+        t.innerHTML = `<div class="app">${statut()}<div class="navigateur"><div class="url"><span>crescite.pages.dev/equipe</span><span>↻</span></div>
+          <div style="flex:1;position:relative;overflow:hidden;border-top:1px solid var(--filet)">${appli('saison', saison()).replace('class="app"', 'class="app" style="position:absolute;inset:0;top:-40px"')}</div>
+          ${os === 'ios' ? `<div class="barre-safari"><span>‹</span><span>›</span><span data-partager>${ic('partage')}</span><span>▢</span><span>⧉</span></div>` : ''}</div></div>`;
+        if (os === 'android') { const h = $('.app-haut', t); h.insertAdjacentHTML('beforeend', '<span class="a-btn petit" data-installer style="margin-left:6px">Installer</span>'); }
+        rebours(t);
+      };
+      const scene = () => {
+        if (k === 0) return ecranVide();
+        if (k === 1) { navigateur(); $(os === 'ios' ? '[data-partager]' : '[data-installer]', t)?.classList.add('vise-ici'); return; }
+        if (os === 'ios' && k === 2) { feuille(t, `<p style="margin:0 0 6px;font-weight:600">Partager</p>${['Copier', 'Ajouter aux signets', 'Sur l’écran d’accueil', 'Imprimer'].map((x, i) => `<div class="act${i === 2 ? ' vise' : ''}">${ic(i === 2 ? 'plus' : 'partage')}${x}</div>`).join('')}`); return; }
+        if (os === 'ios' && k === 3) { fermerFeuille(t); $('.app', t).insertAdjacentHTML('beforeend', `<div class="voile"></div><div class="dialogue"><p><b>Ajouter à l’écran d’accueil</b></p><p style="display:flex;gap:10px;align-items:center"><span style="width:40px;height:40px;border-radius:10px;background:#fffdf9;color:#a3306b;display:grid;place-items:center;font-size:20px;box-shadow:0 0 0 1px var(--filet)">${pieuvre()}</span>Crescite</p><span class="a-btn principal petit vise-ici" style="display:inline-flex">Ajouter</span></div>`); return; }
+        if (os === 'android' && k === 2) { $('.app', t).insertAdjacentHTML('beforeend', `<div class="voile"></div><div class="dialogue"><p><b>Installer l’application ?</b></p><p>Crescite équipe<br><small style="color:var(--gris)">crescite.pages.dev</small></p><span class="a-btn principal petit vise-ici" style="display:inline-flex">Installer</span></div>`); return; }
+      };
+      const fin = () => {
+        t.innerHTML = `<div class="app">${statut()}<div class="accueil-tel">${['Messages', 'Photos', 'Plans', 'Agenda', 'Mail', 'Réglages', 'Météo', 'Notes'].map(n => `<span><i></i>${n}</span>`).join('')}<span class="crescite"><i>${pieuvre()}</i>Crescite</span></div></div>`;
+        a.coche(1); setTimeout(() => a.gagne(), 1100);
+      };
+      const chips = () => {
+        const liste = ETAPES[os]; const ordre = melange(liste.map((x, i) => i), os === 'ios' ? [2, 0, 3, 1] : [1, 2, 0]);
+        $('[data-chips]', extra).innerHTML = ordre.map(i => `<button type="button" data-i="${i}"><span class="n">?</span>${esc(liste[i])}</button>`).join('');
+        $$('[data-chips] button', extra).forEach(b => b.addEventListener('click', () => {
+          const i = +b.dataset.i; if (b.classList.contains('fait')) return;
+          if (i !== k) { b.classList.remove('secoue'); void b.offsetWidth; b.classList.add('secoue'); a.souffler(k === 0 ? 'On commence par ouvrir l’espace dans le navigateur.' : 'Ce n’est pas l’étape suivante. Suivez ce qui est signalé sur le téléphone.'); return; }
+          b.classList.add('fait'); $('.n', b).textContent = k + 1; k++;
+          if (k === liste.length) fin(); else scene();
+        }));
+      };
+      $$('[data-os]', extra).forEach(b => b.addEventListener('click', () => {
+        os = b.dataset.os; k = 0; $$('[data-os]', extra).forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
+        a.coche(0); chips(); scene();
+      }));
+      ecranVide();
+    },
+
+    date(t, a) {
+      t.innerHTML = appli('saison', saison(), { badge: 3 });
+      rebours(t);
+      $('.heros', t).addEventListener('click', () => {
+        $('[data-zone]', t).innerHTML = `<div class="pose">${pageDate(DATES[0])}</div>`;
+        $('[data-zone]', t).scrollTop = 0;
+        a.coche(0);
+        a.question({ q: 'Combien de représentations ce jour-là ?', choix: ['1', '2', '3'], bonne: 1, ok: () => { a.coche(1); a.gagne(); },
+          non: 'Voir la ligne sous les séances.' });
+      });
+      $$('.billet', t).forEach(b => b.addEventListener('click', () => toast(t, 'Pour cette étape, ouvrez la <b>prochaine</b> date, en haut.')));
+    },
+
+    jourj(t, a) {
+      const E = [[450, 'Rendez-vous à Rouen, chargement du camion'], [540, 'Arrivée au Collège Louis Philippe, déchargement'], [585, 'Installation, raccords'], [630, 'Représentation 1'], [705, 'Échange avec les élèves'], [735, 'Repas'], [840, 'Représentation 2'], [930, 'Démontage, chargement'], [1020, 'Retour à Rouen']];
+      const hm = m => `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')}`;
+      t.innerHTML = appli('feuilles', `<p class="a-h">Feuille de route</p>
+        <p style="margin:-6px 0 10px;color:var(--gris);font-size:11.5px">Ci-gisait Cyrano · Eu · ${quand(DATES[0])} <span class="exemple">horaires d’exemple</span></p>
+        <div class="horloge"><label for="jj-h" style="font-size:11px;color:var(--gris)">Il est</label><b data-h>7 h 00</b><input id="jj-h" type="range" min="420" max="1080" step="5" value="420" aria-label="Heure de la journée"></div>
+        <ol class="frise">${E.map(([m, l]) => `<li data-m="${m}"><b>${hm(m)}</b>${esc(l)}<span class="dans"></span></li>`).join('')}</ol>
+        <div style="display:flex;gap:6px;margin-top:10px"><span class="a-btn petit">${ic('feuilles')}Version web</span><span class="a-btn petit">${ic('pdf')}PDF</span></div>`, { vise: 'feuilles' });
+      const r = $('#jj-h', t); let bouge = false, fini = false;
+      const maj = () => {
+        const v = +r.value; $('[data-h]', t).textContent = hm(v);
+        const lis = $$('.frise li', t); let cur = -1;
+        lis.forEach((li, i) => { if (+li.dataset.m <= v) cur = i; });
+        lis.forEach((li, i) => { li.classList.toggle('passee', i < cur); li.classList.toggle('encours', i === cur); $('.dans', li).textContent = ''; });
+        if (cur + 1 < lis.length) { const dm = +lis[cur + 1].dataset.m - v; if (dm <= 90) $('.dans', lis[cur + 1]).textContent = `dans ${dm} min`; }
+        if (!bouge && v !== 420) { bouge = true; a.coche(0); }
+        if (!fini && v >= 840 && v < 930) { fini = true; a.coche(1); setTimeout(() => a.gagne(), 700); }
+      };
+      r.addEventListener('input', maj); maj();
+    },
+
+    route(t, a) {
+      const eu = DATES[0], dist = Math.round(km(ROUEN, eu));
+      const lieux = [ROUEN, { nom: 'Eu', lat: eu.lat, lon: eu.lon }, { nom: 'Saint-Valery-en-Caux', lat: 49.8582, lon: 0.7094 }, { nom: 'Pont-Audemer', lat: 49.3476, lon: 0.5259 }];
+      const W = 280, H = 170, lo0 = .3, lo1 = 1.75, la0 = 49.22, la1 = 50.15;
+      const P = p => [((p.lon - lo0) / (lo1 - lo0)) * W, H - ((p.lat - la0) / (la1 - la0)) * H];
+      const [rx, ry] = P(ROUEN), [ex, ey] = P(eu);
+      const cx = (rx + ex) / 2 + 30, cy = (ry + ey) / 2 + 10;
+      const carte = `<div class="carte-mini"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Carte de Rouen à Eu">
+          <rect width="${W}" height="${H}" fill="var(--surface)"/>
+          ${[1, 2, 3].map(i => `<line x1="${i * W / 4}" y1="0" x2="${i * W / 4}" y2="${H}" stroke="var(--filet)" stroke-width="1"/>`).join('')}
+          ${[1, 2].map(i => `<line x1="0" y1="${i * H / 3}" x2="${W}" y2="${i * H / 3}" stroke="var(--filet)" stroke-width="1"/>`).join('')}
+          <path data-route d="M${rx},${ry} Q${cx},${cy} ${ex},${ey}" fill="none" stroke="var(--magenta)" stroke-width="3" stroke-linecap="round" stroke-dasharray="4 6" opacity="0"/>
+          ${lieux.map((l, i) => { const [x, y] = P(l); return `<circle cx="${x}" cy="${y}" r="${i < 2 ? 5 : 3.5}" fill="${i === 0 ? 'var(--encre)' : i === 1 ? 'var(--magenta)' : 'var(--gris)'}"/><text x="${x + 8}" y="${y + 4}" font-size="10" font-weight="${i < 2 ? 700 : 500}" fill="var(--encre)" font-family="Work Sans, sans-serif">${esc(l.nom)}</text>`; }).join('')}
+        </svg><span class="km" data-km hidden>0 km</span></div>`;
+      const qui = `<div class="qui"><span><i>${ic('moi')}</i>Vous</span><span><i>RG</i>Régie</span><span><i>JE</i>Jeu</span><span><i>JE</i>Jeu</span></div>`;
+      t.innerHTML = appli('saison', pageDate(eu, { seances: false, suite: `<p class="a-sous">Qui part <span class="exemple">exemple</span></p>${qui}<p class="a-sous">Le lieu</p>${carte}
+        <div style="display:flex;gap:6px;margin-top:8px"><button type="button" class="a-btn principal" data-iti>${ic('route')}Itinéraire</button></div><div data-apres></div>` }));
+      $$('.qui span', t).forEach(s => s.addEventListener('click', () => toast(t, 'Appui long sur une personne : sa fiche et son téléphone.')));
+      $('[data-iti]', t).addEventListener('click', () => {
+        a.coche(0);
+        const p = $('[data-route]', t), L = p.getTotalLength(); p.setAttribute('opacity', '1');
+        const kmEl = $('[data-km]', t); kmEl.hidden = false; const t0 = performance.now(), D = reduit() ? 1 : 1400;
+        p.style.strokeDasharray = `${L}`; p.style.strokeDashoffset = `${L}`;
+        const pas = now => {
+          const f = Math.min(1, (now - t0) / D), e = 1 - (1 - f) ** 3;
+          p.style.strokeDashoffset = `${L * (1 - e)}`; kmEl.textContent = `${Math.round(dist * e)} km à vol d’oiseau`;
+          if (f < 1) requestAnimationFrame(pas); else { p.style.strokeDasharray = '4 6'; p.style.strokeDashoffset = '0'; $('[data-apres]', t).innerHTML = `<p class="a-msg info" style="margin-top:8px">Dans l’application, l’itinéraire s’ouvre dans Plans ou Google Maps, sur le Collège Louis Philippe.</p>`; a.coche(1); setTimeout(() => a.gagne(), 800); }
+        };
+        requestAnimationFrame(pas);
+      });
+    },
+
+    planning(t, a) {
+      let repondu = false, pris = false;
+      const debut = new Date('2026-11-01T12:00:00+01:00').getDay(), decal = (debut + 6) % 7; // lundi d'abord
+      const tour = [12, 16, 19, 20];
+      const cal = `<div class="cal">${['L', 'M', 'M', 'J', 'V', 'S', 'D'].map(j => `<span class="j">${j}</span>`).join('')}${Array.from({ length: decal }, () => '<button class="vide" tabindex="-1" aria-hidden="true"></button>').join('')}
+        ${Array.from({ length: 30 }, (_, i) => i + 1).map(n => `<button type="button" data-n="${n}" class="${tour.includes(n) ? 'tournee' : ''}" aria-label="${n} novembre${tour.includes(n) ? ', tournée' : ''}">${n}</button>`).join('')}</div>`;
+      t.innerHTML = appli('planning', `<p class="a-h">Planning</p>
+        <div class="segment" style="margin:0 0 10px"><button type="button" aria-pressed="true">Mes projets</button><button type="button" aria-pressed="false">Toute l’équipe</button></div>
+        <div class="prop" data-prop><small style="font:700 8.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--u-macbeth)">Proposition de dates <span class="exemple">exemple</span></small>
+          <div class="ti" style="margin-top:4px">Macbeth – Fatum · résidence</div><div style="color:var(--gris);font-size:12px">Du 8 au 12 mars 2027</div>
+          <div class="boutons"><button type="button" class="a-btn principal" data-r="oui">Je suis libre</button><button type="button" class="a-btn" data-r="non">Pas libre</button></div></div>
+        <p class="a-sous">Novembre 2026</p>${cal}
+        <p style="font-size:10.5px;color:var(--gris);margin:8px 0 0">Foncé : dates de tournée. Touchez un jour pour indiquer une indisponibilité.</p>`, { vise: 'planning' });
+      const fini = () => { if (repondu && pris) setTimeout(() => a.gagne(), 700); };
+      $$('[data-r]', t).forEach(b => b.addEventListener('click', () => {
+        const oui = b.dataset.r === 'oui', p = $('[data-prop]', t);
+        p.classList.add('repondue'); $('.boutons', p).innerHTML = `<span style="color:var(--ok);font-weight:600">${ic('check')} Réponse envoyée : ${oui ? 'libre' : 'pas libre'}</span>`;
+        if (!repondu) { repondu = true; a.coche(0); fini(); }
+      }));
+      $$('.cal button[data-n]', t).forEach(b => b.addEventListener('click', () => {
+        const n = +b.dataset.n;
+        if (tour.includes(n)) { toast(t, `Le ${n} novembre est une date de tournée.`); return; }
+        if (b.classList.contains('pris')) { b.classList.remove('pris'); return; }
+        const f = feuille(t, `<p style="margin:0 0 8px;font-weight:700">Pas libre le ${n} novembre</p>
+          <label for="pl-motif" style="font-size:11.5px;color:var(--gris)">Motif (il reste privé)</label><input id="pl-motif" placeholder="Par exemple : tournage, rendez-vous…">
+          <div style="display:flex;gap:6px;margin-top:10px"><button type="button" class="a-btn principal" data-ok>Enregistrer</button><button type="button" class="a-btn" data-annule>Annuler</button></div>`);
+        $('[data-annule]', f).addEventListener('click', () => fermerFeuille(t));
+        $('[data-ok]', f).addEventListener('click', () => { fermerFeuille(t); b.classList.add('pris'); toast(t, `Indisponibilité notée le ${n} novembre.`); if (!pris) { pris = true; a.coche(1); fini(); } });
+      }));
+    },
+
+    textes(t, a) {
+      const liste = () => {
+        $('[data-zone]', t).innerHTML = `<p class="a-h">Mes spectacles</p>
+          <button type="button" class="spec" data-s="cyrano" style="--u:var(--u-cyrano)"><span style="flex:1"><span class="ti">Ci-gisait Cyrano</span><small>Prochaine date : ${quand(DATES[0]).toLowerCase()} · Eu</small></span>${ic('fleche-d')}</button>
+          <button type="button" class="spec" data-s="cleophene" style="--u:var(--u-cleophene)"><span style="flex:1"><span class="ti">Cléophène</span><small>Prochaine date : ${quand(DATES[4]).toLowerCase()} · Pont-Audemer</small></span>${ic('fleche-d')}</button>`;
+        $('[data-s="cleophene"]', t).addEventListener('click', () => toast(t, 'Cette étape porte sur <b>Ci-gisait Cyrano</b>.'));
+        $('[data-s="cyrano"]', t).addEventListener('click', cyrano);
+      };
+      const fic = (n, t1, t2, id) => `<div class="fic">${ic(n)}<div><b>${t1}</b><small>${t2}</small></div><button type="button" class="a-btn petit" data-p="${id}">${ic('partage')}Partager</button></div>`;
+      const cyrano = () => {
+        a.coche(0);
+        $('[data-zone]', t).innerHTML = `<div class="pose"><div class="d-tete" style="--u:var(--u-cyrano)"><small>Spectacle</small><div class="ti">Ci-gisait Cyrano</div><div class="qd">5 dates d’ici décembre</div></div>
+          <p class="a-sous">Textes</p>${fic('texte', 'Ci-gisait Cyrano', 'Texte, version de travail · PDF', 'texte')}
+          <p class="a-sous">Pour la tournée</p>${fic('feuille', 'Fiche de renseignements', 'À remplir une fois · PDF', 'fiche')}
+          <p class="a-sous">Prochaines dates</p>${DATES.slice(0, 2).map(d => billet(d)).join('')}</div>`;
+        $$('[data-p]', t).forEach(b => b.addEventListener('click', () => {
+          if (b.dataset.p !== 'texte') { toast(t, 'Pour cette étape, partagez le <b>texte</b>.'); return; }
+          const fin = new Date(Date.now() + 30 * 864e5);
+          const f = feuille(t, `<p style="margin:0;font-weight:700">Ci-gisait Cyrano · texte</p><p style="margin:2px 0 0;font-size:11.5px;color:var(--gris)">Lien valable 30 jours, jusqu’au ${new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long' }).format(fin)}</p>
+            <div class="partage-apps"><button type="button"><i>${ic('message')}</i>Messages</button><button type="button"><i>${ic('mail')}</i>Mail</button><button type="button"><i>${ic('lien')}</i>Copier</button><button type="button"><i>${ic('plus')}</i>Plus</button></div>`);
+          $$('.partage-apps button', f).forEach(x => x.addEventListener('click', () => { fermerFeuille(t); toast(t, 'Lien envoyé.'); a.coche(1); setTimeout(() => a.gagne(), 800); }));
+        }));
+      };
+      t.innerHTML = appli('spectacles', '', { vise: 'spectacles' }); liste();
+    },
+
+    cloche(t, a) {
+      const N = [['feuille', 'Feuille de route publiée', `Ci-gisait Cyrano · Eu · ${quand(DATES[0]).toLowerCase()}`], ['retard', 'Horaire changé : 10 h → 10 h 30', 'Ci-gisait Cyrano · séance 1'], ['texte', 'Nouveau document pour l’équipe', 'Ci-gisait Cyrano · texte, version de travail']];
+      let lues = 0, premier = false;
+      t.innerHTML = appli('saison', `<div style="display:flex;justify-content:space-between;align-items:center"><p class="a-h" style="margin:0">Notifications</p><button type="button" class="a-lien" data-tout>Tout marquer comme lu</button></div>
+        <p style="margin:2px 0 10px;font-size:11px;color:var(--gris)">Aujourd’hui <span class="exemple">exemple</span></p>
+        ${N.map(([i, b, s], k) => `<div class="notif non-lue" data-k="${k}"><div class="fond">${ic('check')} Lue</div><div class="corps" tabindex="0" role="button" aria-label="${esc(b)}, glisser pour marquer lue"><span class="pt">${ic(i)}</span><b>${esc(b)}</b><span>${esc(s)}</span></div></div>`).join('')}`, { badge: 3 });
+      const badge = () => { const bd = $('.badge', t); if (bd) { const n = N.length - lues; if (n) bd.textContent = n; else bd.remove(); } };
+      const lire = (n, glisse) => {
+        if (!n.classList.contains('non-lue')) return;
+        n.classList.remove('non-lue'); n.classList.add('lue'); $('.corps', n).style.transform = ''; lues++; badge();
+        if (glisse && !premier) { premier = true; a.coche(0); }
+        if (lues === N.length) { a.coche(1); setTimeout(() => a.gagne(), 700); }
+      };
+      $$('.notif', t).forEach(n => {
+        const c = $('.corps', n); let x0 = null;
+        c.addEventListener('pointerdown', e => { x0 = e.clientX; c.setPointerCapture?.(e.pointerId); c.style.transition = 'none'; });
+        c.addEventListener('pointermove', e => { if (x0 === null) return; const dx = Math.max(0, e.clientX - x0); c.style.transform = `translateX(${dx}px)`; });
+        const fin = e => { if (x0 === null) return; const dx = e.clientX - x0; x0 = null; c.style.transition = ''; if (dx > 70) { c.style.transform = 'translateX(110%)'; setTimeout(() => lire(n, true), 220); } else c.style.transform = ''; };
+        c.addEventListener('pointerup', fin); c.addEventListener('pointercancel', () => { x0 = null; c.style.transition = ''; c.style.transform = ''; });
+        c.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowRight') { e.preventDefault(); lire(n, true); } });
+      });
+      $('[data-tout]', t).addEventListener('click', () => { $$('.notif', t).forEach((n, i) => setTimeout(() => lire(n, false), i * 160)); });
+    },
+
+    appui(t, a) {
+      t.innerHTML = appli('saison', `<p class="a-sous" style="margin-top:2px">Mes dates</p>${DATES.map((d, i) => billet(d, { attr: `data-b="${i}"` })).join('')}
+        <p style="font-size:10.5px;color:var(--gris);margin:6px 0 0">Maintenez le doigt sur une date.</p>`);
+      const ouvrir = i => {
+        if (i !== 0) { toast(t, 'Cette étape porte sur la date du <b>12 novembre</b>.'); return; }
+        a.coche(0);
+        const f = feuille(t, `<p style="margin:0 0 2px;font-weight:700">Ci-gisait Cyrano · ${quand(DATES[0]).toLowerCase()}</p><p style="margin:0 0 6px;font-size:11px;color:var(--gris)">Eu · Collège Louis Philippe</p>
+          ${[['saison', 'Ouvrir la date'], ['route', 'Itinéraire'], ['feuilles', 'Feuille de route'], ['agenda', 'Ajouter à l’agenda'], ['retard', 'Signaler un retard'], ['euro', 'Note de frais'], ['partage', 'Partager la date']].map(([i, l]) => `<button type="button" class="act" data-a="${i}">${ic(i)}${l}</button>`).join('')}`);
+        $$('[data-a]', f).forEach(b => b.addEventListener('click', () => {
+          if (b.dataset.a !== 'retard') { toast(t, `« ${b.textContent.trim()} » : disponible dans l’application. Ici, choisissez « Signaler un retard ».`); return; }
+          a.coche(1);
+          const g = feuille(t, `<p style="margin:0 0 6px;font-weight:700">Signaler un retard</p><p style="margin:0 0 8px;font-size:11px;color:var(--gris)">L’équipe de la date et l’administration seront prévenues.</p>
+            <label for="ret-txt" class="ecran-lecteur">Message</label><textarea id="ret-txt" maxlength="280">Bouchons à la sortie de Rouen, arrivée vers 9 h 20.</textarea><div class="cpt" data-cpt></div>
+            <button type="button" class="a-btn principal" data-env style="margin-top:6px">Envoyer l’alerte</button>`);
+          const tx = $('#ret-txt', g), cpt = () => { $('[data-cpt]', g).textContent = `${tx.value.length} / 280`; };
+          tx.addEventListener('input', cpt); cpt();
+          $('[data-env]', g).addEventListener('click', () => {
+            if (!tx.value.trim()) { toast(t, 'Saisissez un message.'); return; }
+            fermerFeuille(t); toast(t, `${ic('check')} Alerte envoyée à l’équipe de la date.`); a.coche(2); setTimeout(() => a.gagne(), 900);
+          });
+        }));
+      };
+      $$('[data-b]', t).forEach(b => {
+        b.style.touchAction = 'none';
+        appuiLong(b, () => ouvrir(+b.dataset.b));
+        b.addEventListener('click', () => { if (b.dataset.court) { delete b.dataset.court; toast(t, 'Maintenez l’appui plus longtemps.'); } });
+        b.addEventListener('keydown', e => { if (e.key === 'ContextMenu' || (e.shiftKey && e.key === 'F10')) { e.preventDefault(); ouvrir(+b.dataset.b); } });
+      });
+    },
+
+    balayage(t, a) {
+      let i = 0, arrive = false;
+      t.innerHTML = appli('saison', '', { u: `var(--u-${DATES[0].u})` });
+      const zone = $('[data-zone]', t); zone.style.touchAction = 'pan-y';
+      const peindre = sens => {
+        const d = DATES[i];
+        $('.app', t).style.setProperty('--u', `var(--u-${d.u})`);
+        zone.innerHTML = `<div class="pose" style="animation-name:${sens ? 'glisse' + sens : 'pose'}">${pageDate(d)}</div>
+          <div class="nav-dates"><button type="button" class="a-btn petit" data-prec ${i === 0 ? 'disabled' : ''}>${ic('fleche-g')}Date précédente</button><button type="button" class="a-btn petit" data-suiv ${i === DATES.length - 1 ? 'disabled' : ''}>Date suivante${ic('fleche-d')}</button></div>
+          <p style="text-align:center;font-size:10.5px;color:var(--gris);margin:10px 0 0">${i + 1} / ${DATES.length} · balaie de côté</p>`;
+        $('[data-prec]', zone).addEventListener('click', prec); $('[data-suiv]', zone).addEventListener('click', suiv);
+        if (!arrive && d.u === 'cleophene') {
+          arrive = true; a.coche(0);
+          a.question({ q: 'À quelle heure est la séance du soir à Pont-Audemer ?', choix: ['18 h', '20 h', '20 h 30'], bonne: 1, ok: () => { a.coche(1); a.gagne(); }, non: 'Voir les séances de Cléophène.' });
+        }
+      };
+      const suiv = () => { if (i < DATES.length - 1) { i++; peindre('g'); } };
+      const prec = () => { if (i > 0) { i--; peindre('d'); } };
+      balayer(zone, suiv, prec);
+      t.tabIndex = 0; t.setAttribute('aria-label', 'Téléphone : flèches gauche et droite pour changer de date');
+      t.addEventListener('keydown', e => { if (e.key === 'ArrowRight') { e.preventDefault(); suiv(); } if (e.key === 'ArrowLeft') { e.preventDefault(); prec(); } });
+      peindre();
+    },
+
+    frais(t, a) {
+      let total = 23.6;
+      const eur = v => v.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+      t.innerHTML = appli('moi', `<div class="fiche-moi"><i>${ic('moi')}</i><div><b>Ma fiche</b><br><small style="color:var(--gris)">Fiche, agenda (.ics), réglages</small></div></div>
+        <p class="a-sous">Notes de frais <span class="exemple">exemple</span></p>
+        <div class="total" data-total><span>En attente de validation</span><b data-somme>${eur(total)}</b></div>
+        <div class="ligne"><span>Repas · Saint-Lô</span><b>18,00 €</b></div><div class="ligne"><span>Parking · Rouen</span><b>5,60 €</b></div>
+        <button type="button" class="a-btn principal" data-nouv style="margin-top:10px">${ic('plus')}Nouvelle note de frais</button>`, { vise: 'moi' });
+      $('[data-nouv]', t).addEventListener('click', () => {
+        let nature = null, photo = false;
+        const f = feuille(t, `<p style="margin:0 0 8px;font-weight:700">Nouvelle note de frais</p>
+          <span style="font-size:11.5px;color:var(--gris)">Nature</span><div class="puces">${['Repas', 'Péage', 'Carburant', 'Train', 'Parking'].map(n => `<button type="button" aria-pressed="false" data-nat="${n}">${n}</button>`).join('')}</div>
+          <label for="fr-mt" style="font-size:11.5px;color:var(--gris)">Montant (€)</label><input id="fr-mt" inputmode="decimal" placeholder="0,00">
+          <div data-ph style="margin-top:10px"><button type="button" class="a-btn" data-photo>${ic('photo')}Photographier le justificatif</button></div>
+          <button type="button" class="a-btn principal" data-env style="margin-top:10px">Envoyer</button><p data-err class="a-msg erreur" hidden style="margin:8px 0 0"></p>`);
+        const mt = $('#fr-mt', f), err = $('[data-err]', f);
+        const val = () => parseFloat(mt.value.replace(/\s/g, '').replace(',', '.').replace('€', ''));
+        mt.addEventListener('input', () => { if (Math.abs(val() - 12.4) < .001) a.coche(1); });
+        $$('[data-nat]', f).forEach(b => b.addEventListener('click', () => { nature = b.dataset.nat; $$('[data-nat]', f).forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); if (nature === 'Péage') a.coche(0); }));
+        $('[data-photo]', f).addEventListener('click', () => { photo = true; a.coche(2); $('[data-ph]', f).innerHTML = `<div class="ticket" data-ticket>PÉAGE<br>A28<br>--------<br>CL. 1<br><b>12,40 EUR</b><br>MERCI</div>`; });
+        $('[data-env]', f).addEventListener('click', () => {
+          const dire = m => { err.hidden = false; err.textContent = m; };
+          if (nature !== 'Péage') return dire('Choisissez la nature : péage.');
+          if (!(Math.abs(val() - 12.4) < .001)) return dire('Le montant attendu est 12,40.');
+          if (!photo) return dire('Ajoutez la photo du justificatif.');
+          a.coche(3);
+          const tk = $('[data-ticket]', f), app = $('.app', t), rA = app.getBoundingClientRect(), rT = tk.getBoundingClientRect(), rS = $('[data-somme]', t).getBoundingClientRect();
+          const vol = tk.cloneNode(true); vol.classList.add('vole'); vol.style.left = `${rT.left - rA.left}px`; vol.style.top = `${rT.top - rA.top}px`; app.appendChild(vol);
+          fermerFeuille(t);
+          requestAnimationFrame(() => { vol.style.transform = `translate(${rS.left - rT.left - 20}px, ${rS.top - rT.top - 30}px) scale(.2) rotate(30deg)`; vol.style.opacity = '0'; });
+          setTimeout(() => {
+            vol.remove(); const t0 = performance.now(), de = total; total += 12.4; const el = $('[data-somme]', t), tot = $('[data-total]', t); tot.classList.add('luit');
+            const pas = now => { const k = Math.min(1, (now - t0) / 600); el.textContent = eur(de + 12.4 * k); if (k < 1) requestAnimationFrame(pas); else { toast(t, `${ic('check')} Note envoyée : elle attend la validation.`); setTimeout(() => a.gagne(), 700); } };
+            requestAnimationFrame(pas);
+          }, reduit() ? 10 : 820);
+        });
+      });
+    },
+  };
+  const melange = (arr, ordre) => ordre.map(i => arr[i]);
+
+  // ============================================================================================ les vues
+  let minuteries = [];
+  const nettoyer = () => { minuteries.forEach(clearInterval); minuteries.forEach(clearTimeout); minuteries = []; };
+  const COCHE = '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+  function listeEtapes() {
+    const suiv = prochaine();
+    return GROUPES.map((g, gi) => `<section class="groupe"><h2>${esc(g)}</h2><ol class="etapes">${SCENES.map((s, i) => s.groupe !== gi ? '' : `<li>
+      <a href="#etape-${s.id}" class="${S.faits[s.id] ? 'fait' : ''}${suiv && suiv.id === s.id ? ' suivante' : ''}"><span class="num">${i + 1}</span>
+        <span><span class="t">${esc(s.titre)}</span><span class="s">${esc(s.sous)}</span></span>
+        <span class="etat">${S.faits[s.id] ? `${ic('check')}Fait` : ''}</span></a></li>`).join('')}</ol></section>`).join('');
+  }
+
+  function vueAccueil() {
+    const reprise = nbFaits() > 0;
+    $('#vue').innerHTML = `<div class="page">
+      <section class="accueil">
+        <div>
+          <p class="surtitre">Compagnie Crescite · Espace de l’équipe</p>
+          <h1>Votre tournée, sur votre téléphone.</h1>
+          <p class="chapeau">Dates, horaires, feuille de route, textes, disponibilités, notes de frais. Onze gestes à faire ici, sur un téléphone de démonstration. Rien n’est envoyé.</p>
+          <div class="actions">
+            ${reprise ? `<a class="btn principal" href="#etape-${(prochaine() || SCENES[0]).id}">Reprendre</a><a class="btn" href="#plan">Voir le plan</a>`
+              : `<a class="btn principal" href="#profil">Commencer</a><a class="btn" href="#plan">Voir le plan</a>`}
+          </div>
+          <p class="note">Environ dix minutes. La progression reste sur cet appareil.</p>
+        </div>
+        <div class="plateau-accueil">
+          <div class="tel"><div class="ecran" data-tel-accueil></div></div>
+          <p class="legende">L’onglet Saison, avec la prochaine date réelle : Ci-gisait Cyrano, à Eu.</p>
+        </div>
+      </section>
+      <section class="atouts">
+        <div><h3>La bonne feuille de route</h3><p>Toujours la dernière version, en web et en PDF.</p></div>
+        <div><h3>Les changements, aussitôt</h3><p>Un horaire bouge : une notification, même application fermée.</p></div>
+        <div><h3>Sans réseau</h3><p>La dernière saison consultée reste lisible.</p></div>
+      </section></div>`;
+    const t = $('[data-tel-accueil]'); t.innerHTML = appli('saison', saison(), { badge: 3 }); rebours(t);
+  }
+
+  function vueProfil() {
+    const opt = (cle, v, b, s) => `<button type="button" data-cle="${cle}" data-v="${v}" aria-pressed="${S[cle] === v}"><b>${esc(b)}</b><small>${esc(s)}</small></button>`;
+    $('#vue').innerHTML = `<div class="profil"><p class="surtitre">Avant de commencer</p><h1>Deux questions.</h1>
+      <p style="color:var(--gris);margin:0 0 24px">Elles règlent le niveau de détail.</p>
+      <fieldset><legend>Les applications sur téléphone</legend><div class="options">
+        ${opt('niveau', 'detail', 'Pas à pas', 'Chaque étape expliquée.')}${opt('niveau', 'essentiel', 'L’essentiel', 'Consignes courtes ; les étapes connues se passent.')}</div></fieldset>
+      <fieldset><legend>Votre compte</legend><div class="options">
+        ${opt('compte', 'oui', 'Il est ouvert', 'J’ai reçu le courriel d’invitation.')}${opt('compte', 'non', 'Pas encore', 'Ou je ne sais pas.')}</div></fieldset>
+      <p data-note-compte ${S.compte === 'non' ? '' : 'hidden'} style="margin:-8px 0 24px;color:var(--gris)">L’administration ouvre les comptes : <b>${CONTACT}</b>. Le guide se suit sans compte.</p>
+      <div class="actions"><button type="button" class="btn principal" data-go>Commencer</button></div></div>`;
+    $$('[data-cle]').forEach(b => b.addEventListener('click', () => {
+      S[b.dataset.cle] = b.dataset.v; sauver();
+      $$(`[data-cle="${b.dataset.cle}"]`).forEach(x => x.setAttribute('aria-pressed', x === b));
+      $('[data-note-compte]').hidden = S.compte !== 'non';
+    }));
+    $('[data-go]').addEventListener('click', () => { if (!S.niveau) { S.niveau = 'detail'; sauver(); } location.hash = `etape-${(prochaine() || SCENES[0]).id}`; });
+  }
+
+  function vuePlan() {
+    const n = nbFaits(), suiv = prochaine();
+    $('#vue').innerHTML = `<div class="page plan">
+      <div><p class="surtitre">Le plan</p><h1>Onze étapes.</h1><p class="aide">Dans l’ordre ou non. Une minute chacune.</p>
+        ${listeEtapes()}
+        <p><button type="button" class="lien-btn" data-raz>Tout recommencer</button></p></div>
+      <aside class="cote">
+        <div class="encart"><p class="chiffre">${n} / ${SCENES.length}</p><p style="color:var(--gris)">${n === SCENES.length ? 'Toutes les étapes sont faites.' : 'étapes faites'}</p>
+          ${n === SCENES.length ? `<p><a class="btn principal" href="#fin">Terminer</a></p>` : suiv ? `<p><a class="btn principal" href="#etape-${suiv.id}">${n ? 'Continuer' : 'Commencer'} : ${esc(suiv.titre)}</a></p>` : ''}</div>
+        ${espaceReel()}
+      </aside></div>`;
+    const raz = $('[data-raz]');
+    raz.addEventListener('click', () => {
+      if (raz.dataset.sur) { S = neuf(); sauver(); majBarre(); location.hash = ''; return; }
+      raz.dataset.sur = '1'; raz.textContent = 'Confirmer : effacer la progression'; setTimeout(() => { if (raz.isConnected) { delete raz.dataset.sur; raz.textContent = 'Tout recommencer'; } }, 4000);
+    });
+    brancherCopie();
+  }
+
+  function espaceReel() {
+    return `<div class="encart"><p><b>L’espace de l’équipe</b><br><span style="color:var(--gris)">À ouvrir sur votre téléphone, puis à installer.</span></p>
+      <p><a class="btn principal" href="${ESPACE}" target="_blank" rel="noopener">Ouvrir l’espace</a></p>
+      <div class="copie"><code>${ESPACE.replace('https://', '')}</code><button type="button" data-copie="${ESPACE}">Copier</button></div>
+      <p style="margin:14px 0 6px;font-size:.9rem;color:var(--gris)">Pas de compte : écrire à l’administration.</p>
+      <div class="copie"><code>${CONTACT}</code><button type="button" data-copie="${CONTACT}">Copier</button></div></div>`;
+  }
+  function brancherCopie() {
+    $$('[data-copie]').forEach(b => b.addEventListener('click', async () => {
+      const v = b.dataset.copie;
+      try { await navigator.clipboard.writeText(v); b.textContent = 'Copié'; }
+      catch (e) { const c = b.previousElementSibling; const r = document.createRange(); r.selectNodeContents(c); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = 'Sélectionné'; }
+      setTimeout(() => { if (b.isConnected) b.textContent = 'Copier'; }, 1800);
+    }));
+  }
+
+  function vueScene(id) {
+    const s = parId(id); if (!s) { location.hash = 'plan'; return; }
+    const i = indexDe(id), detaille = S.niveau !== 'essentiel';
+    let gagnee = false;
+    const detailHtml = `<p>${s.detail.map(esc).join('</p><p>')}</p>`;
+    const pasapasHtml = `<ol class="pasapas">${s.pasapas.map(p => `<li>${esc(p)}</li>`).join('')}</ol>`;
+    const detail = detaille ? `<p class="surtitre" style="margin-top:6px">Pas à pas</p>${pasapasHtml}${detailHtml}` : `<details><summary>En savoir plus</summary>${detailHtml}${pasapasHtml}</details>`;
+    const suivante = i < SCENES.length - 1 ? SCENES[i + 1] : null;
+    $('#vue').innerHTML = `<div class="page scene-vue">
+      <div class="sv-tete"><a class="retour" href="#plan">${ic('fleche-g')}Plan</a>
+        <p class="surtitre">Étape ${i + 1} sur ${SCENES.length} · ${esc(GROUPES[s.groupe])}${S.faits[s.id] ? ' · Faite' : ''}</p>
+        <h1>${esc(s.titre)}</h1><p class="essentiel">${esc(s.essentiel)}</p></div>
+      <div class="sv-defi">
+        <div class="defi"><h2>À faire</h2><p class="consigne">${esc(s.consigne)}</p>
+          <ul class="coches">${s.coches.map(c => `<li><span class="case">${COCHE}</span>${esc(c)}</li>`).join('')}</ul>
+          <div data-extra></div><div data-question></div><div data-termine></div></div>
+        <div class="aides"><button type="button" class="lien-btn" data-indice>Indice</button>${detaille ? '' : '<button type="button" class="lien-btn" data-connu>Déjà connu, passer</button>'}</div>
+        <p class="indice" data-texte-indice hidden></p>
+      </div>
+      <div class="sv-plateau"><div class="tel"><div class="ecran" data-tel></div></div><p class="legende">Démonstration : rien n’est envoyé.</p></div>
+      <div class="sv-detail">${detail}
+        <div class="navig">${i > 0 ? `<a class="btn" href="#etape-${SCENES[i - 1].id}">${ic('fleche-g')}Précédente</a>` : '<span></span>'}${suivante ? `<a class="btn" href="#etape-${suivante.id}">Suivante${ic('fleche-d')}</a>` : `<a class="btn" href="#fin">Terminer${ic('fleche-d')}</a>`}</div></div>
+    </div>`;
+    const t = $('[data-tel]'), texteIndice = $('[data-texte-indice]');
+    const indiquer = msg => { texteIndice.hidden = false; texteIndice.textContent = msg || s.indice; };
+    $('[data-indice]').addEventListener('click', () => indiquer());
+    const terminer = () => {
+      if (gagnee) return; gagnee = true;
+      S.faits[s.id] = true; sauver(); majBarre();
+      $$('.coches li').forEach(li => li.classList.add('fait'));
+      const suiv = prochaine(i);
+      $('[data-termine]').innerHTML = `<div class="termine"><span class="ok">${ic('check')}Étape faite.</span>${suiv ? `<a class="btn principal" href="#etape-${suiv.id}">Étape suivante : ${esc(suiv.titre)}</a>` : `<a class="btn principal" href="#fin">Terminer</a>`}</div>`;
+      const lien = $('[data-termine] .btn'); lien.focus({ preventScroll: true });
+      if (matchMedia('(max-width: 900px)').matches) $('[data-termine]').scrollIntoView({ behavior: reduit() ? 'auto' : 'smooth', block: 'center' });
+    };
+    const api = {
+      coche: k => { const li = $$('.coches li')[k]; if (li) li.classList.add('fait'); },
+      souffler: indiquer,
+      question: cfg => {
+        const box = $('[data-question]');
+        box.innerHTML = `<div class="question"><p>${esc(cfg.q)}</p><div class="reponses">${cfg.choix.map((c, k) => `<button type="button" data-k="${k}">${esc(c)}</button>`).join('')}</div></div>`;
+        $$('button', box).forEach(b => b.addEventListener('click', () => {
+          if (+b.dataset.k === cfg.bonne) { b.classList.add('juste'); $$('button', box).forEach(x => x.disabled = true); cfg.ok(); }
+          else { b.classList.add('non'); indiquer(cfg.non); }
+        }));
+        if (matchMedia('(max-width: 900px)').matches) box.scrollIntoView({ behavior: reduit() ? 'auto' : 'smooth', block: 'center' });
+      },
+      gagne: terminer,
+    };
+    MONTER[s.id](t, api, $('[data-extra]'));
+    $('[data-connu]')?.addEventListener('click', terminer);
+  }
+
+  function vueFin() {
+    const manquent = SCENES.filter(s => !S.faits[s.id]);
+    $('#vue').innerHTML = `<div class="fin"><p class="surtitre">Fin</p>
+      <h1>${manquent.length ? `Il reste ${manquent.length} étape${manquent.length > 1 ? 's' : ''}.` : 'Vous avez fait le tour.'}</h1>
+      <p class="chapeau">${manquent.length ? manquent.map(s => `<a href="#etape-${s.id}">${esc(s.titre)}</a>`).join(', ') + '.' : 'Ouvrez maintenant l’espace sur votre téléphone, connectez-vous et installez-le.'}</p>
+      ${espaceReel()}
+      <p style="margin-top:16px"><a class="btn" href="#plan">Revoir le plan</a></p></div>`;
+    brancherCopie();
+  }
+
+  // ============================================================================================ l'aiguillage
+  function aller() {
+    nettoyer();
+    const h = location.hash.slice(1);
+    if (h === 'profil') vueProfil();
+    else if (h === 'plan') vuePlan();
+    else if (h === 'fin') vueFin();
+    else if (h.startsWith('etape-')) vueScene(h.slice(6));
+    else vueAccueil();
+    majBarre();
+    window.scrollTo({ top: 0 });
+    $('#vue').focus({ preventScroll: true });
+  }
+  addEventListener('hashchange', aller);
+  aller();
+})();
+</script>

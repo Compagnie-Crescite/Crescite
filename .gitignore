@@ -5,5 +5,8 @@ private/
 # Le site assemblé : il embarque le logo et les photos quand private/ est présent
 site/dist/
 
+# Guide assemblé (la pieuvre du logo y est injectée)
+guide/dist/
+
 # Caches Python
 __pycache__/
