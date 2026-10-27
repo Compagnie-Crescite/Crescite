@@ -2063,6 +2063,10 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 .s7-chip[aria-pressed="true"] { color: var(--encre); border-color: var(--c, var(--saison-vive)); background: color-mix(in srgb, var(--c, var(--saison-vive)) 12%, transparent); box-shadow: inset 0 0 0 1px var(--c, var(--saison-vive)); }
 .s7-chip .croix { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
 .s7-chip--lieu { --c: var(--saison-vive); }
+/* (une puce ne dépasse jamais sa rangée : un titre trop long, « Mon Royaume pour un cheval – Romeo & Juliet » au téléphone,
+   s'abrège d'une ellipse ; le texte entier reste dans la page, pour les lecteurs d'écran) */
+.s7-chip { max-width: 100%; }
+.s7-ct { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .s7 { padding: clamp(.75rem, 1.6vw, 1.5rem) 0 clamp(3.5rem, 7vw, 6rem); }
 .s7-tete { display: flex; flex-wrap: wrap; align-items: baseline; gap: .4rem 1.5rem; padding-bottom: clamp(.6rem, 1vw, .9rem); border-bottom: 1px solid var(--saison-vive); }
 .s7-t { margin: 0; font: 500 clamp(1.875rem, 1.2rem + 2.2vw, 3.25rem)/1 var(--titre); letter-spacing: -.012em; }
@@ -2267,7 +2271,7 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
   .fe7-t { margin: 0; font: 500 1.375rem/1.2 var(--titre); outline: none; }
   .fe7-x { display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: none; color: var(--encre); cursor: pointer; }
   .fe7-x .croix { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
-  .fe7-corps { flex: 1; min-height: 0; display: grid; align-content: start; gap: 24px; overflow-y: auto; overscroll-behavior: contain; padding: 6px 20px 20px; }
+  .fe7-corps { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 24px; overflow-y: auto; overscroll-behavior: contain; padding: 6px 20px 20px; }
   .fe7-corps .s7-cherche { max-width: none; }
   .fe7-h { margin: 0 0 10px; font: 600 .75rem/1.3 var(--etiq); letter-spacing: .16em; text-transform: uppercase; color: var(--gris); }
   .fe7-mois { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
@@ -5098,7 +5102,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const nSaison = new Map();
     ptsSaison(() => true).forEach(([r]) => nSaison.set(r.cle, (nSaison.get(r.cle) || 0) + 1));
     const spSaison = puces.filter(x => nSaison.has(x.cle)), spPasses = puces.filter(x => passe.some(sa => sa.rows.some(r => r.cle === x.cle)));
-    const puceSp = (x, n) => `<button class="s7-chip" type="button" data-s="${esc(x.cle)}" aria-pressed="false" style="--c:${x.slug ? couleurDe(x.slug) : 'var(--gris)'}"><i aria-hidden="true"></i>${esc(x.titre)}${n ? `<small>${n}</small>` : ''}</button>`;
+    // (un titre trop long pour la largeur de l'écran s'abrège d'une ellipse, .s7-ct : il reste entier dans la page, que lisent
+    // les lecteurs d'écran, et dans sa bulle)
+    const puceSp = (x, n) => `<button class="s7-chip" type="button" data-s="${esc(x.cle)}" aria-pressed="false" title="${esc(x.titre)}" style="--c:${x.slug ? couleurDe(x.slug) : 'var(--gris)'}"><i aria-hidden="true"></i><span class="s7-ct">${esc(x.titre)}</span>${n ? `<small>${n}</small>` : ''}</button>`;
     // le sous-menu d'une saison (comme celui des univers d'un spectacle) : une ligne, un bouton par spectacle, sa vignette (sa
     // photo, cerclée de sa couleur ; sans photo, sa couleur seule), son titre, le nombre de ses dates
     const itemSp = (x, n) => { const src = x.slug && D.photos[x.slug];
@@ -5361,8 +5367,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const jourChoisi = () => (F.jour ? pts.find(p => p.j === F.jour) || null : null);
     const nomMois = m => `<span>${esc(MOIS_NOMS[+m.slice(5, 7) - 1])}</span> <span>${m.slice(0, 4)}</span>`;
     const filtresEnCours = () => { const pj = jourChoisi(), sp = F.slug && puces.find(x => x.cle === F.slug);
-      return [pj && ['j', `<i aria-hidden="true"></i>${esc(pj.quand)}`, pj.couleur], F.mois && ['m', `<span>${nomMois(F.mois)}</span>`], sp && ['s', `<i aria-hidden="true"></i>${esc(sp.titre)}`, sp.slug ? couleurDe(sp.slug) : ''],
-        F.l !== null && CARTE.lieux[F.l] && ['l', esc(CARTE.nom(CARTE.lieux[F.l]))], terme() && ['q', esc(F.q.trim())]].filter(Boolean); };
+      return [pj && ['j', `<i aria-hidden="true"></i>${esc(pj.quand)}`, pj.couleur], F.mois && ['m', `<span>${nomMois(F.mois)}</span>`], sp && ['s', `<i aria-hidden="true"></i><span class="s7-ct">${esc(sp.titre)}</span>`, sp.slug ? couleurDe(sp.slug) : ''],
+        F.l !== null && CARTE.lieux[F.l] && ['l', `<span class="s7-ct">${esc(CARTE.nom(CARTE.lieux[F.l]))}</span>`], terme() && ['q', `<span class="s7-ct">${esc(F.q.trim())}</span>`]].filter(Boolean); };
     // (une étiquette de filtre en cours l'efface : le lecteur d'écran l'entend, « Retirer le filtre Bérénice »)
     const retirer = () => (L.retirerFiltre ? `<span class="sr">${esc(L.retirerFiltre)} </span>` : '');
     const htmlFiltres = fs => fs.map(([c, h, col]) => `<button type="button" class="s7-chip" data-eff="${c}"${col ? ` style="--c:${col}"` : ''}>${retirer()}${h}${CROIX}</button>`).join('')
