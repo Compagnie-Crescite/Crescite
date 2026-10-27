@@ -3403,7 +3403,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
      Moins d'animations, ou ?anim=0 : ni rideau ni composition. */
   const Rideau = (() => {
     const NOIR = 420, OUVRE = 480;
-    let el = null, bete = null, etat = null, tLeve = 0, tFin = 0, suite = null;
+    let el = null, bete = null, etat = null, tLeve = 0, tFin = 0, suite = null, pans = [];
     const lisse = u => u * u * (3 - 2 * u);
     // la pieuvre du rideau : une créature, faite une fois (au premier rideau, ou au repos) ; au milieu, elle nage sur place (une
     // impulsion toutes les 0,62 s) ; à l'ouverture, elle file vers la marque du menu en rapetissant, puis s'efface
@@ -3435,7 +3435,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         el.innerHTML = '<i class="rideau-g"></i><i class="rideau-d"></i>';
         document.body.appendChild(el);
       }
-      el.getAnimations({ subtree: true }).forEach(a => a.cancel());
+      pans.forEach(a => a.cancel()); pans = [];   // (ses pans d'avant, gardés : rien à demander au navigateur, aucun style à recalculer)
       el.classList.remove('leve'); el.hidden = false;
       const b = bestiole();
       const p = el.querySelector('.rideau-pieuvre');
@@ -3461,8 +3461,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       el.classList.add('leve');
       const d = vite ? 220 : OUVRE, courbe = 'cubic-bezier(.7, 0, .25, 1)';
       const [g, dr] = el.querySelectorAll(':scope > i');
-      g.animate([{ translate: '0 0' }, { translate: '-101% 0' }], { duration: d, easing: courbe, fill: 'forwards', id: 'rideau' });
       const a = dr.animate([{ translate: '0 0' }, { translate: '101% 0' }], { duration: d, easing: courbe, fill: 'forwards', id: 'rideau' });
+      pans = [g.animate([{ translate: '0 0' }, { translate: '-101% 0' }], { duration: d, easing: courbe, fill: 'forwards', id: 'rideau' }), a];
       const fini = etat;
       a.onfinish = () => { if (etat !== fini) return; etat = null; el.hidden = true; };
       const f = suite; suite = null;
@@ -8481,7 +8481,18 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     cadre();
     // (le rideau : une page ouverte par le menu, ou la première hors de l'ouverture de l'accueil ; pas d'un onglet à l'autre
     // d'un spectacle ni en entrant dans un spectacle, que l'encre de son univers ouvre)
-    const avecRideau = motionOK() && !INTRO.ouverte() && (premiere || type === 'page' || type === 'quitter') && !(avant && avant.chemin === a.chemin);
+    // (fermé avant que la page se fasse : ses changements et ceux de la page se calculent ensemble, à l'image suivante) ; il
+    // couvre la page neuve, déjà posée ; il s'ouvre et elle se compose (ses titres, ses filets, ce qui paraît au défilement ne
+    // partent qu'alors)
+    const avecRideau = motionOK() && !INTRO.ouverte() && (premiere || type === 'page' || type === 'quitter') && !(avant && avant.chemin === a.chemin)
+      && Rideau.fermer(vite => {
+        if (courant !== a) return;
+        if (MV) MV.reveler(main, { immediat: false });
+        // (un geste a ouvert le rideau : la page est là tout de suite, sans se composer sous le doigt)
+        if (vite) return;
+        if (!premiere && motionOK()) fleurir();
+        composer();
+      });
     let r = rendre(a, false), b = a;
     if (!r) { r = introuvable(); }   // (une adresse inconnue : sa page, l'adresse gardée)
     courant = b;
@@ -8514,16 +8525,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // mise en page de toute la page neuve dans la tâche de la route, plus de 50 ms ; une image après, la page est posée)
     const retour = retourNav;
     ensuite(() => { if (courant !== b) return; habiterCreature(); if (avant) creature(type === 'spectacle' || type === 'onglet' ? type : retour ? 'retour' : 'page'); });
-    // le rideau couvre la page neuve, déjà posée ; il s'ouvre et elle se compose (ses titres, ses filets, ce qui paraît au
-    // défilement ne partent qu'alors)
-    if (avecRideau && Rideau.fermer(vite => {
-      if (courant !== b) return;
-      if (MV) MV.reveler(main, { immediat: false });
-      // (un geste a ouvert le rideau : la page est là tout de suite, sans se composer sous le doigt)
-      if (vite) return;
-      if (vit) fleurir();
-      composer();
-    })) return;
+    if (avecRideau) return;
     Rideau.oter();
     if (!vit) return;
     if (type === 'quitter' && bySlug[spAvant]) {
