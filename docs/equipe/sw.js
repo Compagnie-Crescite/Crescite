@@ -10,7 +10,7 @@
    d'abord par le réseau.
 
    Jamais gardés : l'authentification, la fonction d'envoi, les liens signés des documents, et toute écriture. */
-const VERSION = '9d952bc056fb';
+const VERSION = '4de8bd573f4e';
 const DEV = VERSION.startsWith('__');
 const COQUILLE = `crescite-equipe-coquille-${VERSION}`;   // l'application elle-même, par version
 const OUTILS = 'crescite-equipe-outils';                  // ce qu'elle charge à la demande (pdfmake pour les PDF)
