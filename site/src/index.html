@@ -6316,7 +6316,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         // (les filtres en cours se voient d'abord ; sans eux, la bande se pose sur le premier mois à venir)
         deja = new Set(fs.map(([c]) => c));
         if (fs.length) zone.scrollLeft = 0;
-        else if (avant !== 0) requestAnimationFrame(() => { const b = $('.bf7-m:not(.est-passe)', zone); zone.scrollLeft = b && zone.scrollWidth > zone.clientWidth ? Math.max(0, b.offsetLeft - zone.offsetLeft - 6) : 0; });
+        // (la bande des mois n'est qu'au téléphone : au bureau, la lire forçait la mise en page de la page neuve dans l'image
+        // qui la peint, 40 ms de plus sur le geste « menu saisons »)
+        else if (avant !== 0 && TEL.matches) requestAnimationFrame(() => { const b = $('.bf7-m:not(.est-passe)', zone); zone.scrollLeft = b && zone.scrollWidth > zone.clientWidth ? Math.max(0, b.offsetLeft - zone.offsetLeft - 6) : 0; });
         avant = fs.length;
       }
       // la page va aux dates gardées : celles de la saison en cours, sinon celles des saisons passées
