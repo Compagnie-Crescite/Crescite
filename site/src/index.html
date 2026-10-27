@@ -232,6 +232,10 @@ html:not(.still) .cs-boite { animation: cs-monte .26s var(--k-doux) backwards; }
 .cs-o[aria-selected="true"] { background: color-mix(in srgb, var(--saison-vive) 20%, transparent); box-shadow: inset 3px 0 0 var(--saison-vive); }
 @media (forced-colors: active) { .cs-o[aria-selected="true"] { outline: 2px solid Highlight; } }
 .cs-vide { margin: 18px 12px; color: var(--gris); }
+/* (ce que la recherche a trouvé, dans ses propositions et dans celles de la recherche des saisons : le passage en gras, souligné
+   de la vive de la saison sur un aplat léger ; le texte garde sa couleur, AA) */
+:is(.cs-o, .s7-prop) mark { padding: 0 1px; border-radius: 2px; background: color-mix(in srgb, var(--saison-vive) 18%, transparent); color: inherit; font-weight: 700; box-shadow: inset 0 -2px 0 var(--saison-vive); }
+@media (forced-colors: active) { :is(.cs-o, .s7-prop) mark { background: Mark; color: MarkText; } }
 html.cs-ouvert { overflow: hidden; }
 @media (max-width: 759px) {
   .cs-voile { display: none; }
@@ -3046,6 +3050,21 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const norm = s => String(s || '').replace(/<[^>]+>/g, ' ').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’‘]/g, "'").toLowerCase();
+  // ce que la recherche a trouvé, surligné : le texte échappé, le premier passage qui répond à t (déjà passé par norm : sans
+  // accents ni capitales) dans un <mark>. La correspondance se lit lettre à lettre, chacune normée à part (une lettre accentuée
+  // garde sa place) ; rien trouvé, le texte seul, échappé. (Jamais de HTML venu du texte : il est échappé, le <mark> seul est à nous)
+  function surligne(texte, t) {
+    const x = String(texte ?? '');
+    if (!t) return esc(x);
+    const cs = [...x], debuts = [];
+    let n = '';
+    cs.forEach(c => { debuts.push(n.length); n += norm(c); });
+    const k = n.indexOf(t);
+    if (k < 0) return esc(x);
+    let a = 0; while (a + 1 < cs.length && debuts[a + 1] <= k) a++;
+    let b = a; while (b < cs.length && debuts[b] < k + t.length) b++;
+    return `${esc(cs.slice(0, a).join(''))}<mark>${esc(cs.slice(a, b).join(''))}</mark>${esc(cs.slice(b).join(''))}`;
+  }
   const reduit = matchMedia('(prefers-reduced-motion: reduce)');
   const MV = typeof MOUVEMENT !== 'undefined' ? MOUVEMENT : null, FR = typeof FRISE !== 'undefined' ? FRISE : null;
   const motionOK = () => !reduit.matches && (!MV || MV.permis());
@@ -5686,7 +5705,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         const co = tri(communesDe().map(([l, nom]) => ({ type: 'l', v: l, t: nom, n: norm(nom) }))).slice(0, 6);
         if (!sp.length && !co.length) { fermer(); return; }
         const groupe = (k, titre, xs, i0) => (xs.length ? `<div role="group" aria-labelledby="${id}-${k}"><p class="s7-props-t" id="${id}-${k}" role="presentation">${esc(titre)}</p>`
-          + xs.map((x, j) => `<div class="s7-prop" role="option" id="${id}-${i0 + j}" aria-selected="false" data-n="${i0 + j}"${x.c ? ` style="--c:${x.c}"` : ''}>${x.c ? '<i aria-hidden="true"></i>' : ''}<span>${esc(x.t)}</span></div>`).join('') + '</div>' : '');
+          + xs.map((x, j) => `<div class="s7-prop" role="option" id="${id}-${i0 + j}" aria-selected="false" data-n="${i0 + j}"${x.c ? ` style="--c:${x.c}"` : ''}>${x.c ? '<i aria-hidden="true"></i>' : ''}<span>${surligne(x.t, t)}</span></div>`).join('') + '</div>' : '');
         lb.innerHTML = groupe('s', L.spectacles, sp, 0) + groupe('c', L.communes, co, sp.length);
         ops = [...sp, ...co].map((x, k) => ({ ...x, el: lb.querySelector(`[data-n="${k}"]`) }));
         lb.hidden = false; input.setAttribute('aria-expanded', 'true'); viser(-1);
@@ -7341,7 +7360,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       const tri = (xs, max) => (t ? xs.filter(x => x.n.includes(t)).sort((a, b) => (b.n.startsWith(t) - a.n.startsWith(t)) || (mots(b) - mots(a))) : xs).slice(0, max);
       const sp = tri(tout.sp, t ? 6 : 8), co = t ? tri(tout.co, 8) : [], pg = tri(t ? tout.pg : tout.pg.filter(x => !x.passe), t ? 6 : 12);
       let k = 0;
-      const groupe = (id, titre, xs) => (xs.length ? `<div role="group" aria-labelledby="cs-g-${id}"><p class="cs-g" id="cs-g-${id}" role="presentation">${esc(titre)}</p>${xs.map(x => `<a class="cs-o" role="option" id="cs-o-${k}" data-n="${k++}" aria-selected="false" tabindex="-1" href="${esc(x.h)}"${x.c ? ` style="--c:${x.c}"` : ''}><i aria-hidden="true"></i><span class="cs-ot">${esc(x.t)}</span>${x.s ? `<span class="cs-os">${esc(x.s)}</span>` : ''}</a>`).join('')}</div>` : '');
+      const groupe = (id, titre, xs) => (xs.length ? `<div role="group" aria-labelledby="cs-g-${id}"><p class="cs-g" id="cs-g-${id}" role="presentation">${esc(titre)}</p>${xs.map(x => `<a class="cs-o" role="option" id="cs-o-${k}" data-n="${k++}" aria-selected="false" tabindex="-1" href="${esc(x.h)}"${x.c ? ` style="--c:${x.c}"` : ''}><i aria-hidden="true"></i><span class="cs-ot">${surligne(x.t, t)}</span>${x.s ? `<span class="cs-os">${surligne(x.s, t)}</span>` : ''}</a>`).join('')}</div>` : '');
       const tous = [...sp, ...co, ...pg];
       liste.innerHTML = tous.length ? groupe('s', L.spectacles, sp) + groupe('c', L.communes, co) + groupe('p', L.pages, pg) : `<p class="cs-vide">${esc(L.aucunResultat || '')}</p>`;
       ops = tous.map((x, j) => ({ ...x, el: liste.querySelector(`[data-n="${j}"]`) }));
