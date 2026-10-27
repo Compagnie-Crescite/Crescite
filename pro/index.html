@@ -107,6 +107,10 @@ main { max-width: 1120px; margin: 0 auto; padding: 8px calc(20px + var(--ds)) 40
 .spectacle { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--filet); border-radius: var(--rayon); overflow: hidden; box-shadow: var(--ombre); }
 .spectacle .photo { position: relative; aspect-ratio: 16 / 9; background: var(--surface-2); overflow: hidden; }
 .spectacle .photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+/* sans photo : la couleur de l'univers (une lueur montée du bas, comme la scène) et la pieuvre de la compagnie au milieu */
+.spectacle .sans-photo { display: grid; place-items: center; background: radial-gradient(120% 90% at 50% 110%, color-mix(in srgb, var(--u) 42%, transparent), transparent 70%), linear-gradient(160deg, color-mix(in srgb, var(--u) 16%, var(--surface-2)), var(--surface-2) 70%); }
+.spectacle .pieuvre-cadre { display: block; width: min(44%, 220px); color: color-mix(in srgb, var(--u) 78%, transparent); filter: drop-shadow(0 10px 22px color-mix(in srgb, var(--u) 30%, transparent)); }
+.spectacle .pieuvre-cadre svg { display: block; width: 100%; height: auto; overflow: visible; }
 .spectacle .photo::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: var(--u); }
 .spectacle .corps { padding: 18px 20px 20px; display: grid; gap: 4px; }
 .spectacle h2 { font: 600 1.7rem/1.1 var(--serif); color: var(--u); letter-spacing: -.005em; }

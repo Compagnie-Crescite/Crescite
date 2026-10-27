@@ -280,6 +280,28 @@ fs.mkdirSync(CAPT, { recursive: true });
   ok('la page n’a pas bougé (le clic qui suit l’appui est avalé)', await page.evaluate(() => location.hash) === '#/accueil');
   await page.click('.gm-feuille .gm-voile', { position: { x: 10, y: 10 } });
   ok('toucher le voile ferme la feuille', (await compte(page, '.gm-boite')) === 0);
+  // l'en-tête arrimé tient sur une ligne (il en prenait trois, 126 px) : la marque, le direct, la loupe ; le compte passe
+  // dans « Plus », dont les rubriques, sur deux colonnes, tiennent dans l'écran, celle où l'on est marquée
+  const tete = await page.evaluate(() => { const b = document.querySelector('.barre'), m = b.querySelector('.marque').getBoundingClientRect(), c = b.querySelector('.chercher').getBoundingClientRect();
+    return { h: Math.round(b.getBoundingClientRect().height), uneLigne: Math.abs((m.top + m.bottom) / 2 - (c.top + c.bottom) / 2) < 4, loupe: [Math.round(c.width), Math.round(c.height)], compte: getComputedStyle(b.querySelector('#b-sortir')).display }; });
+  ok('au téléphone, l’en-tête sur une ligne (64 px au plus), la loupe de 44 px, le compte ôté de l’en-tête', tete.h <= 64 && tete.uneLigne && tete.loupe[0] >= 44 && tete.loupe[1] >= 44 && tete.compte === 'none', JSON.stringify(tete));
+  const plusVue = async () => { await page.click('.ob-barre [data-ob="plus"]'); await page.waitForSelector('.ob-voile.la .ob-feuille', { timeout: 3000 }); await page.waitForTimeout(300);
+    return page.evaluate(() => { const f = document.querySelector('.ob-feuille'), it = [...f.querySelectorAll('.ob-item')], fermer = f.querySelector('.ob-fermer').getBoundingClientRect();
+      return { items: it.map(x => x.textContent.trim().split('\n')[0].replace(/\s+/g, ' ')), courant: it.filter(x => x.getAttribute('aria-current') === 'page').map(x => x.textContent.trim()), focus: document.activeElement?.textContent.trim(),
+        enVue: fermer.bottom <= innerHeight + 1 && f.scrollHeight <= f.clientHeight + 1, cible: Math.min(...it.map(x => x.getBoundingClientRect().height)) }; }); };
+  let plus = await plusVue();
+  await page.screenshot({ path: `${CAPT}/telephone-plus.png`, fullPage: false });
+  ok('« Plus » : les rubriques sur deux colonnes, puis le compte (voir le site, le modifier, le mot de passe, la déconnexion), tout en vue', ['Feuilles de route', 'Spectacles', 'Lieux', 'Textes du site', 'Journal', 'Voir le site ↗', 'Mot de passe', 'Déconnexion'].every(x => plus.items.includes(x)) && plus.enVue && plus.cible >= 44 && !plus.courant.length, JSON.stringify(plus));
+  await page.keyboard.press('Escape'); await page.waitForTimeout(300);
+  await page.evaluate(() => { location.hash = '#/textes'; }); await page.waitForTimeout(800);
+  plus = await plusVue();
+  ok('depuis « Textes du site », « Plus » la marque comme la rubrique courante, et le focus s’y pose', plus.courant.join() === 'Textes du site' && plus.focus === 'Textes du site', JSON.stringify(plus));
+  await page.keyboard.press('Escape'); await page.waitForTimeout(300);
+  await page.setViewportSize({ width: 360, height: 800 });
+  plus = await plusVue();
+  await page.screenshot({ path: `${CAPT}/telephone-plus-360.png`, fullPage: false });
+  ok('à 360 × 800, « Plus » tient dans l’écran sans défiler, « Fermer » compris', plus.enVue && !(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), JSON.stringify(plus));
+  await page.keyboard.press('Escape'); await page.waitForTimeout(300);
   ok('aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();
   const s = await ouvrir(navigateur, { sombre: true, hash: '#/accueil' });

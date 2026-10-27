@@ -2,8 +2,10 @@
 /* Le téléphone (moins de 640 px de large) : une barre d'onglets en bas de l'écran, à portée du pouce (Tableau, Dates,
    Planning, Équipe, Plus : les autres rubriques dans une feuille), un bouton « + » flottant (une date, une fiche, un lieu,
    une opportunité, une proposition de dates, une séance d'atelier), les rubriques de l'en-tête masquées (la marque, la
-   recherche et le compte restent), les fiches en plein écran (comme avant), leur pied et les annonces au-dessus de la
-   barre. Rien ne change à l'ordinateur. Chargé après tiroir.js et corbeille.js.
+   recherche et le témoin du direct restent, sur une seule ligne), les fiches en plein écran (comme avant), leur pied et
+   les annonces au-dessus de la barre. Le compte (voir le site, le modifier, le mot de passe, la déconnexion) passe dans
+   « Plus » : l'en-tête, arrimé en haut, tenait sur trois lignes (126 px sur 844, avec la barre du bas plus d'un écran
+   sur cinq). Rien ne change à l'ordinateur. Chargé après tiroir.js et corbeille.js.
    MOBILE.feuille(titre, items)   MOBILE.actif() */
 const MOBILE = (() => {
   const MQ = '(max-width: 640px)';
@@ -36,12 +38,16 @@ const MOBILE = (() => {
     $$('[data-ob]', barre).forEach(a => { const ici = a.dataset.ob === r || (a.dataset.ob === 'plus' && !tabs.has(r)); if (ici) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     bouton.hidden = /^#\/[a-z]+\/(nouvelle|nouveau|\d+)$/.test(location.hash) || !!$('.deux.edition');
   }
-  // une feuille qui monte du bas : des liens et des actions
+  // une feuille qui monte du bas : des liens et des actions ; un élément { groupe } est un intertitre, demi le range sur
+  // deux colonnes avec ses voisins, courant le marque comme la rubrique où l'on est, nouvel l'ouvre dans un autre onglet
   function feuille(titre, items) {
     fermerFeuille();
     const m = document.createElement('div'); m.className = 'ob-voile';
+    const classe = x => `ob-item${x.demi ? ' demi' : ''}`, corps = x => `${x.icone || ''}<span>${esc(x.libelle)}${x.nouvel ? '\u00a0↗' : ''}${x.detail ? `<small>${esc(x.detail)}</small>` : ''}</span>`;
     m.innerHTML = `<div class="ob-feuille" role="dialog" aria-modal="true" aria-label="${esc(titre)}"><span class="gm-poignee" aria-hidden="true"></span><h2>${esc(titre)}</h2>
-      <div class="ob-items">${items.filter(Boolean).map((x, i) => x.href ? `<a class="ob-item" href="${esc(x.href)}" data-ob-i="${i}">${x.icone || ''}<span>${esc(x.libelle)}${x.detail ? `<small>${esc(x.detail)}</small>` : ''}</span></a>` : `<button type="button" class="ob-item" data-ob-i="${i}">${x.icone || ''}<span>${esc(x.libelle)}${x.detail ? `<small>${esc(x.detail)}</small>` : ''}</span></button>`).join('')}</div>
+      <div class="ob-items">${items.filter(Boolean).map((x, i) => x.groupe ? `<h3 class="ob-groupe">${esc(x.groupe)}</h3>`
+        : x.href ? `<a class="${classe(x)}" href="${esc(x.href)}" data-ob-i="${i}"${x.courant ? ' aria-current="page"' : ''}${x.nouvel ? ' target="_blank" rel="noopener"' : ''}>${corps(x)}</a>`
+        : `<button type="button" class="${classe(x)}" data-ob-i="${i}">${corps(x)}</button>`).join('')}</div>
       <button type="button" class="btn ob-fermer" data-ob-fermer>Fermer</button></div>`;
     m.addEventListener('click', e => {
       if (e.target === m || e.target.closest('[data-ob-fermer]')) { fermerFeuille(); return; }
@@ -51,15 +57,20 @@ const MOBILE = (() => {
       if (x && x.faire) { e.preventDefault(); x.faire(); }
     });
     document.body.append(m);
-    requestAnimationFrame(() => { m.classList.add('la'); $('.ob-item', m)?.focus({ preventScroll: true }); });
+    requestAnimationFrame(() => { m.classList.add('la'); ($('.ob-item[aria-current]', m) || $('.ob-item', m))?.focus({ preventScroll: true }); });
     feuilleOuverte = m;
   }
   function fermerFeuille() { if (!feuilleOuverte) return; const m = feuilleOuverte; feuilleOuverte = null; m.classList.remove('la'); setTimeout(() => m.remove(), 200); }
   const allerEtCliquer = (href, sel) => { const essayer = n => { const b = $(sel); if (b) { b.click(); return; } if (n > 0) requestAnimationFrame(() => essayer(n - 1)); }; if (location.hash === href) return essayer(40); window.addEventListener('hashchange', () => setTimeout(() => essayer(40), 20), { once: true }); location.hash = href; };
+  // « Plus » : les autres rubriques sur deux colonnes (elles tiennent toutes dans l'écran, sans défiler, même à 360 px), celle
+  // où l'on est marquée ; puis la carte, la corbeille, la recherche ; puis le compte, ôté de l'en-tête au téléphone (ses
+  // boutons y restent, cachés : la feuille les déclenche)
   function feuillePlus() {
-    const tabs = new Set(ONGLETS.map(o => o[0]));
-    const items = rubriquesVisibles().filter(([k]) => !tabs.has(k)).map(([k, l]) => ({ libelle: l, href: `#/${k}` }));
-    items.push({ libelle: 'Carte de tournée', href: '#/representations/carte' }, { libelle: 'Corbeille', detail: 'ce qui a été supprimé ces trente derniers jours', href: '#/corbeille' }, { libelle: 'Rechercher', detail: 'une date, une personne, un lieu…', faire: () => ouvrirRecherche() });
+    const tabs = new Set(ONGLETS.map(o => o[0])), r = rubrique(), carte = location.hash.startsWith('#/representations/carte');
+    const items = rubriquesVisibles().filter(([k]) => !tabs.has(k)).map(([k, l]) => ({ libelle: l, href: `#/${k}`, demi: true, courant: k === r }));
+    items.push({ libelle: 'Carte de tournée', href: '#/representations/carte', demi: true, courant: carte }, { libelle: 'Corbeille', detail: 'ce qui a été supprimé ces trente derniers jours', href: '#/corbeille', courant: r === 'corbeille' }, { libelle: 'Rechercher', detail: 'une date, une personne, un lieu…', faire: () => ouvrirRecherche() });
+    if ($('#b-sortir')) items.push({ groupe: 'Compte' }, { libelle: 'Voir le site', href: SITE, nouvel: true, demi: true }, { libelle: 'Modifier sur le site', href: `${SITE}?edition`, nouvel: true, demi: true },
+      { libelle: 'Mot de passe', demi: true, faire: () => $('#b-mdp')?.click() }, { libelle: 'Déconnexion', demi: true, faire: () => $('#b-sortir')?.click() });
     feuille('Les autres rubriques', items);
   }
   function feuilleCreer() {
@@ -82,6 +93,14 @@ const MOBILE = (() => {
   style.textContent = `
 @media (max-width: 640px) {
   html.ob-actif .barre .nav { display: none; }
+  /* l'en-tête sur une ligne : la marque (« Administration » sous le nom, comme l'équipe), le témoin du direct, la loupe */
+  html.ob-actif .barre { flex-wrap: nowrap; gap: 10px; min-height: 56px; padding: 6px 10px 6px 12px; }
+  html.ob-actif .barre .marque { display: grid; grid-template-columns: auto auto; align-items: center; column-gap: 8px; row-gap: 3px; min-width: 0; min-height: 44px; align-content: center; justify-content: start; line-height: 1.1; }
+  html.ob-actif .barre .marque .pieuvre { grid-row: span 2; }
+  html.ob-actif .barre .marque small { font-size: 10.5px; }
+  html.ob-actif .barre .qui { order: 2; margin-left: auto; }
+  html.ob-actif .barre .qui > :not(.direct) { display: none; }
+  html.ob-actif .barre .chercher { order: 3; margin-left: 0; width: 44px; height: 44px; }
   html.ob-actif main { padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px)); }
   /* le pied commun après le contenu : c'est lui qui laisse la place à la barre */
   html.ob-actif main:has(+ .pied-espace) { padding-bottom: 20px; }
@@ -97,13 +116,19 @@ const MOBILE = (() => {
 }
 .ob-voile { position: fixed; inset: 0; z-index: 70; background: rgba(23, 15, 26, 0); transition: background .2s; }
 .ob-voile.la { background: rgba(23, 15, 26, .45); }
-.ob-feuille { position: absolute; left: 0; right: 0; bottom: 0; max-height: 80vh; overflow: auto; padding: 8px 14px calc(14px + env(safe-area-inset-bottom, 0px)); background: var(--carte); color: var(--encre); border-radius: 18px 18px 0 0; box-shadow: 0 -12px 40px -16px rgba(0, 0, 0, .5); transform: translateY(100%); transition: transform .22s cubic-bezier(.3, .7, .3, 1); }
+.ob-feuille { position: absolute; left: 0; right: 0; bottom: 0; max-height: 88vh; overflow: auto; padding: 8px 14px calc(14px + env(safe-area-inset-bottom, 0px)); background: var(--carte); color: var(--encre); border-radius: 18px 18px 0 0; box-shadow: 0 -12px 40px -16px rgba(0, 0, 0, .5); transform: translateY(100%); transition: transform .22s cubic-bezier(.3, .7, .3, 1); }
 .ob-voile.la .ob-feuille { transform: none; }
 .ob-feuille h2 { margin: 6px 0 10px; font-size: 16px; }
-.ob-items { display: grid; gap: 4px; }
+.ob-items { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.ob-items > :not(.demi) { grid-column: 1 / -1; }
+.ob-groupe { margin: 10px 2px 2px; font: 700 11px/1.2 var(--etiq, inherit); letter-spacing: .12em; text-transform: uppercase; color: var(--gris); }
 .ob-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 12px 12px; border: 0; border-radius: 12px; background: var(--doux); color: var(--encre); text-decoration: none; font: inherit; font-weight: 700; text-align: left; cursor: pointer; }
 .ob-item small { display: block; font-weight: 500; color: var(--gris); font-size: 12.5px; }
+.ob-item { min-height: 48px; }
+.ob-item.demi { padding: 10px 12px; }
+.ob-item small { line-height: 1.3; }
 .ob-item:hover, .ob-item:focus-visible { background: var(--accent-doux); }
+.ob-item[aria-current="page"] { background: var(--accent-doux); color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
 .ob-fermer { width: 100%; margin-top: 10px; justify-content: center; }
 @media (prefers-reduced-motion: reduce) { .ob-voile, .ob-feuille { transition: none; } }`;
   document.head.append(style);
