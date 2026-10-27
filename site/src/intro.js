@@ -40,7 +40,7 @@
 
    Le jeu (avec mouvement ; la lampe toujours, le reste avec la pieuvre vivante) : pendant l'ouverture, la pieuvre répond au
    pointeur, souris, doigt ou stylet. Elle le regarde : sa tête se tourne vers lui, ses tentacules s'y penchent. Il s'arrête
-   près du bout d'une de ses queues : elle se tourne vers lui et le tâte du bout, qui frémit, tant qu'il reste à sa portée,
+   de son côté, à sa portée : une de ses queues s'allonge jusqu'à lui et s'y enroule, le suit tant qu'il reste à sa portée,
    et revient d'un ressort quand il s'en va. Il fonce sur elle : elle sursaute (elle se ramasse, sa tête recule, ses tentacules
    s'écartent de lui), puis se rassure. On l'attrape et on la tire : elle s'étire vers le doigt, de plus en plus dur, ses
    tentacules à la traîne ; lâchée assez loin, ou d'un coup sec, elle part (le départ, depuis là où elle est) ; sinon elle
@@ -219,11 +219,10 @@ const INTRO = (() => {
   // ondule) ; dès que l'une part vers sa cible, chacune se dessine elle-même (PIEUVRE.dessiner), le relais pris en fondu
   // enchaîné, en 260 ms, au début du déroulement (où les deux dessins se confondent encore)
   // (le jeu s'y ajoute : tete, { theta, dx, dy }, la tête qui se tourne et se déplace (comme PIEUVRE.corpsVivant), les
-  // tentacules emportées par leur racine ; incline, { cle: angle }, de quoi chaque tentacule se penche en plus, bouts, de quoi sa
-  // pointe seule se courbe ; decal, { x, y },
+  // tentacules emportées par leur racine ; incline, { cle: angle }, de quoi chaque tentacule se penche en plus ; decal, { x, y },
   // la pieuvre tirée hors de sa place, en px ; etire, de 0 à 1 : elle s'étire dans le sens ang (radians) et s'amincit en travers)
   const FONDU = 260;
-  function peindre(now, { onde = 0, rame = 0, vers = null, serre = 0, teinte = 0, cols = null, tete = null, incline = null, bouts = null, decal = null, etire = 0, ang = 0 } = {}) {
+  function peindre(now, { onde = 0, rame = 0, vers = null, serre = 0, teinte = 0, cols = null, tete = null, incline = null, decal = null, etire = 0, ang = 0 } = {}) {
     if (!vie || !geo || !geo.pose) return;
     const { cv, ctx, TS, dpr } = vie, S = geo.pose.S, ox = geo.pose.ox + (decal ? decal.x : 0), oy = geo.pose.oy + (decal ? decal.y : 0);
     const th = tete ? tete.theta : 0, hx = tete ? tete.dx : 0, hy = tete ? tete.dy : 0, bouge = !!(th || hx || hy);
@@ -235,9 +234,10 @@ const INTRO = (() => {
       if (incline && !t.cible) penche += incline[t.cle] || 0;
       // (sa racine suit la tête, déplacée et pivotée d'autant ; la tête immobile, elle est simplement à sa place)
       const tourne = bouge ? t.suivreTete(ox, oy, S, th, hx, hy) : (t.deplacer(ox, oy, S), 0);
-      t.avancer(dt, { temps: vie.t, onde, penche, tourne, bout: bouts && !t.cible ? bouts[t.cle] || 0 : 0 });
+      t.avancer(dt, { temps: vie.t, onde, penche, tourne });
     }
-    if (vie.tFondu == null && TS.some(t => t.cible || t.mouvement() > .001)) vie.tFondu = now;
+    // (une tentacule partie sur place, la queue qui tâte, reste dans le logo, qui la suit : elle ne demande pas le relais)
+    if (vie.tFondu == null && TS.some(t => (t.cible && !t.cible.surPlace) || (t.mouvement() > .001 && !t.attSauve))) vie.tFondu = now;
     const f = vie.tFondu == null ? 0 : clamp((now - vie.tFondu) / FONDU);
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
     const k = 1 - serre, cx = ox + COEUR[0] * S, cy = oy + COEUR[1] * S;
@@ -288,9 +288,9 @@ const INTRO = (() => {
   const jeuNeuf = () => ({
     p: null, tP: 0, v: 0, traces: [],            // le pointeur (null : absent, ou le doigt levé), sa vitesse lissée (px/ms), ses dernières places
     tPrec: 0, theta: 0, vTheta: 0, dx: 0, dy: 0, // la tête : son angle (et sa vitesse), son déplacement (unités du dessin)
-    pen: {}, vPen: {}, bout: {}, vBout: {},      // la penche de chaque tentacule, la courbe de sa pointe (et leurs vitesses)
+    pen: {}, vPen: {},                           // la penche de chaque tentacule (et sa vitesse)
     peur: null, tPeur: -1e9,                     // le sursaut en cours, et le dernier
-    tate: null, tTate0: 0, tCalme: null, tTate: -1e9,   // la queue qui tâte (depuis quand), depuis quand le pointeur est calme, quand elle a lâché
+    tate: null, sensTate: 1, tCalme: null, tTate: -1e9,   // la queue qui tâte (et son sens), depuis quand le pointeur est calme, quand elle a lâché
     prise: null, decal: { x: 0, y: 0 }, vDecal: { x: 0, y: 0 },   // on la tient : où on l'a prise ; son décalage, sa vitesse (px/s)
     lampe: { x: 0, y: 0, a: 0, vue: false, dit: '0' }, avale: 0, y0: null, appui: null,   // (appui : le dernier appui, où, quand, de combien il a bougé)
   });
@@ -302,15 +302,17 @@ const INTRO = (() => {
     const { S, ox, oy } = geo.pose, u = (x - ox - jeu.decal.x) / S, v = (y - oy - jeu.decal.y) / S;
     return u > 220 && u < 1322 && v > 310 && v < 946;
   }
-  // les tentacules qui peuvent tâter : les deux queues, dont le bout est dehors (celui des autres est au creux d'une boucle).
-  // Elles se tournent et se courbent, sans se déployer (t.viser) : déployée, une queue partirait de son attache sur la tête, et
-  // la pieuvre quitterait le dessin du logo d'un seul tenant, le temps de l'ouverture
+  // les tentacules qui peuvent tâter : les deux queues, dont le bout est dehors (celui des autres est au creux d'une boucle :
+  // allongées, elles barreraient la pieuvre). Elle s'allonge depuis sa place (surPlace : sans glisser vers son attache sur la
+  // tête), sa boucle gardée entière (racine .6), jusqu'au pointeur, et s'y enroule ; le logo d'un seul tenant la suit
   const libres = () => vie.TS.filter(t => /^queue/.test(t.cle) && !t.parent && !t.decor);
+  // (sens : le côté où elle l'enroule, pris une fois, au départ : il ne bascule pas quand le pointeur passe son bout)
+  const tater = (t, p, sens) => t.viser({ cle: 'tate', x: p.x, y: p.y, sens, U: 10, mobile: geo.W < 760, racine: .6, epaisseur: 2, boucle: .45, tension: .7, surPlace: true }, 650);
   function lacherTate() {
     if (!jeu || !jeu.tate) return;
-    jeu.tate = null; jeu.tTate = performance.now(); jeu.tCalme = null;
+    jeu.tate.viser(null, 800, true); jeu.tate = null; jeu.tTate = performance.now(); jeu.tCalme = null;
   }
-  // une image : rend de quoi peindre (peindre(now, ...)) : tete, incline, bouts, decal, etire, ang, serre, et onde (en plus)
+  // une image : rend de quoi peindre (peindre(now, ...)) : tete, incline, decal, etire, ang, serre, et onde (en plus)
   function vivre(now) {
     const J = jeu, rien = { onde: 0 };
     if (!J || !geo || !geo.pose) return rien;
@@ -353,42 +355,40 @@ const INTRO = (() => {
     const thetaV = (nx * 4 - ux * 5 * pe) * RAD, dxV = nx * 10 + ux * 22 * pe, dyV = ny * 7 + uy * 14 * pe - 8 * pe;
     J.vTheta += (40 * (thetaV - J.theta) - 5 * J.vTheta) * dts; J.theta += J.vTheta * dts;
     J.dx += (dxV - J.dx) * Math.min(1, dt / 90); J.dy += (dyV - J.dy) * Math.min(1, dt / 90);
-    // la queue qui tâte : le pointeur s'arrête près du bout d'une des deux queues (hors de la pieuvre) ; elle se tourne vers lui
-    // et le tâte du bout, tant qu'il reste à portée et calme ; sinon elle revient, d'un ressort (la penche, plus bas)
-    const portee = L * .42, libre = p && !J.prise && !J.peur && !surElle(p.x, p.y);
+    // la queue qui tâte : le pointeur s'arrête de son côté, hors de la pieuvre, à sa portée (loin : jusqu'à presque la largeur
+    // de la pieuvre depuis son bout) ; elle s'allonge jusqu'à lui et s'y enroule, le suit tant qu'il reste à portée et calme,
+    // et revient d'un ressort sinon. Elle peut le suivre vite : seul un geste brusque la fait lâcher
+    const portee = L * .85, libre = p && !J.prise && !J.peur && !surElle(p.x, p.y);
     if (libre && J.v < .18) { if (J.tCalme == null) J.tCalme = now; } else if (!J.tate) J.tCalme = null;
     if (J.tate) {
       const q = J.tate.pointe();
-      if (!libre || J.v > .9 || Math.hypot(p.x - q.x, p.y - q.y) > portee * 1.35) lacherTate();
+      if (!libre || J.v > 1.4 || Math.hypot(p.x - q.x, p.y - q.y) > portee * 1.2) lacherTate();
+      else tater(J.tate, p, J.sensTate);
     } else if (libre && J.tCalme != null && now - J.tCalme > 260 && now - J.tTate > 500) {
       let best = null, bd = Infinity;
       for (const t of libres()) { const q = t.pointe(), d = Math.hypot(p.x - q.x, p.y - q.y); if (d < bd) { bd = d; best = t; } }
-      if (best && bd < portee) { J.tate = best; J.tTate0 = now; }
+      if (best && bd < portee && bd > 12) { J.tate = best; J.sensTate = p.x >= best.pointe().x ? 1 : -1; tater(best, p, J.sensTate); }
     }
     // la penche de chaque tentacule libre, au bout d'un ressort (elle dépasse un peu, se balance, se pose) : vers le pointeur qui
     // passe, d'autant plus qu'elle en est près ; loin de lui au sursaut ; à la traîne quand on la tire ou qu'elle revient. Les
-    // queues, dehors, le plus ; les boucles du milieu, prises dans l'arche de la tête, à peine (penchées, elles la traversent).
-    // La queue qui tâte se tourne vers lui, et sa pointe seule se courbe vers lui et frémit (bout)
+    // queues, dehors, le plus ; les boucles du milieu, prises dans l'arche de la tête, à peine (penchées, elles la traversent)
     const arr = Math.atan2(-versT[1], -versT[0]);
     for (const t of vie.TS) {
       const w = /^queue/.test(t.cle) ? 1 : /Ext/.test(t.cle) ? .7 : .35;
-      let a = 0, b = 0;
+      let a = 0;
       if (!t.cible) {
         if (p && !J.prise) {
           const q = t.pointe(), dx = p.x - q.x, dy = p.y - q.y, d = Math.hypot(dx, dy), pres = clamp(1 - d / (L * 1.1));
           let df = Math.atan2(dy, dx) - t.RS[t.M - 1]; df = Math.atan2(Math.sin(df), Math.cos(df));
           a = clamp(df, -1.2, 1.2) * .3 * pres * w;
-          if (t === J.tate) { const u = clamp((now - J.tTate0) / 450), f = now / 1000; a += clamp(df, -1.2, 1.2) * .12 * u; b = (clamp(df, -1, 1) * .9 + .14 * Math.sin(f * 9) + .06 * Math.sin(f * 23)) * u; }
           if (pe) { let dg = Math.atan2(-dy, -dx) - t.RS[t.M - 1]; dg = Math.atan2(Math.sin(dg), Math.cos(dg)); a = a * (1 - pe) + clamp(dg, -1.2, 1.2) * .4 * pe * w; }
         }
         if (traine > .001) { let dr = arr - t.RS[t.M - 1]; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); a += clamp(dr, -1.2, 1.2) * traine * w; }
       }
       const a0 = J.pen[t.cle] || 0, v0 = J.vPen[t.cle] || 0, v = v0 + ((a - a0) * (pe ? 260 : 70) - v0 * (pe ? 20 : 10)) * dts;
       J.vPen[t.cle] = v; J.pen[t.cle] = a0 + v * dts;
-      const b0 = J.bout[t.cle] || 0, vb0 = J.vBout[t.cle] || 0, vb = vb0 + ((b - b0) * 110 - vb0 * 11) * dts;
-      J.vBout[t.cle] = vb; J.bout[t.cle] = b0 + vb * dts;
     }
-    return { tete: { theta: J.theta, dx: J.dx, dy: J.dy }, incline: J.pen, bouts: J.bout, decal: m || vm ? { x: D.x, y: D.y } : null, etire, ang: Math.atan2(versT[1], versT[0]),
+    return { tete: { theta: J.theta, dx: J.dx, dy: J.dy }, incline: J.pen, decal: m || vm ? { x: D.x, y: D.y } : null, etire, ang: Math.atan2(versT[1], versT[0]),
       serre: .1 * pe, onde: 2 * pe + clamp(vm / 1500) * 1.2 };
   }
   // la lampe : elle suit le pointeur avec un peu de retard, s'allume quand il est là, s'éteint quand il s'en va (le calque se
@@ -468,7 +468,7 @@ const INTRO = (() => {
       if (now - T0 >= PIEUVRE.ATTENTE) for (const t of vie.TS) if (t.decor) { const { S, ox, oy } = geo.pose; t.deco = PIEUVRE.decor(t, ox, oy, S, 0, 0, 0, t.deco); if (t.cible !== t.deco) t.viser(t.deco, PIEUVRE.DEPLOI); }
       return cols; } : null;
     if (vie) { vie.t0 = T0; vie.teinte = 0; }
-    const j0 = jeu ? { x: jeu.decal.x, y: jeu.decal.y, theta: jeu.theta, dx: jeu.dx, dy: jeu.dy, pen: { ...jeu.pen }, bout: { ...jeu.bout } } : null;
+    const j0 = jeu ? { x: jeu.decal.x, y: jeu.decal.y, theta: jeu.theta, dx: jeu.dx, dy: jeu.dy, pen: { ...jeu.pen } } : null;
     const pas = now => {
       const v = clamp((now - T0) / TD), u = ease.inOut(v), bat = Math.sin(Math.PI * clamp(v * 1.3));
       c = opts.devient() || c;
@@ -482,7 +482,7 @@ const INTRO = (() => {
         vie.teinte = clamp((now - T0) / 700);
         // (avec des cibles, pas de coup de nage : les tentacules vont se déployer, rien ne doit les agiter avant)
         const r = 1 - u, jj = j0 ? { decal: { x: j0.x * r, y: j0.y * r }, tete: { theta: j0.theta * r, dx: j0.dx * r, dy: j0.dy * r },
-          incline: Object.fromEntries(Object.entries(j0.pen).map(([k, a]) => [k, a * r])), bouts: Object.fromEntries(Object.entries(j0.bout).map(([k, a]) => [k, a * r])) } : {};
+          incline: Object.fromEntries(Object.entries(j0.pen).map(([k, a]) => [k, a * r])) } : {};
         peindre(now, { onde: 1.3 * (1 - u), rame: viseur ? 0 : .5 * bat * (Math.hypot(vx, vy) > 4 ? 1 : 0), vers: [vx, vy], serre: .05 * bat, teinte: vie.teinte, cols, ...jj });
       }
       passent.forEach((n, i) => { n.style.opacity = String(o0[i] * (1 - ease.out(clamp(v * 2.2)))); });

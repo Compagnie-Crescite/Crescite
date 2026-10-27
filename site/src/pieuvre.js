@@ -35,14 +35,15 @@
                                  courbes, sans cassure de tangente) ; loin, de 0 à 1 : en route elle s'éloigne (plus fine
                                  d'autant, au milieu du chemin) et revient en avant au titre ; tourne : un angle
                                  (radians) dont sa racine pivote autour de son pied pour partir dans ce sens : la base du
-                                 bras se plie, le reste suit, sans cassure) ou null (le repos). Elle y va depuis où elle en est, en duree ms (0 : d'un
-                                 coup) ; le mouvement part de la racine quand elle s'allonge, de la pointe quand elle revient ;
+                                 bras se plie, le reste suit, sans cassure) ; surPlace : elle se déploie depuis sa place du
+                                 logo, sans glisser vers son attache sur la tête (le logo d'un seul tenant, PIEUVRE.logo, la
+                                 suit alors : elle reste dessinée avec lui) ou null (le repos). Elle y va depuis où elle
+                                 en est, en duree ms (0 : d'un coup) ; le mouvement part de la racine quand elle s'allonge, de la pointe quand elle revient ;
                                  elastique : elle revient comme un ressort (la pointe se love un peu trop, se balance, se
                                  pose). La même cible (même clé) redonnée, déplacée : le trajet continue vers sa nouvelle place.
-     t.avancer(dt, { temps, onde, penche, bout, bob, tourne }) → vrai tant qu'elle se déplace. temps : en secondes (l'ondulation) ;
+     t.avancer(dt, { temps, onde, penche, bob, tourne }) → vrai tant qu'elle se déplace. temps : en secondes (l'ondulation) ;
                                  onde : son ampleur (0 : immobile, 1 : normale) ; penche : un angle, vers où elle se
-                                 penche au repos ; bout : un angle dont sa pointe seule (son dernier cinquième) se courbe
-                                 au repos ; bob : { x, y }, le flottement de toute la pieuvre, en px ; tourne : un
+                                 penche au repos ; bob : { x, y }, le flottement de toute la pieuvre, en px ; tourne : un
                                  angle (radians) dont toute la tentacule pivote autour de sa racine (la tête qui bouge
                                  l'emmène) : au repos entière, tendue sa racine seule, le reste rejoint sa cible
      t.pointe()                  le bout de la tentacule au repos, à l'écran (sans le flottement), { x, y }
@@ -140,6 +141,30 @@ const PIEUVRE = (() => {
     }
   }
 
+  // la peau lissée : notée sur le contour du logo, elle garde les entailles des croisements (là où un brin passe sous un autre,
+  // le jour du croisement mord dans son contour) ; déployée, la tentacule les emportait, en bosses le long du bras. De chaque
+  // côté, la largeur le long du bras (|N| selon S) est fermée (les creux de moins de deux fois R unités se comblent) puis ouverte
+  // (les pointes aussi étroites s'effacent) ; seuls changent les points qui s'en écartent de plus d'un tiers d'unité. La racine
+  // (ses premiers 6 %, qui touchent la tête) et la pointe (les derniers 4 %, où le contour fait le tour) restent telles quelles
+  function lisserPeau(t, R = 7) {
+    const m = t.m, S = t.S, N = t.N, a = .06 * t.L0, b = .96 * t.L0;
+    for (const signe of [1, -1]) {
+      const idx = [];
+      for (let k = 0; k < m; k++) if (Math.sign(N[k]) === signe && S[k] > a && S[k] < b) idx.push(k);
+      if (idx.length < 5) continue;
+      idx.sort((i, j) => S[i] - S[j]);
+      const w = idx.map(k => Math.abs(N[k]));
+      const fen = (v, f) => idx.map((k, i) => {
+        let r = v[i];
+        for (let j = i - 1; j >= 0 && S[k] - S[idx[j]] <= R; j--) r = f(r, v[j]);
+        for (let j = i + 1; j < idx.length && S[idx[j]] - S[k] <= R; j++) r = f(r, v[j]);
+        return r;
+      });
+      const lisse = fen(fen(fen(fen(w, Math.max), Math.min), Math.min), Math.max);
+      idx.forEach((k, i) => { if (Math.abs(lisse[i] - w[i]) > .33) N[k] = signe * lisse[i]; });
+    }
+  }
+
   class Tentacule {
     constructor(b, i) {
       this.cle = b.cle; this.cote = b.cote; this.i = i; this.plat = !!b.plat;
@@ -187,6 +212,7 @@ const PIEUVRE = (() => {
       // (la peau est recalée sur le contour du logo : reconstruite depuis l'épine, elle en dévie d'un demi-point, ce qui laisse
       // un fil de corps autour de la place de repos d'une tentacule partie ; recalée, découpe, repos et contour coïncident)
       recaler(this);
+      lisserPeau(this);
       this.rac = RAC; this.wmin = 0; this.tourne = 0; this.libreRac = -1; this.libre = this.libres(RAC);
       // (la pointe : les derniers 12 % de la peau, de chaque côté ; le jour s'arrête avant, elle s'enroule sur elle-même)
       { const sB = .88 * this.L0; let a = 0; while (a < m && this.S[a] < sB) a++; let b = m - 1; while (b > 0 && this.S[b] < sB) b--; this.bout = [a, b]; }
@@ -303,12 +329,11 @@ const PIEUVRE = (() => {
       return { x: X[this.M], y: Y[this.M], k: this.M - 1 };
     }
     // une pose : l'angle (sg) et la longueur (ln) de chaque segment, l'angle aux points (th) ; mu : 0 au repos, 1 tendue
-    // (bout : un angle dont seule la pointe se courbe, son dernier cinquième, le reste tel quel)
-    reposPose(temps = 0, onde = 0, penche = 0, tourne = 0, bout = 0) {
+    reposPose(temps = 0, onde = 0, penche = 0, tourne = 0) {
       const M = this.M, sg = new Float64Array(M), th = new Float64Array(M + 1), ln = new Float64Array(M);
       for (let k = 0; k < M; k++) ln[k] = this.RL[k] * this.s;
       const ph = this.i * 2.399;
-      const dev = x => (onde ? onde * (0.075 * Math.pow(x, 1.4) * Math.sin(temps * 1.3 + ph - x * 3.4) + 0.03 * x * Math.sin(temps * .55 + ph * 1.7)) : 0) + penche * x + tourne + (bout ? bout * lisse(.78, 1, x) : 0);
+      const dev = x => (onde ? onde * (0.075 * Math.pow(x, 1.4) * Math.sin(temps * 1.3 + ph - x * 3.4) + 0.03 * x * Math.sin(temps * .55 + ph * 1.7)) : 0) + penche * x + tourne;
       for (let k = 0; k < M; k++) sg[k] = this.RS[k] + dev((k + .5) / M);
       for (let k = 0; k <= M; k++) th[k] = this.RT[k] + dev(k / M);
       return { sg, th, ln, mu: 0 };
@@ -438,7 +463,12 @@ const PIEUVRE = (() => {
     }
     viser(cible, duree = 600, elastique = false) {
       const meme = !!cible === !!this.cible && (!cible || (cible.cle === this.cible.cle));
-      this.cible = cible; this.elastique = !!elastique;
+      // (sur place : elle se déploie depuis sa place du logo, sans glisser vers son attache sur la tête ; l'attache lui revient
+      // dès qu'une cible ordinaire la vise, ou qu'elle est revenue au repos)
+      if (cible && cible.surPlace) { if (this.att) { this.attSauve = this.att; this.att = null; } }
+      else if (cible && this.attSauve) { this.att = this.attSauve; this.attSauve = null; }
+      // (la même cible redonnée garde son trajet, et sa façon d'y aller : un retour élastique le reste)
+      this.cible = cible; this.elastique = meme && cible && !elastique ? this.elastique : !!elastique;
       // (la racine de la dernière cible reste celle du liseré et de l'effilement, le temps qu'elle revienne au repos)
       if (cible) { this.derniere = cible; this.rac = cible.racine != null ? cible.racine : RAC; this.wmin = cible.epaisseur || 0; }
       if (!this.pose_ || (meme && this.pose)) return;   // la même cible (peut-être déplacée) : le trajet continue
@@ -477,18 +507,19 @@ const PIEUVRE = (() => {
         }
       }
       // (le repos d'une tentacule glissée sur la tête : sa forme du logo, tournée dans le sens de son attache)
-      // (le glissement de la racine vers son attache précède le déroulement : la pièce du logo rejoint la tête, entière, puis
-      // se déplie depuis elle ; au retour, elle se replie, puis glisse. delai : la part du trajet que prend le glissement)
+      // (le glissement de la racine vers son attache : delai, la part du trajet qu'il prend. Vers une cible, elle se déplie
+      // pendant qu'il se fait (plus bas) ; sinon il précède le déroulement : la pièce du logo rejoint la tête, entière, puis se
+      // déplie depuis elle ; au retour, elle se replie, puis glisse)
       const delai = this.att && !this.colle ? Math.min(.35, Math.hypot(this.att.x - this.RX[0], this.att.y - this.RY[0]) / 800) : 0;
       if (this.q < 1 && this.depuis) this.gl = !delai ? (this.cible || this.colle ? 1 : 0) : this.etire ? Math.min(1, this.q / delai) : Math.min(1, (1 - this.q) / delai);
       else this.gl = this.cible || this.colle ? 1 : 0;
       const glisseR = this.racineEff()[2];
-      const repos = this.reposPose(o.temps || 0, o.onde || 0, o.penche || 0, this.tourne + glisseR, o.bout || 0);
+      const repos = this.reposPose(o.temps || 0, o.onde || 0, o.penche || 0, this.tourne + glisseR);
       // (reliée : la pièce ne tourne pas. Collée, une tentacule dont la place du logo est loin de son attache (la queue, la
       // spirale extérieure) revient à cette place, d'un seul tenant, son pied restant sur la tête (reliePose) : sa forme du
       // logo tournée dans le sens de l'attache tombait dans la tête)
       const loinTete = this.att && Math.hypot(this.att.x - this.RX[0], this.att.y - this.RY[0]) > 40;
-      const repos0 = this.relie || (this.colle && loinTete) ? this.reposPose(o.temps || 0, o.onde || 0, o.penche || 0, this.tourne, o.bout || 0) : repos;
+      const repos0 = this.relie || (this.colle && loinTete) ? this.reposPose(o.temps || 0, o.onde || 0, o.penche || 0, this.tourne) : repos;
       const reposB = this.colle && loinTete ? this.reliePose(1, repos0) : repos;
       if (this.cible) this.but = this.viseePose(this.cible, bob);
       let bouge = false;
@@ -525,7 +556,9 @@ const PIEUVRE = (() => {
           // (un front étroit : la part dépliée est exactement sur le chemin visé ; un front large laisserait tout le bras à demi
           // courbé, en grands arcs qui balaient. Celle qui a glissé part de sa forme du logo tournée dans le sens de son attache
           // (repos : elle s'y est tournée en glissant, enfoncée))
-          const q2 = delai ? Math.max(0, (brut - delai) / (1 - delai)) : brut, OND = .82, A0 = A;
+          // (elle se déplie dès le premier instant, pendant que sa racine glisse vers son attache : la pièce du logo s'ouvre vers son
+          // titre en route, au lieu de traverser le corps entière, enroulée, où toutes s'emmêlaient le temps du glissement)
+          const q2 = brut, OND = .82, A0 = A;
           // (reliée : elle ne glisse pas, entière, à travers la tête : la pièce du logo reste à sa place, d'un seul tenant, son
           // pied s'allonge jusqu'à l'attache par-dessous (reliePose), puis elle se déplie de là, opaque, au premier plan)
           A = this.relie ? this.reliePose(ease(Math.min(1, Math.max(0, this.gl || 0))), repos0) : delai ? repos : A;
@@ -564,6 +597,7 @@ const PIEUVRE = (() => {
       }
       this.pose = P;
       if (this.att && this.collant && P.mu > .999) this.colle = true;   // (collant : la pieuvre de l'accueil)
+      if (this.attSauve && !this.cible && this.q >= 1) { this.att = this.attSauve; this.attSauve = null; }
       // l'épine à l'écran, depuis la racine de cette image (glissée vers son attache en se déployant)
       const X = this.X, Y = this.Y, [r0x, r0y] = this.racineEff();
       X[0] = this.ox + r0x * this.s + bob.x; Y[0] = this.oy + r0y * this.s + bob.y;
@@ -949,7 +983,25 @@ const PIEUVRE = (() => {
         if (sg[0] === 'C') { if (prec >= 0 && meme(Q[prec], Q[sg[3]])) Q[sg[1]] = Q[sg[2]] = Q[sg[3]]; prec = sg[3]; } else prec = sg[1];
       }
       const pts = Q.map((L, j) => L.map(e => ({ n: e.n, w: e.w, r: repere(peaux[e.n].t, P[2 * j], P[2 * j + 1]) })));
-      return { pts, cles: peaux.map(h => h.t.cle) };
+      // (et, pour chaque trait du contour qui n'est qu'à une tentacule (ses deux bouts à elle seule), ce trait en points serrés,
+      // de trois en trois unités, chacun dans le repère de l'épine : déployée, elle s'étire, et le trait la suit point par point,
+      // comme sa peau ; ses points de contrôle, chacun de son côté, le vrillaient en un ruban aux angles cassés)
+      const dense = segs.map(() => null);
+      prec = -1;
+      segs.forEach((sg, i) => {
+        const fin = sg[0] === 'C' ? sg[3] : sg[1];
+        if (sg[0] !== 'M' && prec >= 0 && Q[prec].length === 1 && Q[fin].length === 1 && Q[prec][0].n === Q[fin][0].n) {
+          const t = peaux[Q[fin][0].n].t, ax = P[2 * prec], ay = P[2 * prec + 1], bx = P[2 * fin], by = P[2 * fin + 1];
+          const c = sg[0] === 'C' ? [P[2 * sg[1]], P[2 * sg[1] + 1], P[2 * sg[2]], P[2 * sg[2] + 1]] : null;
+          const at = u => { if (!c) return [lerp(ax, bx, u), lerp(ay, by, u)]; const v = 1 - u; return [v * v * v * ax + 3 * v * v * u * c[0] + 3 * v * u * u * c[2] + u * u * u * bx, v * v * v * ay + 3 * v * v * u * c[1] + 3 * v * u * u * c[3] + u * u * u * by]; };
+          const long = c ? Math.hypot(c[0] - ax, c[1] - ay) + Math.hypot(c[2] - c[0], c[3] - c[1]) + Math.hypot(bx - c[2], by - c[3]) : Math.hypot(bx - ax, by - ay);
+          const nb = Math.max(1, Math.ceil(long / 3)), r = new Float64Array(4 * nb);
+          for (let j = 1; j <= nb; j++) { const [x, y] = at(j / nb), q = repere(t, x, y); r.set(q, 4 * (j - 1)); }
+          dense[i] = { n: Q[fin][0].n, r };
+        }
+        prec = fin;
+      });
+      return { pts, dense, cles: peaux.map(h => h.t.cle) };
     });
     return CARTE;
   }
@@ -974,12 +1026,25 @@ const PIEUVRE = (() => {
         } else { tete(P[2 * j], P[2 * j + 1], W[j], theta, dx, dy, out); out[0] = bx + out[0] * s; out[1] = by + out[1] * s; }
         return out;
       };
-      const p1 = [0, 0], p2 = [0, 0];
-      for (const sg of segs) {
+      const p1 = [0, 0], p2 = [0, 0], { dense } = K[n];
+      // (le trait d'une tentacule qui se déploie, ou s'en revient : en points serrés, chacun suivant son épine)
+      const serre = i => {
+        const d = dense[i], t = d && T[d.n];
+        if (!t || !t.pose || !(t.pose.mu > .001 || t.cible)) return false;
+        const r = d.r, P_ = t.pose;
+        for (let j = 0; j < r.length; j += 4) {
+          const k = r[j], f = r[j + 1], u = r[j + 2] * t.s, v = r[j + 3] * t.s;
+          const cx = lerp(t.X[k], t.X[k + 1], f), cy = lerp(t.Y[k], t.Y[k + 1], f), a = lerp(P_.th[k], P_.th[k + 1], f), ca = Math.cos(a), sa = Math.sin(a);
+          g.lineTo(cx + u * ca - v * sa, cy + u * sa + v * ca);
+        }
+        return true;
+      };
+      segs.forEach((sg, i) => {
         if (sg[0] === 'M') { place(sg[1], pt); g.moveTo(pt[0], pt[1]); }
+        else if (serre(i)) return;
         else if (sg[0] === 'L') { place(sg[1], pt); g.lineTo(pt[0], pt[1]); }
         else { place(sg[1], p1); place(sg[2], p2); place(sg[3], pt); g.bezierCurveTo(p1[0], p1[1], p2[0], p2[1], pt[0], pt[1]); }
-      }
+      });
       g.closePath();
     });
     g.fillStyle = encre; g.fill('evenodd');
