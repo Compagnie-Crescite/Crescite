@@ -50,6 +50,9 @@
 .pied-espace { max-width: 600px; margin: 0 auto; padding: 14px calc(20px + var(--ds)) 30px calc(20px + var(--gs)); }
 /* la marque de l'en-tête, comme dans l'administration et l'espace de l'équipe : la pieuvre (../admin/tentacules.js la pose
    dans [data-pieuvre], d'après ../admin/logo.js), « Compagnie Crescite », et dessous le nom de l'espace ; elle mène au site */
+/* le lien d'évitement, comme sur le site et dans les autres espaces : il paraît au premier Tab */
+.evitement { position: absolute; left: 8px; top: -80px; z-index: 90; padding: 10px 14px; border-radius: 10px; background: var(--encre); color: var(--papier); font-weight: 600; text-decoration: none; }
+.evitement:focus { top: 8px; color: var(--papier); }
 .marque { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; color: var(--encre); text-decoration: none; min-width: 0; }
 .marque:hover { color: var(--encre); }
 .marque .pieuvre { display: inline-block; flex: none; width: 46px; height: 26px; color: var(--pieuvre); }
@@ -125,6 +128,7 @@ h1 { font: 500 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
 <style id="couleurs-saison">/* écrit par site/build.py : les couleurs de la saison (cassandres) */ :root { --saison: #1f3a73; --saison-vive: #7f9fe0; --saison-porteur: #45629f; --saison-profond: #11203f; --saison-texte: #1f3a73; --saison-fonce: #192e5c; --saison-doux: #e4e6e9; --saison-texte-nuit: #7f9fe0; --saison-fonce-nuit: #a5bce9; --saison-doux-nuit: #313043; }</style>
 </head>
 <body>
+<a class="evitement" href="#page">Aller au contenu</a>
 <header class="barre">
   <a class="marque" href="../"><span class="pieuvre" data-pieuvre aria-hidden="true"></span><span class="marque-texte"><span class="marque-nom">Compagnie Crescite</span><small>Vos réponses</small></span><span class="sr"> : le site de la compagnie</span></a>
 </header>
@@ -142,6 +146,8 @@ h1 { font: 500 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
   const CONTACT = 'contact@crescite.fr';
   const CHOIX = { oui: 'Disponible', non: 'Pas disponible', peut_etre: 'Peut-être' };
   const main = document.getElementById('page');
+  // « Aller au contenu » : le titre reçoit le focus, l'adresse (qui porte la proposition) ne change pas
+  document.querySelector('.evitement').addEventListener('click', e => { e.preventDefault(); const h = main.querySelector('h1') || main; if (h !== main) h.setAttribute('tabindex', '-1'); h.focus(); });
   const q = new URLSearchParams(location.search || location.hash.replace(/^#/, ''));
   const r = q.get('r') || '';
   let vise = { j: q.get('j'), c: q.get('c') };          // le choix fait dans le courriel, à confirmer

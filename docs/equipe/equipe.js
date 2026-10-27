@@ -313,6 +313,28 @@
     return `<div class="etat-vide">${pieuvre(objet)}<b>${esc(titre)}</b><p>${esc(texte)}</p>${suite}</div>`;
   }
 
+  // une lecture qui n'a pas abouti (une vue qui demande la base, hors connexion ou en panne) : à la place de « Lecture… »,
+  // ce qui s'est passé et « Réessayer » (data-relire), qui redessine la vue et relance la lecture ; comme le planning
+  function echecLecture(quoi, e) {
+    const texte = estReseau(e) ? `${quoi.enLigne} : vérifiez votre connexion, puis réessayez.` : `${quoi.erreur} : ${motsErreur(e) || 'réessayez dans un instant'}.`;
+    return `<div class="message erreur echec-lecture" role="alert"><p>${esc(texte)}</p><button type="button" class="btn" data-relire>${ICONES.actualiser}Réessayer</button></div>`;
+  }
+  // la lecture en attente d'une zone (son « Lecture… ») cède la place à l'échec, si la vue est toujours là
+  function poserEchec(zone, quoi, e, vue) {
+    if (vue && E.vue !== vue) return;
+    const z = typeof zone === 'string' ? $(zone) : zone, attente = z && (z.matches('p.chargement') ? z : $('p.chargement', z));
+    if (attente) attente.outerHTML = echecLecture(quoi, e);
+  }
+  const LECTURES = {
+    feuille: { enLigne: 'Cette feuille de route se lit en ligne', erreur: 'La feuille de route n’a pas pu être lue' },
+    propositions: { enLigne: 'Les propositions se lisent en ligne', erreur: 'Les propositions n’ont pas pu être lues' },
+    proposition: { enLigne: 'La proposition se lit en ligne', erreur: 'La proposition n’a pas pu être lue' },
+    agendas: { enLigne: 'Vos agendas se lisent en ligne', erreur: 'Vos agendas n’ont pas pu être lus' },
+    flux: { enLigne: 'Votre lien se lit en ligne', erreur: 'Votre lien n’a pas pu être lu' },
+  };
+  // hors connexion (déjà constaté), une lecture échoue tout de suite, sans les trois relances de supabase-js (7 s et plus)
+  const vite = q => (E.horsLigne && typeof q.retry === 'function' ? q.retry(false) : q);
+
   // ================================================================================================ les mots des erreurs
   const estReseau = e => !!e && (e.name === 'AuthRetryableFetchError' || e.status === 0
     || /Failed to fetch|NetworkError|Load failed|fetch failed|Network request failed|ERR_INTERNET|ERR_NETWORK/i.test(String(e.message || e)));
@@ -1785,7 +1807,7 @@
   });
   async function chargerFeuille(id) {
     if (E.feuilles.has(id)) return E.feuilles.get(id);
-    const { data, error } = await sb.from('crescite_feuilles').select('id, date_id, titre, contenu, statut, version, publiee_le').eq('date_id', id).eq('statut', 'publiee').maybeSingle();
+    const { data, error } = await vite(sb.from('crescite_feuilles').select('id, date_id, titre, contenu, statut, version, publiee_le').eq('date_id', id).eq('statut', 'publiee').maybeSingle());
     if (error) throw error;
     if (data) E.feuilles.set(id, data);
     return data;
@@ -1808,7 +1830,7 @@
       if (!x) return afficher(r, 'Feuille de route', `${tete}<p class="message erreur" role="alert">Cette feuille de route n’est pas (ou plus) publiée. L’administration la publiera dès qu’elle sera prête.</p>`, { focus });
       montrerFeuille(r, d, x, { focus, tete });
       entree('fondu');
-    }).catch(e => { if (ici()) afficher(r, 'Feuille de route', `${tete}<p class="message erreur" role="alert">La feuille de route n’a pas pu être lue : ${esc(motsErreur(e))}.</p>`, { focus }); });
+    }).catch(e => { if (ici()) afficher(r, 'Feuille de route', `${tete}${echecLecture(LECTURES.feuille, e)}`, { focus }); });
   }
   function montrerFeuille(r, d, f, { focus, tete }) {
     const version = `Version ${f.version || 1}${f.publiee_le ? `, publiée ${momentTexte(f.publiee_le)}` : ''}`;
@@ -2212,9 +2234,9 @@
   // ———— lire
   async function chargerPropositions() {
     if (E.moi == null) return;
-    const { data, error } = await sb.from('crescite_propositions')
+    const { data, error } = await vite(sb.from('crescite_propositions')
       .select('id, titre, message, statut, spectacle_id, cree_le, spectacle:crescite_spectacles(id, titre, slug), jours:crescite_propositions_jours(id, debut, fin, journee, reponses:crescite_propositions_reponses(personne_id, reponse, commentaire, repondu_le))')
-      .order('cree_le', { ascending: false }).limit(60);
+      .order('cree_le', { ascending: false }).limit(60));
     if (error) {
       if (dispoAbsente(error)) { E.dispo.etat = 'absent'; E.dispo.propositions = []; E.dispo.propositionsLues = true; majBadgePlanning(); return; }
       throw error;
@@ -2245,14 +2267,14 @@
   }
   async function chargerAgendas() {
     // jamais l'adresse (url) : elle s'écrit, elle ne se relit pas
-    const { data, error } = await sb.from('crescite_agendas_lies').select('id, nom, actif, derniere_synchro, erreur, nb_evenements, cree_le')
-      .eq('personne_id', E.moi).order('cree_le').order('id');
+    const { data, error } = await vite(sb.from('crescite_agendas_lies').select('id, nom, actif, derniere_synchro, erreur, nb_evenements, cree_le')
+      .eq('personne_id', E.moi).order('cree_le').order('id'));
     if (error) { if (dispoAbsente(error)) { E.dispo.etat = 'absent'; return null; } throw error; }
     E.dispo.agendas = data || [];
     return E.dispo.agendas;
   }
   async function chargerJeton() {
-    const { data, error } = await sb.from('crescite_personnes_privees').select('agenda_jeton').eq('personne_id', E.moi).maybeSingle();
+    const { data, error } = await vite(sb.from('crescite_personnes_privees').select('agenda_jeton').eq('personne_id', E.moi).maybeSingle());
     if (error) { if (dispoAbsente(error)) { E.dispo.etat = 'absent'; E.dispo.jeton = null; return null; } throw error; }
     E.dispo.jeton = (data && data.agenda_jeton) || null;
     return E.dispo.jeton;
@@ -2531,11 +2553,10 @@
     afficher(r, TITRES.agendas, html, { focus });
     brancherFormAgenda();
     const lire = [];
-    if (E.dispo.agendas == null) lire.push(chargerAgendas().then(() => majZone('#zone-agendas', blocAgendas)));
-    if (E.dispo.jeton === undefined) lire.push(chargerJeton().then(() => { majZone('#zone-flux', blocFlux); verifierFlux(); }));
+    if (E.dispo.agendas == null) lire.push(chargerAgendas().then(() => majZone('#zone-agendas', blocAgendas), e => poserEchec('#zone-agendas', LECTURES.agendas, e, 'agendas')));
+    if (E.dispo.jeton === undefined) lire.push(chargerJeton().then(() => { majZone('#zone-flux', blocFlux); verifierFlux(); }, e => poserEchec('#zone-flux', LECTURES.flux, e, 'agendas')));
     else verifierFlux();
-    Promise.all(lire).catch(e => annoncer(`Vos agendas n’ont pas pu être lus : ${motsErreur(e) || 'réessayez'}.`, { erreur: true }))
-      .then(() => { if (E.dispo.etat === 'absent' && E.vue === 'agendas') vueAgendas(r, { focus: false }); });
+    Promise.all(lire).then(() => { if (E.dispo.etat === 'absent' && E.vue === 'agendas') vueAgendas(r, { focus: false }); });
   }
   const majZone = (s, f) => { const z = $(s); if (z && (E.vue === 'agendas')) z.innerHTML = f(); };
   function etatAgenda(a) {
@@ -2706,7 +2727,7 @@
       ${att.length ? `<section aria-labelledby="t-att"><h2 class="titre-section" id="t-att">À répondre</h2><ul class="liste-props">${att.map(carte).join('')}</ul></section>` : ''}
       ${autres.length ? `<section aria-labelledby="t-aut"><h2 class="titre-section" id="t-aut">${att.length ? 'Les autres' : 'Répondues ou closes'}</h2><ul class="liste-props">${autres.map(carte).join('')}</ul></section>` : ''}`;
     afficher(r, TITRES.propositions, html, { focus });
-    if (!E.dispo.propositionsLues) chargerPropositions().then(() => { if (E.vue === 'propositions') vuePropositions(r, { focus: false }); }).catch(() => {});
+    if (!E.dispo.propositionsLues) chargerPropositions().then(() => { if (E.vue === 'propositions') vuePropositions(r, { focus: false }); }).catch(e => poserEchec('#contenu', LECTURES.propositions, e, 'propositions'));
   }
   function vueProposition(r, { focus }) {
     if (E.dispo.etat === 'absent') return afficher(r, TITRES.proposition, `<div class="titre-vue"><h1>Proposition de dates</h1></div>${etatVide('calendrier', 'Bientôt dans l’application', 'Les propositions de dates arriveront ici, et par courriel.')}`, { focus });
@@ -2715,7 +2736,7 @@
       if (!E.dispo.propositionsLues || !E.dispo.relu) {
         afficher(r, TITRES.proposition, '<div class="titre-vue"><h1>Proposition de dates</h1></div><p class="chargement" role="status">Lecture de la proposition…</p>', { focus });
         E.dispo.relu = true;
-        chargerPropositions().then(() => { if (E.route && E.route.hash === r.hash) vueProposition(r, { focus: false }); }).catch(e => annoncer(`La proposition n’a pas pu être lue : ${motsErreur(e) || 'réessayez'}.`, { erreur: true }));
+        chargerPropositions().then(() => { if (E.route && E.route.hash === r.hash) vueProposition(r, { focus: false }); }).catch(e => { if (E.route && E.route.hash === r.hash) poserEchec('#contenu', LECTURES.proposition, e); });
         return;
       }
       return afficher(r, TITRES.proposition, `<div class="titre-vue"><h1>Proposition de dates</h1></div>${etatVide('calendrier', 'Cette proposition n’est pas (ou plus) pour vous', 'Elle a pu être retirée par l’administration. Vos propositions sont dans le planning.', '<p><a class="btn" href="#/propositions">Mes propositions</a></p>')}`, { focus });
@@ -5011,6 +5032,7 @@
     if (t.matches('[data-notif]')) { marquerLue(Number(t.dataset.notif)); if (t.classList.contains('bandeau-notif')) t.classList.remove('visible'); return; }
     if (t.matches('[data-sortir]')) return sortir();
     if (t.matches('[data-reessayer]')) return occupe(t, 'Un instant…', () => reessayer(true));
+    if (t.matches('[data-relire]') && E.route) { vibrer(6); VUES[E.route.k](E.route, { focus: true }); return; }
     if (t.matches('[data-actualiser]')) { vibrer(8); return reessayer(true); }
     if (t.matches('[data-retard]')) return ouvrirModaleRetard(Number(t.dataset.retard), t);
     if (t.matches('[data-modifier-date]')) return ouvrirModaleDate(Number(t.dataset.modifierDate), t);
