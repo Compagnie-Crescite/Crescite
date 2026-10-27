@@ -41,7 +41,11 @@
      TABLEUR.lireTsv(texte)   un texte de tableur (tabulations, guillemets d'Excel) → des lignes de cases
      TABLEUR.xlsx({ entetes, lignes })   un classeur .xlsx (un Blob), écrit ici sans bibliothèque
      TABLEUR.lireImport(texte)           les lignes collées → { lignes (chacune avec son aperçu et ses erreurs), cles, avecTete }
-   (lireJour, lireHeure, lireTsv, xlsx et lireImport ne sont lues par aucun autre module : les bancs les atteignent.)
+     TABLEUR.lecteurs         { choix, spectacle, lieu, personnes } : ce qui lit un texte tapé (un choix par son libellé, un
+                              spectacle, un lieu, des personnes), pour le schéma de la date (SCHEMA_DATE, script principal)
+                              tant que COLONNES et lui coexistent
+   (lireTsv, xlsx et lireImport ne sont lues par aucun autre module : les bancs les atteignent ; lireJour et lireHeure, le
+   schéma de la date les lit aussi.)
 
    Ce qu'il lit du script principal (admin/index.html), relevé par grep croisé avec les déclarations :
      E, $, $$, esc, clone, norm, AUJ, h5, jourCourt, lieu, spectacle, lieuTexte, repsDe, couleurSp (l'état et les petits
@@ -1097,5 +1101,5 @@ const TABLEUR = (() => {
     $('#tab-im-texte', dlg).focus();
   }
 
-  return { vue, choixVue, lireJour, lireHeure, lireTsv, xlsx, lireImport };
+  return { vue, choixVue, lireJour, lireHeure, lireTsv, xlsx, lireImport, lecteurs: { choix: lireChoix, spectacle: trouverSpectacle, lieu: trouverLieu, personnes: lirePersonnes } };
 })();

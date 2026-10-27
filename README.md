@@ -37,6 +37,7 @@ node site/adresses-admin.mjs       # les adresses et les garde-fous de l'adminis
 node site/tableur.mjs              # le tableur des représentations, dans Chromium, sur la même base fictive (après le build)
 node site/icones.mjs               # la bibliothèque d'icônes de l'administration et ses consommateurs, dans Chromium (après le build)
 node site/cadre.mjs                # la coque, le menu latéral, ses raccourcis et ses badges, dans Chromium, sur la même base fictive (après le build)
+node site/champs.mjs               # la fiche d'une date : le schéma de ses champs, le rail d'écriture, les puces, la jauge (après le build)
 bash site/bancs-admin.sh           # le build, puis tous les bancs de l'administration l'un après l'autre ; --tout y joint
                                    # ceux de l'espace de l'équipe (sinon, seulement si gestes.js, planning.js ou feuille.js changent)
 node site/reactivite.mjs /tmp/x index --strict  # les budgets de réactivité du site, au bureau et au téléphone ralenti ×4
@@ -313,7 +314,11 @@ compte du projet inscrit dans `crescite_admins`.
     traiter » (ou « Traiter… » du clic droit) ouvre une feuille de modification en place (`GESTES.formulaire`) :
     confirmer une option, fixer les horaires, suivre le contrat, publier ou composer la feuille de route, valider ou
     refuser une note de frais, répondre à un devis, relancer, clore une proposition, prolonger une invitation, noter
-    un accord de portrait ; la base écrite, l'état se relit et la ligne disparaît. (2) **La file au clavier** : J et K
+    un accord de portrait ; la base écrite, l'état se relit et la ligne disparaît. Les trois feuilles qui touchent une
+    date (confirmer une option, fixer les horaires, suivre le contrat) écrivent par le même chemin que la fiche
+    (`ecrireChamps`, voir « La fiche d'une date » plus bas) : la date entière part à la base, jamais un envoi partiel, et
+    l'annonce porte « Annuler » ; le montant de cession peut maintenant s'y effacer. Les horaires envoient toutes les
+    séances de la date (voir le Journal, plus bas). (2) **La file au clavier** : J et K
     parcourent les lignes à traiter, Entrée ouvre la feuille de la ligne, Échap la referme et rend le focus ; une ligne
     traitée, la suivante prend le focus. (3) **La barre de commande** (Ctrl K, la loupe) cherche aussi les actions
     (« nouvelle date », « briefing », « personnaliser »), les vues, ce qui est à traiter (Entrée le traite sur place),
@@ -372,6 +377,37 @@ compte du projet inscrit dans `crescite_admins`.
     confirmée, contrat (à envoyer, envoyé, signé), lieu complet (adresse, contact), équipe (qui part, les téléphones),
     feuille de route (composée, publiée), bilan (les spectateurs, après la date) ; chaque étape dit où elle en est et
     s'ouvre là où on la complète. Dans les listes et les prochaines dates du tableau de bord, des points colorés.
+  - **La fiche d'une date : chaque champ décrit une fois, un seul chemin d'écriture** (`SCHEMA_DATE`, `ecrireChamps` et
+    `bandeauAilleurs` dans `admin/index.html`, `COMPLETUDE` dans `admin/parcours.js`). *Le schéma* : une entrée par colonne
+    des cinq tables d'une date (la date, ses séances, son suivi, ses chiffres, son équipe) dit où le champ vit dans la base,
+    son niveau, son libellé et son aide, la raison quand la base le calcule toute seule, et de quoi le lire, l'écrire et le
+    montrer ; la fiche en tire ses libellés et ses aides, le tableau de bord ses feuilles, et le tableur y a déjà ses 22
+    colonnes (il garde sa propre déclaration jusqu'à ce qu'elle disparaisse). Le contrat d'un champ est le commentaire de
+    `SCHEMA_DATE`. *Ce que la base calcule* : sous l'aperçu « Sur le site », des puces grises, la raison en infobulle
+    (« Saison 2026-2027 : déduite du 18 déc. », « Début et fin : suivent les séances », « Public : mixte, d'après les
+    séances », « Masquée : une répétition ne va jamais sur le site »). *La jauge* : sous le titre, « 8 champs sur 10 » (le
+    compte roule quand il change) et « Compléter », qui vise le premier champ vide ; elle compte la date, les séances (un
+    jour, l'heure de chacune), la billetterie d'une date publiable et confirmée, le suivi (organisateur, contact, contrat,
+    cession), les spectateurs d'une date passée, l'équipe : ce qui ne s'applique pas à la date ne compte pas. *La piste de
+    diffusion* : quand une piste a donné la date, un bloc en lecture seule (son étape, son dernier contact, sa prochaine
+    relance, un lien vers elle ; « jamais publié, jamais exporté sans le demander ») ; le suivi commercial vit sur la
+    piste depuis le script 22, plus sur la date, dont il ne reste que le montant de cession, toujours dans « Suivi
+    interne ». « Les chiffres » dit d'où ils viennent (la source). *Un seul chemin d'écriture* : `ecrireChamps(date,
+    champs)` part de la date entière, y pose chaque champ par son geste du schéma, puis la fait passer par `ecrireDate`
+    (l'enregistrement de la date, ses chiffres, le montant de cession, l'équipe, la relecture) : les mêmes règles, déclencheurs, notifications
+    et journal que la fiche, et jamais d'envoi partiel. Un champ de séance sans séance est refusé (il en créerait une
+    fantôme), « Annuler » rejoue l'état d'avant. Deux écritures restent hors de ce chemin, par choix : la sélection
+    groupée (`selection.js`) et la pose d'un contrat « envoyé » quand un document est émis (`modeles.js`). *« Modifiée à
+    14h32 par Barbara »* : si un autre compte enregistre la date qu'on a sous les yeux, un bandeau le dit, en tête de la
+    fiche (sale ou non), avec « Recharger » et « Garder mes changements » ; le dernier qui enregistre l'emporte, et le
+    bandeau ne voit que l'enregistrement de la date elle-même : le suivi, les chiffres et l'équipe s'écrivent à part et
+    ne le déclenchent pas. `node site/champs.mjs` le vérifie, dans Chromium sur la base fictive : « aucun champ oublié »
+    (chaque colonne de `supabase/tests/champs-date.json` a son champ ou une raison d'être écartée ; l'essai sait échouer),
+    la feuille « Horaires » du tableau de bord (un seul enregistrement de la date, le lien de billetterie gardé, « Annuler » qui
+    remet une séance retirée), le rail (un seul enregistrement, jamais un envoi partiel, le montant après lui, un montant
+    qui s'efface, le refus sans séance, l'échec de l'équipe ou du montant dit sans rouvrir la feuille), les puces, la jauge et « Compléter » (même sur une date neuve), la piste, la source des chiffres, le bandeau (pas de bandeau sans
+    auteur) :
+    60 vérifications, des captures dans `site/dist/shots-champs/`.
   - **Annuler plutôt que confirmer** (`admin/corbeille.js`) : plus de « Êtes-vous sûr ? » pour supprimer (une date, un
     lieu, une séance, un atelier, une piste, une demande de devis, une alerte, un document, une invitation, du matériel,
     une note) ni pour revenir sur une ligne du journal : c'est fait tout de suite, et l'annonce porte « Annuler » (ou
@@ -578,7 +614,8 @@ compte du projet inscrit dans `crescite_admins`.
   ou une table, un auteur, une période : aujourd'hui, 7 ou 30 jours, ou deux dates) et se cherche (un nom, un numéro,
   un champ, jusque dans les valeurs changées), au téléphone comme à l'ordinateur ; il lit les 300 dernières
   modifications, « Lire 300 modifications plus anciennes » remonte plus loin (et la liste dit quand ce qui est lu ne
-  remonte pas assez).
+  remonte pas assez). Enregistrer les horaires d'une date (la fiche, le tableur, le tableau de bord) écrit une ligne du
+  Journal par séance, même pour celles qui n'ont pas changé : le script de l'enregistrement en une fois y mettra bon ordre.
 - **Modifier sur le site ↗** ouvre le site en mode édition : les mêmes droits, dans la page publique.
 
 **Son mouvement.** L'administration s'ouvre sur un squelette qui luit le temps de lire la base, puis le contenu paraît.
@@ -634,7 +671,8 @@ script, `supabase/migrations/20261021_crescite_equipe.sql`, s'exécute après le
 Une personne connectée ne lit que sa fiche, ses dates (options comprises), les documents de ses spectacles et les
 feuilles de route publiées de ses dates ; un fichier privé ne s'ouvre que par un lien signé, si son document se lit. Le
 public ne lit que les fiches publiées et la distribution des spectacles publiés. Les règles sont vérifiées par 37 essais
-sur PostgreSQL (`supabase/tests/` : `npm install`, puis `node base.mjs`, `node equipe.mjs` et `node notifications.mjs`). Le script se termine par
+sur PostgreSQL (`supabase/tests/` : `npm install`, puis `node base.mjs`, `node equipe.mjs` et `node notifications.mjs` ; `node champs.mjs` y
+écrit les colonnes d'une date dans `champs-date.json`, que `site/champs.mjs` compare au schéma de la date). Le script se termine par
 une vérification : les tables du projet, hors compagnie, qu'un compte connecté pourrait lire. Les comptes de ce projet
 sont aussi ceux du site adrienvada.fr.
 

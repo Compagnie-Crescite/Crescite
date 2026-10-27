@@ -20,7 +20,8 @@ Quatre durées, trois courbes, et rien qui bouge sans raison.
 
 Ce qui bouge en continu ne touche que `transform` et `opacity` (le compositeur) ; une boîte qui change de taille
 s'anime par l'API, jamais par une transition de hauteur en continu (seule exception : le repli du menu latéral, un geste
-unique de 220 ms, dont `mouvement-admin.mjs` mesure qu'aucune tâche ne dépasse 200 ms à `CPU=4`). Un chiffre qui change roule (`chiffresRoulants`), une
+unique de 220 ms, dont `mouvement-admin.mjs` mesure qu'aucune tâche ne dépasse 200 ms à `CPU=4`). Un chiffre qui change roule (`chiffresRoulants`, recopié dans l'administration pour la jauge de
+complétude d'une date : `cpl-roule`, 450 ms, le doux), une
 liste qui se redessine glisse, un élément qui s'en va se replie (`retirerLigne`, `listeQuiSeVide`) : rien ne saute d'un
 état à l'autre sans que l'œil puisse suivre.
 
@@ -64,11 +65,11 @@ captures vont dans `site/dist/shots-equipe/` et `site/dist/shots-admin/`. Un ban
 manque.
 
 `bash site/bancs-admin.sh` enchaîne aussi `prefs.mjs` (où chaque réglage est gardé : avec le compte ou sur l'appareil) et
-`tableur.mjs` (le tableur des représentations), `icones.mjs` (la bibliothèque d'icônes) et `cadre.mjs` (la coque, le menu
-latéral, ses raccourcis et ses badges). Les trois derniers ne touchent presque pas à ce vocabulaire : ils mesurent
-seulement que le repli anime la colonne une fois, et rien sous « moins d'animations » (`cadre.mjs`), et que le compte des
-badges ne tient jamais la page plus de 200 ms à `CPU=4` (`cadre.mjs` encore) ; pour le reste, ils veillent à ce qu'une
-refonte ne casse rien.
+`tableur.mjs` (le tableur des représentations), `icones.mjs` (la bibliothèque d'icônes), `cadre.mjs` (la coque, le menu
+latéral, ses raccourcis et ses badges) et `champs.mjs` (la fiche d'une date : le schéma de ses champs, la jauge, le
+bandeau « Modifiée ailleurs », qui paraît en `ad-arrive`). Ils ne touchent presque pas à ce vocabulaire : `cadre.mjs`
+mesure seulement que le repli anime la colonne une fois, et rien sous « moins d'animations », et que le compte des
+badges ne tient jamais la page plus de 200 ms à `CPU=4` ; pour le reste, ils veillent à ce qu'une refonte ne casse rien.
 
 ## Ce qui a été écarté
 

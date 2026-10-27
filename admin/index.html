@@ -377,6 +377,14 @@ td.tab-vide .btn { margin-top: 10px; min-height: 44px; }
 .d-depuis a { font-weight: 700; white-space: nowrap; }
 .apercu .l { font-weight: 700; }
 .apercu .d { color: var(--gris); font-size: 14px; }
+/* ce que la base calcule toute seule : des puces grises, la raison en infobulle */
+.derives { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.derives:empty { display: none; }
+.derive { display: inline-block; padding: 2px 10px; border-radius: 999px; background: var(--doux); border: 1px solid var(--trait); color: var(--gris); font-size: 12.5px; cursor: help; }
+/* « Modifiée à 14h32 par Barbara » : la fiche ouverte a été enregistrée ailleurs */
+.ailleurs { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; background: var(--option-doux); border: 1px solid color-mix(in srgb, var(--option) 40%, var(--trait)); color: var(--encre); font-size: 14px; }
+.ailleurs > span { font-weight: 700; }
+@media (pointer: coarse) { .ailleurs .btn { min-height: 44px; } }
 table.reps { width: 100%; border-collapse: separate; border-spacing: 0 6px; }
 table.reps th { text-align: left; font-size: 12px; color: var(--gris); font-weight: 700; padding: 0 6px; }
 table.reps td { padding: 0 3px; vertical-align: middle; }
@@ -785,7 +793,7 @@ html.still *, html.still *::before, html.still *::after { animation: none !impor
   @keyframes ad-fait { from { background: var(--ok); color: #fff; } }
   .visee { animation: visee 1.6s ease-out; }
   @keyframes visee { 0%, 35% { box-shadow: 0 0 0 4px var(--accent-doux), 0 0 0 6px var(--accent); } }
-  .ad-neuf { animation: ad-arrive .3s cubic-bezier(.2, .8, .2, 1) both; }
+  .ad-neuf, .ailleurs { animation: ad-arrive .3s cubic-bezier(.2, .8, .2, 1) both; }
   .btn.sonne { transform-origin: 50% 0; animation: sonne .8s ease-in-out; }
   .suggestions, .tab-export:not([hidden]), .pied-ed.a-plus.replie .pied-autres.ouvert { animation: ad-arrive .15s ease-out both; }   /* les menus se posent */
   details[open] > :not(summary) { animation: ad-paraitre .22s ease-out both; }   /* ce qu'un pli ouvre paraît (sans transform : la liste qui glisse mesure ses lignes) */
@@ -899,6 +907,16 @@ const lieuTexte = l => l ? `${l.nom ? l.nom + ' — ' : ''}${l.commune} (${l.dep
 const couleurSp = s => s?.univers?.couleurs?.scene || s?.univers?.couleurs?.accent || getComputedStyle(document.documentElement).getPropertyValue('--saison').trim() || '#5f565a';
 const repsDe = id => E.reps.filter(r => r.date_id === id).sort((a, b) => a.jour < b.jour ? -1 : a.jour > b.jour ? 1 : String(a.heure || '99').localeCompare(String(b.heure || '99')));
 const h5 = h => h ? String(h).slice(0, 5) : '';
+// l'auteur d'une écriture, par son identifiant de compte : un administrateur (son nom), une personne de l'équipe qui a
+// modifié depuis son espace (le quatorzième script : son nom, « équipe »), le compte connecté (son courriel), sinon un
+// import. Une seule fonction : le journal, le tableau de bord, la corbeille et le bandeau « Modifiée ailleurs » l'appellent
+function nomAdmin(id) {
+  const a = (E.admins || []).find(x => x.user_id === id);
+  if (a?.nom) return a.nom;
+  const f = id ? (E.privees || []).find(x => x.user_id === id) : null, p = f && typeof personne === 'function' ? personne(f.personne_id) : null;
+  if (p && nomDe(p)) return a ? nomDe(p) : `${nomDe(p)} (équipe)`;
+  return id === E.session?.user?.id ? E.session.user.email : id ? (a ? 'un administrateur' : 'un autre compte') : 'import';
+}
 let session = {};
 try { session = JSON.parse(sessionStorage.getItem('crescite-admin-filtres') || '{}'); } catch { session = {}; }
 const garderFiltres = () => { try { sessionStorage.setItem('crescite-admin-filtres', JSON.stringify(session)); } catch { /* navigation privée */ } ecrireFiltres(); };
@@ -1431,6 +1449,34 @@ document.addEventListener('click', e => { if (e.target.closest?.('[data-temoin]'
 setInterval(() => { if (document.visibilityState === 'visible') majTemoin(); }, 30000);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState !== 'visible' || !E.pret) return; majTemoin(); if (!E.direct && !E.horsLigne && Date.now() - (E.luLe || 0) > 900000) actualiser({ discret: true }); });
 
+// « Modifiée à 14h32 par Barbara — Recharger / Garder mes changements » : en tête de la fiche d'une date (la page, chaque
+// tiroir du haut) quand la ligne de cette date vient d'être mise à jour par un autre compte identifié, que la fiche soit
+// sale ou non (le temps réel ne redessine jamais la fiche). Une fiche cachée sous un autre tiroir n'en a pas. Le rpc met la ligne de crescite_dates à jour à chaque enregistrement, avec
+// l'auteur (modifie_par, posé par le déclencheur) : les écritures directes du suivi, des chiffres ou de l'équipe ne la
+// touchent pas, et le bandeau ne les voit pas. Le dernier qui enregistre l'emporte : « Garder mes changements » ne fait
+// que retirer le bandeau.
+function bandeauAilleurs(p) {
+  const l = p.new;
+  if (p.eventType !== 'UPDATE' || !l || !l.modifie_par || l.modifie_par === E.session?.user?.id) return;   // (sans auteur : un import, un compte inconnu, rien à dire)
+  const haut = typeof TIROIR !== 'undefined' ? TIROIR.racine() : null;
+  $$('#ed-date[data-id]').forEach(zone => {
+    if (+zone.dataset.id !== l.id) return;
+    const tiroir = zone.closest('.tiroir');
+    if (tiroir && tiroir !== haut) return;
+    $('.ailleurs', zone)?.remove();
+    const quand = new Date(l.modifie_le || Date.now()).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h');
+    zone.insertAdjacentHTML('afterbegin', `<div class="ailleurs" role="status"><span>Modifiée à ${esc(quand)} par ${esc(nomAdmin(l.modifie_par))}</span><button type="button" class="btn petit" data-ailleurs="recharger">Recharger</button><button type="button" class="btn petit lien" data-ailleurs="garder">Garder mes changements</button></div>`);
+  });
+}
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-ailleurs]'); if (!b) return;
+  const bandeau = b.closest('.ailleurs'), zone = b.closest('#ed-date[data-id]');
+  if (b.dataset.ailleurs === 'garder' || !zone) { bandeau?.remove(); return; }
+  const id = +zone.dataset.id;
+  try { await rechargerDate(id); } catch (err) { return erreur(err, 'Impossible de relire la date'); }
+  E.sale = false;
+  if (zone.closest('.tiroir')) TIROIR.redessiner(); else vueDates(id);   // la fiche qui porte le bandeau, pas « le tiroir du haut » quand c'est la page
+});
 function changement(t, p) {
   const [k, pk] = TABLES[t] || TABLES_EQUIPE[t] || TABLES_IDEALE[t] || TABLES_CHIFFRES[t] || TABLES_DOCUMENTS[t] || TABLES_CARNET[t];
   const pd = $('.direct.on'); if (pd) { pd.classList.remove('bat'); void pd.offsetWidth; pd.classList.add('bat'); }
@@ -1439,6 +1485,7 @@ function changement(t, p) {
   const i = coll.findIndex(x => cles.every(c => x[c] === ligne[c]));
   if (p.eventType === 'DELETE') { if (i >= 0) coll.splice(i, 1); } else if (i >= 0) coll[i] = p.new; else coll.push(p.new);
   if (t === 'crescite_feuilles') majACompleter();     // « n à compléter » des dates ouvertes ailleurs (equipe.js)
+  if (t === 'crescite_dates') bandeauAilleurs(p);     // la fiche ouverte a été enregistrée par un autre compte : le bandeau le dit
   clearTimeout(rendrePlusTard);
   rendrePlusTard = setTimeout(() => { if (!E.sale) rafraichirListes(); }, 200);
   APRES_CHANGEMENT.forEach(f => { try { f(); } catch (e) { console.error(e); } });     // (cadre.js : les badges du menu)
@@ -2563,7 +2610,7 @@ function nouvelleDate() {
   const sp = session.dates?.spectacle ? +session.dates.spectacle : (E.spectacles.find(s => s.page) || {}).id;
   const F = { id: null, spectacle_id: sp, lieu_id: null, debut: '', fin: '', precision: 'jour', saison: null, public: 'tout_public', statut: 'confirmee', visible: true, nature: 'representations',
     intitule: null, details: [], lien: '', nb_representations: null, representations: [{ jour: '', heure: '20:00', fin: '', public: 'tout_public', annulee: false, lien: '', note: '' }], suivi: {}, equipe: [],
-    chiffres: Object.fromEntries(CHIFFRES.map(([k]) => [k, ''])) };
+    chiffres: { ...Object.fromEntries(CHIFFRES.map(([k]) => [k, ''])), source: '' } };
   if (typeof SERIES !== 'undefined') SERIES.appliquerModele(F);   // les horaires habituels du spectacle (series.js)
   return F;
 }
@@ -2573,6 +2620,17 @@ function dateVersForm(d) {
   return { ...clone(d), nature: d.nature || 'representations', lien: d.lien || '', representations: reps, suivi: { organisateur: su.organisateur || '', contact: su.contact || '', contrat: su.contrat || '', notes: su.notes || '', montant_cession: su.montant_cession ?? '' },
     equipe: ecartsDate(d.id), chiffres: chiffresVersForm(d.id) };
 }
+// les pistes de diffusion qui ont donné cette date (date_convertie_id), en lecture seule : l'étape, le dernier contact, la
+// prochaine relance, un lien vers la piste. Le suivi commercial vit sur la piste (le script 22), plus sur la date ; rien
+// quand la base n'a pas la diffusion ou qu'aucune piste n'y mène. Jamais publié, jamais exporté sans le demander
+function pistesDeLaDate(d) {
+  const ps = d && E.ideale ? (E.prospects || []).filter(p => p.date_convertie_id === d.id) : [];
+  if (!ps.length) return '';
+  const quand = j => (j ? jourCourt(j) : '—');
+  return `<div class="bloc" id="d-pistes" aria-labelledby="d-pistes-t"><h3 id="d-pistes-t">Piste de diffusion <span class="aide" style="font-weight:400">— jamais publié, jamais exporté sans le demander</span></h3>
+    <ul class="liste-simple">${ps.map(p => `<li><a href="#/diffusion/piste/${p.id}"><b>${esc(p.structure || 'Piste')}</b></a><span>${esc(etapeLib(p.etape))}</span>
+      <span class="compte">Dernier contact : ${esc(quand(p.date_dernier_contact))} · prochaine relance : ${esc(quand(p.date_prochaine_relance))}</span></li>`).join('')}</ul></div>`;
+}
 // une copie de date (Dupliquer, Dupliquer vers…) garde l'organisateur et son contact, pas le contrat ni les notes de l'autre
 // date (un contrat « signé » l'an d'après serait un contrat fantôme), ni ses chiffres
 const suiviPourCopie = su => ({ organisateur: su?.organisateur || '', contact: su?.contact || '', contrat: '', notes: '', montant_cession: '' });
@@ -2580,15 +2638,20 @@ const suiviPourCopie = su => ({ organisateur: su?.organisateur || '', contact: s
 // nombres ou '' (vide)
 const CHIFFRES = [['jauge', 'Jauge (places)', 1, 100000], ['spectateurs', 'Spectateurs', 1, 1000000], ['heures_ateliers', 'Heures d’ateliers', .5, 100000]];
 const chiffresDe = id => (E.chiffres || []).find(x => x.date_id === id) || {};
-const chiffresVersForm = id => { const c = chiffresDe(id); return Object.fromEntries(CHIFFRES.map(([k]) => [k, c[k] == null ? '' : Number(c[k])])); };
+const chiffresVersForm = id => { const c = chiffresDe(id); return { ...Object.fromEntries(CHIFFRES.map(([k]) => [k, c[k] == null ? '' : Number(c[k])])), source: c.source || '' }; };
 const nombreFr = n => Number(n).toLocaleString('fr-FR', { maximumFractionDigits: 1 });   // « 1 456 », « 12,5 »
-// les écrire (l'administration seule) : rien quand ils n'ont pas changé, la ligne effacée quand ils sont tous vides
+// chaque chiffre dans son propre span : quand le compte change, ils roulent l'un après l'autre (--i) ; le texte reste entier
+// pour les lecteurs d'écran (recopié de l'espace de l'équipe, equipe/equipe.js)
+const chiffresRoulants = s => [...String(s)].map((c, i) => (/\d/.test(c) ? `<span class="d" style="--i:${i}">${c}</span>` : esc(c))).join('');
+// les écrire (l'administration seule) : rien quand ils n'ont pas changé, la ligne effacée quand les trois nombres et la
+// source sont vides (une source absente de F.chiffres reste ce qu'elle était)
 async function ecrireChiffres(id, F) {
   if (!E.chiffresInstalles || !F.chiffres) return;
   const avant = chiffresVersForm(id), ligne = { date_id: id };
   CHIFFRES.forEach(([k]) => { const v = F.chiffres[k]; ligne[k] = v === '' || v == null || !Number.isFinite(Number(v)) ? null : Number(v); });
-  if (CHIFFRES.every(([k]) => (avant[k] === '' ? null : avant[k]) === ligne[k])) return;
-  const vide = CHIFFRES.every(([k]) => ligne[k] == null);
+  ligne.source = 'source' in F.chiffres ? String(F.chiffres.source ?? '').trim() || null : avant.source || null;
+  if (CHIFFRES.every(([k]) => (avant[k] === '' ? null : avant[k]) === ligne[k]) && (avant.source || null) === ligne.source) return;
+  const vide = CHIFFRES.every(([k]) => ligne[k] == null) && ligne.source == null;
   const { error } = vide ? await sb.from('crescite_dates_chiffres').delete().eq('date_id', id)
     : await sb.from('crescite_dates_chiffres').upsert(ligne, { onConflict: 'date_id' });
   if (error) { error.message = `La date est enregistrée, mais pas ses chiffres : ${error.message}`; throw error; }
@@ -2598,10 +2661,197 @@ async function ecrireChiffres(id, F) {
 // script : une résidence se montre ou non, comme une représentation) ; les répétitions et les dates « autre » restent pour l'équipe
 const PUBLIABLE = n => ['representations', 'residence'].includes(n || 'representations');
 const NATURES_DATE = [['representations', 'Représentations'], ['repetitions', 'Répétitions'], ['residence', 'Résidence'], ['autre', 'Autre']];
+// ===================================================================================================== le schéma de la date
+// Chaque champ d'une date est décrit ici, une seule fois : sa place dans la base (table, colonne), son niveau, son type, son
+// libellé et son aide, la raison quand il se calcule tout seul, et de quoi le lire, l'écrire et le montrer. La fiche d'une
+// date en tire ses libellés, ses aides et ses puces « calculé tout seul » ; le rail d'écriture (ecrireChamps) en tire le
+// geste d'écriture de chaque champ ; les feuilles « traiter sur place » du tableau de bord en tirent leurs champs ; l'essai
+// « aucun champ oublié » (site/champs.mjs) compare ce tableau aux colonnes réelles de la base (supabase/tests/champs.mjs).
+// Le tableur a encore sa déclaration (COLONNES, admin/tableur.js) : les deux coexistent jusqu'au lot qui retire l'ancienne ;
+// celle-ci en reprend les 22 colonnes telles quelles (val, texte, exp, copie, lire, ecrire).
+//
+// Le contrat d'un champ — une entrée du tableau SCHEMA_DATE :
+//   k            l'identifiant, libre (« spectacle » est la colonne spectacle_id, « billetterie » la colonne lien de la date)
+//   l, aide      le libellé et l'aide de la fiche ; court : l'en-tête d'une colonne quand il est plus court que l
+//   table, col   la place dans la base : table parmi 'dates', 'representations', 'dates_suivi', 'dates_chiffres', 'equipes'
+//                (crescite_ devant), col le nom de la colonne ; absents pour un champ qui n'est que la vue d'un autre
+//                (miroir : 'visible' pour « site », 'equipe' pour « distribution ») et pour les envois entiers
+//   niveau       'date' (vaut pour toutes les séances), 'seance' (une séance : ecrire exige x.r), 'lieu' (lu dans la fiche
+//                du lieu), 'suivi', 'diffusion' (le suivi commercial), 'chiffres', 'equipe' (ecrire exige x.personne_id),
+//                'lecture' (calculé par la base : jamais écrit)
+//   type         jour, heure, choix, lieu, equipe, lien, texte, long, riche, nombre, case, lecture, liste (un envoi entier)
+//   choix        () => [[valeur, libellé]…] ; si : () => bool (le champ n'existe que si la base a le script qu'il faut)
+//   min, max, pas   pour un nombre (le montant de cession : 0 à 10 000 000, au centime ; les chiffres : CHIFFRES)
+//   derive       (F, d0) => 'la raison' quand le champ se calcule tout seul, '' sinon : la fiche en fait une puce grise
+//   confidentiel  vrai : jamais publié, jamais exporté sans le demander (le suivi commercial) ; jeux : les jeux de colonnes
+//                où le champ entre ('site', 'tournee', 'suivi', 'bilan', 'diffusion') ; colonne : { toujours } quand le
+//                tableur en fait une colonne ; fige : x => 'la raison' | '' (la case est grise quand le champ ne s'applique pas)
+//   val, texte, html, exp, copie, lire, ecrire, vider   comme les colonnes du tableur : val x → la valeur (écrire, annuler,
+//                comparer), texte x → ce qui s'affiche, exp x → la valeur exportée, copie x → ce qu'on copie, lire (t, x,
+//                ligne) → une valeur ou undefined (pas reconnu), ecrire (F, x, v) → pose v dans le formulaire de la date
+//                (dateVersForm). x est la ligne { d (la date), r (la séance) } ; nul pour un champ de niveau date, suivi,
+//                diffusion ou chiffres quand l'appelant n'a pas de ligne.
+// Quatre entrées de plus, hors colonnes, pour les envois entiers : representations (toutes les séances), equipe (les
+// écarts de l'équipe), suivi (plusieurs champs du suivi d'un coup) et chiffres. champDate(k) et champsDate([k…]) sont les
+// deux aides. Ne sont pas ici, par choix (des entités à part, que la fiche montre) : les notes, la feuille de route, les
+// séances d'atelier, les documents générés, les contacts et hébergements du lieu, le budget (dérivé), les retours d'équipe.
+// Ne sont plus ici : étape, dernier contact, prochaine relance et notes de diffusion du suivi de la date (le script 22 :
+// la piste de diffusion porte ce suivi ; site/champs.mjs le dit dans ses exclusions).
+const PUBLICS_SEANCE = [['tout_public', 'Tout public'], ['scolaire', 'Scolaire'], ['autre', 'Autre']];
+const STATUTS_DATE = [['option', 'Option'], ['confirmee', 'Confirmée'], ['annulee', 'Annulée'], ['reportee', 'Reportée']];
+const CONTRATS_DATE = [['à envoyer', 'À envoyer'], ['envoyé', 'Envoyé'], ['signé', 'Signé']];
+const SCHEMA_DATE = (() => {
+  const natureDe = d => d.nature || 'representations';
+  const suiviDe = d => E.suivis.find(x => x.date_id === d.id) || {};
+  const libelleDe = (xs, v) => (xs.find(x => x[0] === v) || [null, ''])[1];
+  const heureT = h => (h ? AGENDA.heureTexte(h5(h)) : '');
+  const jjmmaaaa = j => (j ? `${j.slice(8, 10)}/${j.slice(5, 7)}/${j.slice(0, 4)}` : '');
+  // ce qui lit un texte tapé : ceux du tableur (admin/tableur.js, TABLEUR.lecteurs), pris au moment de lire
+  const lecteur = (nom, ...pre) => (t, ...a) => (pre.length ? TABLEUR.lecteurs[nom](...pre) : TABLEUR.lecteurs[nom])(t, ...a);
+  const lireTexte = t => String(t ?? '').trim();
+  const nombreOuVide = v => (v == null || v === '' ? '' : Number.isFinite(Number(v)) ? Number(v) : '');
+  // la séance d'une ligne : celle qu'on écrit, sinon (pas de x.r) une séance neuve, posée sur le formulaire
+  const repDe = (F, x) => {
+    if (x.r) { const r = F.representations.find(y => y.id === x.r.id); if (!r) throw new Error('Cette séance n’existe plus (elle a été retirée ailleurs).'); return r; }
+    if (!F._nouvelle) { F._nouvelle = { jour: F.debut, heure: '', fin: '', public: F.public && F.public !== 'mixte' ? F.public : 'tout_public', annulee: false, lien: '', note: '' }; F.representations.push(F._nouvelle); }
+    return F._nouvelle;
+  };
+  const lieuDe = x => lieu(x.d.lieu_id);
+  // l'équipe d'une date : l'équipe effective (la distribution « en tournée », moins qui ne part pas, plus les renforts)
+  const equipeIds = d => (E.equipeInstallee ? equipeDeLaDate(d).map(x => x.personne_id) : []);
+  const tourneeIds = spId => equipeDate(spId, []).map(x => x.personne_id);
+  function ecartsPour(d, ids, spId = d.spectacle_id) {
+    const voulus = new Set(ids), actuels = ecartsDate(d.id), base = tourneeIds(spId), out = [];
+    base.forEach(p => { if (!voulus.has(p)) out.push({ personne_id: p, present: false, fonction: '', note: null }); else { const e = actuels.find(x => x.personne_id === p && x.present); if (e) out.push(e); } });
+    voulus.forEach(p => { if (!base.includes(p)) out.push(actuels.find(x => x.personne_id === p && x.present) || { personne_id: p, present: true, fonction: '', note: null }); });
+    return out;
+  }
+  const prenoms = ids => { const ps = ids.map(personne).filter(Boolean); return ps.map(p => (ps.filter(q => norm(q.prenom) === norm(p.prenom)).length > 1 && p.nom ? `${p.prenom || ''} ${p.nom[0]}.` : p.prenom || nomDe(p)).trim()); };
+  const ecartDe = (F, x) => (F.equipe || []).find(e => e.personne_id === x.personne_id);
+  const ecartVal = (x, k) => (E.equipes.find(e => e.date_id === x.d.id && e.personne_id === x.personne_id) || {})[k];
+  // les jours des séances d'un formulaire, et ce que la base en déduit
+  const joursDe = F => F.representations.filter(r => r.jour).map(r => r.jour).sort();
+  const SUIVENT = F => (joursDe(F).length ? 'Début et fin : suivent les séances' : '');
+  const ETIQUETTES_PUBLIC = { tout_public: 'tout public', scolaire: 'scolaire', mixte: 'mixte', autre: 'autre' };
+  const suiviCol = (k, l, extra) => ({ k, l, table: 'dates_suivi', col: k, niveau: 'suivi', type: 'texte', jeux: ['suivi'], confidentiel: true, colonne: {}, vider: true,
+    val: x => suiviDe(x.d)[k] || '', texte: x => suiviDe(x.d)[k] || '', lire: lireTexte, ecrire: (F, x, v) => { F.suivi[k] = v; }, ...extra });
+  return [
+    // ———— la date (crescite_dates)
+    { k: 'spectacle', l: 'Spectacle', table: 'dates', col: 'spectacle_id', niveau: 'date', type: 'choix', jeux: ['site', 'tournee'], colonne: { toujours: true }, choix: () => choixSpectacles().map(([v, l]) => [+v, l]),
+      val: x => x.d.spectacle_id, texte: x => spectacle(x.d.spectacle_id)?.titre || '',
+      html: x => { const s = spectacle(x.d.spectacle_id); return s ? `<span class="pastille" style="--c:${esc(couleurSp(s))}"></span>${esc(s.titre)}` : ''; },
+      lire: lecteur('spectacle'), ecrire: (F, x, v) => { F.spectacle_id = v; } },
+    { k: 'lieu', l: 'Lieu', table: 'dates', col: 'lieu_id', niveau: 'date', type: 'lieu', jeux: ['site', 'tournee'], colonne: {}, val: x => x.d.lieu_id ?? null,
+      texte: x => { const l = lieuDe(x); return l ? l.nom || l.commune : ''; },
+      html: x => { const l = lieuDe(x), ailleurs = !l && (x.d.intitule || '').split(' — ')[1]; return l ? esc(l.nom || l.commune) : ailleurs ? `<span class="tab-gris" title="Lieu repris de l’ancien site, sans fiche">${esc(ailleurs)}</span>` : ''; },
+      lire: (t, x, ligne) => TABLEUR.lecteurs.lieu(t, ligne?.commune), vider: true, ecrire: (F, x, v) => { F.lieu_id = v; } },
+    { k: 'commune', l: 'Commune', niveau: 'lieu', type: 'lecture', jeux: ['tournee'], colonne: {}, val: x => lieuDe(x)?.commune || '',
+      texte: x => { const l = lieuDe(x); return l ? `${l.commune}${l.departement ? ` (${l.departement})` : ''}` : ''; } },
+    { k: 'statut', l: 'Statut', aide: 'Une option n’apparaît jamais sur le site.', table: 'dates', col: 'statut', niveau: 'date', type: 'choix', jeux: ['site', 'tournee'], colonne: {}, choix: () => STATUTS_DATE,
+      val: x => x.d.statut, texte: x => libelleDe(STATUTS_DATE, x.d.statut),
+      html: x => (x.d.statut === 'confirmee' ? 'Confirmée' : `<span class="badge ${x.d.statut === 'annulee' ? 'annulee' : 'option'}">${esc(libelleDe(STATUTS_DATE, x.d.statut))}</span>`),
+      lire: lecteur('choix', STATUTS_DATE), ecrire: (F, x, v) => { F.statut = v; } },
+    { k: 'nature', l: 'Nature', aide: 'Les représentations et les résidences vont sur le site (une résidence y est marquée « Résidence », sans réservation) ; les répétitions et les autres dates ne sont que pour l’équipe.',
+      table: 'dates', col: 'nature', niveau: 'date', type: 'choix', jeux: ['site'], colonne: {}, si: () => E.sql3, choix: () => NATURES_DATE, val: x => natureDe(x.d), texte: x => libelleDe(NATURES_DATE, natureDe(x.d)),
+      lire: lecteur('choix', NATURES_DATE), ecrire: (F, x, v) => { F.nature = v; if (!PUBLIABLE(v)) F.visible = false; } },
+    { k: 'visible', l: 'Publiée sur le site', aide: 'Une option ou une date annulée n’y va jamais.', table: 'dates', col: 'visible', niveau: 'date', type: 'case', jeux: ['site'],
+      derive: F => (PUBLIABLE(F.nature) ? '' : `Masquée : ${F.nature === 'repetitions' ? 'une répétition' : 'une date « autre »'} ne va jamais sur le site`),
+      val: x => !!x.d.visible, texte: x => (x.d.visible ? 'publiée' : 'masquée'), ecrire: (F, x, v) => { F.visible = !!v; } },
+    { k: 'site', l: 'Site', miroir: 'visible', niveau: 'date', type: 'case', jeux: ['site'], colonne: {}, fige: x => (natureDe(x.d) !== 'representations' ? 'Une répétition, une résidence ou une autre date ne se règle pas ici' : ''),
+      val: x => natureDe(x.d) === 'representations' && !x.d.visible, texte: x => (natureDe(x.d) === 'representations' && !x.d.visible ? 'masquée' : ''),
+      html: x => (natureDe(x.d) === 'representations' && !x.d.visible ? '<span class="badge masquee">masquée</span>' : ''),
+      lire: t => /^(masquee?|cachee?|non|oui)$/i.test(norm(t).trim()) ? /^(masquee?|cachee?|oui)$/i.test(norm(t).trim()) : (String(t ?? '').trim() ? undefined : false),
+      ecrire: (F, x, v) => { F.visible = !v; } },
+    { k: 'intitule', l: 'Ligne affichée', aide: 'Sinon la ligne se compose toute seule à partir des jours et du lieu.', table: 'dates', col: 'intitule', niveau: 'date', type: 'texte', jeux: ['site'],
+      val: x => x.d.intitule || '', texte: x => x.d.intitule || '', lire: lireTexte, vider: true, ecrire: (F, x, v) => { F.intitule = v || null; } },
+    { k: 'details', l: 'Précisions sous la ligne', aide: 'Vide : le site écrit lui-même « 14h et 20h : représentations au … ».', table: 'dates', col: 'details', niveau: 'date', type: 'riche', jeux: ['site'],
+      val: x => x.d.details || [], texte: x => (x.d.details || []).map(p => texteSeul(p.texte)).join(' · '), ecrire: (F, x, v) => { F.details = v || []; } },
+    { k: 'billetterie', l: 'Lien (billetterie ou page du lieu)', court: 'Billetterie', table: 'dates', col: 'lien', niveau: 'date', type: 'lien', jeux: ['site'], colonne: {}, val: x => x.d.lien || '', texte: x => x.d.lien || '',
+      html: x => (x.d.lien ? esc(String(x.d.lien).replace(/^https?:\/\/(www\.)?/, '')) : ''),
+      lire: t => { const s = String(t ?? '').trim(); return !s ? '' : /^https?:\/\/\S+$/.test(s) ? s : /^[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(s) ? `https://${s}` : undefined; }, vider: true, ecrire: (F, x, v) => { F.lien = v; } },
+    { k: 'nb-representations', l: 'Nombre de représentations', aide: 'Quand les séances ne sont pas détaillées.', table: 'dates', col: 'nb_representations', niveau: 'date', type: 'nombre', min: 1, max: 1000, pas: 1,
+      val: x => x.d.nb_representations ?? '', texte: x => (x.d.nb_representations == null ? '' : String(x.d.nb_representations)),
+      lire: t => { const n = String(t ?? '').trim(); if (!n) return ''; const v = Number(n); return Number.isInteger(v) && v >= 1 && v <= 1000 ? v : undefined; },
+      vider: true, ecrire: (F, x, v) => { F.nb_representations = v === '' || v == null ? null : +v; } },
+    { k: 'source-date', l: 'Origine de la ligne', aide: 'Reprise de l’ancien site : la ligne garde son texte d’origine.', table: 'dates', col: 'source', niveau: 'lecture', type: 'lecture',
+      val: x => x.d.source || '', texte: x => x.d.source || '' },
+    // ———— ce que la base déduit (jamais écrit : les puces grises de la fiche en donnent la raison)
+    { k: 'date-debut', l: 'Début', table: 'dates', col: 'debut', niveau: 'lecture', type: 'lecture', derive: SUIVENT, val: x => x.d.debut, texte: x => jourCourt(x.d.debut) },
+    { k: 'date-fin', l: 'Fin', table: 'dates', col: 'fin', niveau: 'lecture', type: 'lecture', derive: SUIVENT, val: x => x.d.fin || x.d.debut, texte: x => jourCourt(x.d.fin || x.d.debut) },
+    { k: 'precision', l: 'Précision', table: 'dates', col: 'precision', niveau: 'lecture', type: 'lecture', derive: SUIVENT, val: x => x.d.precision, texte: x => x.d.precision },
+    { k: 'saison', l: 'Saison', table: 'dates', col: 'saison', niveau: 'lecture', type: 'lecture',
+      derive: (F, d0) => { const j = joursDe(F)[0] || F.debut; return j ? `Saison ${F.saison && d0 && F.debut === d0.debut ? F.saison : AGENDA.saisonDe(j)} : déduite du ${jourSansAn(j)}` : ''; },
+      val: x => x.d.saison, texte: x => x.d.saison },
+    { k: 'public-date', l: 'Public de la date', table: 'dates', col: 'public', niveau: 'lecture', type: 'lecture',
+      derive: F => { const ps = new Set(F.representations.filter(r => r.jour).map(r => r.public)); return ps.size ? `Public : ${ETIQUETTES_PUBLIC[ps.size > 1 ? 'mixte' : [...ps][0]] || 'autre'}, d’après les séances` : ''; },
+      val: x => x.d.public, texte: x => ETIQUETTES_PUBLIC[x.d.public] || x.d.public },
+    // ———— les séances (crescite_representations)
+    { k: 'jour', l: 'Jour', table: 'representations', col: 'jour', niveau: 'seance', type: 'jour', jeux: ['site', 'tournee'], colonne: { toujours: true },
+      val: x => (x.r ? x.r.jour : x.d.debut),
+      texte: x => (x.r ? jourCourt(x.r.jour) : x.d.precision === 'mois' ? `${AGENDA.MOIS[+x.d.debut.slice(5, 7) - 1]} ${x.d.debut.slice(0, 4)}` : `${jourCourt(x.d.debut)}${x.d.fin && x.d.fin !== x.d.debut ? ` → ${jourCourt(x.d.fin)}` : ''}`),
+      copie: x => jjmmaaaa(x.r ? x.r.jour : x.d.debut), exp: x => ({ jour: x.r ? x.r.jour : x.d.debut }),
+      lire: (t, x) => TABLEUR.lireJour(t, x ? (x.r ? x.r.jour : x.d.debut) : AUJ), ecrire: (F, x, v) => { repDe(F, x).jour = v; } },
+    { k: 'heure', l: 'Heure', table: 'representations', col: 'heure', niveau: 'seance', type: 'heure', jeux: ['site', 'tournee'], colonne: {}, val: x => h5(x.r?.heure), texte: x => heureT(x.r?.heure), copie: x => h5(x.r?.heure),
+      exp: x => ({ heure: h5(x.r?.heure) }), lire: t => TABLEUR.lireHeure(t), ecrire: (F, x, v) => { repDe(F, x).heure = v; } },
+    { k: 'fin', l: 'Fin', aide: 'Heure de fin (une répétition : 10h-18h).', table: 'representations', col: 'fin', niveau: 'seance', type: 'heure', jeux: ['tournee'], colonne: {}, si: () => E.sql3, val: x => h5(x.r?.fin), texte: x => heureT(x.r?.fin), copie: x => h5(x.r?.fin),
+      exp: x => ({ heure: h5(x.r?.fin) }), lire: t => TABLEUR.lireHeure(t), ecrire: (F, x, v) => { repDe(F, x).fin = v; } },
+    { k: 'public', l: 'Public', table: 'representations', col: 'public', niveau: 'seance', type: 'choix', jeux: ['site'], colonne: {}, choix: () => PUBLICS_SEANCE, val: x => (x.r ? x.r.public : ''), texte: x => (x.r ? libelleDe(PUBLICS_SEANCE, x.r.public) : ''),
+      lire: lecteur('choix', PUBLICS_SEANCE), ecrire: (F, x, v) => { repDe(F, x).public = v; } },
+    { k: 'precisions', l: 'Précision', aide: 'Une précision publique : « complet », « audiodécrite »…', table: 'representations', col: 'note', niveau: 'seance', type: 'texte', jeux: ['site'], colonne: {}, val: x => x.r?.note || '', texte: x => x.r?.note || '',
+      lire: lireTexte, vider: true, ecrire: (F, x, v) => { repDe(F, x).note = v; } },
+    { k: 'billetterie-seance', l: 'Billetterie de la séance', table: 'representations', col: 'lien', niveau: 'seance', type: 'lien', jeux: ['site'], val: x => x.r?.lien || '', texte: x => x.r?.lien || '',
+      lire: t => { const s = String(t ?? '').trim(); return !s ? '' : /^https?:\/\/\S+$/.test(s) ? s : undefined; }, vider: true, ecrire: (F, x, v) => { repDe(F, x).lien = v; } },
+    { k: 'annulee', l: 'Séance annulée', table: 'representations', col: 'annulee', niveau: 'seance', type: 'case', jeux: ['site', 'tournee'], colonne: {}, val: x => !!x.r?.annulee, texte: x => (x.r?.annulee ? 'annulée' : ''),
+      html: x => (x.r?.annulee ? '<span class="badge annulee">annulée</span>' : ''), lire: t => /^(oui|x|vrai|true|1|annulee?)$/i.test(norm(t).trim()) || (String(t ?? '').trim() ? undefined : false),
+      ecrire: (F, x, v) => { repDe(F, x).annulee = !!v; } },
+    // ———— le suivi interne (crescite_dates_suivi) : jamais publié
+    suiviCol('organisateur', 'Organisateur'),
+    suiviCol('contact', 'Contact', { aide: 'Nom, téléphone, adresse électronique' }),
+    suiviCol('contrat', 'Contrat', { type: 'choix', choix: () => [['', '—'], ...CONTRATS_DATE], texte: x => libelleDe(CONTRATS_DATE, suiviDe(x.d).contrat || ''),
+      lire: t => (String(t ?? '').trim() ? TABLEUR.lecteurs.choix(CONTRATS_DATE)(t) : '') }),
+    suiviCol('notes', 'Notes', { type: 'long' }),
+    // le montant de cession : la seule colonne vivante du suivi commercial (les autres : voir plus haut), écrite par ecrireMontant
+    { k: 'montant', l: 'Montant de cession HT (€)', court: 'Cession HT (€)', aide: 'Repris dans le devis, le contrat, la facture', table: 'dates_suivi', col: 'montant_cession', niveau: 'diffusion', type: 'nombre', min: 0, max: 1e7, pas: .01,
+      confidentiel: true, jeux: ['diffusion'], colonne: {}, si: () => !!E.ideale, val: x => suiviDe(x.d).montant_cession ?? '', texte: x => { const v = suiviDe(x.d).montant_cession; return v == null || v === '' ? '' : nombreFr(v); },
+      lire: t => { const n = String(t ?? '').trim().replace(/\s|€/g, '').replace(',', '.'); if (!n) return ''; const v = Number(n); return Number.isFinite(v) && v >= 0 && v < 1e7 ? Math.round(v * 100) / 100 : undefined; },
+      vider: true, ecrire: (F, x, v) => { F.suivi.montant_cession = nombreOuVide(v); } },
+    // ———— les chiffres (crescite_dates_chiffres) : jamais publiés, l'équipe les lit
+    ...CHIFFRES.map(([k, l, pas, max]) => ({ k: `chiffre-${k}`, l, court: l.replace(' (places)', ''), table: 'dates_chiffres', col: k, niveau: 'chiffres', type: 'nombre', min: 0, max, pas, confidentiel: true, jeux: ['bilan'], colonne: {}, si: () => !!E.chiffresInstalles,
+      val: x => chiffresVersForm(x.d.id)[k], texte: x => { const v = chiffresVersForm(x.d.id)[k]; return v === '' ? '' : nombreFr(v); },
+      lire: t => { const n = String(t ?? '').trim().replace(/\s/g, '').replace(',', '.'); if (!n) return ''; const v = Number(n);
+        return Number.isFinite(v) && v >= 0 && v <= max ? (pas < 1 ? Math.round(v * 2) / 2 : Math.round(v)) : undefined; },
+      vider: true, ecrire: (F, x, v) => { F.chiffres = F.chiffres || {}; F.chiffres[k] = nombreOuVide(v); } })),
+    { k: 'chiffres-source', l: 'D’où viennent ces chiffres', aide: 'Par exemple : « Récapitulatif de la compagnie, feuille « Bérénice », ligne 12 ».', table: 'dates_chiffres', col: 'source', niveau: 'chiffres', type: 'texte', confidentiel: true, jeux: ['bilan'], si: () => !!E.chiffresInstalles,
+      val: x => chiffresVersForm(x.d.id).source, texte: x => chiffresVersForm(x.d.id).source, lire: lireTexte, vider: true, ecrire: (F, x, v) => { F.chiffres = F.chiffres || {}; F.chiffres.source = v; } },
+    // ———— l'équipe (crescite_equipes) : ce qui change de la distribution en tournée, pour cette date
+    { k: 'distribution', l: 'Distribution', miroir: 'equipe', niveau: 'date', type: 'equipe', jeux: ['tournee'], colonne: {}, si: () => E.equipeInstallee, val: x => equipeIds(x.d),
+      texte: x => equipeIds(x.d).map(id => nomDe(personne(id))).filter(Boolean).join(', '),
+      // des pastilles sur une ligne : autant qu'il en tient, puis « +n »
+      html: x => { const ids = equipeIds(x.d), ns = prenoms(ids); let place = 232, k = 0; for (; k < ns.length && place - (ns[k].length * 7.4 + 22) >= (k < ns.length - 1 ? 34 : 0); k++) place -= ns[k].length * 7.4 + 22;
+        return ns.slice(0, k).map(n => `<span class="tab-pastille">${esc(n)}</span>`).join('') + (k < ns.length ? `<span class="tab-pastille plus">+${ns.length - k}</span>` : ''); },
+      lire: t => (String(t ?? '').trim() ? TABLEUR.lecteurs.personnes(t) : []), vider: true, ecrire: (F, x, v) => { F.equipe = ecartsPour({ ...x.d, spectacle_id: F.spectacle_id }, v, F.spectacle_id); } },
+    { k: 'equipe-present', l: 'Part sur cette date', aide: 'Faux : la personne ne part pas sur cette date (remplacée).', table: 'equipes', col: 'present', niveau: 'equipe', type: 'case', jeux: ['tournee'], si: () => E.equipeInstallee,
+      val: x => ecartVal(x, 'present') !== false, texte: x => (ecartVal(x, 'present') === false ? 'ne part pas' : 'part'), ecrire: (F, x, v) => { const e = ecartDe(F, x); if (e) e.present = !!v; } },
+    { k: 'equipe-fonction', l: 'Fonction sur cette date', aide: 'Par exemple : « remplace Lauren Toulin ».', table: 'equipes', col: 'fonction', niveau: 'equipe', type: 'texte', jeux: ['tournee'], si: () => E.equipeInstallee,
+      val: x => ecartVal(x, 'fonction') || '', texte: x => ecartVal(x, 'fonction') || '', lire: lireTexte, vider: true, ecrire: (F, x, v) => { const e = ecartDe(F, x); if (e) e.fonction = v; } },
+    { k: 'equipe-note', l: 'Note sur cette date', table: 'equipes', col: 'note', niveau: 'equipe', type: 'texte', jeux: ['tournee'], si: () => E.equipeInstallee,
+      val: x => ecartVal(x, 'note') || '', texte: x => ecartVal(x, 'note') || '', lire: lireTexte, vider: true, ecrire: (F, x, v) => { const e = ecartDe(F, x); if (e) e.note = v || null; } },
+    // ———— les envois entiers (hors colonnes) : les feuilles « traiter sur place » et la fenêtre de distribution les écrivent d'un coup
+    { k: 'representations', l: 'Les séances', niveau: 'date', type: 'liste', ecrire: (F, x, v) => { F.representations = v; } },
+    { k: 'equipe', l: 'L’équipe de la date', niveau: 'date', type: 'liste', ecrire: (F, x, v) => { F.equipe = v; } },
+    { k: 'suivi', l: 'Le suivi interne', niveau: 'suivi', type: 'liste', confidentiel: true,
+      ecrire: (F, x, v) => { F.suivi = { ...F.suivi, ...v }; if ('montant_cession' in v) F.suivi.montant_cession = nombreOuVide(v.montant_cession); } },
+    { k: 'chiffres', l: 'Les chiffres', niveau: 'chiffres', type: 'liste', confidentiel: true, ecrire: (F, x, v) => { F.chiffres = { ...F.chiffres, ...v }; } },
+  ];
+})();
+const champDate = k => SCHEMA_DATE.find(c => c.k === k);
+const champsDate = ks => ks.map(champDate).filter(Boolean);
 const zoneNeuve = sel => { const a = $(sel), z = a.cloneNode(false); a.replaceWith(z); return z; };
 let ouvertureMuette = false;     // après un enregistrement, l'éditeur se redessine : la tentacule s'enroule autour du bouton, elle ne se déroule pas
 function editeurDate(id, depart = null) {
   const zone = zoneNeuve('#ed-date');
+  if (id) zone.dataset.id = id;   // quelle date est ouverte : le bandeau « Modifiée ailleurs » (changement) le lit
+  const L = k => esc(champDate(k).l), A = k => esc(champDate(k).aide || '');   // libellés et aides : ceux du schéma de la date
   const d0 = id ? E.dates.find(d => d.id === id) : null;
   if (!depart && !ouvertureMuette) requestAnimationFrame(() => tt('ouvrir', zone, { sens: 'gauche' }));
   ouvertureMuette = false;
@@ -2611,16 +2861,16 @@ function editeurDate(id, depart = null) {
   const libre = !!F.intitule;
   const dep = F.depuis;
   zone.innerHTML = `<div class="titre-ed"><a class="btn petit" data-tt="retour" href="#/representations" title="Retour à la liste">←</a><h2 id="ed-titre"></h2></div>
-    ${d0 ? '<div id="d-parcours"></div>' : ''}<div id="d-gardefous"></div>
+    <div id="d-completude"></div>${d0 ? '<div id="d-parcours"></div>' : ''}<div id="d-gardefous"></div>
     ${dep ? `<p class="d-depuis" role="note">Depuis la proposition « ${esc(dep.titre)} » (${esc(dep.jour)})${E.equipeInstallee ? ` : l’équipe, ${dep.oui ? (dep.oui > 1 ? `les ${dep.oui} personnes qui ont répondu oui` : 'la personne qui a répondu oui') : 'personne pour l’instant (aucun oui ce jour-là)'}` : ''}. Enregistrée, la date ${dep.close ? 'se note dans la proposition' : 'clôt la proposition'}. <a href="#/planning/proposition/${dep.proposition}">Revoir la proposition</a></p>` : ''}
     <div class="bloc"><div class="rangee">
-      <div class="champ"><label for="d-sp">Spectacle</label><select id="d-sp">${choixSpectacles().map(([v, t]) => `<option value="${v}"${String(F.spectacle_id) === v ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></div>
-      <div class="champ"><span class="lib">Statut</span><div class="seg" role="group" aria-label="Statut">${[['option', 'Option'], ['confirmee', 'Confirmée'], ['annulee', 'Annulée'], ['reportee', 'Reportée']].map(([k, l]) => `<button type="button" data-statut="${k}" aria-pressed="${F.statut === k}">${l}</button>`).join('')}</div>
-        <span class="aide">Une option n’apparaît jamais sur le site.</span></div></div>
-      ${E.sql3 ? `<div class="champ"><span class="lib">Nature</span><div class="seg" role="group" aria-label="Nature de la date">${NATURES_DATE.map(([k, l]) => `<button type="button" data-nature="${k}" aria-pressed="${(F.nature || 'representations') === k}">${l}</button>`).join('')}</div>
-        <span class="aide" id="d-nature-aide">Les représentations et les résidences vont sur le site (une résidence y est marquée « Résidence », sans réservation) ; les répétitions et les autres dates ne sont que pour l’équipe.</span></div>` : ''}
-      <div class="champ"><span class="lib">Lieu</span><div id="d-lieu"></div><div id="d-lieu-fiche"></div></div>
-      <label class="case"><input type="checkbox" id="d-visible"${F.visible && PUBLIABLE(F.nature) ? ' checked' : ''}${PUBLIABLE(F.nature) ? '' : ' disabled'}> Publiée sur le site</label></div>
+      <div class="champ"><label for="d-sp">${L('spectacle')}</label><select id="d-sp">${choixSpectacles().map(([v, t]) => `<option value="${v}"${String(F.spectacle_id) === v ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></div>
+      <div class="champ"><span class="lib">${L('statut')}</span><div class="seg" role="group" aria-label="${L('statut')}">${champDate('statut').choix().map(([k, l]) => `<button type="button" data-statut="${k}" aria-pressed="${F.statut === k}">${l}</button>`).join('')}</div>
+        <span class="aide">${A('statut')}</span></div></div>
+      ${E.sql3 ? `<div class="champ"><span class="lib">${L('nature')}</span><div class="seg" role="group" aria-label="${L('nature')} de la date">${NATURES_DATE.map(([k, l]) => `<button type="button" data-nature="${k}" aria-pressed="${(F.nature || 'representations') === k}">${l}</button>`).join('')}</div>
+        <span class="aide" id="d-nature-aide">${A('nature')}</span></div>` : ''}
+      <div class="champ"><span class="lib">${L('lieu')}</span><div id="d-lieu"></div><div id="d-lieu-fiche"></div></div>
+      <label class="case"><input type="checkbox" id="d-visible"${F.visible && PUBLIABLE(F.nature) ? ' checked' : ''}${PUBLIABLE(F.nature) ? '' : ' disabled'}> ${L('visible')}</label></div>
 
     <div class="bloc"><h3 id="d-reps-titre">${(F.nature || 'representations') === 'representations' ? 'Représentations' : 'Séances'}</h3>
       <div class="reps-cadre"><table class="reps"><thead><tr><th>Jour</th><th>Heure</th>${E.sql3 ? '<th>Fin</th>' : ''}<th>Public</th><th>Précision</th><th>Billetterie</th><th><span class="sr">Retirer</span></th></tr></thead><tbody id="d-reps"></tbody></table></div>
@@ -2629,24 +2879,26 @@ function editeurDate(id, depart = null) {
 
     <div class="bloc"><h3>Sur le site</h3>
       <div class="apercu" id="d-apercu"></div>
+      <div class="derives" id="d-derives" role="group" aria-label="Ce qui se calcule tout seul"></div>
       <div class="champ" style="margin-top:12px"><label class="case"><input type="checkbox" id="d-libre"${libre ? ' checked' : ''}> Écrire la ligne moi-même</label>
-        <span class="aide">Sinon la ligne se compose toute seule à partir des jours et du lieu.${d0?.source ? ' Les dates reprises de l’ancien site gardent leur ligne d’origine.' : ''}</span></div>
-      <div class="champ" id="d-intitule-zone"${libre ? '' : ' hidden'}><input type="text" id="d-intitule" value="${esc(F.intitule || '')}" aria-label="Ligne affichée"></div>
+        <span class="aide">${A('intitule')}${d0?.source ? ` ${A('source-date')}` : ''}</span></div>
+      <div class="champ" id="d-intitule-zone"${libre ? '' : ' hidden'}><input type="text" id="d-intitule" value="${esc(F.intitule || '')}" aria-label="${L('intitule')}"></div>
       <div id="d-details"></div>
-      <div class="champ"><label for="d-lien">Lien (billetterie ou page du lieu)</label><input type="url" id="d-lien" value="${esc(F.lien)}" placeholder="https://…"></div></div>
+      <div class="champ"><label for="d-lien">${L('billetterie')}</label><input type="url" id="d-lien" value="${esc(F.lien)}" placeholder="https://…"></div></div>
 
     <div class="bloc" id="d-equipe"></div>
     ${d0 && E.equipeInstallee ? '<div class="bloc" id="d-retours" hidden></div>' : ''}
 
     <div class="bloc"><h3>Suivi interne <span class="aide" style="font-weight:400">— jamais publié</span></h3><div class="rangee">
-      <div class="champ"><label for="s-org">Organisateur</label><input type="text" id="s-org" value="${esc(F.suivi.organisateur)}"></div>
-      <div class="champ"><label for="s-contrat">Contrat</label><select id="s-contrat">${['', 'à envoyer', 'envoyé', 'signé'].map(x => `<option${F.suivi.contrat === x ? ' selected' : ''}>${x}</option>`).join('')}</select></div>
-      ${E.ideale ? `<div class="champ"><label for="s-montant">Montant de cession HT (€)</label><input type="number" id="s-montant" min="0" step="0.01" inputmode="decimal" value="${esc(F.suivi.montant_cession ?? '')}" placeholder="Repris dans le devis, le contrat, la facture"></div>` : ''}</div>
-      <div class="champ"><label for="s-contact">Contact</label><input type="text" id="s-contact" value="${esc(F.suivi.contact)}" placeholder="Nom, téléphone, adresse électronique"></div>
-      <div class="champ"><label for="s-notes">Notes</label><textarea id="s-notes">${esc(F.suivi.notes)}</textarea></div></div>
-    ${d0 && E.ideale ? '<div class="bloc" id="d-budget"></div>' : ''}${d0 && typeof MODELES !== 'undefined' ? '<div class="bloc" id="d-documents"></div>' : ''}${d0 && typeof NOTES !== 'undefined' ? '<div class="bloc" id="d-notes"></div>' : ''}
+      <div class="champ"><label for="s-org">${L('organisateur')}</label><input type="text" id="s-org" value="${esc(F.suivi.organisateur)}"></div>
+      <div class="champ"><label for="s-contrat">${L('contrat')}</label><select id="s-contrat">${['', 'à envoyer', 'envoyé', 'signé'].map(x => `<option${F.suivi.contrat === x ? ' selected' : ''}>${x}</option>`).join('')}</select></div>
+      ${E.ideale ? `<div class="champ"><label for="s-montant">${L('montant')}</label><input type="number" id="s-montant" min="${champDate('montant').min}" step="${champDate('montant').pas}" inputmode="decimal" value="${esc(F.suivi.montant_cession ?? '')}" placeholder="${A('montant')}"></div>` : ''}</div>
+      <div class="champ"><label for="s-contact">${L('contact')}</label><input type="text" id="s-contact" value="${esc(F.suivi.contact)}" placeholder="${A('contact')}"></div>
+      <div class="champ"><label for="s-notes">${L('notes')}</label><textarea id="s-notes">${esc(F.suivi.notes)}</textarea></div></div>
+    ${pistesDeLaDate(d0)}${d0 && E.ideale ? '<div class="bloc" id="d-budget"></div>' : ''}${d0 && typeof MODELES !== 'undefined' ? '<div class="bloc" id="d-documents"></div>' : ''}${d0 && typeof NOTES !== 'undefined' ? '<div class="bloc" id="d-notes"></div>' : ''}
     ${E.chiffresInstalles ? `<div class="bloc"><h3>Les chiffres <span class="aide" style="font-weight:400">— jamais publiés ; l’équipe les lit</span></h3><div class="rangee">
-      ${CHIFFRES.map(([k, l, pas, max]) => `<div class="champ"><label for="c-${k}">${l}</label><input type="number" id="c-${k}" data-chiffre="${k}" min="0" max="${max}" step="${pas}" inputmode="${pas < 1 ? 'decimal' : 'numeric'}" value="${esc(F.chiffres?.[k] ?? '')}"></div>`).join('')}</div></div>` : ''}
+      ${CHIFFRES.map(([k, l, pas, max]) => `<div class="champ"><label for="c-${k}">${L(`chiffre-${k}`)}</label><input type="number" id="c-${k}" data-chiffre="${k}" min="0" max="${max}" step="${pas}" inputmode="${pas < 1 ? 'decimal' : 'numeric'}" value="${esc(F.chiffres?.[k] ?? '')}"></div>`).join('')}</div>
+      <div class="champ"><label for="c-source">${L('chiffres-source')}</label><input type="text" id="c-source" value="${esc(F.chiffres?.source ?? '')}" placeholder="${A('chiffres-source')}"></div></div>` : ''}
     ${pied(id ? 'Tout est enregistré' : 'Nouvelle date', `${id ? `${boutonFeuille(id)}${boutonPrevenir(id)}<button type="button" class="btn" id="d-dupliquer">Dupliquer</button><button type="button" class="btn danger" id="d-suppr">Supprimer</button>` : ''}`, { replier: true, marque: id && E.equipeInstallee ? resteFeuille(id, 'nombre') : '' })}`;
   suivrePied($('.pied-ed', zone));
   const etatPublic = () => { const ps = new Set(F.representations.filter(r => r.jour).map(r => r.public)); return ps.size > 1 ? 'mixte' : ps.size ? [...ps][0] : F.public; };
@@ -2661,6 +2913,15 @@ function editeurDate(id, depart = null) {
     $('#d-apercu').innerHTML = `<div class="l">${esc(lg)}</div>${pr.map(p => `<div class="d">${p.texte}</div>`).join('')}
       <div class="d" style="margin-top:6px">Saison ${esc(F.saison && d0 && F.debut === d0.debut ? F.saison : AGENDA.saisonDe(dd.debut))}${etatPublic() === 'scolaire' ? ' · scolaire : n’apparaît pas dans « Je viens voir un spectacle »' : ''}${F.statut === 'option' || !$('#d-visible').checked ? ' · <b>n’apparaît pas sur le site</b>' : ''}</div>`;
     if (!$('#d-libre').checked) $('#d-intitule').value = AGENDA.ligne({ ...dd, intitule: null }, reps, l);
+    derives();
+  };
+  // ce que la base calcule toute seule, en puces grises : le nom d'un coup d'œil, la raison en infobulle (et lue par aria-describedby)
+  const derives = () => {
+    const raisons = [...new Set(SCHEMA_DATE.map(c => (c.derive ? c.derive(F, d0) : '')).filter(Boolean))];
+    $('#d-derives').innerHTML = raisons.map((r, i) => {
+      const [tete, ...reste] = r.split(' : '), [val, ...pourquoi] = reste.join(' : ').split(', ');
+      return `<output class="derive" title="${esc(r)}" aria-describedby="dv-${i}">${esc(pourquoi.length ? `${tete} : ${val}` : tete)}</output><span class="sr" id="dv-${i}">${esc(r)}</span>`;
+    }).join('');
   };
   const dessinerReps = () => {
     $('#d-reps').innerHTML = F.representations.map((r, i) => `<tr data-i="${i}">
@@ -2684,7 +2945,7 @@ function editeurDate(id, depart = null) {
       <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn petit" id="d-det-plus">＋ Précision</button><button type="button" class="btn petit" id="d-det-auto">Proposer d’après les représentations</button></div>
       <span class="aide">Vide : le site écrit lui-même « 14h et 20h : représentations au … ».</span></div>`;
   };
-  const parcours = () => { if (d0 && typeof PARCOURS !== 'undefined') PARCOURS.poser($('#d-parcours', zone), d0, F); if (typeof GARDEFOUS !== 'undefined') GARDEFOUS.poser(zone, F, d0); };
+  const parcours = () => { if (d0 && typeof PARCOURS !== 'undefined') PARCOURS.poser($('#d-parcours', zone), d0, F); if (typeof COMPLETUDE !== 'undefined') COMPLETUDE.poser($('#d-completude', zone), F); if (typeof GARDEFOUS !== 'undefined') GARDEFOUS.poser(zone, F, d0); };
   const changer = () => { marquerSale(JSON.stringify(F) !== initial || $('#d-libre').checked !== libre); apercu(); titre(); parcours(); };
   // le lieu de la date, tel que sa fiche le connaît (adresse, contact, jauge) : de quoi préparer la date sans changer d'écran
   const dessinerLieu = () => {
@@ -2761,9 +3022,11 @@ function editeurDate(id, depart = null) {
     else if (t.dataset.det !== undefined) F.details[+t.dataset.det].texte = propre(t.innerHTML);
     else if (t.dataset.detLien !== undefined) F.details[+t.dataset.detLien].lien = t.value;
     else if (t.dataset.chiffre) F.chiffres[t.dataset.chiffre] = t.value === '' ? '' : Number(t.value);
+    else if (t.id === 'c-source') F.chiffres.source = t.value;
     else if (t.id === 's-org') F.suivi.organisateur = t.value;
     else if (t.id === 's-contact') F.suivi.contact = t.value;
     else if (t.id === 's-notes') F.suivi.notes = t.value;
+    else if (t.id === 's-montant') F.suivi.montant_cession = t.value;   // (le budget se redessine par l'écouteur plus haut ; ici, la fiche devient sale et la jauge suit)
     else return;
     changer();
   });
@@ -2817,7 +3080,7 @@ function editeurDate(id, depart = null) {
       dessinerDetails(); changer(); return;
     }
     if (t.id === 'd-serie') return SERIES.serie(F, () => { dessinerReps(); changer(); });
-    if (t.id === 'd-dupliquer') { const G = clone(F); G.id = null; G.intitule = null; G.representations.forEach(r => delete r.id); G.suivi = suiviPourCopie(G.suivi); G.chiffres = Object.fromEntries(CHIFFRES.map(([k]) => [k, ''])); remplacerAdresse('#/representations/nouvelle'); editeurDate(null, G); marquerSale(true); annoncer('Copie prête : changez les jours ou le lieu, puis enregistrez.'); return; }
+    if (t.id === 'd-dupliquer') { const G = clone(F); G.id = null; G.intitule = null; G.representations.forEach(r => delete r.id); G.suivi = suiviPourCopie(G.suivi); G.chiffres = { ...Object.fromEntries(CHIFFRES.map(([k]) => [k, ''])), source: '' }; remplacerAdresse('#/representations/nouvelle'); editeurDate(null, G); marquerSale(true); annoncer('Copie prête : changez les jours ou le lieu, puis enregistrez.'); return; }
     if (t.id === 'd-suppr') return supprimerDate(d0);
     if (t.matches('[data-enregistrer]')) return enregistrerDate(F, d0, t);
   });
@@ -2849,27 +3112,89 @@ function chargeDate(F, d0, libre = !!(F.intitule || '').trim()) {
 const manqueDate = F => !F.spectacle_id ? 'Choisissez le spectacle.'
   : F.representations.some(r => !r.jour) ? 'Chaque représentation a besoin de son jour (ou retirez la ligne vide).'
   : !(F.representations.find(r => r.jour)?.jour || F.debut) ? 'Indiquez au moins un jour.' : '';
-// écrire une date : la date et ses séances (crescite_enregistrer_date), puis son équipe (ce qui change de la distribution
-// en tournée), puis la relire. → { id, equipeOk } ; une erreur de la base est levée
+// écrire une date : la date et ses séances (crescite_enregistrer_date), puis ses chiffres, son montant de cession, son
+// équipe (ce qui change de la distribution en tournée), puis la relire. → { id, equipeOk, montantOk } ; une erreur de la
+// base est levée. C'est le seul chemin vers la base pour une date : la fiche, le tableur, les séries et ecrireChamps
+// (le rail des écritures champ par champ, plus bas) y passent tous
 async function ecrireDate(F, d0, { libre } = {}) {
   const { data: id, error } = await sb.rpc('crescite_enregistrer_date', { d: chargeDate(F, d0, libre) });
   if (error) throw error;
   await ecrireChiffres(id, F);
-  await ecrireMontant(id, F);
+  const montantOk = await ecrireMontant(id, F);
   const equipeOk = await enregistrerEquipeDate(id, F);
   await rechargerDate(id);
-  return { id, equipeOk };
+  return { id, equipeOk, montantOk };
 }
 // le montant de cession (le script « Compagnie Idéale ») : à côté de crescite_enregistrer_date, qui ne le connaît pas ;
-// seulement s'il a changé
+// seulement s'il a changé. Un échec ne lève pas : une annonce le dit, et ecrireMontant rend faux (ecrireDate le rend en
+// montantOk, ecrireChamps le dit dans sa phrase)
 async function ecrireMontant(id, F) {
-  if (!E.ideale || !F.suivi || !('montant_cession' in F.suivi)) return;
+  if (!E.ideale || !F.suivi || !('montant_cession' in F.suivi)) return true;
   const v = F.suivi.montant_cession === '' || F.suivi.montant_cession == null ? null : Math.round(Number(F.suivi.montant_cession) * 100) / 100;
-  if (v != null && !(Number.isFinite(v) && v >= 0)) return;
+  if (v != null && !(Number.isFinite(v) && v >= 0)) return true;
   const avant = E.suivis.find(x => x.date_id === id)?.montant_cession ?? null;
-  if ((avant == null ? null : Number(avant)) === v) return;
+  if ((avant == null ? null : Number(avant)) === v) return true;
   const { error } = await sb.from('crescite_dates_suivi').upsert({ date_id: id, montant_cession: v }, { onConflict: 'date_id' });
-  if (error) erreur(error, 'La date est enregistrée, mais pas son montant');
+  if (error) { erreur(error, 'La date est enregistrée, mais pas son montant'); return false; }
+  return true;
+}
+// ———— le rail des écritures champ par champ : une seule porte pour changer un ou plusieurs champs d'une date sans passer par
+// la fiche (le tableau de bord « traite sur place » par là ; le tableur et le tiroir y viendront). Il part toujours de la date
+// entière (dateVersForm), y pose chaque champ par le `ecrire` du schéma (SCHEMA_DATE), puis la fait passer par ecrireDate :
+// jamais un envoi partiel à la base, les mêmes règles, déclencheurs, notifications et journal que la fiche.
+//   modifs   { k: valeur } (un champ de niveau date, suivi, diffusion ou chiffres, ou un envoi entier : representations,
+//            equipe, suivi, chiffres), ou [[k, valeur, x]…] quand le champ est celui d'une séance ({ r }) ou d'une
+//            personne de l'équipe ({ personne_id }) : un champ de niveau séance sans x.r est refusé (repDe créerait sinon
+//            une séance fantôme), de même un champ d'équipe sans personne_id
+//   dire     la phrase annoncée (sinon « Date du … enregistrée. ») ; annulable (vrai par défaut) : l'annonce porte « Annuler »,
+//            qui rejoue l'instantané de la date d'avant (annulable: false pour ce retour en arrière lui-même)
+//   → { ok, partiel, phrase, defaire } ; phrase dit l'échec quand ok est faux (rien n'est annoncé alors : l'appelant la montre) ;
+//   partiel : la date est écrite mais pas son équipe ou son montant (ok reste vrai : l'appelant relit et ferme sa feuille,
+//   une annonce d'erreur a déjà dit ce qui manque) ; defaire est la fonction qu'« Annuler » appelle (une séance retirée
+//   par le geste revient, recréée). Deux raccourcis : l'équipe seule passe par enregistrerEquipeDate, les
+//   chiffres seuls par ecrireChiffres (aucun appel au rpc). Le montant de cession s'écrit par ecrireMontant, après le rpc :
+//   son échec est dit dans la phrase.
+async function ecrireChamps(dateId, modifs, { dire = null, annulable = true } = {}) {
+  const raté = phrase => ({ ok: false, phrase, defaire: null });
+  const d = E.dates.find(x => x.id === dateId);
+  if (!d) return raté('Cette date n’existe plus (elle a été supprimée ailleurs).');
+  const F = dateVersForm(d), instantane = clone(F);
+  const liste = Array.isArray(modifs) ? modifs : Object.entries(modifs);
+  for (const [k, v, x] of liste) {
+    const c = champDate(k);
+    if (!c || !c.ecrire) return raté(`Le champ « ${k} » ne s’écrit pas ici.`);
+    if (c.niveau === 'seance' && !x?.r) return raté(`« ${c.l} » est le champ d’une séance : dites laquelle.`);
+    if (c.niveau === 'equipe' && x?.personne_id == null) return raté(`« ${c.l} » est le champ d’une personne de l’équipe : dites laquelle.`);
+    try { c.ecrire(F, { d, ...x }, v); } catch (e) { return raté(e?.message || String(e)); }
+  }
+  const manque = manqueDate(F);
+  if (manque) return raté(manque);
+  const champs = liste.map(m => champDate(m[0])), seul = champs.every(c => c.k === 'equipe' || c.miroir === 'equipe' || c.niveau === 'equipe') ? 'equipe' : champs.every(c => c.niveau === 'chiffres') ? 'chiffres' : '';
+  // écrire un formulaire par le chemin qui convient : l'équipe seule, les chiffres seuls, sinon la date entière
+  const ecrire = async (G, libre) => {
+    if (seul === 'equipe') return { equipeOk: await enregistrerEquipeDate(dateId, G), montantOk: true };
+    if (seul === 'chiffres') { await ecrireChiffres(dateId, G); return { equipeOk: true, montantOk: true }; }
+    return ecrireDate(G, E.dates.find(x => x.id === dateId) || d, { libre });
+  };
+  // les séances que ce geste vient de retirer reviennent (sans leur numéro : l'enregistrement les recrée) ; celles qui avaient
+  // déjà disparu ailleurs entre-temps ne reviennent pas
+  const retirees = new Set(instantane.representations.filter(y => y.id && !F.representations.some(z => z.id === y.id)).map(y => y.id));
+  let r;
+  try { r = await ecrire(F, !!(F.intitule || '').trim()); } catch (e) { return raté(e?.message || String(e)); }
+  const defaire = async () => {
+    const G = clone(instantane);
+    G.representations = G.representations.filter(y => !y.id || retirees.has(y.id) || E.reps.some(z => z.id === y.id));
+    G.representations.forEach(y => { if (retirees.has(y.id)) delete y.id; });
+    if (!E.dates.find(x => x.id === dateId)) throw new Error('Cette date n’existe plus.');
+    await ecrire(G, !!(G.intitule || '').trim());
+  };
+  const reste = [!r.equipeOk && 'son équipe', !r.montantOk && 'son montant'].filter(Boolean).join(' ni ');
+  const phrase = reste ? `La date est enregistrée, mais pas ${reste}.` : dire || `Date du ${jourCourt(d.debut)} enregistrée.`;
+  const fait = async () => { try { await defaire(); annoncer('Annulé.'); } catch (e) { erreur(e, 'Retour impossible'); } };
+  if (annulable) annoncer(phrase, { action: fait, libelle: 'Annuler', erreur: !!reste }); else annoncer(phrase, { erreur: !!reste });
+  // la date est écrite quand seuls l'équipe ou le montant ont échoué (ok, partiel) : l'appelant relit et ferme sa feuille ;
+  // un rail « équipe seule » qui échoue n'a rien écrit : pas ok
+  return { ok: !reste || !seul, partiel: !!reste, phrase, defaire };
 }
 async function enregistrerDate(F, d0, bouton) {
   const manque = manqueDate(F);
@@ -2895,12 +3220,17 @@ async function enregistrerDate(F, d0, bouton) {
   redessinerFiche(vueDates, id);
   bravo();
 }
+// relire une date après l'avoir écrite : la ligne, ses séances, son suivi, et ses chiffres et son équipe quand la base les a
+// (une lecture qui échoue laisse ce qu'on en savait : ni les chiffres ni l'équipe ne sont jamais vidés par une erreur)
 async function rechargerDate(id) {
-  const [a, b, c] = await Promise.all([sb.from('crescite_dates').select('*').eq('id', id), sb.from('crescite_representations').select('*').eq('date_id', id), sb.from('crescite_dates_suivi').select('*').eq('date_id', id)]);
+  const [a, b, c, ch, eq] = await Promise.all([sb.from('crescite_dates').select('*').eq('id', id), sb.from('crescite_representations').select('*').eq('date_id', id), sb.from('crescite_dates_suivi').select('*').eq('date_id', id),
+    E.chiffresInstalles ? sb.from('crescite_dates_chiffres').select('*').eq('date_id', id) : null, E.equipeInstallee ? sb.from('crescite_equipes').select('*').eq('date_id', id) : null]);
   const remplacer = (k, pk, rows, filtre) => { E[k] = E[k].filter(x => !filtre(x)).concat(rows || []); };
   remplacer('dates', 'id', a.data, x => x.id === id);
   remplacer('reps', 'id', b.data, x => x.date_id === id);
   remplacer('suivis', 'date_id', c.data, x => x.date_id === id);
+  if (ch && !ch.error) remplacer('chiffres', 'date_id', ch.data, x => x.date_id === id);
+  if (eq && !eq.error) remplacer('equipes', 'date_id', eq.data, x => x.date_id === id);
 }
 // supprimer une date (ses séances, son suivi, son équipe et sa feuille partent avec elle) → de quoi la rétablir
 async function effacerDate(d) {
@@ -4165,18 +4495,8 @@ const OPS_JOURNAL = { INSERT: 'Ajout', UPDATE: 'Modification', DELETE: 'Suppress
 const valeurJournal = v => (v == null ? '' : typeof v === 'object' ? JSON.stringify(v).replace(/["{}\[\]]/g, ' ') : String(v)).slice(0, 1500);
 async function vueJournal() {
   const f = session.journal = Object.assign({ q: '', quoi: '', qui: '', periode: '', du: '', au: '' }, session.journal || {});
-  // l'auteur d'une ligne : un administrateur (son nom), une personne de l'équipe qui a modifié depuis son espace (le
-  // quatorzième script : l'horaire d'une date, ses précisions, les fichiers d'un spectacle ; son nom, « équipe »), le
-  // compte connecté, sinon un import
-  const qui = id => {
-    const a = E.admins.find(x => x.user_id === id);
-    if (a?.nom) return a.nom;
-    const f = id ? (E.privees || []).find(x => x.user_id === id) : null, p = f && typeof personne === 'function' ? personne(f.personne_id) : null;
-    if (p && nomDe(p)) return a ? nomDe(p) : `${nomDe(p)} (équipe)`;
-    return id === E.session.user.id ? E.session.user.email : id ? (a ? 'un administrateur' : 'un autre compte') : 'import';
-  };
   const option = (v, l, choisi) => `<option value="${esc(v)}"${choisi === v ? ' selected' : ''}>${esc(l)}</option>`;
-  const auteurs = () => [...new Set([...E.admins.map(a => a.user_id), ...E.journal.map(j => j.qui ?? '')])].map(id => [id || '', qui(id || null)]).sort((a, b) => a[1].localeCompare(b[1], 'fr'));
+  const auteurs = () => [...new Set([...E.admins.map(a => a.user_id), ...E.journal.map(j => j.qui ?? '')])].map(id => [id || '', nomAdmin(id || null)]).sort((a, b) => a[1].localeCompare(b[1], 'fr'));
   cadre('journal', `<div class="tete"><h1>Journal</h1><span class="compte">« Revenir » remet une ligne telle qu’elle était juste avant la modification.</span><a class="btn" href="#/corbeille">Corbeille</a></div>
     <div class="filtres journal-filtres" role="search" aria-label="Filtrer le journal">
       <input type="search" id="j-q" placeholder="Chercher : un nom, un lieu, un numéro, un champ…" value="${esc(f.q)}" aria-label="Chercher dans le journal">
@@ -4201,7 +4521,7 @@ async function vueJournal() {
     if (!textes.has(j.id)) {
       const ch = champsChanges(j), x = j.apres || j.avant || {};
       const valeurs = j.operation === 'UPDATE' ? ch.map(k => `${valeurJournal(j.avant[k])} ${valeurJournal(j.apres[k])}`) : Object.entries(x).filter(([k]) => !/(^|_)id$|^modifie_|^cree_/.test(k)).map(([, v]) => valeurJournal(v));
-      textes.set(j.id, cleRch(`${OPS_JOURNAL[j.operation]} ${NOMS_TABLES[j.table_nom] || j.table_nom} ${resume(j) || ''} ${ch.join(' ')} ${apprisDuJournal(j).join(' ')} ${qui(j.qui)} ${valeurs.join(' ')}`));
+      textes.set(j.id, cleRch(`${OPS_JOURNAL[j.operation]} ${NOMS_TABLES[j.table_nom] || j.table_nom} ${resume(j) || ''} ${ch.join(' ')} ${apprisDuJournal(j).join(' ')} ${nomAdmin(j.qui)} ${valeurs.join(' ')}`));
     }
     return textes.get(j.id);
   };
@@ -4228,7 +4548,7 @@ async function vueJournal() {
     const enTeteJour = j => { const k = jourDe(j); if (k === jourVu) return ''; jourVu = k;
       return `<div class="mois j-jour">${k === AUJ ? 'Aujourd’hui' : k === hier ? 'Hier' : esc(new Date(j.quand).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }))}</div>`; };
     zone.innerHTML = xs.map(j => { const ch = champsChanges(j), ap = apprisDuJournal(j);
-      return `${enTeteJour(j)}<div class="journal-ligne"><span class="quand">${new Date(j.quand).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })}<br>${esc(qui(j.qui))}</span>
+      return `${enTeteJour(j)}<div class="journal-ligne"><span class="quand">${new Date(j.quand).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })}<br>${esc(nomAdmin(j.qui))}</span>
         <span class="quoi"><b>${OPS_JOURNAL[j.operation]} · ${esc(NOMS_TABLES[j.table_nom] || j.table_nom)}</b>${surlignerRch(resume(j) || '', mots)}${ch.length ? `<span class="diff"> — ${surlignerRch(ch.join(', '), mots)}</span>` : ''}${ap.length ? `<span class="diff appris"> — gardé dans les fiches : ${esc(ap.join(', '))}</span>` : ''}</span>
         <span>${j.operation === 'INSERT' ? `<button class="btn petit" data-j="${j.id}" data-tt="retour">Retirer</button>` : `<button class="btn petit" data-j="${j.id}" data-tt="retour">Revenir</button>`}</span></div>`; }).join('')
       || listeVide(total > 0, { rien: 'Aucune modification ne correspond.', aucun: 'Rien encore.' });

@@ -53,15 +53,9 @@ const TABLEAU = (() => {
   const ligne = ({ href, viser, couleur, gauche, titre, sous, droite, classe, externe, attrs = '' }) => `<a class="tb-l${gauche ? '' : ' sans-gauche'}${classe ? ` ${classe}` : ''}" href="${esc(href)}"${viser ? ` data-viser="${esc(viser)}"` : ''}${externe ? ' target="_blank" rel="noopener"' : ''}${couleur ? ` style="--c:${esc(couleur)}"` : ''}${attrs ? ` ${attrs}` : ''}>${gauche || ''}<span class="tb-l-corps"><span class="tb-l-t">${titre}</span>${sous ? `<span class="tb-l-s">${sous}</span>` : ''}</span>${droite ? `<span class="tb-l-d">${droite}</span>` : ''}</a>`;
   const rien = (texte, ok = false) => `<p class="tb-rien${ok ? ' ok' : ''}">${texte}</p>`;
   const plus = (n, href, texte = 'Tout voir') => (n > 0 ? `<a class="tb-plus" href="${esc(href)}">${n > 1 ? `Et ${n} autres` : 'Et une autre'} · ${texte} →</a>` : '');
-  // l'auteur d'une modification, comme le journal : un administrateur (son nom), une personne de l'équipe qui a modifié
-  // depuis son espace (le quatorzième script : son nom, « équipe »), le compte connecté, sinon un import
-  const nomAdmin = id => {
-    const a = E.admins.find(x => x.user_id === id);
-    if (a?.nom) return a.nom;
-    const f = id ? (E.privees || []).find(x => x.user_id === id) : null, p = f ? personne(f.personne_id) : null;
-    if (p && nomDe(p)) return a ? nomDe(p) : `${nomDe(p)} (équipe)`;
-    return id === uid() ? E.session.user.email : id ? (a ? 'un administrateur' : 'un autre compte') : 'import';
-  };
+  // l'auteur d'une modification : celui du journal (nomAdmin, dans le script principal : un administrateur, une personne de
+  // l'équipe qui a modifié depuis son espace, le compte connecté, sinon un import)
+  const nomAdmin = id => (typeof globalThis.nomAdmin === 'function' ? globalThis.nomAdmin(id) : id ? 'un autre compte' : 'import');
   // le bilan d'une proposition de dates : combien de disponibles, de pas disponibles, de peut-être, sans réponse
   const reponseDe = (jour, pid) => (jour.reponses || []).find(r => String(r.personne_id) === String(pid))?.reponse || 'attente';
   const bilanDe = p => { const n = { oui: 0, non: 0, peut_etre: 0, attente: 0 }; for (const j of p.jours || []) for (const d of p.destinataires || []) n[reponseDe(j, d.personne_id)]++; return n; };
@@ -768,9 +762,11 @@ const TABLEAU = (() => {
         { k: 'statut', t: 'choix', seg: true, l: 'Statut', choix: [['confirmee', 'Confirmée'], ['option', 'Toujours en option'], ['reportee', 'Reportée'], ['annulee', 'Annulée']], valeur: 'confirmee' },
         { k: 'visible', t: 'case', l: 'Publiée sur le site', valeur: d.visible !== false, aide: 'Une option ou une date annulée n’y va jamais.' },
       ], ok: 'Enregistrer', enregistrer: async v => {
-        const { error } = await sb.from('crescite_dates').update({ statut: v.statut, visible: !!v.visible && v.statut === 'confirmee' }).eq('id', d.id);
-        if (error) return texteErreur(error);
-        await apresTraiter({ confirmee: 'Date confirmée.', option: 'Toujours en option.', reportee: 'Date reportée.', annulee: 'Date annulée.' }[v.statut], cle); return true;
+        // par le rail de la fiche (ecrireChamps, script principal) : la date entière part au rpc ; la règle du tableau de bord
+        // (publiée seulement si confirmée) reste ici, chez l'appelant
+        const r = await ecrireChamps(d.id, { statut: v.statut, visible: !!v.visible && v.statut === 'confirmee' }, { dire: { confirmee: 'Date confirmée.', option: 'Toujours en option.', reportee: 'Date reportée.', annulee: 'Date annulée.' }[v.statut] });
+        if (!r.ok) return r.phrase;
+        await apresTraiter(null, cle); return true;
       } }); },
     heures: (id, cle) => { const d = dateDe(id), Gf = G(); if (!d || !Gf) return;
       const reps = E.reps.filter(r => r.date_id === d.id).sort((a, b) => (a.jour + h5(a.heure)).localeCompare(b.jour + h5(b.heure))).map(r => ({ id: r.id, jour: r.jour, heure: h5(r.heure), fin: h5(r.fin), public: r.public || 'tout_public', annulee: !!r.annulee, note: r.note || '' }));
@@ -780,31 +776,33 @@ const TABLEAU = (() => {
           champs: [{ k: 'jour', t: 'date', l: 'Jour', requis: true }, { k: 'heure', t: 'heure', l: 'Heure' }, { k: 'fin', t: 'heure', l: 'Fin' },
             ...(sco ? [{ k: 'public', t: 'choix', l: 'Public', choix: [['tout_public', 'Tout public'], ['scolaire', 'Scolaire'], ['autre', 'Autre']] }] : []), { k: 'note', t: 'texte', l: 'Précision', ph: 'complet, audiodécrite…' }, { k: 'annulee', t: 'case', l: 'Annulée' }] },
       ], note: 'L’équipe de la date est prévenue des horaires changés.', enregistrer: async v => {
-        const avant = new Map(reps.map(r => [String(r.id), r])), gardes = new Set(), requetes = [];
+        // toutes les séances de la date partent d'un coup, par le rail de la fiche (ecrireChamps) : la ligne du journal est
+        // écrite pour chaque séance, même inchangée (le script SQL de l'enregistrement en une fois y mettra bon ordre) ;
+        // le lien de billetterie d'une séance, absent de cette feuille, est gardé
+        const avant = new Map(E.reps.filter(r => r.date_id === d.id).map(r => [String(r.id), r]));
+        const seances = [];
         for (const r of v.reps || []) {
           if (!r.jour) return 'Un jour pour chaque séance.';
-          const l = { jour: r.jour, heure: r.heure || null, fin: r.fin || null, public: r.public || (sco ? 'scolaire' : 'tout_public'), annulee: !!r.annulee, note: (r.note || '').trim() || null };
-          if (r.id && avant.has(String(r.id))) { gardes.add(String(r.id)); const a = avant.get(String(r.id));
-            if (a.jour !== l.jour || a.heure !== (l.heure || '') || a.fin !== (l.fin || '') || a.public !== l.public || a.annulee !== l.annulee || (a.note || '') !== (l.note || '')) requetes.push(() => sb.from('crescite_representations').update(l).eq('id', Number(r.id))); }
-          else requetes.push(() => sb.from('crescite_representations').insert({ ...l, date_id: d.id }));
+          const a = r.id && avant.get(String(r.id));
+          seances.push({ ...(a ? { id: a.id } : {}), jour: r.jour, heure: r.heure || '', fin: r.fin || '', public: r.public || (sco ? 'scolaire' : 'tout_public'), annulee: !!r.annulee, lien: a?.lien || '', note: (r.note || '').trim() });
         }
-        const retirees = reps.filter(r => !gardes.has(String(r.id))).map(r => Number(r.id));
-        if (retirees.length) requetes.push(() => sb.from('crescite_representations').delete().in('id', retirees));
-        for (const q of requetes) { const { error } = await q(); if (error) return texteErreur(error); }
-        await apresTraiter('Horaires enregistrés.', cle); return true;
+        const res = await ecrireChamps(d.id, { representations: seances }, { dire: 'Horaires enregistrés.' });
+        if (!res.ok) return res.phrase;
+        await apresTraiter(null, cle); return true;
       } }); },
     contrats: (id, cle) => { const d = dateDe(id), Gf = G(); if (!d || !Gf) return;
       const su = E.suivis.find(s => s.date_id === d.id) || {};
       Gf.formulaire({ titre: 'Le contrat', sousTitre: titreDateLong(d), champs: [
         { k: 'contrat', t: 'choix', seg: true, l: 'Contrat', choix: [['', '—'], ['à envoyer', 'À envoyer'], ['envoyé', 'Envoyé'], ['signé', 'Signé']], valeur: (su.contrat || '').trim() },
         { k: 'organisateur', t: 'texte', l: 'Organisateur', valeur: su.organisateur || '' }, { k: 'contact', t: 'texte', l: 'Contact', valeur: su.contact || '', ph: 'nom, téléphone, courriel' },
-        { k: 'montant_cession', t: 'nombre', l: 'Montant de cession (€)', valeur: su.montant_cession ?? '', min: 0, pas: 0.01 },
+        (c => ({ k: 'montant_cession', t: 'nombre', l: c.l, valeur: su.montant_cession ?? '', min: c.min, max: c.max, pas: c.pas }))(champDate('montant')),   // (le champ du schéma de la date : libellé, bornes, centime)
         { k: 'notes', t: 'long', l: 'Notes', valeur: su.notes || '', lignes: 2 },
       ], enregistrer: async v => {
-        const ligne = { date_id: d.id, contrat: v.contrat || null, organisateur: v.organisateur.trim() || null, contact: v.contact.trim() || null, notes: v.notes.trim() || null, ...(v.montant_cession == null || v.montant_cession === '' ? {} : { montant_cession: Number(v.montant_cession) }) };
-        const { error } = await sb.from('crescite_dates_suivi').upsert(ligne, { onConflict: 'date_id' });
-        if (error) return texteErreur(error);
-        await apresTraiter(v.contrat === 'signé' ? 'Contrat signé : la date quitte « à traiter ».' : 'Suivi enregistré.', cle); return true;
+        // par le rail de la fiche (ecrireChamps) : le suivi entier, montant compris (effacé quand le champ est vidé)
+        const r = await ecrireChamps(d.id, { suivi: { contrat: v.contrat || '', organisateur: (v.organisateur || '').trim(), contact: (v.contact || '').trim(), notes: (v.notes || '').trim(), montant_cession: v.montant_cession } },
+          { dire: v.contrat === 'signé' ? 'Contrat signé : la date quitte « à traiter ».' : 'Suivi enregistré.' });
+        if (!r.ok) return r.phrase;
+        await apresTraiter(null, cle); return true;
       } }); },
     feuilles: (id, cle) => { const d = dateDe(id), Gf = G(); if (!d || !Gf) return;
       const f = E.feuilles.find(x => x.date_id === d.id), peutComposer = typeof composerPour === 'function' && typeof FEUILLE !== 'undefined';

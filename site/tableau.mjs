@@ -372,7 +372,7 @@ fs.mkdirSync(CAPT, { recursive: true });
   const n1 = MODIFS.length;
   await page.click('.gf button[type="submit"]');
   await page.waitForFunction(() => !document.querySelector('.gf') && !document.querySelector('.tb-tuile[data-k="urgent"] a.tb-l[data-cle="options:105"]'), null, { timeout: 10000 }).catch(() => {});
-  ok('1 · Enregistrer écrit « confirmée », l’état se relit, la date quitte « Options à confirmer »', MODIFS.slice(n1).some(m => m.table === 'crescite_dates' && m.body && m.body.statut === 'confirmee' && m.n === 1) && (await compte(page, `${tuile('urgent')} a.tb-l[data-cle="options:105"]`)) === 0, JSON.stringify(MODIFS.slice(n1)));
+  ok('1 · Enregistrer écrit « confirmée », l’état se relit, la date quitte « Options à confirmer »', MODIFS.slice(n1).some(m => m.rpc === 'crescite_enregistrer_date' && m.corps.d.statut === 'confirmee') && (await compte(page, `${tuile('urgent')} a.tb-l[data-cle="options:105"]`)) === 0, JSON.stringify(MODIFS.slice(n1)));
   // 2. la file au clavier
   await page.evaluate(() => document.activeElement && document.activeElement.blur());
   await page.keyboard.press('j');
