@@ -2227,7 +2227,7 @@ html { view-transition-name: none; }
 .encre-page { position: fixed; inset: 0; z-index: 90; width: 100%; height: 100%; pointer-events: none; }
 .encre-page.couvre { pointer-events: auto; }
 /* une page qui arrive : son titre fleurit (il se dépose), le bras d'encre arrive du bord de l'écran, le souligne et s'enroule */
-.fleur { position: relative; display: inline-block; max-width: 100%; padding-bottom: 22px; --trait: var(--saison-vive); }   /* (max-width : un mot trop long s'y coupe, voir h1) */
+.fleur { position: relative; display: inline-block; max-width: 100%; padding-bottom: 22px; --trait: var(--saison-vive); }   /* (max-width : un mot trop long s'y coupe, voir h1 ; la boucle est à son échelle 1:1, son trait de 3 px au bas du bloc, dans l'axe du bras) */
 .fleur::after { content: ""; position: absolute; left: -100vw; right: 31px; bottom: 2px; height: 3px; border-radius: 2px; background: var(--trait); }
 .fleur::before { content: ""; position: absolute; right: 0; bottom: 0; width: 32px; height: 32px; background: var(--trait);
   -webkit-mask: var(--boucle) 0 0 / 100% 100% no-repeat; mask: var(--boucle) 0 0 / 100% 100% no-repeat; }
@@ -7560,7 +7560,7 @@ const CADRAGE = (() => {
    de formulaire (elle s'enroule autour du bouton), le panneau de date et l'enregistrement de l'édition sur place.
 
    Les moments
-   TENTACULES.toucher(el | [x, y])      une tentacule fine jusqu'à ce point, et son empreinte
+   TENTACULES.toucher(el | [x, y])      la pieuvre seule répond (plus de tentacule jusqu'au point)
    TENTACULES.page(destination)         la remontée d'une page ('#/voir', une couleur CSS ou {couleur, slug}) ; automatique
                                         à chaque changement d'adresse seulement avec pages: true
    TENTACULES.ouvrir(el)  .fermer(el)   la tentacule se déroule le long de ce qui s'ouvre ; elle s'enroule à la fermeture
@@ -8068,39 +8068,13 @@ const TENTACULES = (() => {
     return { p, dir: [-cand[2][0], -cand[2][1]], G: null, bord: true };
   }
 
-  /* Le geste de base : une tentacule fine part du guide, s'enroule sur le point touché, y laisse l'empreinte d'une ventouse,
-     puis se retire vers la pieuvre. */
-  const cleurs = [];
+  /* Le geste de base : la pieuvre seule se contracte ; aucune tentacule ne part d'elle vers le point touché. */
   function toucher(but, o = {}) {
     if (!pret()) return null;
     if (!Array.isArray(but)) { const r = rectDe(but); o = Object.assign({ el: but }, o); but = centreDe(r); }
-    const P = palette(o.el), svg = monter();
-    if (!svg) return null;
-    const accent = o.accent || o.couleur || P.accent, couleur = o.couleur || P.encre;
-    if (reduit()) return empreinteFondue(svg, but, P, accent);
-    const orig = o.seulEmpreinte ? null : origine(but, o), dist = orig ? Math.hypot(but[0] - orig.p[0], but[1] - orig.p[1]) : 0;
-    const total = dureeDe(clamp(330 + dist * .12, 350, 450), P), dur = total / 1.15, mobile = innerWidth < 700, rayon = mobile ? 5.5 : 6.5, rot = graine(but[0], but[1]) % 45;
-    const sens = graine(but[0] / 3, but[1] / 3) % 2 ? 1 : -1;
-    const g = creer('g', {}, svg), imp = empreinte(g, but[0], but[1], rayon, P, accent, rot);
-    let tt = null;
-    if (orig && dist > 20) {
-      const sp = fil({ de: orig.p, dir0: orig.dir, vers: but, crosse: { sens, r0: rayon + 8, r1: rayon + 1.5, tours: 1.25 }, courbe: sens * (orig.bord ? .6 : 1), raideur: .42 });
-      tt = tentacule(g, { sp, S: P.S, couleur, contre: P.contre, lw: 2.4, w0: P.ep * P.S.corps * (admin() ? 1.6 : 2.4), w1: 1.3, k: 1.1, amorce: orig.bord ? 0 : .22, cote: sens, ventouse: P.ventouse,
-        onde: { A: clamp(dist * .03, 3, 11), lambda: 130, vitesse: .018, decroit: dur * .9 } });
-    }
-    const a = { duree: total, g, fin() { g.remove(); } };
-    a.pas = t => {
-      const u = t / dur;
-      if (tt) tt.maj(0, clamp(ease.out(clamp((u - .05) / .47)) * (1 - ease.inOut(clamp((u - .6) / .4))), 0, 1), t, 1);
-      const contact = tt ? .5 : 0, c = clamp((u - contact) / .12), p = clamp((u - contact - .1) / (1.15 - contact - .1));
-      imp.poser(lerp(1.8, 1, ease.out(c)), u < contact ? 0 : clamp(c * 1.5) * (1 - ease.in(p)));
-      return true;
-    };
-    lancer(a);
-    cleurs.push(a);
-    while (cleurs.length > 2) fondre(cleurs.shift(), 90);
+    // plus de tentacule ni d'empreinte jusqu'au point touché : seule la pieuvre répond (elle se contracte et ondule)
     if (o.guide !== false && !o.local) reagir(o.genre || 'clic', but);
-    return a;
+    return null;
   }
   function empreinteFondue(svg, but, P, accent) {
     const g = creer('g', {}, svg), imp = empreinte(g, but[0], but[1], 8, P, accent, 0);
