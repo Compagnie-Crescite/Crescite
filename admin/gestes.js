@@ -550,7 +550,8 @@ dialog.gq-aide .gq-boite { display: flex; flex-direction: column; min-height: 0;
 .gq-aide-corps { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; margin: 0 -20px; padding: 0 20px 4px; }
 .gq-aide h3 { display: flex; align-items: center; gap: 8px; margin: 14px 0 4px; font: 700 11.5px/1.3 var(--etiq, Raleway, 'Open Sans', system-ui, sans-serif); letter-spacing: .12em; text-transform: uppercase; color: var(--gris, #777); }
 .gq-aide section:first-child h3 { margin-top: 4px; }
-.gq-ici { padding: 1px 7px; border-radius: 999px; background: var(--accent-doux, var(--doux, #eee)); color: var(--encre, #222); letter-spacing: .06em; }
+/* (la boîte est hors de l'application de l'équipe, qui pose --accent-doux sur .appli : la teinte de la saison, --magenta-doux, prend le relais ; sans elle la pastille « ici » restait claire sur un texte clair) */
+.gq-ici { padding: 1px 7px; border-radius: 999px; background: var(--accent-doux, var(--magenta-doux, var(--doux, #eee))); color: var(--encre, #222); letter-spacing: .06em; }
 .gq-aide dl { margin: 0; }
 .gq-aide-l { display: grid; grid-template-columns: minmax(118px, 38%) 1fr; gap: 4px 14px; align-items: baseline; padding: 7px 0; border-top: 1px solid var(--trait, var(--filet, #ddd)); }
 .gq-aide-l:first-child { border-top: 0; }
