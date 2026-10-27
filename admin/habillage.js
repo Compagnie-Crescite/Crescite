@@ -53,8 +53,8 @@ body { min-height: 100%; background: radial-gradient(1100px 540px at -5% -10%, c
 .marque { color: #fff; font-family: var(--titres); font-weight: 700; }
 .marque small { color: rgba(255, 255, 255, .72); font-family: var(--etiq); font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
 .marque .pieuvre { color: var(--pieuvre); }
-.nav a { color: rgba(255, 255, 255, .8); font-family: var(--etiq); font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: 8px 12px; transition: background .15s, color .15s; }
-.nav a:hover { background: rgba(255, 255, 255, .12); color: #fff; }
+.nav a, .nav-plus { color: rgba(255, 255, 255, .8); font-family: var(--etiq); font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: 8px 12px; transition: background .15s, color .15s; }
+.nav a:hover, .nav-plus:hover, .nav-plus[aria-expanded="true"] { background: rgba(255, 255, 255, .12); color: #fff; }
 .nav a[aria-current="page"] { color: #fff; box-shadow: 0 6px 16px -6px color-mix(in srgb, var(--saison) 80%, transparent); }
 .qui { color: rgba(255, 255, 255, .72); }
 .qui a { color: #fff; }
@@ -65,7 +65,6 @@ body { min-height: 100%; background: radial-gradient(1100px 540px at -5% -10%, c
 .barre kbd { background: rgba(255, 255, 255, .12); border-color: rgba(255, 255, 255, .22); color: #fff; }
 .direct::before { background: rgba(255, 255, 255, .35); }
 .direct.on::before { background: #4fd68e; box-shadow: 0 0 0 3px rgba(79, 214, 142, .22); }
-@media (max-width: 860px) { .nav { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); } }
 
 /* ===================================================================================================== les titres, les étiquettes */
 h1, h2, h3, .tete h1, .editeur h2, .bloc h3, .connexion h1, .fr-tete h1, dialog h2 { font-family: var(--titres); letter-spacing: -.01em; }

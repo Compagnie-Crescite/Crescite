@@ -239,10 +239,21 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 .echec-lecture .btn { color: var(--encre); }
 .message.horsligne { background: var(--option-doux); border-color: color-mix(in srgb, var(--option) 30%, transparent); color: var(--option); }
 .chargement { margin: 0; padding: 60px 20px; color: var(--gris); text-align: center; }
+/* une lecture en cours (enLecture) : sa forme, qui luit, à la place des mots (dits aux lecteurs d'écran) */
+.chargement.en-lecture { padding: 0; text-align: left; }
+/* avant que les scripts ne soient là : le mot n'apparaît qu'au bout de 0,6 s */
+#app > .chargement { animation: sq-attend 0s linear .6s both; }
 
 /* les squelettes : la forme de ce qui arrive */
 .squelette { position: relative; overflow: hidden; border-radius: var(--rayon); background: var(--surface-2); }
 .squelette.ligne { height: 14px; border-radius: 7px; margin: 10px 0; }
+/* (squelette() : ils attendent 0,15 s avant de paraître, sans mouvement : une base rapide ne les fait pas clignoter) */
+.squelettes { animation: sq-attend 0s linear .15s both; }
+/* le pied de page attend le contenu : il ne paraît pas sous le squelette pour descendre ensuite */
+#contenu:has(> .squelettes) + .pied-espace { display: none; }
+@keyframes sq-attend { from { visibility: hidden; } }
+.sq-chiffres { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.sq-boutons { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 18px; }
 @media (prefers-reduced-motion: no-preference) {
   .squelette::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--surface) 70%, transparent), transparent); animation: lueur 1.3s infinite; }
   @keyframes lueur { to { transform: translateX(100%); } }

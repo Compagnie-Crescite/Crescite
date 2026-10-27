@@ -1,7 +1,7 @@
 // La base fictive de l’administration, commune aux harnais (tableau.mjs, niveau.mjs) : un petit serveur qui sert
 // admin/ et site/src/, les lectures et écritures REST de Supabase simulées (DB, MODIFS, ECRITURES), la session posée
 // dans le stockage du navigateur, le temps réel coupé, les polices coupées. Aucune donnée réelle, aucun appel à la base.
-// ouvrir(navigateur, { largeur, hauteur, hash, sombre, prefsAbsentes }) → { ctx, page, erreurs } ; ok(nom, v, detail) note une
+// ouvrir(navigateur, { largeur, hauteur, hash, sombre, prefsAbsentes, tactile, latence }) → { ctx, page, erreurs } ; ok(nom, v, detail) note une
 // vérification ; bilan(CAPT) les imprime, ferme le serveur et sort en erreur si une manque.
 import http from 'node:http';
 import fs from 'node:fs';
@@ -118,8 +118,8 @@ async function calme(page) {
   await page.waitForTimeout(400);
 }
 
-async function ouvrir(navigateur, { largeur = 1600, hauteur = 1000, hash = '', sombre = false, prefsAbsentes = false } = {}) {
-  const ctx = await navigateur.newContext({ viewport: { width: largeur, height: hauteur }, locale: 'fr-FR', timezoneId: 'Europe/Paris', colorScheme: sombre ? 'dark' : 'light', isMobile: largeur < 600, hasTouch: largeur < 600 });
+async function ouvrir(navigateur, { largeur = 1600, hauteur = 1000, hash = '', sombre = false, prefsAbsentes = false, tactile = largeur < 600, latence = 0 } = {}) {
+  const ctx = await navigateur.newContext({ viewport: { width: largeur, height: hauteur }, locale: 'fr-FR', timezoneId: 'Europe/Paris', colorScheme: sombre ? 'dark' : 'light', isMobile: tactile, hasTouch: tactile });
   // la base simulée : REST lu depuis DB, les écritures de préférences gardées ; le temps réel ne répond jamais
   await ctx.route(/fonts\.g(oogleapis|static)\.com/, r => r.abort());   // (hors ligne : les polices du système)
   await ctx.route(/supabase\.co\//, async route => {
@@ -132,6 +132,7 @@ async function ouvrir(navigateur, { largeur = 1600, hauteur = 1000, hash = '', s
       return json(200, {});
     }
     if (!url.pathname.startsWith('/rest/v1/')) return route.abort();
+    if (latence) await new Promise(r => setTimeout(r, latence));   // une base lente (latence, en ms, à chaque lecture)
     if (url.pathname.startsWith('/rest/v1/rpc/')) { MODIFS.push({ rpc: table, corps: JSON.parse(req.postData() || '{}') }); return json(200, table === 'crescite_prevenir_equipe' ? 2 : null); }
     if (prefsAbsentes && table === 'crescite_preferences') return json(404, { code: 'PGRST205', message: `Could not find the table 'public.${table}' in the schema cache` });
     if (req.method() === 'GET') {

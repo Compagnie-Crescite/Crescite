@@ -50,7 +50,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
 /* le lien d'évitement, comme sur le site et dans l'équipe : hors de l'écran, il paraît au premier Tab */
 .evitement { position: absolute; left: 8px; top: -80px; z-index: 90; padding: 10px 14px; border-radius: 10px; background: var(--encre); color: var(--carte); font-weight: 600; text-decoration: none; }
 .evitement:focus { top: 8px; }
-main.ad-chargement { padding: 0; max-width: none; }
 
 /* le pied commun des espaces réservés (PIED) : sobre, en fin de contenu */
 .pied-espace { display: flex; flex-wrap: wrap; align-items: center; gap: 0 22px; max-width: 1500px; margin: 8px auto 0; padding: 18px 20px 26px; border-top: 1px solid var(--trait); color: var(--gris); font-size: 13px; }
@@ -98,33 +97,48 @@ main.ad-chargement { padding: 0; max-width: none; }
 @media (max-width: 860px) { .temoin-detail { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } .temoin { padding: 4px 8px; } .temoin:is([data-etat="horsligne"], [data-etat="reconnexion"]) .temoin-ic { display: none; } }
 /* l'aide (« ? ») : un bouton discret dans l'en-tête, à l'ordinateur */
 .barre .aide-b { min-width: 32px; padding-left: 0; padding-right: 0; font-weight: 800; }
-/* dix rubriques et la recherche : sous 2 080 px l'adresse du compte se retire ; sous 1 940 px les rubriques passent sur
-   une seconde ligne ; entre 861 et 1 099 px, elles s'y rangent sur deux rangs ; au téléphone, elles défilent (la rubrique
-   courante en vue) */
-@media (max-width: 2079px) { .qui .moi { display: none; } }
-@media (max-width: 1939px) { .barre { flex-wrap: wrap; row-gap: 6px; } .nav { order: 3; flex-basis: 100%; } .qui { margin-left: auto; } .qui .moi { display: inline; } }
-@media (min-width: 861px) and (max-width: 1099px) { .nav { flex-wrap: wrap; row-gap: 2px; overflow: visible; } }
-/* onze rubriques (la Diffusion, quand la base a ses tables) : une seule ligne à partir de 2 080 px, l'adresse du compte à
-   partir de 2 220 px, et les rubriques sur deux rangs jusqu'à 1 219 px */
-@media (min-width: 1100px) and (max-width: 1219px) { .barre.onze .nav { flex-wrap: wrap; row-gap: 2px; overflow: visible; } }
-@media (min-width: 1940px) and (max-width: 2079px) { .barre.onze { flex-wrap: wrap; row-gap: 6px; } .barre.onze .nav { order: 3; flex-basis: 100%; } .barre.onze .qui { margin-left: auto; } .barre.onze .qui .moi, .barre.onze .chercher .mot { display: inline; } }
-@media (min-width: 2080px) and (max-width: 2219px) { .barre.onze .qui .moi { display: none; } }
-/* douze rubriques (le tableau de bord et la Diffusion) : une seule ligne à partir de 2 220 px, l'adresse du compte à partir
-   de 2 360 px, et les rubriques sur deux rangs jusqu'à 1 339 px */
-@media (min-width: 1220px) and (max-width: 1339px) { .barre.douze .nav { flex-wrap: wrap; row-gap: 2px; overflow: visible; } }
-@media (min-width: 2080px) and (max-width: 2219px) { .barre.douze { flex-wrap: wrap; row-gap: 6px; } .barre.douze .nav { order: 3; flex-basis: 100%; } .barre.douze .qui { margin-left: auto; } .barre.douze .qui .moi, .barre.douze .chercher .mot { display: inline; } }
-@media (min-width: 2220px) and (max-width: 2359px) { .barre.douze .qui .moi { display: none; } }
-/* une tablette couchée, un petit portable (1 101 à 1 339 px) : sans l'adresse du compte, le compte tient sur la ligne de la
-   marque, l'en-tête perd une ligne (168 px de haut sur 820, 130 sans elle) */
-@media (min-width: 1101px) and (max-width: 1339px) { .qui .moi { display: none; } }
-/* un écran bas au doigt (un téléphone couché : 390 px de haut) : l'en-tête, sur trois lignes, en aurait pris plus du
-   tiers ; il défile avec la page au lieu d'y rester arrimé (la barre du bas du téléphone en portrait n'est pas touchée) */
-@media (max-height: 500px) and (pointer: coarse) { html:not(.ob-actif) .barre { position: relative; } }
-@media (max-width: 860px) { .qui .moi { display: none; } .barre { flex-wrap: wrap; gap: 8px 14px; padding: 8px 12px; } .nav { order: 3; flex-basis: 100%; padding-right: 28px; -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); } }
+/* L'en-tête tient sur une ligne, ou sur deux, à toutes les largeurs (rangerBarre le mesure, à chaque rendu et quand la
+   fenêtre change) : la marque, la recherche, les rubriques, le compte. Quand tout ne tient pas sur une ligne, les rubriques
+   passent sur la seconde (.deux-lignes). Ce qui ne tient pas encore se replie, dans cet ordre : l'adresse du compte
+   (.r-moi), le mot « Rechercher » (.r-mot), les mots longs (.r-long), les liens du compte, qui passent dans « Plus »
+   (.r-compte), « Administration » sous le nom (.r-marque), la loupe seule (.r-loupe) ; les rubriques qui ne tiennent pas
+   sur leur ligne passent dans « Plus », comme au téléphone, la rubrique courante restant en vue. Un écran bas (500 px de
+   haut au plus : un téléphone couché) garde une seule ligne, arrimée si elle tient dans 64 px (sinon .defile : elle défile
+   avec la page). Au téléphone en portrait (mobile.js), les rubriques sont dans la barre du bas. */
+/* (les rubriques ne débordent jamais : overflow coupe au cas où ; un peu d'air autour garde l'ombre de la rubrique
+   courante et l'anneau du focus, sans changer la hauteur) */
+.barre .nav { flex: 1 1 auto; min-width: 0; overflow: hidden; align-items: center; padding: 6px 4px 12px; margin: -6px -4px -12px; }
+.barre .qui { margin-left: auto; }
+.barre.deux-lignes { flex-wrap: wrap; row-gap: 6px; }
+.barre.deux-lignes .nav { order: 3; flex-basis: 100%; }
+.barre.defile { position: relative; }
+.barre.r-moi .qui .moi, .barre.r-mot .chercher .mot, .barre.r-long .long, .barre.r-loupe .chercher kbd { display: none; }
+.barre.r-compte .qui > :not(.direct) { display: none; }
+.barre.r-marque .marque { display: grid; grid-template-columns: auto auto; align-items: center; column-gap: 8px; row-gap: 2px; line-height: 1.1; }
+.barre.r-marque .marque .pieuvre { grid-row: span 2; }
+.barre.r-marque .marque small { font-size: 10.5px; }
+.barre.r-loupe .chercher { width: 40px; height: 40px; padding: 0; justify-content: center; border-radius: 50%; }
+/* au doigt (une tablette, un téléphone couché), chaque rubrique et « Plus » sont des cibles de 44 px */
+@media (pointer: coarse) { .barre .nav a, .barre .nav-plus { display: inline-flex; align-items: center; min-height: 44px; } .barre.r-loupe .chercher { width: 44px; height: 44px; } }
+/* « Plus » : au bout des rubriques, il ouvre sous lui les rubriques qui n'ont pas tenu, puis le compte (.r-compte) */
+.nav-plus { display: inline-flex; align-items: center; gap: 6px; flex: none; margin-left: 2px; padding: 7px 12px; border: 0; border-radius: 999px; background: none; color: inherit; font: inherit; font-weight: 600; white-space: nowrap; cursor: pointer; }
+.barre .nav > [hidden] { display: none !important; }
+.nav-plus svg { transition: transform .15s; }
+.nav-plus[aria-expanded="true"] svg { transform: rotate(180deg); }
+.nav-autres { position: absolute; z-index: 40; display: none; flex-direction: column; gap: 2px; width: max-content; min-width: 230px; max-width: calc(100vw - 16px); overflow: auto; overscroll-behavior: contain; padding: 6px; background: var(--carte); color: var(--encre); border: 1px solid var(--trait); border-radius: 12px; box-shadow: 0 14px 40px rgba(10, 5, 10, .35); text-transform: none; letter-spacing: 0; }
+.nav-autres.ouvert { display: flex; }
+.nav-autres .na-titre { margin: 6px 12px 2px; }
+.nav-autres .na-item + .na-titre { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--trait); }
+.nav-autres .na-titre { font: 700 11px/1.2 var(--etiq, inherit); letter-spacing: .12em; text-transform: uppercase; color: var(--gris); }
+.nav-autres .na-moi { margin: 0 12px 4px; font-size: 12.5px; color: var(--gris); overflow-wrap: anywhere; }
+.nav-autres .na-item { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 12px; border: 0; border-radius: 9px; background: none; color: var(--encre); font: inherit; font-weight: 650; text-align: left; text-decoration: none; cursor: pointer; }
+.nav-autres .na-item:hover, .nav-autres .na-item:focus-visible { background: var(--doux); }
+.nav-autres .na-item[aria-current="page"] { background: var(--accent-doux); color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+@media (max-width: 860px) { .barre { gap: 8px 14px; padding: 8px 12px; } }
 @media (max-width: 520px) { .qui { gap: 10px; font-size: 12.5px; } .qui .long, .direct .mot { display: none; } }
 /* la recherche rapide : le bouton de l'en-tête (la loupe, « Rechercher », le raccourci Ctrl K ou ⌘K) et sa fenêtre.
-   La loupe et le raccourci ; le mot en plus quand l'en-tête tient sur deux lignes (de 1 200 à 1 939 px) ; au téléphone,
-   la loupe seule, au bout de la ligne de la marque (les liens du compte passent dessous quand la place manque) */
+   La loupe, le mot et le raccourci, tant qu'ils tiennent (rangerBarre : .r-mot, .r-loupe) ; au téléphone, la loupe seule,
+   au bout de la ligne de la marque */
 .chercher { display: inline-flex; align-items: center; gap: 8px; flex: none; min-height: 34px; padding: 4px 6px 4px 10px; border: 1px solid var(--trait); border-radius: 9px; background: var(--doux); color: var(--gris); font-weight: 600; font-size: 13.5px; cursor: pointer; }
 .chercher:hover { border-color: var(--gris); color: var(--encre); }
 .chercher svg { flex: none; }
@@ -132,8 +146,6 @@ main.ad-chargement { padding: 0; max-width: none; }
 /* le raccourci s'écrit par la feuille de style : ce que montre le bouton reste dans son nom (« Rechercher ») */
 .chercher kbd[data-touche]::before { content: attr(data-touche); }
 kbd { font: 650 11.5px/1 var(--police); padding: 3px 5px 2px; border: 1px solid var(--trait); border-bottom-width: 2px; border-radius: 5px; background: var(--carte); color: var(--gris); white-space: nowrap; }
-@media (max-width: 1199px), (min-width: 1940px) { .chercher .mot { display: none; } }
-@media (max-width: 860px) { .chercher { margin-left: auto; width: 40px; height: 40px; padding: 0; justify-content: center; border-radius: 50%; } .chercher .mot, .chercher kbd { display: none; } .barre .qui { margin-left: 0; } }
 dialog.recherche { width: min(640px, calc(100% - 24px)); max-width: none; max-height: min(580px, calc(100dvh - 24px)); margin: max(12px, 9vh) auto auto; padding: 0; border: 1px solid var(--trait); border-radius: 14px; background: var(--carte); color: var(--encre); box-shadow: 0 18px 60px rgba(20, 10, 20, .3); overflow: hidden; }
 dialog.recherche[open] { display: flex; }
 dialog.recherche::backdrop { background: rgba(23, 15, 26, .4); }
@@ -151,7 +163,12 @@ dialog.recherche::backdrop { background: rgba(23, 15, 26, .4); }
 .rch-corps b, .rch-corps small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rch-corps small { color: var(--gris); font-size: 13px; }
 .rch-type { flex: none; font-size: 12px; font-weight: 700; color: var(--gris); }
-.rch-liste mark { background: none; color: inherit; text-decoration: underline 2px var(--accent); text-underline-offset: 3px; }
+.rch-liste mark { background: color-mix(in srgb, var(--accent) 16%, transparent); border-radius: 3px; color: inherit; text-decoration: underline 2px var(--accent); text-underline-offset: 3px; }
+/* le passage qui a trouvé la fiche (un téléphone, une adresse, un jour), sous sa ligne ; l'intitulé du second groupe */
+.rch-corps .rch-passage { font-size: 12.5px; }
+.rch-passage > span { font-weight: 700; }
+.rch-liste .rch-groupe { margin: 10px 10px 2px; padding-top: 8px; border-top: 1px solid var(--trait); font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--gris); list-style: none; }
+@media (pointer: coarse) { .rch-liste [role=option] { min-height: 52px; } .rch-tete [data-fermer] { min-height: 44px; padding: 8px 12px; } }
 .rch-aide { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0; padding: 8px 18px; border-top: 1px solid var(--trait); font-size: 12.5px; color: var(--gris); }
 @media (max-width: 520px) { dialog.recherche { width: calc(100% - 16px); margin-top: 8px; max-height: calc(100dvh - 16px); } .rch-aide { display: none; } }
 
@@ -368,7 +385,8 @@ table.simple tr.cliquable:hover td { background: var(--doux); }
 .connexion form { width: min(400px, 100%); }
 .connexion h1 { font-size: 22px; margin: 0 0 4px; }
 .connexion p { color: var(--gris); margin: 0 0 18px; }
-.chargement { padding: 60px 20px; text-align: center; color: var(--gris); }
+/* (avant que les scripts ne soient là : le mot n'apparaît qu'au bout de 0,6 s, sans marge qui décale la page ensuite) */
+.chargement { margin: 0; padding: 60px 20px; text-align: center; color: var(--gris); animation: sq-attend 0s linear .6s both; }
 
 /* annonces */
 #annonces { position: fixed; z-index: 50; left: 50%; bottom: 18px; transform: translateX(-50%); display: grid; gap: 8px; width: min(460px, calc(100% - 24px)); }
@@ -610,18 +628,39 @@ html.still *, html.still *::before, html.still *::after { animation: none !impor
 .ligne { transition: box-shadow .15s, border-color .15s; }
 .nav a, .seg button, .puce { transition: background-color .2s, color .2s, border-color .2s; }
 .champ input, .champ select, .champ textarea, .riche, input[type=search], .filtres input, .filtres select { transition: border-color .15s, box-shadow .15s; }
-/* le squelette du chargement : la barre, une liste et une fiche, qui luisent (le contenu paraît ensuite, main.fondu) */
-.ad-squelette { --h: 16px; }
+/* le squelette du chargement (squeletteAdmin) : l'en-tête tel qu'il sera, puis la vue à sa forme, aux mesures de la page
+   (le titre et ses boutons de 41 px, le bandeau du tableau de bord, les lignes d'une liste, les cartes…), qui luisent ; le
+   contenu paraît ensuite à sa place (main.fondu). Il attend 0,15 s avant de paraître, sans mouvement si l'appareil en
+   demande moins (une base rapide ne le fait pas clignoter) */
+.ad-squelette { --h: 16px; animation: sq-attend 0s linear .15s both; }
+@keyframes sq-attend { from { visibility: hidden; } }
 .sq { position: relative; display: block; height: var(--h); border-radius: 8px; background: var(--doux); overflow: hidden; }
-.sq-barre { display: flex; align-items: center; gap: 18px; padding: 14px 20px; border-bottom: 1px solid var(--trait); background: var(--carte); }
-.sq-rond { width: 42px; height: 24px; border-radius: 999px; }
-.sq-main { display: grid; gap: 16px; max-width: 1500px; margin: 0 auto; padding: 20px; }
-.sq-deux { display: grid; grid-template-columns: minmax(340px, 460px) 1fr; gap: 18px; }
-.sq-deux > div { display: grid; gap: 8px; align-content: start; }
+.sq-tete { min-height: 41px; }
+.sq-titre { height: 34px; max-width: 60%; margin-right: auto; border-radius: 9px; }
+.sq-pilule { height: 41px; max-width: 100%; border-radius: 10px; }
+.sq-tb-outils { justify-content: flex-end; }
+.sq-tb-outils .sq-pilule:first-child { margin-right: 0; }
+.sq-salut { height: 175px; margin-bottom: 14px; border-radius: 22px; }
+.sq-tuiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.sq-tuile { height: 490px; border-radius: var(--rayon); }
+.sq-tuile-g { grid-column: 1 / -1; height: 171px; }
+.sq-tuile-m { grid-column: span 2; }
+.sq-deux { display: grid; grid-template-columns: minmax(340px, 460px) minmax(0, 1fr); gap: 18px; align-items: start; }
+.sq-pile { display: grid; gap: 8px; align-content: start; }
 .sq-ligne { height: 64px; border-radius: 10px; }
-.sq-bloc { height: 320px; border-radius: 12px; }
-@media (max-width: 1100px) { .sq-deux { grid-template-columns: 1fr; } .sq-bloc { display: none; } }
-.btn:active:not([disabled]) { transform: scale(.97); }
+.sq-fiche { height: 84px; border-radius: var(--rayon); }
+.sq-filtres { height: 149px; margin-bottom: 10px; border-radius: var(--rayon); }
+.sq-etroit { max-width: 920px; }
+.sq-zone { padding: 8px; }
+.sq-cartes { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+.sq-carte { height: 234px; border-radius: var(--rayon); }
+.sq-grille { height: 320px; border-radius: var(--rayon); }
+.sq-kpi { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 17px; }
+.sq-chiffre { height: 82px; border-radius: var(--rayon); }
+.sq-colonnes { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
+.sq-colonne { height: 480px; border-radius: var(--rayon); }
+@media (max-width: 1100px) { .sq-deux { grid-template-columns: 1fr; } .sq-fiche { display: none; } .sq-tuiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .sq-tuiles, .sq-kpi, .sq-colonnes { grid-template-columns: 1fr; } .sq-tuile-m { grid-column: auto; } .sq-salut { height: 283px; } .sq-tuile-g { height: 591px; } .sq-filtres { height: 243px; } .sq-colonne { height: 220px; } }.btn:active:not([disabled]) { transform: scale(.97); }
 @media (prefers-reduced-motion: no-preference) {
   ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .22s; animation-timing-function: cubic-bezier(.2, .8, .2, 1); }
   html[data-sens="avant"]::view-transition-old(root) { animation-name: ad-sort-gauche; }
@@ -957,6 +996,40 @@ function ecranMotDePasse(depuisLaBarre = false) {
   });
 }
 
+// en attendant la base : l'en-tête tel qu'il sera (inerte), et la vue de l'adresse dessinée à sa forme, qui luit. Le
+// tableau de bord : le bandeau, ses boutons, la grande tuile puis les autres ; une rubrique à liste : son titre, la liste
+// et la place de la fiche ; le journal : ses filtres et ses lignes ; les spectacles : leurs cartes ; le planning, sa grille ;
+// la diffusion : ses chiffres et ses colonnes. Les mêmes marges que la page : le contenu prend la place du squelette sans
+// pousser l'en-tête ni le titre. Le squelette ne paraît qu'au bout de 0,15 s (une base rapide ne le fait pas clignoter).
+const SQ = (cls, style = '') => `<span class="sq ${cls}"${style ? ` style="${style}"` : ''}></span>`;
+const sqTete = (boutons = 1, titre = 200) => `<div class="tete sq-tete">${SQ('sq-titre', `width:${titre}px`)}${Array.from({ length: boutons }, (_, i) => SQ('sq-pilule', `width:${i ? 110 : 150}px`)).join('')}</div>`;
+const sqLignes = n => SQ('sq-ligne').repeat(n);
+// une zone qui attend sa lecture (le journal, la corbeille, un fil de notes, le journal d'une invitation) : ses lignes en
+// squelette, et « Chargement… » pour les lecteurs d'écran
+const attenteLignes = (n = 4, hauteur = 58) => `<div class="ad-squelette sq-pile sq-zone" aria-hidden="true">${SQ('sq-ligne', `height:${hauteur}px`).repeat(n)}</div><p class="sr" role="status">Chargement…</p>`;
+function corpsSquelette(rub) {
+  switch (rub) {
+    case 'accueil': return `${SQ('sq-salut')}<div class="tete sq-tete sq-tb-outils">${SQ('sq-pilule', 'width:272px')}${SQ('sq-pilule', 'width:87px')}${SQ('sq-pilule', 'width:130px')}</div>
+      <div class="sq-tuiles">${SQ('sq-tuile sq-tuile-g')}${SQ('sq-tuile sq-tuile-m')}${SQ('sq-tuile')}${SQ('sq-tuile')}</div>`;
+    case 'journal': return `${sqTete(1, 98)}${SQ('sq-filtres')}<div class="sq-pile">${sqLignes(7)}</div>`;
+    case 'spectacles': return `${sqTete(1, 144)}<div class="sq-cartes">${SQ('sq-carte').repeat(5)}</div>`;
+    case 'planning': return `${sqTete(2, 113)}${SQ('sq-grille')}`;
+    case 'diffusion': return `${sqTete(2, 300)}<div class="sq-kpi">${SQ('sq-chiffre').repeat(3)}</div><div class="sq-colonnes">${SQ('sq-colonne').repeat(5)}</div>`;
+    case 'feuilles': return `${sqTete(0, 212)}<div class="sq-etroit">${SQ('sq-filtres')}<div class="sq-pile">${sqLignes(6)}</div></div>`;
+    default: return `${sqTete(rub === 'textes' ? 0 : 1)}<div class="sq-deux"><div class="sq-pile">${sqLignes(7)}</div>${SQ('sq-fiche')}</div>`;
+  }
+}
+function squeletteAdmin() {
+  const k = (location.hash.match(/^#\/([a-z]+)/) || [])[1], rub = RUBRIQUES.some(r => r[0] === k) ? k : 'accueil';
+  $('#app').innerHTML = `${barreHtml(rub, true)}<main class="ad-chargement" aria-busy="true"><div class="ad-squelette" aria-hidden="true">${corpsSquelette(rub)}</div><p class="sr" role="status">Chargement de la base…</p></main>`;
+  majTemoin();
+  tt('pieuvre');     // (la marque a sa pieuvre, comme dans la page : l'en-tête garde sa largeur)
+  rangerBarre();
+  // au téléphone, l'en-tête du squelette est déjà celui du téléphone (la marque, le témoin, la loupe : mobile.js) ;
+  // la barre du bas viendra avec la page
+  if (typeof MOBILE !== 'undefined' && MOBILE.actif()) document.documentElement.classList.add('ob-actif');
+  poserHautBarre();
+}
 let demarre = false;
 async function demarrer() {
   // feuille.js et equipe.js se chargent après ce script : on les attend
@@ -964,8 +1037,7 @@ async function demarrer() {
   if (!E.session) { demarre = false; return ecranConnexion(); }
   if (demarre) return;
   demarre = true;
-  $('#app').innerHTML = `<main class="ad-chargement" aria-busy="true"><div class="ad-squelette" aria-hidden="true"><div class="sq-barre"><span class="sq sq-rond"></span><span class="sq" style="width:120px"></span><span class="sq" style="width:160px;margin-left:auto"></span></div>
-    <div class="sq-main"><span class="sq" style="width:220px;height:26px"></span><div class="sq-deux"><div>${'<span class="sq sq-ligne"></span>'.repeat(6)}</div><span class="sq sq-bloc"></span></div></div></div><p class="sr" role="status">Chargement de la base…</p></main>`;
+  squeletteAdmin();
   const { data, error } = await sb.from('crescite_admins').select('user_id').eq('user_id', E.session.user.id);
   if (error) { demarre = false; return ecranConnexion(/crescite_admins/.test(error.message) ? 'La base de la compagnie n’est pas encore installée.' : error.message); }
   if (!data.length) {
@@ -1121,6 +1193,7 @@ function majTemoin() {
     b.title = `${x.long} Actualiser.`;
     b.setAttribute('aria-busy', String(x.k === 'lecture'));
   });
+  if ($('.barre .nav-plus')) rangerBientot();     // (« Hors ligne · lu il y a 3 min » prend plus de place que « À jour »)
   // les lecteurs d'écran : le passage hors ligne, puis le retour (pas l'état d'ouverture, que l'écran dit déjà)
   const hors = x.k === 'horsligne';
   if (etatAnnonce !== null && hors !== etatAnnonce) {
@@ -1183,39 +1256,125 @@ const RUBRIQUES = [['accueil', 'Tableau de bord'], ['representations', 'Représe
 // la Diffusion n'est là que quand la base a ses tables (le script 20261026_crescite_ideale.sql) : sinon elle se masque
 const rubriquesVisibles = () => RUBRIQUES.filter(([k]) => k !== 'diffusion' || E.ideale);
 const idealeAbsente = titre => `<div class="bloc"><h3>${titre}</h3><p>Exécutez <code>supabase/migrations/20261026_crescite_ideale.sql</code> dans Supabase (SQL Editor → New query → coller le fichier → Run), puis rechargez cette page.</p><p class="aide">Le reste de l’administration marche comme avant.</p></div>`;
-function cadre(rubrique, contenu) {
+// l'en-tête : celui de la page, et celui du squelette du chargement (attente : le même, inerte, pour que rien ne bouge
+// quand la page arrive)
+function barreHtml(rubrique, attente = false) {
   const nRub = rubriquesVisibles().length;
-  $('#app').innerHTML = `<a class="evitement" href="#vue">Aller au contenu</a><header class="barre${nRub > 11 ? ' onze douze' : nRub > 10 ? ' onze' : ''}"><a class="marque" href="#/accueil" title="Tableau de bord"><span class="pieuvre" data-pieuvre aria-hidden="true"></span>Compagnie Crescite <small>Administration</small></a>
+  return `<header class="barre${nRub > 11 ? ' onze douze' : nRub > 10 ? ' onze' : ''}${attente ? ' attente" inert aria-hidden="true' : ''}"><a class="marque" href="#/accueil" title="Tableau de bord"><span class="pieuvre" data-pieuvre aria-hidden="true"></span>Compagnie Crescite <small>Administration</small></a>
     <button type="button" class="chercher" id="b-chercher" aria-label="Rechercher" aria-haspopup="dialog" aria-keyshortcuts="${SUR_MAC ? 'Meta+K' : 'Control+K'}" title="Rechercher une date, une personne, un lieu… (${RACCOURCI_RCH})">${LOUPE}<span class="mot" aria-hidden="true">Rechercher</span><kbd aria-hidden="true" data-touche="${RACCOURCI_RCH}"></kbd></button>
-    <nav class="nav" aria-label="Rubriques">${rubriquesVisibles().map(([k, l]) => `<a href="#/${k}"${k === rubrique ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>
+    <nav class="nav" aria-label="Rubriques">${rubriquesVisibles().map(([k, l]) => `<a href="#/${k}"${k === rubrique ? ' aria-current="page"' : ''}>${l}</a>`).join('')}<button type="button" class="nav-plus" aria-expanded="false" aria-controls="nav-autres" hidden>Plus<svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></nav><div class="nav-autres" id="nav-autres" role="group" aria-label="Autres rubriques et compte"></div>
     <div class="qui">${temoinHtml()}
     <a href="${SITE}" target="_blank" rel="noopener">Voir le site ↗</a><a href="${SITE}?edition" target="_blank" rel="noopener" title="Écrire les textes et les dates dans la page elle-même">Modifier<span class="long"> sur le site</span> ↗</a><span class="moi">${esc(E.session.user.email)}</span>
-    <button class="btn petit" type="button" id="b-mdp" aria-label="Mot de passe" title="Changer mon mot de passe"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3M16.5 6.5l3 3M14.5 8.5l2 2"/></svg><span class="long"> Mot de passe</span></button><button class="btn petit aide-b" type="button" id="b-aide" data-aide aria-label="Raccourcis clavier" aria-keyshortcuts="?" title="Raccourcis clavier (?)">?</button><button class="btn petit" type="button" id="b-sortir">Se déconnecter</button></div></header><main id="vue" tabindex="-1"${ouvertureMuette || CALME_ADMIN() ? '' : ' class="entree"'}>${contenu}</main>${PIED}`;
+    <button class="btn petit" type="button" id="b-mdp" aria-label="Mot de passe" title="Changer mon mot de passe"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3M16.5 6.5l3 3M14.5 8.5l2 2"/></svg><span class="long"> Mot de passe</span></button><button class="btn petit aide-b" type="button" id="b-aide" data-aide aria-label="Raccourcis clavier" aria-keyshortcuts="?" title="Raccourcis clavier (?)">?</button><button class="btn petit" type="button" id="b-sortir">Se déconnecter</button></div></header>`;
+}
+function cadre(rubrique, contenu) {
+  $('#app').innerHTML = `<a class="evitement" href="#vue">Aller au contenu</a>${barreHtml(rubrique)}<main id="vue" tabindex="-1"${ouvertureMuette || CALME_ADMIN() ? '' : ' class="entree"'}>${contenu}</main>${PIED}`;
   majTemoin();
+  rangerBarre();
   poserHautBarre();
   setTimeout(() => $('#vue')?.classList.remove('entree'), 900);
   $('#b-sortir').addEventListener('click', async () => { if (await partirSansPerdre({ titre: 'Se déconnecter sans enregistrer ?', ok: 'Se déconnecter' })) await sb.auth.signOut(); });
   $('#b-mdp').addEventListener('click', async () => { if (await partirSansPerdre({ titre: 'Changer de mot de passe sans enregistrer ?', ok: 'Continuer' })) ecranMotDePasse(true); });
   $('#b-chercher').addEventListener('click', ouvrirRecherche);
-  // au téléphone, les rubriques défilent : la rubrique courante est amenée en vue (hors du fondu de droite)
-  const nav = $('.nav'), courante = $('.nav a[aria-current="page"]');
-  if (nav && courante && nav.scrollWidth > nav.clientWidth) {
-    const n = nav.getBoundingClientRect(), r = courante.getBoundingClientRect();
-    if (r.right > n.right - 36) nav.scrollLeft += r.right - (n.right - 40);
-    else if (r.left < n.left) nav.scrollLeft -= n.left - r.left + 4;
-  }
   tt('pieuvre');
 }
-// la hauteur de l'en-tête arrimé (une, deux ou trois lignes selon la largeur ; 56 px au téléphone) : --haut-barre, sous
-// lequel collent les en-têtes des listes qui défilent avec la page (le mois, le jour) et la barre d'outils d'une feuille
+// la hauteur de l'en-tête arrimé (une ou deux lignes selon la largeur ; 56 px au téléphone) : --haut-barre, sous lequel
+// collent les en-têtes des listes qui défilent avec la page (le mois, le jour) et la barre d'outils d'une feuille
 const RO_BARRE = typeof ResizeObserver === 'function' ? new ResizeObserver(() => poserHautBarre(false)) : null;
 function poserHautBarre(observer = true) {
   const b = $('.barre'), arrime = b && getComputedStyle(b).position === 'sticky';     // (un écran bas : l'en-tête défile, rien ne colle dessous)
   document.documentElement.style.setProperty('--haut-barre', `${arrime ? Math.round(b.getBoundingClientRect().height) : 0}px`);
   if (observer && RO_BARRE && b) { RO_BARRE.disconnect(); RO_BARRE.observe(b); }
 }
-// (le téléphone qu'on tourne : l'en-tête s'arrime ou défile sans changer de taille)
-if (typeof matchMedia === 'function') matchMedia('(max-height: 500px) and (pointer: coarse)').addEventListener?.('change', () => poserHautBarre(false));
+// l'en-tête sur une ligne ou deux (la feuille de style dit l'ordre des replis) : on part de tout déplié, on essaie une
+// ligne, puis deux, en repliant une chose de plus tant que ça ne tient pas ; puis les rubriques en trop passent dans
+// « Plus », de la dernière à la première, la rubrique courante gardée. Tout se mesure dans le même tour, avant que la page
+// se peigne : rien ne saute. Un écran bas (500 px de haut au plus) garde une seule ligne, et ne s'arrime que dans 64 px.
+const REPLIS_BARRE = ['r-moi', 'r-mot', 'r-long', 'r-compte', 'r-marque', 'r-loupe'];
+// (la hauteur se lit par une requête média : au téléphone, innerHeight grandit le temps qu'un essai déborde de l'écran)
+const BARRE_BASSE = '(max-height: 500px)', BARRE_ARRIMEE = 64;
+function rangerBarre() {
+  const b = $('.barre'), nav = b && $('.nav', b), plus = nav && $('.nav-plus', nav);
+  if (!plus) return;
+  fermerNavPlus();
+  const liens = $$(':scope > a', nav), tel = typeof MOBILE !== 'undefined' && MOBILE.actif(), bas = typeof matchMedia === 'function' && matchMedia(BARRE_BASSE).matches;
+  b.classList.remove('deux-lignes', 'defile', ...REPLIS_BARRE);
+  liens.forEach(a => { a.hidden = false; });
+  plus.hidden = true;
+  // le téléphone en portrait : les rubriques et le compte sont dans la barre du bas (mobile.js), l'en-tête n'a plus que la
+  // marque, le témoin et la loupe
+  if (tel) { b.classList.add(...REPLIS_BARRE); MOBILE.poser(); return; }
+  const large = () => b.scrollWidth <= b.clientWidth + 1, deborde = () => nav.scrollWidth > nav.clientWidth + 1;
+  const marque = $('.marque', b), qui = $('.qui', b);
+  // tout sur une ligne (rien n'y déborde) ; deux lignes : le compte reste sur la ligne de la marque
+  const tient = deux => large() && (deux ? qui.getBoundingClientRect().top < marque.getBoundingClientRect().bottom : !deborde());
+  const replier = deux => { for (const r of REPLIS_BARRE) { if (tient(deux)) return; b.classList.add(r); } };
+  if (bas) replier(false);              // une ligne, coûte que coûte : le compte, la marque et la loupe se replient avant les rubriques
+  else if (!tient(false)) { b.classList.add('deux-lignes'); replier(true); }
+  if (deborde() || b.classList.contains('r-compte')) {
+    plus.hidden = false;
+    const courante = liens.find(a => a.hasAttribute('aria-current'));
+    for (let i = liens.length - 1; i >= 0 && deborde(); i--) if (liens[i] !== courante) liens[i].hidden = true;
+    if (deborde() && courante) courante.hidden = true;
+  }
+  if (bas && b.getBoundingClientRect().height > BARRE_ARRIMEE) b.classList.add('defile');
+}
+// « Plus » : ce qui n'a pas tenu (les rubriques, dans leur ordre ; le compte), sous le bouton. Il s'ouvre au clic, à Entrée
+// ou à l'espace (le focus sur la première ligne) ; ↑ ↓ Début Fin entre les lignes ; Échap le ferme et rend le focus au
+// bouton ; un choix, un clic à côté, le focus ailleurs ou la fenêtre qui change le ferment aussi
+const navAutres = () => $('#nav-autres');
+function ouvrirNavPlus() {
+  const b = $('.barre'), plus = $('.nav-plus', b), m = navAutres();
+  if (!plus || !m) return;
+  const caches = $$('.nav > a[hidden]', b), compte = b.classList.contains('r-compte');
+  m.innerHTML = `${caches.length ? `<p class="na-titre" aria-hidden="true">Rubriques</p>${caches.map(a => `<a class="na-item" href="${esc(a.getAttribute('href'))}"${a.hasAttribute('aria-current') ? ' aria-current="page"' : ''}>${esc(a.textContent)}</a>`).join('')}` : ''}${compte ? `<p class="na-titre" aria-hidden="true">Compte</p><p class="na-moi">${esc(E.session?.user?.email || '')}</p>
+    <a class="na-item" href="${SITE}" target="_blank" rel="noopener">Voir le site ↗</a><a class="na-item" href="${SITE}?edition" target="_blank" rel="noopener">Modifier sur le site ↗</a>
+    <button type="button" class="na-item" data-na="mdp">Mot de passe</button><button type="button" class="na-item" data-na="aide">Raccourcis clavier</button><button type="button" class="na-item" data-na="sortir">Se déconnecter</button>` : ''}`;
+  const rb = b.getBoundingClientRect(), rp = plus.getBoundingClientRect(), haut = Math.round(rp.bottom - rb.top + 6);
+  m.style.top = `${haut}px`;
+  m.style.maxHeight = `${Math.max(160, innerHeight - Math.max(0, rb.top) - haut - 10)}px`;
+  m.classList.add('ouvert');
+  // sous le bouton, aligné sur son bord droit, sans sortir de l'écran à gauche
+  const droite = Math.max(8, Math.round(rb.right - rp.right)), l = m.getBoundingClientRect().width;
+  m.style.right = `${Math.min(droite, Math.max(8, Math.round(rb.width - l - 8)))}px`;
+  plus.setAttribute('aria-expanded', 'true');
+  $('.na-item', m)?.focus();
+}
+function fermerNavPlus(rendre = false) {
+  const m = navAutres();
+  if (!m || !m.classList.contains('ouvert')) return;
+  m.classList.remove('ouvert');
+  const plus = $('.nav-plus');
+  plus?.setAttribute('aria-expanded', 'false');
+  if (rendre) plus?.focus();
+}
+document.addEventListener('click', e => {
+  const plus = e.target.closest?.('.nav-plus'), m = navAutres();
+  if (plus) { if (m?.classList.contains('ouvert')) fermerNavPlus(); else ouvrirNavPlus(); return; }
+  if (!m || !m.classList.contains('ouvert')) return;
+  const x = e.target.closest('.na-item');
+  if (m.contains(e.target) && !x) return;
+  fermerNavPlus(!!x && !!x.dataset.na);
+  const quoi = x?.dataset.na;
+  if (quoi === 'mdp') $('#b-mdp')?.click();
+  else if (quoi === 'sortir') $('#b-sortir')?.click();
+  else if (quoi === 'aide' && typeof ouvrirAide === 'function') ouvrirAide($('.nav-plus'));
+});
+document.addEventListener('keydown', e => {
+  const m = navAutres();
+  if (!m || !m.classList.contains('ouvert')) return;
+  if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); fermerNavPlus(true); return; }
+  const xs = $$('.na-item', m), i = xs.indexOf(document.activeElement);
+  if (i < 0) return;
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); xs[(i + (e.key === 'ArrowDown' ? 1 : -1) + xs.length) % xs.length].focus(); }
+  else if (e.key === 'Home' || e.key === 'End') { e.preventDefault(); xs[e.key === 'Home' ? 0 : xs.length - 1].focus(); }
+}, true);
+document.addEventListener('focusin', e => { if (!e.target.closest?.('#nav-autres, .nav-plus')) fermerNavPlus(); });
+// la fenêtre qui change (de largeur, de hauteur : le téléphone qu'on tourne), les polices qui arrivent : l'en-tête se range
+// de nouveau, une fois par image
+function rangerBientot() { if (!rangerBientot.image) rangerBientot.image = requestAnimationFrame(() => { rangerBientot.image = 0; rangerBarre(); poserHautBarre(false); }); }
+window.addEventListener('resize', rangerBientot);
+document.fonts?.addEventListener?.('loadingdone', rangerBientot);
 const ROUTES = [
   [/^#\/accueil$/, () => vueTableau()],
   [/^#\/representations(?:\/(nouvelle|tableur|carte|\d+))?$/, m => vueDates(m[1])],
@@ -1450,13 +1609,23 @@ document.addEventListener('keydown', e => {
    (le temps réel a pu changer E entre-temps). Le champ est une combobox, les résultats une listbox : ↑ ↓ (Page ↑ ↓) pour
    choisir, Entrée pour ouvrir, Échap pour fermer ; sans rien taper, les prochaines dates. Chaque mot tapé doit se trouver ;
    un mot au début du titre compte plus qu'au milieu d'un mot, et, à égalité, les dates à venir passent avant les passées
-   (les plus proches d'abord), une feuille de route juste après sa date. */
+   (les plus proches d'abord), une feuille de route juste après sa date.
+   Tout ce qui a une adresse s'y trouve : aussi les parties des rubriques (le tableur, la carte, les propositions…), les
+   textes du site, les invitations des salles, les ateliers proposés, les documents, et le compte (le mot de passe, les
+   raccourcis). Champ vide : les fiches ouvertes en dernier sur cet appareil (noterRecente), puis les prochaines dates.
+   Le mot trouvé est souligné ; trouvé ailleurs que dans le titre et sa ligne (une adresse, un téléphone, un jour, un
+   contact), le passage qui le contient s'ajoute dessous, souligné lui aussi : on voit pourquoi la fiche est là. */
 const SUR_MAC = /mac|iphone|ipad|ipod/i.test(navigator.userAgentData?.platform || navigator.platform || '');
 const RACCOURCI_RCH = SUR_MAC ? '⌘K' : 'Ctrl K';
 const LOUPE = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>';
 const JOURS_RCH = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
 const TYPES_RCH = [['Action', 'Action'], ['À traiter', 'À traiter'], ['Rubrique', 'Rubrique'], ['Spectacle', 'Spectacle'], ['Personne', 'Personne'], ['Lieu', 'Lieu'], ['Date', 'Date'], ['Feuille de route', 'Feuille'],
-  ['Vue', 'Vue'], ['Note de frais', 'Frais'], ['Devis', 'Devis'], ['Diffusion', 'Diffusion'], ['Proposition', 'Proposition'], ['Séance', 'Séance']];
+  ['Vue', 'Vue'], ['Note de frais', 'Frais'], ['Devis', 'Devis'], ['Diffusion', 'Diffusion'], ['Proposition', 'Proposition'], ['Séance', 'Séance'],
+  ['Atelier', 'Atelier'], ['Invitation', 'Invitation'], ['Document', 'Document'], ['Texte du site', 'Texte'], ['Compte', 'Compte']];
+// un jour dit en toutes lettres (« mardi 21 octobre 2026 ») : le passage montré quand c'est un jour qui a trouvé la date
+const jourLettresRch = j => { const d = new Date(`${j}T12:00:00`); return `${JOURS_RCH[d.getDay()]} ${d.getDate() === 1 ? '1er' : d.getDate()} ${AGENDA.MOIS[d.getMonth()]} ${d.getFullYear()}`; };
+// les passages d'une fiche qui ne sont ni son titre ni sa ligne : [libellé, texte, ce qui s'y cherche (le texte, sinon)]
+const passagesRch = xs => xs.filter(x => x && String(x[1] || '').trim()).map(([l, t, c]) => ({ l, t: String(t).replace(/\s+/g, ' ').trim(), c: cleRch(c || t) }));
 const STATUTS_FRAIS_RCH = { en_attente: 'en attente', valide: 'validée', refuse: 'refusée', rembourse: 'remboursée' };
 const eurosRch = n => `${(Number(n) || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
 const sansBalises = h => String(h || '').replace(/<[^>]+>/g, '').replace(/&[a-z#0-9]+;/g, ' ').replace(/\s+/g, ' ').trim();
@@ -1469,11 +1638,13 @@ function indexRch() {
   const xs = [], joursDe = new Map(), feuilles = new Map((E.feuilles || []).map(f => [f.date_id, f]));
   E.reps.forEach(r => { if (!r.jour) return; if (!joursDe.has(r.date_id)) joursDe.set(r.date_id, new Set()); joursDe.get(r.date_id).add(r.jour); });
   // (le genre compte dans les mots cherchés : « lieu volcan », « frais camille », « action nouvelle date »)
-  const mettre = (o, plus = '') => xs.push({ ordre: 0, sous: '', ...o, rang: TYPES_RCH.findIndex(t => t[0] === o.type), ct: cleRch(o.titre), c: cleRch(`${o.type} ${o.titre} ${o.sous || ''} ${plus}`) });
+  const mettre = (o, plus = '') => xs.push({ ordre: 0, sous: '', passages: [], ...o, rang: TYPES_RCH.findIndex(t => t[0] === o.type), ct: cleRch(o.titre), c: cleRch(`${o.type} ${o.titre} ${o.sous || ''} ${plus} ${(o.passages || []).map(x => x.c).join(' ')}`) });
   rubriquesVisibles().forEach(([k, l], i) => mettre({ type: 'Rubrique', titre: l, href: `#/${k}`, ordre: i / 100 }));
   E.spectacles.forEach(s => mettre({ type: 'Spectacle', titre: s.titre, sous: s.page ? '' : 'Ancien spectacle', href: `#/spectacles/${s.slug}`, couleur: couleurSp(s), ordre: s.page ? 0 : 1 }));
-  (E.personnes || []).forEach(p => mettre({ type: 'Personne', titre: nomDe(p) || 'Sans nom', sous: (p.metiers || []).join(', '), href: `#/equipe/${p.id}` }));
-  E.lieux.forEach(l => mettre({ type: 'Lieu', titre: l.nom || l.commune, sous: [l.nom ? l.commune : '', l.departement ? `(${l.departement})` : ''].filter(Boolean).join(' '), href: `#/lieux/${l.id}` }, l.adresse));
+  (E.personnes || []).forEach(p => { const v = (E.privees || []).find(x => x.personne_id === p.id) || {};
+    mettre({ type: 'Personne', titre: nomDe(p) || 'Sans nom', sous: (p.metiers || []).join(', '), href: `#/equipe/${p.id}`, passages: passagesRch([['Téléphone', v.telephone], ['Courriel', v.email], ['Ville', v.ville]]) }); });
+  E.lieux.forEach(l => { const su = (E.lieuxSuivi || []).find(x => x.lieu_id === l.id) || {};
+    mettre({ type: 'Lieu', titre: l.nom || l.commune, sous: [l.nom ? l.commune : '', l.departement ? `(${l.departement})` : ''].filter(Boolean).join(' '), href: `#/lieux/${l.id}`, passages: passagesRch([['Adresse', l.adresse], ['Contact', su.contact]]) }); });
   E.dates.forEach(d => {
     const s = spectacle(d.spectacle_id), l = lieu(d.lieu_id), fin = d.fin || d.debut, avenir = fin >= AUJ, t = Date.parse(`${d.debut}T12:00:00Z`) / 864e5;
     const quand = d.precision === 'mois' ? `${AGENDA.MOIS[+d.debut.slice(5, 7) - 1]} ${d.debut.slice(0, 4)}` : d.precision === 'saison' ? `saison ${d.saison || ''}` : `${jourCourt(d.debut)}${fin !== d.debut ? ` → ${jourCourt(fin)}` : ''}`;
@@ -1482,7 +1653,9 @@ function indexRch() {
     const jours = new Set(joursDe.get(d.id) || []);
     if (d.precision !== 'mois' && d.precision !== 'saison') for (let j = d.debut, n = 0; j <= fin && n < 62; j = plusJours(j, 1), n++) jours.add(j);
     const plus = `${l ? `${l.commune} ${l.departement || ''}` : ''} ${d.intitule || ''} ${(NATURES_DATE.find(x => x[0] === d.nature) || [])[1] || ''} ${[...jours].map(jourRch).join(' ')}`;
-    const base = { titre: s?.titre || 'Spectacle à préciser', couleur: couleurSp(s), ordre: avenir ? t : 1e9 - t, avenir, sous: `${quand} · ${ou}${etat ? ` · ${etat}` : ''}` };
+    const su = (E.suivis || []).find(x => x.date_id === d.id) || {};
+    const passages = passagesRch([...[...jours].sort().map(j => ['Jour', jourLettresRch(j), jourRch(j)]), ['Intitulé', d.intitule], ['Organisateur', su.organisateur], ['Contact', su.contact]]);
+    const base = { titre: s?.titre || 'Spectacle à préciser', couleur: couleurSp(s), ordre: avenir ? t : 1e9 - t, avenir, passages, sous: `${quand} · ${ou}${etat ? ` · ${etat}` : ''}` };
     mettre({ ...base, type: 'Date', href: `#/representations/${d.id}` }, plus);
     const f = feuilles.get(d.id);
     if (f) mettre({ ...base, type: 'Feuille de route', sous: `${base.sous} · ${f.statut === 'publiee' ? `publiée (v${f.version})` : 'brouillon'}`, href: `#/feuilles/${d.id}` }, `feuille de route ${plus}`);
@@ -1501,11 +1674,27 @@ function indexRch() {
     try { TABLEAU.urgences().lignes.filter(x => !x.reporte).slice(0, 40).forEach(x => mettre({ type: 'À traiter', titre: x.titreTexte, sous: `${x.sujet}${sansBalises(x.sous) ? ` · ${sansBalises(x.sous)}` : ''}`, couleur: x.couleur, href: x.href,
       faire: () => { if (!TABLEAU.traiter(x.cle)) location.hash = x.href; } }, 'urgent traiter')); } catch (e) { console.error(e); }
   }
-  (E.frais || []).forEach(f => { const p = personne(f.personne_id); mettre({ type: 'Note de frais', titre: `${p ? nomDe(p) : 'Une personne'} · ${eurosRch(f.montant_ttc)}`, sous: [typeof CAT_FRAIS !== 'undefined' ? CAT_FRAIS[f.categorie] || f.categorie : f.categorie, f.date_depense ? jourCourt(f.date_depense) : '', STATUTS_FRAIS_RCH[f.statut] || f.statut].filter(Boolean).join(' · '), href: '#/equipe/frais', ordre: f.statut === 'en_attente' ? 0 : 1 }, f.commentaire || ''); });
-  (E.devis || []).forEach(v => mettre({ type: 'Devis', titre: v.structure_nom || 'Demande de devis', sous: [v.commune, spectacle(v.spectacle_id)?.titre, (STATUTS_DEVIS.find(x => x[0] === (v.statut || 'nouveau')) || [])[1]].filter(Boolean).join(' · '), href: `#/diffusion/devis/${v.id}` }, v.contact_nom || ''));
-  (E.prospects || []).forEach(p => mettre({ type: 'Diffusion', titre: p.structure || 'Piste', sous: [p.commune, spectacle(p.spectacle_id)?.titre, ((ETAPES_CRM.find(e => e[0] === p.etape) || [])[1] || '').replace(/^\d\.\s*/, '')].filter(Boolean).join(' · '), href: typeof TIROIR !== 'undefined' ? `#/diffusion/piste/${p.id}` : '#/diffusion' }, p.contact_nom || ''));
+  (E.frais || []).forEach(f => { const p = personne(f.personne_id); mettre({ type: 'Note de frais', titre: `${p ? nomDe(p) : 'Une personne'} · ${eurosRch(f.montant_ttc)}`, sous: [typeof CAT_FRAIS !== 'undefined' ? CAT_FRAIS[f.categorie] || f.categorie : f.categorie, f.date_depense ? jourCourt(f.date_depense) : '', STATUTS_FRAIS_RCH[f.statut] || f.statut].filter(Boolean).join(' · '), href: '#/equipe/frais', ordre: f.statut === 'en_attente' ? 0 : 1, passages: passagesRch([['Commentaire', f.commentaire]]) }); });
+  (E.devis || []).forEach(v => mettre({ type: 'Devis', titre: v.structure_nom || 'Demande de devis', sous: [v.commune, spectacle(v.spectacle_id)?.titre, (STATUTS_DEVIS.find(x => x[0] === (v.statut || 'nouveau')) || [])[1]].filter(Boolean).join(' · '), href: `#/diffusion/devis/${v.id}`, passages: passagesRch([['Contact', v.contact_nom], ['Courriel', v.contact_email], ['Période souhaitée', v.periode_souhaitee]]) }));
+  (E.prospects || []).forEach(p => mettre({ type: 'Diffusion', titre: p.structure || 'Piste', sous: [p.commune, spectacle(p.spectacle_id)?.titre, ((ETAPES_CRM.find(e => e[0] === p.etape) || [])[1] || '').replace(/^\d\.\s*/, '')].filter(Boolean).join(' · '), href: typeof TIROIR !== 'undefined' ? `#/diffusion/piste/${p.id}` : '#/diffusion', passages: passagesRch([['Contact', p.contact_nom], ['Courriel', p.contact_email]]) }));
   (E.propositions || []).forEach(p => mettre({ type: 'Proposition', titre: p.titre || 'Proposition de dates', sous: p.statut === 'ouverte' ? 'proposition ouverte' : 'proposition close', href: `#/planning/proposition/${p.id}`, ordre: p.statut === 'ouverte' ? 0 : 1 }));
-  (E.seances || []).forEach(s => { const a = (E.ateliers || []).find(x => x.id === s.atelier_id), l = lieu(s.lieu_id); mettre({ type: 'Séance', titre: a?.titre || 'Séance d’atelier', sous: `${jourCourt(s.jour)}${l ? ` · ${l.nom || l.commune}` : ''}${s.classe ? ` · ${s.classe}` : ''}`, href: `#/ateliers/seances/${s.id}`, ordre: s.jour >= AUJ ? Date.parse(`${s.jour}T12:00:00Z`) / 864e5 : 1e9 }, s.jour ? jourRch(s.jour) : ''); });
+  (E.seances || []).forEach(s => { const a = (E.ateliers || []).find(x => x.id === s.atelier_id), l = lieu(s.lieu_id); mettre({ type: 'Séance', titre: a?.titre || 'Séance d’atelier', sous: `${jourCourt(s.jour)}${l ? ` · ${l.nom || l.commune}` : ''}${s.classe ? ` · ${s.classe}` : ''}`, href: `#/ateliers/seances/${s.id}`, ordre: s.jour >= AUJ ? Date.parse(`${s.jour}T12:00:00Z`) / 864e5 : 1e9, passages: passagesRch([s.jour ? ['Jour', jourLettresRch(s.jour), jourRch(s.jour)] : null, ['Intervenants', s.intervenants]]) }); });
+  // les parties des rubriques qui ont leur adresse (sous les noms de leurs boutons), le compte
+  [['#/representations/tableur', 'Tableur', 'Représentations'], ['#/representations/carte', 'Carte de tournée', 'Représentations'],
+    E.equipeInstallee && E.sql5 !== false ? ['#/planning/propositions', 'Propositions', 'Planning'] : null,
+    ['#/ateliers/seances', 'Séances', 'Ateliers'], ['#/ateliers/catalogue', 'Ateliers proposés', 'Ateliers'],
+    E.equipeInstallee ? ['#/equipe/documents', 'Documents de la compagnie', 'Équipe'] : null,
+    E.ideale && E.alertesInstallees ? ['#/diffusion/alertes', 'Alertes de tournée', 'Diffusion CRM'] : null]
+    .filter(Boolean).forEach(([href, titre, rub]) => mettre({ type: 'Rubrique', titre, sous: rub, href, ordre: .5 }));
+  mettre({ type: 'Compte', titre: 'Mot de passe', sous: E.session?.user?.email || '', faire: () => $('#b-mdp')?.click() }, 'changer réglages');
+  mettre({ type: 'Compte', titre: 'Raccourcis clavier', sous: 'les gestes et les touches de l’administration', faire: () => { if (typeof ouvrirAide === 'function') ouvrirAide($('#b-chercher')); } }, 'aide réglages');
+  // les textes du site (comme leur liste), les ateliers du catalogue, les invitations des salles, les documents
+  clesTextes().forEach(k => mettre({ type: 'Texte du site', titre: nomTexte(k), href: `#/textes/${encodeURIComponent(k)}` }, 'réglages'));
+  (E.ateliers || []).forEach(a => mettre({ type: 'Atelier', titre: a.titre || 'Atelier', sous: [spectacle(a.spectacle_id)?.titre, a.public, a.publie ? '' : 'non publié'].filter(Boolean).join(' · '), href: `#/ateliers/catalogue/${a.id}`, couleur: couleurSp(spectacle(a.spectacle_id)) }));
+  if (E.sql4 && typeof etatAcces === 'function') (E.acces || []).forEach(a => mettre({ type: 'Invitation', titre: a.nom || 'Invitation', sous: [a.contact, etatAcces(a).texte].filter(Boolean).join(' · '), href: `#/pro/${a.id}`, passages: passagesRch([['Courriel', a.courriel]]) }, 'espace pro salle'));
+  (E.documents || []).forEach(d => { const sp = d.spectacle_id ? spectacle(d.spectacle_id) : null;
+    mettre({ type: 'Document', titre: d.titre || 'Document', sous: sp ? sp.titre : 'Documents de la compagnie', couleur: sp ? couleurSp(sp) : '', href: sp ? `#/spectacles/${sp.slug}` : '#/equipe/documents', ordre: 1,
+      faire: sp ? () => { try { sessionStorage.setItem('crescite-onglet-sp', 'Documents'); } catch (e) { /* navigation privée */ } location.hash = `#/spectacles/${sp.slug}`; } : null }); });
   return xs;
 }
 function chercherRch(index, mots) {
@@ -1530,6 +1719,30 @@ function surlignerRch(texte, mots) {
   for (let i = 0; i < s.length; i++) { if (marque[i] !== dedans) { h += dedans ? '</mark>' : '<mark>'; dedans = marque[i]; } h += esc(s[i]); }
   return h + (dedans ? '</mark>' : '');
 }
+// le passage qui a trouvé la fiche, quand un mot tapé n'est ni dans son titre, ni dans sa ligne, ni dans son genre : le
+// premier passage qui le contient, coupé autour du mot s'il est long, souligné
+function passageRch(x, mots) {
+  if (!mots.length || !x.passages.length) return '';
+  const vu = cleRch(`${x.titre} ${x.sous || ''} ${x.type} ${TYPES_RCH[x.rang][1]}`), ailleurs = mots.filter(m => !vu.includes(m));
+  const p = ailleurs.length && x.passages.find(y => ailleurs.some(m => y.c.includes(m)));
+  if (!p) return '';
+  let t = p.t;
+  if (t.length > 70) {
+    const n = norm(t), m = ailleurs.find(w => n.includes(w)), k = m ? n.indexOf(m) : 0, de = Math.max(0, k - 28);
+    t = `${de ? '…' : ''}${t.slice(de, de + 64).trim()}${de + 64 < t.length ? '…' : ''}`;
+  }
+  return `<small class="rch-passage"><span>${esc(p.l)} :</span> ${surlignerRch(t, mots)}</small>`;
+}
+// les fiches ouvertes en dernier (leur adresse ; la page, un tiroir, la recherche), sur cet appareil seulement : la
+// recherche les propose champ vide, sous le nom qu'elles ont aujourd'hui (une fiche supprimée ne revient pas)
+const CLE_RECENTES = 'crescite-admin-recentes';
+const FICHE_RECENTE = /^#\/(?:representations\/\d+|feuilles\/\d+|spectacles\/[a-z0-9-]+|equipe\/\d+|lieux\/\d+|diffusion\/(?:devis|piste)\/\d+|pro\/\d+|ateliers\/(?:seances|catalogue)\/\d+|planning\/proposition\/\d+|textes\/.+)$/;
+function lireRecentes() { try { const x = JSON.parse(localStorage.getItem(CLE_RECENTES) || '[]'); return Array.isArray(x) ? x.filter(h => typeof h === 'string') : []; } catch (e) { return []; } }
+function noterRecente(href) {
+  if (!FICHE_RECENTE.test(href || '')) return;
+  try { localStorage.setItem(CLE_RECENTES, JSON.stringify([href, ...lireRecentes().filter(h => h !== href)].slice(0, 12))); } catch (e) { /* navigation privée : rien de gardé */ }
+}
+APRES_VUE.push(() => noterRecente(location.hash));
 function dialogueRch() {
   let dlg = $('#recherche');
   if (dlg) return dlg;
@@ -1567,9 +1780,13 @@ function ouvrirRecherche() {
 function rendreRch() {
   const q = $('#rch-q'), mots = motsRch(q.value);
   let xs, entete;
+  let groupes = null;     // champ vide : [ [intitulé, nombre], … ]
   if (!mots.length) {
-    xs = RCH.index.filter(x => x.type === 'Date' && x.avenir).sort((a, b) => a.ordre - b.ordre).slice(0, 8);
-    entete = xs.length ? 'Prochaines dates' : 'Tapez un nom, une commune, un jour, une action…';
+    const recentes = lireRecentes().map(h => RCH.index.find(x => x.href === h && !x.faire && x.type !== 'Rubrique' && x.type !== 'Action')).filter(Boolean).slice(0, 5);
+    const prochaines = RCH.index.filter(x => x.type === 'Date' && x.avenir && !recentes.includes(x)).sort((a, b) => a.ordre - b.ordre).slice(0, recentes.length ? 5 : 8);
+    xs = [...recentes, ...prochaines];
+    groupes = [['Ouvertes récemment', recentes.length], ['Prochaines dates', prochaines.length]].filter(g => g[1]);
+    entete = groupes.length ? groupes[0][0] : 'Tapez un nom, une commune, un jour, une action…';
   } else {
     const tous = chercherRch(RCH.index, mots);
     xs = tous.slice(0, 50);
@@ -1577,7 +1794,9 @@ function rendreRch() {
   }
   RCH.vus = xs;
   $('#rch-entete').textContent = entete;
-  $('#rch-liste').innerHTML = xs.map((x, i) => `<li role="option" id="rch-o${i}" data-i="${i}" style="--i:${Math.min(i, 10)}" aria-selected="false"><span class="pastille"${x.couleur ? ` style="--c:${esc(x.couleur)}"` : ''}></span><span class="rch-corps"><b>${surlignerRch(x.titre, mots)}</b>${x.sous ? `<small>${surlignerRch(x.sous, mots)}</small>` : ''}</span><span class="rch-type">${TYPES_RCH[x.rang][1]}</span></li>`).join('');
+  // (champ vide, deux groupes : le second a son intitulé, une ligne qui n'est pas une option)
+  const debuts = new Map((groupes || []).slice(1).map((g, k) => [groupes.slice(0, k + 1).reduce((n, x) => n + x[1], 0), g[0]]));
+  $('#rch-liste').innerHTML = xs.map((x, i) => `${debuts.has(i) ? `<li role="presentation" class="rch-groupe">${esc(debuts.get(i))}</li>` : ''}<li role="option" id="rch-o${i}" data-i="${i}" style="--i:${Math.min(i, 10)}" aria-selected="false"><span class="pastille"${x.couleur ? ` style="--c:${esc(x.couleur)}"` : ''}></span><span class="rch-corps"><b>${surlignerRch(x.titre, mots)}</b>${x.sous ? `<small>${surlignerRch(x.sous, mots)}</small>` : ''}${passageRch(x, mots)}</span><span class="rch-type">${TYPES_RCH[x.rang][1]}</span></li>`).join('');
   q.setAttribute('aria-expanded', String(xs.length > 0));
   activerRch(0, false);
   $('#rch-liste').scrollTop = 0;
@@ -3832,12 +4051,14 @@ const TEXTES = {
   programmation: ['Je souhaite programmer : le contact', [{ k: 'contact.nom', t: 'texte', l: 'Nom' }, { k: 'contact.role', t: 'texte', l: 'Rôle', ph: 'Administratrice' },
     { k: 'contact.email', t: 'texte', l: 'Adresse électronique', ph: 'contact@…' }, { k: 'contact.telephone', t: 'texte', l: 'Téléphone', aide: 'Facultatif : sans numéro, la page n’en montre pas.' }]],
 };
+// les textes du site, dans l'ordre de leur liste (ceux de TEXTES, puis les autres), et leur nom (la recherche rapide aussi)
+const nomTexte = k => (TEXTES[k] && TEXTES[k][0]) || (k.startsWith('dossier:') ? `Dossier scolaire : ${k.slice(8)}` : k);
+const clesTextes = () => [...Object.keys(TEXTES).filter(k => E.textes.some(t => t.cle === k)),
+  ...E.textes.map(t => t.cle).filter(k => !TEXTES[k] && !k.startsWith('modele-date:') && !k.startsWith('documents:')).sort()];
 function vueTextes(cle) {
-  const noms = Object.fromEntries(Object.entries(TEXTES).map(([k, v]) => [k, v[0]]));
-  const autres = E.textes.map(t => t.cle).filter(k => !noms[k] && !k.startsWith('modele-date:') && !k.startsWith('documents:')).sort();
-  const nom = k => noms[k] || (k.startsWith('dossier:') ? `Dossier scolaire : ${k.slice(8)}` : k);
+  const nom = nomTexte;
   cadre('textes', `<div class="tete"><h1>Textes du site</h1></div><div class="deux${cle ? ' edition' : ''}"><div class="liste">
-      ${[...Object.keys(TEXTES).filter(k => E.textes.some(t => t.cle === k)), ...autres].map(k => `<a class="ligne" style="grid-template-columns:1fr" href="#/textes/${encodeURIComponent(k)}"${k === cle ? ' aria-current="true"' : ''}><span class="corps"><span class="t">${esc(nom(k))}</span></span></a>`).join('')}</div>
+      ${clesTextes().map(k => `<a class="ligne" style="grid-template-columns:1fr" href="#/textes/${encodeURIComponent(k)}"${k === cle ? ' aria-current="true"' : ''}><span class="corps"><span class="t">${esc(nom(k))}</span></span></a>`).join('')}</div>
     <section class="editeur" id="ed-txt">${cle ? '' : '<div class="vide bloc">Les textes du site qui ne dépendent d’aucun spectacle.</div>'}</section></div>`);
   if (!cle) return;
   const t0 = E.textes.find(t => t.cle === cle);
@@ -4446,7 +4667,7 @@ async function vueJournal() {
       </div>
       <p class="j-compte"><span class="compte" id="j-compte"></span><button type="button" class="btn lien petit" id="j-effacer" hidden>Tout montrer</button></p>
     </div>
-    <div class="bloc" style="padding:0" data-liste id="l-journal"><p class="vide">Chargement…</p></div><p class="j-plus" id="j-plus-zone"></p><p class="sr" id="j-annonce" aria-live="polite"></p>`);
+    <div class="bloc" style="padding:0" data-liste id="l-journal">${attenteLignes(6, 58)}</div><p class="j-plus" id="j-plus-zone"></p><p class="sr" id="j-annonce" aria-live="polite"></p>`);
   const zone = $('#l-journal');
   const remplirAuteurs = () => { $('#j-qui').innerHTML = `<option value="">Tous les auteurs</option>${auteurs().map(([id, l]) => option(`u:${id}`, l, f.qui)).join('')}`; };
   remplirAuteurs();
