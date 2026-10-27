@@ -181,6 +181,14 @@ main { padding: 20px; max-width: 1500px; margin: 0 auto; }
 /* au bureau, une longue liste qui défile à côté de sa fiche garde en vue l'en-tête de ce qu'on parcourt : le mois (ou « À
    venir »), collé en haut de la liste jusqu'au suivant */
 @media (min-width: 1101px) { .deux > .liste .mois { position: sticky; top: 0; z-index: 2; margin: 0 0 6px; padding: 10px 4px 6px; background: color-mix(in srgb, var(--fond) 92%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); } }
+/* une liste qui défile avec la page (les Feuilles de route, le Journal ; jusqu'à 1 100 px et au téléphone, celles qui sont
+   d'habitude à côté de leur fiche) garde de même son mois, ou son jour, en vue : collé sous l'en-tête arrimé, dont
+   --haut-barre est la hauteur mesurée (poserHautBarre) */
+.fr-liste [data-liste] .mois, #l-journal .j-jour { position: sticky; top: var(--haut-barre, 0px); z-index: 3; margin: 0 0 6px; padding: 10px 4px 6px; background: color-mix(in srgb, var(--fond) 92%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.fr-liste [data-liste] .mois:not(:first-child) { margin-top: 8px; }
+#l-journal .j-jour { margin: 0; padding: 9px 12px 7px; background: color-mix(in srgb, var(--carte) 94%, transparent); border-bottom: 1px solid var(--trait); }
+#l-journal .j-jour:first-child { border-radius: var(--rayon) var(--rayon) 0 0; }
+@media (max-width: 1100px) { .deux > .liste { overflow: visible; } .deux > .liste .mois { position: sticky; top: var(--haut-barre, 0px); z-index: 3; margin: 0 0 6px; padding: 10px 4px 6px; background: color-mix(in srgb, var(--fond) 92%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); } }
 .ligne { display: grid; grid-template-columns: 58px 1fr auto; gap: 10px; align-items: start; padding: 10px 12px; margin-bottom: 6px; border-radius: 10px; background: var(--carte); border: 1px solid var(--trait); text-decoration: none; color: var(--encre); border-left: 4px solid var(--c, var(--accent)); }
 .ligne:hover { border-color: var(--gris); border-left-color: var(--c, var(--accent)); }
 .ligne[aria-current="true"] { box-shadow: 0 0 0 3px var(--accent-doux); border-color: var(--accent); }
@@ -364,6 +372,13 @@ table.simple tr.cliquable:hover td { background: var(--doux); }
 .crm-tableau { display: grid; grid-template-columns: repeat(5, minmax(260px, 1fr)); gap: 14px; overflow-x: auto; padding-bottom: 16px; }
 .crm-colonne { background: var(--doux); border: 1px solid var(--trait); border-radius: var(--rayon); padding: 12px; display: flex; flex-direction: column; min-height: 480px; }
 .crm-col-tete { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; font-weight: 700; font-size: 14px; }
+/* le Kanban suit la page, sans cadre qui défile de côté (un cadre qui défile garderait pour lui le nom des colonnes) : les
+   cinq colonnes côte à côte quand elles tiennent, sinon sur plusieurs rangs, puis l'une sous l'autre au téléphone ; le nom
+   de chaque colonne reste collé sous l'en-tête arrimé pendant qu'on fait défiler ses cartes */
+.crm-tableau { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); overflow: visible; }
+.crm-col-tete { position: sticky; top: var(--haut-barre, 0px); z-index: 2; margin: -12px -12px 12px; padding: 12px 12px 7px; background: inherit; border-radius: var(--rayon) var(--rayon) 0 0; }
+@media (max-width: 640px) { .crm-tableau { grid-template-columns: minmax(0, 1fr); } .crm-colonne { min-height: 0; } }
+.crm-carte-pied { flex-wrap: wrap; }
 .crm-badge-nb { font-size: 11px; padding: 2px 7px; border-radius: 999px; background: var(--carte); color: var(--gris); }
 .crm-cartes { display: flex; flex-direction: column; gap: 10px; flex: 1; }
 .crm-carte { background: var(--carte); border: 1.5px solid var(--trait); border-radius: 10px; padding: 12px; box-shadow: var(--ombre); transition: transform .15s, border-color .15s; }
@@ -1049,6 +1064,7 @@ function cadre(rubrique, contenu) {
     <div class="qui"><span class="direct${E.direct ? ' on' : ''}" title="${E.direct ? 'Connecté en temps réel' : 'Temps réel en cours de connexion'}"><span class="mot">direct</span></span>
     <a href="${SITE}" target="_blank" rel="noopener">Voir le site ↗</a><a href="${SITE}?edition" target="_blank" rel="noopener" title="Écrire les textes et les dates dans la page elle-même">Modifier<span class="long"> sur le site</span> ↗</a><span class="moi">${esc(E.session.user.email)}</span>
     <button class="btn petit" type="button" id="b-mdp" aria-label="Mot de passe" title="Changer mon mot de passe"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3M16.5 6.5l3 3M14.5 8.5l2 2"/></svg><span class="long"> Mot de passe</span></button><button class="btn petit" type="button" id="b-sortir">Déconnexion</button></div></header><main id="vue" tabindex="-1"${ouvertureMuette || CALME_ADMIN() ? '' : ' class="entree"'}>${contenu}</main>${PIED}`;
+  poserHautBarre();
   setTimeout(() => $('#vue')?.classList.remove('entree'), 900);
   $('#b-sortir').addEventListener('click', async () => { if (await partirSansPerdre({ titre: 'Se déconnecter sans enregistrer ?', ok: 'Se déconnecter' })) await sb.auth.signOut(); });
   $('#b-mdp').addEventListener('click', async () => { if (await partirSansPerdre({ titre: 'Changer de mot de passe sans enregistrer ?', ok: 'Continuer' })) ecranMotDePasse(true); });
@@ -1061,6 +1077,14 @@ function cadre(rubrique, contenu) {
     else if (r.left < n.left) nav.scrollLeft -= n.left - r.left + 4;
   }
   tt('pieuvre');
+}
+// la hauteur de l'en-tête arrimé (une, deux ou trois lignes selon la largeur ; 56 px au téléphone) : --haut-barre, sous
+// lequel collent les en-têtes des listes qui défilent avec la page (le mois, le jour) et la barre d'outils d'une feuille
+const RO_BARRE = typeof ResizeObserver === 'function' ? new ResizeObserver(() => poserHautBarre(false)) : null;
+function poserHautBarre(observer = true) {
+  const b = $('.barre');
+  document.documentElement.style.setProperty('--haut-barre', `${b ? Math.round(b.getBoundingClientRect().height) : 0}px`);
+  if (observer && RO_BARRE && b) { RO_BARRE.disconnect(); RO_BARRE.observe(b); }
 }
 const ROUTES = [
   [/^#\/accueil$/, () => vueTableau()],
@@ -4298,8 +4322,14 @@ async function vueJournal() {
     const mots = motsRch(f.q), filtre = !!(mots.length || f.quoi || f.qui || f.periode), xs = E.journal.filter(j => garde(j, mots));
     const total = E.journal.filter(j => j.operation !== 'UPDATE' || champsChanges(j).length).length;
     const premier = !zone.querySelector('.journal-ligne');
+    // les modifications rangées par jour (« Aujourd'hui », « Hier », « mardi 20 octobre 2026 ») : l'en-tête du jour reste
+    // en vue pendant qu'on fait défiler ses lignes
+    let jourVu = '';
+    const hier = plusJours(AUJ, -1);
+    const enTeteJour = j => { const k = jourDe(j); if (k === jourVu) return ''; jourVu = k;
+      return `<div class="mois j-jour">${k === AUJ ? 'Aujourd’hui' : k === hier ? 'Hier' : esc(new Date(j.quand).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }))}</div>`; };
     zone.innerHTML = xs.map(j => { const ch = champsChanges(j), ap = apprisDuJournal(j);
-      return `<div class="journal-ligne"><span class="quand">${new Date(j.quand).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })}<br>${esc(qui(j.qui))}</span>
+      return `${enTeteJour(j)}<div class="journal-ligne"><span class="quand">${new Date(j.quand).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })}<br>${esc(qui(j.qui))}</span>
         <span class="quoi"><b>${OPS_JOURNAL[j.operation]} · ${esc(NOMS_TABLES[j.table_nom] || j.table_nom)}</b>${surlignerRch(resume(j) || '', mots)}${ch.length ? `<span class="diff"> — ${surlignerRch(ch.join(', '), mots)}</span>` : ''}${ap.length ? `<span class="diff appris"> — gardé dans les fiches : ${esc(ap.join(', '))}</span>` : ''}</span>
         <span>${j.operation === 'INSERT' ? `<button class="btn petit" data-j="${j.id}" data-tt="retour">Retirer</button>` : `<button class="btn petit" data-j="${j.id}" data-tt="retour">Revenir</button>`}</span></div>`; }).join('')
       || listeVide(total > 0, { rien: 'Aucune modification ne correspond.', aucun: 'Rien encore.' });

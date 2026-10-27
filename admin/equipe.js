@@ -1008,12 +1008,14 @@ function listeFeuilles(zone) {
       ${reps.length ? `<span class="reps">${reps.slice(0, 6).map(r => `<span class="rep${r.public === 'scolaire' ? ' sco' : ''}${r.annulee ? ' ann' : ''}">${jours.length > 1 ? `${+r.jour.slice(8, 10)}/${+r.jour.slice(5, 7)} ` : ''}${r.heure ? AGENDA.heureTexte(h5(r.heure)) : 'heure ?'}</span>`).join('')}${reps.length > 6 ? `<span class="rep">+${reps.length - 6}</span>` : ''}</span>` : ''}</span>
       <span class="badges">${badgeFeuille(d.id)}${resteFeuille(d.id)}${d.statut === 'option' ? '<span class="badge option">Option</span>' : d.statut === 'annulee' ? '<span class="badge annulee">Annulée</span>' : d.statut === 'reportee' ? '<span class="badge option">Reportée</span>' : ''}</span></a>`;
   };
+  // les dates rangées par mois, comme Représentations : l'en-tête du mois reste en vue pendant qu'on fait défiler ses dates
+  const parMois = ds => { let m = '', h = ''; ds.forEach(d => { const k = d.debut.slice(0, 7); if (k !== m) { m = k; h += `<div class="mois">${AGENDA.MOIS[+k.slice(5) - 1]} ${k.slice(0, 4)}</div>`; } h += ligne(d); }); return h; };
   const saisons = [...new Set(passees.map(d => d.saison))].sort().reverse(), enCours = AGENDA.saisonDe(AUJ);
   if (!xs.length) { zone.innerHTML = listeVide(cherche, { rien: 'Aucune date ne correspond à ces filtres.', aucun: 'Aucune date pour l’instant.', ajouter: ['#/representations/nouvelle', '＋ Nouvelle date'] }); return; }
-  zone.innerHTML = `<h2 class="mois" style="font-size:13px;color:var(--accent)">À venir</h2>${avenir.map(ligne).join('') || '<p class="vide">Aucune date à venir.</p>'}
+  zone.innerHTML = `<h2 class="mois" style="font-size:13px;color:var(--accent)">À venir</h2>${avenir.length ? parMois(avenir) : '<p class="vide">Aucune date à venir.</p>'}
     <h2 class="mois" style="font-size:13px;color:var(--accent);margin-top:24px">Dates passées</h2>
     ${saisons.map(sa => `<details class="saison-ad" data-saison="${sa}"${cherche || sa === enCours || f.ouvertes.includes(sa) ? ' open' : ''}><summary class="ligne" style="grid-template-columns:1fr auto;cursor:pointer;border-left-color:var(--trait)"><span class="t">Saison ${sa}</span><span class="badge">${passees.filter(d => d.saison === sa).length}</span></summary><div class="contenu-saison"></div></details>`).join('') || '<p class="vide">Aucune date passée.</p>'}`;
-  const remplir = det => { const c = $('.contenu-saison', det); if (det.open && !c.innerHTML) c.innerHTML = passees.filter(d => d.saison === det.dataset.saison).map(ligne).join(''); };
+  const remplir = det => { const c = $('.contenu-saison', det); if (det.open && !c.innerHTML) c.innerHTML = parMois(passees.filter(d => d.saison === det.dataset.saison)); };
   $$('details.saison-ad', zone).forEach(det => { remplir(det); det.addEventListener('toggle', () => { const sa = det.dataset.saison; f.ouvertes = det.open ? [...new Set([...f.ouvertes, sa])] : f.ouvertes.filter(x => x !== sa); garderFiltres(); remplir(det); }); });
 }
 

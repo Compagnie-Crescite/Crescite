@@ -10,7 +10,9 @@
 //   retour vers le niveau d'au-dessus ; l'en-tête d'un tiroir nomme sa rubrique, en lien ;
 // - une liste garde son état dans l'adresse (?statut=…&q=…) : ses fiches, le retour, le précédent, un rechargement, un
 //   lien partagé la rouvrent filtrée, une autre rubrique ne prend pas ses filtres ; l'en-tête du mois reste en vue ;
-// - une liste vide dit pourquoi et propose le geste utile (« Effacer les filtres »), une colonne du Kanban aussi.
+// - une liste vide dit pourquoi et propose le geste utile (« Effacer les filtres »), une colonne du Kanban aussi ;
+// - les titres restent visibles : le mois des Feuilles de route, le jour du Journal, le nom des colonnes du Kanban (et au
+//   téléphone le mois de Représentations), collés sous l'en-tête quand la page défile.
 //   python3 site/build.py && node site/adresses-admin.mjs
 // Captures dans site/dist/shots-adresses/. Sort en erreur si une vérification manque.
 import fs from 'node:fs';
@@ -331,6 +333,38 @@ for (const [largeur, hauteur, nom] of [[1440, 900, 'bureau'], [390, 844, 'télé
   const kanban = await page.evaluate(() => getComputedStyle(document.querySelector('.crm-colonne[data-colonne="option_posee"] .crm-cartes, .crm-colonne:nth-child(3) .crm-cartes'), '::before').content);
   ok(`vides (${nom}) · une colonne du Kanban sans piste le dit`, /Aucune piste/.test(kanban), kanban);
   ok(`vides (${nom}) · aucune erreur de script`, erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+
+// ================================================================================ les titres restent visibles : le mois, le jour, la colonne
+for (const [largeur, hauteur, nom] of [[1440, 900, 'bureau'], [390, 844, 'téléphone']]) {
+  const tel = largeur < 600;
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur, hauteur, hash: '#/accueil' });
+  await page.waitForSelector('#vue', { timeout: 15000 });
+  if (tel) await page.waitForSelector('.ob-barre', { timeout: 8000 });     // (la barre du téléphone se pose juste après la page)
+  // les titres arrimés : le mois des Feuilles de route, le jour du Journal, le nom des colonnes du Kanban ; au téléphone, le
+  // mois de Représentations ; chacun collé sous l'en-tête (--haut-barre, sa hauteur) quand on fait défiler la page
+  await page.setViewportSize({ width: largeur, height: 420 });
+  const arrime = sel => page.evaluate(s => { const hb = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--haut-barre')), xs = [...document.querySelectorAll(s)];
+    // (la page défile jusqu'à ce que le plus long des blocs qui les portent passe sous l'en-tête : son titre doit y rester)
+    const p = xs.map(x => x.parentElement).sort((a, b) => b.getBoundingClientRect().height - a.getBoundingClientRect().height)[0];
+    if (p) window.scrollTo(0, p.getBoundingClientRect().top + window.scrollY - hb + 150);
+    const barre = Math.round(document.querySelector('.barre').getBoundingClientRect().bottom);
+    return { n: xs.length, sticky: xs.length > 0 && xs.every(x => getComputedStyle(x).position === 'sticky'), hb, barre, colle: xs.some(x => Math.abs(x.getBoundingClientRect().top - hb) < 2), deb: document.documentElement.scrollWidth > innerWidth }; }, sel);
+  const vers = async (h, sel) => { await page.evaluate(x => { location.hash = x; }, h); await page.waitForSelector(sel, { timeout: 8000 }); await page.waitForTimeout(500); return arrime(sel); };
+  const fr = await vers('#/feuilles', '.fr-liste [data-liste] .mois');
+  ok(`arrimés (${nom}) · Feuilles de route : les dates par mois, le mois collé sous l'en-tête`, fr.n >= 3 && fr.sticky && fr.colle && fr.hb === fr.barre && !fr.deb, JSON.stringify(fr));
+  const jo = await vers('#/journal', '#l-journal .j-jour');
+  ok(`arrimés (${nom}) · Journal : les modifications par jour (« Aujourd’hui »…), le jour collé sous l'en-tête`, jo.n >= 2 && jo.sticky && jo.colle && (await texte(page, '#l-journal .j-jour')) === 'Aujourd’hui', JSON.stringify(jo));
+  const kb = await vers('#/diffusion', '.crm-col-tete');
+  ok(`arrimés (${nom}) · Kanban : le nom de chaque colonne collé sous l'en-tête pendant qu'on fait défiler ses cartes, sans cadre qui défile de côté`, kb.n === 5 && kb.sticky && kb.colle && (await page.$eval('#kanban-zone', e => getComputedStyle(e).overflowX)) === 'visible' && !kb.deb, JSON.stringify(kb));
+  await calme(page);
+  await page.screenshot({ path: path.join(CAPT, `kanban-arrime-${tel ? 'telephone' : 'bureau'}.png`) });
+  if (tel) {
+    const re = await vers('#/representations', '#l-dates .mois');
+    ok('arrimés (téléphone) · Représentations : le mois collé sous l’en-tête (la liste suit la page)', re.sticky && re.colle, JSON.stringify(re));
+  }
+  ok(`arrimés (${nom}) · aucune erreur de script`, erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();
 }
 
