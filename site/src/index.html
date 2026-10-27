@@ -8208,6 +8208,34 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   }, { capture: true, passive: true });
   addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') Scene.suspendre(650); }, { capture: true, passive: true });
   if (MV) MV.presse(document);
+
+  /* ---------- la langue des titres étrangers ----------
+     Ce que D écrit en anglais (« Romeo & Juliet », « Romeo and Juliet », « Shak’Songs », et dans le dossier de Bérénice
+     « Game of Thrones », « Gladiator ») porte lang="en" là où il s'affiche, pour que les lecteurs d'écran le prononcent en
+     anglais : un <span lang="en"> autour, le texte ne change pas (l'édition sur place lit textContent, ou un HTML propre qui
+     ne garde pas les <span>). Tout ce qui s'ajoute à la page (une vue, une liste refaite, une bulle, la recherche) est relu
+     au repos. Une liste déroulante (<option>), un attribut (aria-label, title) ne peuvent porter une langue en partie : ils
+     restent tels quels */
+  const ANGLAIS = /Romeo (?:&|and) Juliet|Shak['’]Songs|Game of Thrones|Gladiator/, ANGLAIS_G = new RegExp(ANGLAIS.source, 'g');
+  const horsLangue = 'script, style, option, select, textarea, title, svg, [lang="en"], [contenteditable="true"]';
+  function marquerLangues(racine) {
+    if (!racine || !racine.isConnected || !ANGLAIS.test(racine.textContent || '')) return;
+    const w = document.createTreeWalker(racine, NodeFilter.SHOW_TEXT, { acceptNode: n => (ANGLAIS.test(n.data) && n.parentElement && !n.parentElement.closest(horsLangue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP) });
+    const ns = []; for (let n = w.nextNode(); n; n = w.nextNode()) ns.push(n);
+    ns.forEach(n => {
+      const t = n.data, f = document.createDocumentFragment(); let i = 0, m;
+      ANGLAIS_G.lastIndex = 0;
+      while ((m = ANGLAIS_G.exec(t))) { if (m.index > i) f.append(t.slice(i, m.index)); const s = document.createElement('span'); s.lang = 'en'; s.textContent = m[0]; f.append(s); i = m.index + m[0].length; }
+      if (i < t.length) f.append(t.slice(i));
+      n.replaceWith(f);
+    });
+  }
+  { const aLire = new Set(); let tLangues = 0;
+    new MutationObserver(ms => {
+      ms.forEach(m => m.addedNodes.forEach(n => { const x = n.nodeType === 1 ? n : n.parentElement; if (x) aLire.add(x); }));
+      if (aLire.size && !tLangues) tLangues = auRepos(() => { tLangues = 0; const xs = [...aLire]; aLire.clear(); xs.forEach(marquerLangues); });
+    }).observe(document.body, { childList: true, subtree: true });
+    auRepos(() => marquerLangues(document.body)); }
   lire();
   cadre();
   // le retour en haut d'une page longue (hors de <main> : il survit aux pages) : il paraît après deux écrans lus, remonte la
