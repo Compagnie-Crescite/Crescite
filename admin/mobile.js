@@ -5,7 +5,8 @@
    recherche et le témoin du direct restent, sur une seule ligne), les fiches en plein écran (comme avant), leur pied et
    les annonces au-dessus de la barre. Le compte (voir le site, le modifier, le mot de passe, la déconnexion) passe dans
    « Plus » : l'en-tête, arrimé en haut, tenait sur trois lignes (126 px sur 844, avec la barre du bas plus d'un écran
-   sur cinq). Rien ne change à l'ordinateur. Chargé après tiroir.js et corbeille.js.
+   sur cinq). Le témoin de la connexion y reste, réduit à sa pastille sur l'icône qui relit la base. Rien ne change à
+   l'ordinateur. Chargé après tiroir.js et corbeille.js.
    MOBILE.feuille(titre, items)   MOBILE.actif() */
 const MOBILE = (() => {
   const MQ = '(max-width: 640px)';
@@ -101,6 +102,16 @@ const MOBILE = (() => {
   html.ob-actif .barre .qui { order: 2; margin-left: auto; }
   html.ob-actif .barre .qui > :not(.direct) { display: none; }
   html.ob-actif .barre .chercher { order: 3; margin-left: 0; width: 44px; height: 44px; }
+  /* le témoin de la connexion : la pastille sur l'icône qui relit la base, dans une cible de 44 px ; le mot seulement
+     quand il y a lieu de s'inquiéter (hors ligne, la reconnexion), à la place de l'icône */
+  html.ob-actif .barre .temoin { position: relative; justify-content: center; width: 44px; height: 44px; padding: 0; }
+  html.ob-actif .barre .temoin::before { position: absolute; top: 9px; right: 8px; }
+  html.ob-actif .barre .temoin .temoin-ic { width: 20px; height: 20px; opacity: .9; }
+  html.ob-actif .barre .temoin :is(.temoin-mot, .temoin-detail) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  html.ob-actif .barre .temoin:is([data-etat="horsligne"], [data-etat="reconnexion"]) { width: auto; padding: 0 12px; gap: 7px; }
+  html.ob-actif .barre .temoin:is([data-etat="horsligne"], [data-etat="reconnexion"])::before { position: static; }
+  html.ob-actif .barre .temoin:is([data-etat="horsligne"], [data-etat="reconnexion"]) .temoin-mot { position: static; width: auto; height: auto; clip: auto; }
+  html.ob-actif .barre .temoin:is([data-etat="horsligne"], [data-etat="reconnexion"]) .temoin-ic { display: none; }
   html.ob-actif main { padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px)); }
   /* le pied commun après le contenu : c'est lui qui laisse la place à la barre */
   html.ob-actif main:has(+ .pied-espace) { padding-bottom: 20px; }

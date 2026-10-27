@@ -12,7 +12,9 @@
 //   lien partagé la rouvrent filtrée, une autre rubrique ne prend pas ses filtres ; l'en-tête du mois reste en vue ;
 // - une liste vide dit pourquoi et propose le geste utile (« Effacer les filtres »), une colonne du Kanban aussi ;
 // - les titres restent visibles : le mois des Feuilles de route, le jour du Journal, le nom des colonnes du Kanban (et au
-//   téléphone le mois de Représentations), collés sous l'en-tête quand la page défile.
+//   téléphone le mois de Représentations), collés sous l'en-tête quand la page défile ;
+// - le témoin de la connexion : « À jour », « Hors ligne · lu à l'instant » quand le réseau tombe (les lecteurs d'écran
+//   l'entendent), la base relue à son retour, le bouton qui la relit.
 //   python3 site/build.py && node site/adresses-admin.mjs
 // Captures dans site/dist/shots-adresses/. Sort en erreur si une vérification manque.
 import fs from 'node:fs';
@@ -365,6 +367,34 @@ for (const [largeur, hauteur, nom] of [[1440, 900, 'bureau'], [390, 844, 'télé
     ok('arrimés (téléphone) · Représentations : le mois collé sous l’en-tête (la liste suit la page)', re.sticky && re.colle, JSON.stringify(re));
   }
   ok(`arrimés (${nom}) · aucune erreur de script`, erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+
+// ================================================================================ le témoin de la connexion : à jour, hors ligne, le retour
+for (const [largeur, hauteur, nom] of [[1440, 900, 'bureau'], [390, 844, 'téléphone']]) {
+  const tel = largeur < 600;
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur, hauteur, hash: '#/accueil' });
+  await page.waitForSelector('[data-temoin]', { timeout: 15000 });
+  if (tel) await page.waitForSelector('.ob-barre', { timeout: 8000 });     // (la barre du téléphone se pose juste après la page)
+  await attendre(page, () => document.querySelector('[data-temoin]').dataset.etat === 'ajour');
+  const temoin = () => page.evaluate(() => { const b = document.querySelector('[data-temoin]'), r = b.getBoundingClientRect(); return { etat: b.dataset.etat, texte: b.textContent.trim(), l: Math.round(r.width), h: Math.round(r.height), sr: document.querySelector('#sr-connexion')?.textContent || '' }; });
+  const t1 = await temoin();
+  ok(`témoin (${nom}) · dans l'en-tête : « À jour », le bouton qui relit la base${tel ? ', une cible de 44 px' : ''}`, t1.etat === 'ajour' && /^À jour/.test(t1.texte) && /Actualiser/.test(t1.texte) && (!tel || (t1.l >= 44 && t1.h >= 44)), JSON.stringify(t1));
+  await ctx.setOffline(true);
+  await attendre(page, () => document.querySelector('[data-temoin]').dataset.etat === 'horsligne', 3000);
+  const t2 = await temoin();
+  ok(`témoin (${nom}) · hors ligne : « Hors ligne · lu à l’instant », et les lecteurs d'écran l'entendent`, t2.etat === 'horsligne' && /Hors ligne · lu à l’instant/.test(t2.texte) && /^Connexion perdue/.test(t2.sr) && !(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), JSON.stringify(t2));
+  await calme(page);
+  await page.screenshot({ path: path.join(CAPT, `temoin-horsligne-${tel ? 'telephone' : 'bureau'}.png`) });
+  if (!tel) ok('témoin (bureau) · l’en-tête garde ses lignes hors ligne (l’adresse du compte cède la place)', await page.evaluate(() => Math.round(document.querySelector('.barre').getBoundingClientRect().height)) <= 96);
+  await ctx.setOffline(false);
+  await attendre(page, () => document.querySelector('[data-temoin]').dataset.etat === 'ajour', 6000);
+  const t3 = await temoin();
+  ok(`témoin (${nom}) · le réseau revient : la base se relit, « À jour », « Connexion rétablie »`, t3.etat === 'ajour' && /^Connexion rétablie/.test(t3.sr), JSON.stringify(t3));
+  await page.click('[data-temoin]');
+  await attendre(page, () => [...document.querySelectorAll('#annonces .annonce')].some(a => /La base est relue/.test(a.textContent)), 6000);
+  ok(`témoin (${nom}) · le toucher relit la base et le dit`, await page.evaluate(() => [...document.querySelectorAll('#annonces .annonce')].some(a => /La base est relue/.test(a.textContent))));
+  ok(`témoin (${nom}) · aucune erreur de script`, erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();
 }
 

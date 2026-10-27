@@ -1,7 +1,8 @@
 // Les gestes de l'espace de l'équipe (equipe/equipe.js avec ../admin/gestes.js), vérifiés dans Chromium, hors ligne :
 // l'appui long sur un billet (une feuille d'actions depuis le bas), la date d'avant et d'après (les boutons, le balayage
 // au doigt, ← → au clavier), le clic droit sur une notification ; ne rien perdre en partant ; supprimer dans la boîte de
-// la charte (jamais confirm()), un retard signalé et un mot pour l'administration commencés protégés du départ.
+// la charte (jamais confirm()), un retard signalé et un mot pour l'administration commencés protégés du départ ; le
+// témoin de la connexion (à jour, hors ligne, le retour).
 //   python3 site/build.py && node site/gestes-equipe.mjs
 // Même saison fictive que mouvement-equipe.mjs (aucune donnée réelle, la base coupée). Demande Playwright et Chromium.
 import http from 'node:http';
@@ -574,6 +575,37 @@ fs.mkdirSync(CAPT, { recursive: true });
   await page.waitForTimeout(500);
   ok('proposition · le mot parti avec la réponse : on change de vue sans question', !(await page.$('dialog.gq[open]')) && (await page.evaluate(() => location.hash)) === '#/saison' && natifs === 0);
   ok('supprimer, retard, proposition · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+
+// ================================================================================ le témoin de la connexion : à jour, hors ligne, le retour
+{
+  // au téléphone, hors ligne (la base coupée) : la pastille sur l'icône qui relit, « Installer » garde son nom
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { hash: '#/saison' });
+  await page.waitForTimeout(600);
+  const t1 = await page.evaluate(() => { const b = document.querySelector('[data-temoin]'), r = b.getBoundingClientRect(); return { etat: b.dataset.etat, nom: b.textContent.trim(), l: Math.round(r.width), h: Math.round(r.height), bandeau: document.querySelector('#bandeau-etat')?.textContent.trim().slice(0, 12) }; });
+  ok('témoin (téléphone) · hors ligne : la pastille sur l’icône (44 px), son nom dit « Hors ligne · lu … · Actualiser », le bandeau aussi', t1.etat === 'horsligne' && /^Hors ligne · lu .+ · Actualiser$/.test(t1.nom) && t1.l >= 44 && t1.h >= 44 && t1.bandeau === 'Hors ligne :', JSON.stringify(t1));
+  ok('témoin (téléphone) · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+{
+  // à l'ordinateur, en ligne (la base simulée) : « À jour » ; le réseau tombe puis revient
+  const base = baseSimulee();
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { telephone: false, hash: '#/date/102', base });
+  const etat = () => page.evaluate(() => { const b = document.querySelector('[data-temoin]'); return { etat: b.dataset.etat, texte: b.textContent.trim(), sr: document.querySelector('#sr-connexion')?.textContent || '', bandeau: document.querySelector('#bandeau-etat')?.textContent.trim() || '' }; });
+  await page.waitForFunction(() => document.querySelector('[data-temoin]')?.dataset.etat === 'ajour', null, { timeout: 10000 }).catch(() => {});
+  const e1 = await etat();
+  ok('témoin (ordinateur) · en ligne : « À jour », sans bandeau', e1.etat === 'ajour' && /^À jour/.test(e1.texte) && !e1.bandeau, JSON.stringify(e1));
+  await ctx.setOffline(true);
+  await page.waitForFunction(() => document.querySelector('[data-temoin]')?.dataset.etat === 'horsligne', null, { timeout: 4000 }).catch(() => {});
+  const e2 = await etat();
+  ok('témoin (ordinateur) · le réseau tombe : « Hors ligne · lu à l’instant », le bandeau, « Connexion perdue » aux lecteurs d’écran', e2.etat === 'horsligne' && /Hors ligne · lu à l’instant/.test(e2.texte) && /^Hors ligne :/.test(e2.bandeau) && /^Connexion perdue/.test(e2.sr), JSON.stringify(e2));
+  await page.screenshot({ path: `${CAPT}/temoin-horsligne-ordinateur.png`, fullPage: false });
+  await ctx.setOffline(false);
+  await page.waitForFunction(() => document.querySelector('[data-temoin]')?.dataset.etat === 'ajour', null, { timeout: 10000 }).catch(() => {});
+  const e3 = await etat();
+  ok('témoin (ordinateur) · le réseau revient : l’espace se relit, « À jour », « Connexion rétablie »', e3.etat === 'ajour' && !e3.bandeau && /^Connexion rétablie/.test(e3.sr), JSON.stringify(e3));
+  ok('témoin (ordinateur) · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();
 }
 
