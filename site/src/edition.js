@@ -15,7 +15,12 @@
    - data-date-id="<id>" sur chaque ligne d'agenda (D.dates[].id, et l'id des dates de D.saisons) : on la modifie,
      même passée ; data-agenda sur chaque liste de dates (data-agenda="<slug>" pour celle d'un spectacle) : on en ajoute ;
    - les variables CSS --ed-fond, --ed-encre, --ed-accent, --ed-sur-accent, --ed-police, --ed-rayon, --ed-trait : la
-     barre et les panneaux prennent le style de la maquette (et des règles .ed-… pour aller plus loin).
+     barre et les panneaux prennent le style de la maquette (et des règles .ed-… pour aller plus loin) ; --ed-bas : ce que
+     la maquette occupe déjà en bas de l'écran (sa barre d'onglets au téléphone, la safe-area) : la barre d'édition se pose
+     juste au-dessus (défaut : la safe-area seule). En retour, tant que la barre est là, l'édition écrit sur <html>
+     --ed-barre-h : la place qu'elle prend en bas de l'écran, son écart compris (0px sinon), pour que la maquette pose ce
+     qu'elle a en bas (un bouton du haut de page, une barre de filtres) au-dessus d'elle. Au téléphone (jusqu'à 759 px, le
+     seuil des maquettes), la barre prend toute la largeur.
    L'édition demande la base (DONNEES.etat === 'base') et un compte inscrit dans crescite_admins ; la session est celle
    de l'administration (admin/index.html), sur la même origine.
 
@@ -37,7 +42,7 @@ const EDITION = (() => {
   const STYLE = `
   :root { --ed-fond-d: var(--ed-fond, #fff); --ed-encre-d: var(--ed-encre, #1d1720); --ed-accent-d: var(--ed-accent, #1d1720);
     --ed-sur-d: var(--ed-sur-accent, #fff); --ed-police-d: var(--ed-police, system-ui, sans-serif); --ed-rayon-d: var(--ed-rayon, 12px);
-    --ed-trait-d: var(--ed-trait, rgba(0, 0, 0, .16)); }
+    --ed-trait-d: var(--ed-trait, rgba(0, 0, 0, .16)); --ed-bas-d: var(--ed-bas, env(safe-area-inset-bottom, 0px)); }
   .ed-actif [data-edit] { outline: 1.5px dashed color-mix(in srgb, var(--ed-accent-d) 55%, transparent); outline-offset: 3px; cursor: text; border-radius: 2px; }
   .ed-actif [data-edit]:hover { outline-style: solid; }
   .ed-actif [data-edit]:focus { outline: 2px solid var(--ed-accent-d); background: color-mix(in srgb, var(--ed-accent-d) 7%, transparent); }
@@ -49,9 +54,9 @@ const EDITION = (() => {
   .ed-boite, .ed-boite * { box-sizing: border-box; }
   .ed-boite { font: 15px/1.45 var(--ed-police-d); color: var(--ed-encre-d); }
   .ed-boite button, .ed-boite input, .ed-boite select, .ed-boite textarea { font: inherit; color: inherit; }
-  .ed-barre { position: fixed; z-index: 2147483000; right: 16px; bottom: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; max-width: calc(100vw - 32px);
+  .ed-barre { position: fixed; z-index: 2147483000; right: 16px; bottom: calc(16px + var(--ed-bas-d)); display: flex; flex-wrap: wrap; align-items: center; gap: 8px; max-width: calc(100vw - 32px);
     padding: 9px 10px 9px 14px; background: var(--ed-fond-d); border: 1px solid var(--ed-trait-d); border-radius: 999px; box-shadow: 0 10px 34px rgba(0, 0, 0, .28); }
-  @media (max-width: 760px) { .ed-barre { left: 8px; right: 8px; bottom: calc(76px + env(safe-area-inset-bottom)); border-radius: var(--ed-rayon-d); } }
+  @media (max-width: 759px) { .ed-barre { left: 8px; right: 8px; bottom: calc(8px + var(--ed-bas-d)); max-width: none; border-radius: var(--ed-rayon-d); } }
   .ed-barre .ed-etat { font-weight: 700; margin-right: 4px; }
   .ed-barre .ed-etat::before { content: ''; display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--ed-accent-d); margin-right: 7px; vertical-align: 1px; }
   .ed-barre .ed-nb { opacity: .72; font-size: 13px; }
@@ -249,6 +254,10 @@ const EDITION = (() => {
       <a class="ed-bt" href="${ADMIN}" target="_blank" rel="noopener" title="Ateliers, lieux, journal…">Administration ↗</a>
       <button type="button" class="ed-bt" data-ed="quitter">Quitter</button>`;
     document.body.append(barre);
+    // (la place qu'elle prend en bas de l'écran, son écart compris, pour la maquette : --ed-barre-h sur <html>)
+    const place = () => { if (!barre) return; const r = barre.getBoundingClientRect(); document.documentElement.style.setProperty('--ed-barre-h', `${Math.max(0, Math.ceil(innerHeight - r.top))}px`); };
+    if ('ResizeObserver' in window) { barre.__ro = new ResizeObserver(place); barre.__ro.observe(barre); }
+    addEventListener('resize', place); barre.__place = place; place();
     barre.addEventListener('click', e => {
       const b = e.target.closest('[data-ed]'); if (!b) return;
       if (b.dataset.ed === 'enregistrer') enregistrer();
@@ -268,6 +277,7 @@ const EDITION = (() => {
     if (modifies.size) { modifies.clear(); DONNEES.suspendre(false); DONNEES.recharger({ force: true }); }
     moi.actif = false;
     observateur?.disconnect();
+    if (barre) { barre.__ro?.disconnect(); removeEventListener('resize', barre.__place); document.documentElement.style.removeProperty('--ed-barre-h'); }
     barre?.remove(); barre = null; outils?.remove(); outils = null; outilPhoto?.remove(); outilPhoto = null;
     $$('.ed-ajout').forEach(b => b.remove());
     desarmerTout();
