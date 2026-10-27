@@ -228,8 +228,10 @@ const TROUPE = (() => {
 :where(.troupe-icone .tr-ic-etoile) { transform-box: fill-box; transform-origin: 50% 50%; }
 :where(.troupe-icone .tr-ic-coeur) { transform-origin: 16px 16px; }
 @media (prefers-reduced-motion: no-preference) {
-  :where([data-troupe-categorie]:hover, [data-troupe-categorie].est-allume, .troupe-icone.est-vivant) :where(.troupe-icone) :where(.tr-ic-avant, .tr-ic-arriere, .tr-ic-oeil, .tr-ic-iris, .tr-ic-onde, .tr-ic-plume, .tr-ic-cintre, .tr-ic-onde1, .tr-ic-onde2, .tr-ic-onde3, .tr-ic-billet, .tr-ic-etoile, .tr-ic-coeur) {
+  :where([data-troupe-categorie].est-allume, .troupe-icone.est-vivant) :where(.troupe-icone) :where(.tr-ic-avant, .tr-ic-arriere, .tr-ic-oeil, .tr-ic-iris, .tr-ic-onde, .tr-ic-plume, .tr-ic-cintre, .tr-ic-onde1, .tr-ic-onde2, .tr-ic-onde3, .tr-ic-billet, .tr-ic-etoile, .tr-ic-coeur) {
     animation: var(--tr-anim, none); }
+  @media (hover: hover) { :where([data-troupe-categorie]:hover) :where(.troupe-icone) :where(.tr-ic-avant, .tr-ic-arriere, .tr-ic-oeil, .tr-ic-iris, .tr-ic-onde, .tr-ic-plume, .tr-ic-cintre, .tr-ic-onde1, .tr-ic-onde2, .tr-ic-onde3, .tr-ic-billet, .tr-ic-etoile, .tr-ic-coeur) {
+    animation: var(--tr-anim, none); } }
 }
 :where(.troupe-icone .tr-ic-avant) { --tr-anim: troupe-balance 1.25s cubic-bezier(.4, 0, .2, 1); }
 :where(.troupe-icone .tr-ic-arriere) { --tr-anim: troupe-contre 1.25s cubic-bezier(.4, 0, .2, 1); }
