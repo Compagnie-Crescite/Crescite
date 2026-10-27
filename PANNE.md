@@ -16,13 +16,14 @@ aucun outil d'intelligence artificielle : du Python 3, Node.js, git et un naviga
 | **Le code** | GitHub, `Compagnie-Crescite/Crescite` | Garde l'historique et publie la copie GitHub Pages | Le site continue de tourner ; on publie sans GitHub (scénario B). |
 | **La base** | Supabase, projet `fwjgyfzcbcmfyfkhhtuh` | Tables `crescite_*`, comptes, fichiers (stockages `crescite`, `crescite-equipe`, `crescite-pro`, `crescite-frais`), 4 fonctions, 2 tâches planifiées | Le site public reste lisible ; tout le reste s'arrête (scénarios C et D). |
 | **Les courriels** | Brevo (clé `BREVO_API_KEY`), ou Resend (`RESEND_API_KEY`) | Propositions de dates, alertes de tournée | Rien ne part ; l'administration l'affiche (« non configuré »). |
+| **Les boîtes aux lettres** `@crescite.fr` | OVH (offre e-mail du même compte que le domaine : `mx1.mail.ovh.net`…) | Les adresses de la compagnie | Plus de courriel reçu ni envoyé. Elles dépendent du compte OVH qui gère le domaine : à garder sous la main de la compagnie (section 7). |
 | **Le logo et les photos d'origine** | `private/`, **hors du dépôt** (droits des photographes) | Il faut ce dossier pour reconstruire le site publié | Sans lui, `site/build.py --pages` refuse de publier. **En garder une copie** (section 6). |
 
 Le reste est déjà dans le site : les polices (`docs/polices/`, plus de Google Fonts), le client Supabase
 (`admin/vendor/`), pdfmake. Seuls la recherche de communes (`geo.api.gouv.fr`, dans l'édition) et les vidéos
 (YouTube sans cookie, Vimeo) appellent encore un autre site.
 
-> **Aujourd'hui (octobre 2026)**, `crescite.fr` mène encore à l'ancien site WordPress, hébergé ailleurs. Le jour de la
+> **Aujourd'hui (octobre 2026)**, `crescite.fr` mène encore à l'ancien site WordPress, hébergé chez WP Serveur. Le jour de la
 > bascule, ajouter `crescite.fr` comme domaine personnalisé du projet Cloudflare Pages (Workers & Pages → crescite →
 > Custom domains) et suivre ce qu'il demande dans le DNS d'OVH ; puis mettre la nouvelle adresse dans Supabase
 > (section 5, étape 4).
