@@ -383,13 +383,10 @@ async function envoyerPortrait(fichier, publique) {
 }
 async function rangerPortrait(chemin, publique) {
   if (!chemin || portraitPrive(chemin) !== publique) return chemin;   // déjà à sa place
-  const de = publique ? PORTRAITS : 'crescite', vers = publique ? 'crescite' : PORTRAITS;
-  const nom = chemin.split('/').pop(), dest = publique ? `equipe/${nom}` : `portraits/${nom}`;
-  const { data, error } = await sb.storage.from(de).download(chemin);
+  const { data, error } = await sb.storage.from(publique ? PORTRAITS : 'crescite').download(chemin);
   if (error) throw error;
-  const r = await sb.storage.from(vers).upload(dest, data, { contentType: data.type || 'image/webp', upsert: true, ...(publique ? { cacheControl: '31536000' } : {}) });
-  if (r.error) throw r.error;
-  return dest;
+  // un envoi neuf, sous un nouveau nom, comme une photo choisie : le stockage refuse le remplacement (upsert) d'un portrait
+  return envoyerPortrait(new File([data], chemin.split('/').pop(), { type: data.type || 'image/webp' }), publique);
 }
 async function effacerPortrait(chemin) {
   if (!chemin) return;
