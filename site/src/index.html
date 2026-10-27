@@ -792,6 +792,13 @@ section.bloc.troupe { padding-top: 0; content-visibility: auto; contain-intrinsi
 .calcul input { width: 4.5em; padding: 8px 10px; }
 .envoi { margin: 0; }
 .coord { font-style: normal; line-height: 1.7; padding: 22px 24px; border-left: 3px solid var(--magenta); background: var(--papier-2); }
+/* (la page de contact : les coordonnées d'abord, à côté du formulaire au bureau, au-dessus au téléphone) */
+.contact > .ct-coord { grid-column: 2; grid-row: 1; display: grid; gap: 18px; }
+.contact > .formulaire { grid-column: 1; grid-row: 1; }
+.ct-coord .coord { margin: 0; }
+.ct-ecrire { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 0; }
+.ct-ecrire .bouton { min-height: 44px; }
+.ct-courriel { color: var(--gris); font-size: .92rem; overflow-wrap: anywhere; }
 .legal { max-width: 78ch; overflow-wrap: anywhere; }
 .legal h2 { margin: 1.6em 0 .5em; font: 500 1.6rem/1.2 var(--titre); }
 .legal h2:first-child { margin-top: 0; }
@@ -2473,6 +2480,7 @@ article.u { --onglets: 58px; }
   .une-carte { margin: 22px 0 8px; }
   .bulle { position: static; max-width: none; margin-top: 8px; }
   .bulle:empty { display: none; }
+  .contact > .ct-coord, .contact > .formulaire { grid-column: auto; grid-row: auto; }
   .compagnie, .directeur, .contact, .ag-corps, .sa-corps, .sai-corps, .e-dates, .u-tournee, .u-prog, .dos-accueil, .dos-grille, .dos-pres, .dos-ateliers, .fus.large { grid-template-columns: minmax(0, 1fr); }
   .dos-pres .boite:first-child { grid-column: auto; }
   .pied { grid-template-columns: minmax(0, 1fr); }
@@ -5968,8 +5976,15 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const types = { 'Nom': ['text', 'name'], 'Adresse e-mail': ['email', 'email'], 'Téléphone': ['tel', 'tel'], 'Ville': ['text', 'address-level2'] };
     // (le menu par les saisons n'a plus « Contact » : son libellé vient alors de D.site.libelles)
     const nomC = (MENU.contact || {}).texte || L.contact;
+    // d'abord où écrire : les coordonnées et le courriel du contact diffusion (D.site.programmation.contact), puis le formulaire
+    // (au bureau, les coordonnées dans la colonne d'à côté) ; le formulaire n'envoie rien (décision de la compagnie)
+    const cp = contactPrg(), courriel = cp && cp.email;
     main.innerHTML = `<div class="wrap page-titre"><p class="surtitre">${esc(nomC)}</p><h1 tabindex="-1"><span class="fleur"${ed('site.contact.titre')}>${esc(C.titre)}</span></h1></div>
       <section class="bloc sans-filet"><div class="wrap contact">
+        <div class="ct-coord">
+          <address class="coord"><strong${ed('site.coordonnees.nom')}>${esc(co.nom)}</strong><br>${co.adresse.map((x, i) => `<span${ed(`site.coordonnees.adresse.${i}`)}>${esc(x)}</span>`).join('<br>')}</address>
+          ${courriel ? `<p class="ct-ecrire"><a class="bouton e" href="mailto:${esc(courriel)}" style="--ec:var(--saison)"><span>${esc(S.ecrire.texte)}</span></a><span class="ct-courriel"${ed('site.programmation.contact.email')}>${esc(courriel)}</span></p>` : ''}
+        </div>
         <form class="formulaire" novalidate>
           ${C.champs.map((c, i) => i === C.champs.length - 1 ? `<p class="champ large"><label for="f${i}">${esc(c)}</label><textarea id="f${i}" rows="6"></textarea></p>`
             : `<p class="champ"><label for="f${i}">${esc(c)}</label><input id="f${i}" type="${(types[c] || ['text'])[0]}"${types[c] ? ` autocomplete="${types[c][1]}"` : ''}></p>`).join('')}
@@ -5977,7 +5992,6 @@ html.still .sc-image { transition: opacity .35s ease !important; }
           <p class="calcul"><label for="f-calc">${esc(C.calcul)}</label><input id="f-calc" inputmode="numeric" maxlength="2"></p>
           <p class="envoi"><button class="bouton" type="submit">${esc(C.bouton)}</button></p>
         </form>
-        <address class="coord"><strong${ed('site.coordonnees.nom')}>${esc(co.nom)}</strong><br>${co.adresse.map((x, i) => `<span${ed(`site.coordonnees.adresse.${i}`)}>${esc(x)}</span>`).join('<br>')}</address>
       </div></section>`;
     $('form', main).addEventListener('submit', e => e.preventDefault());
     return { titre: nomC, menu: 'contact' };
