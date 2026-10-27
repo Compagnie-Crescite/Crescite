@@ -438,7 +438,7 @@ compte du projet inscrit dans `crescite_admins`.
     témoin de la connexion (« À jour », « Hors ligne · lu à l'instant ») ; l'aide « ? » : 116 vérifications, des
     captures dans `site/dist/shots-adresses/`.
   - `node site/tableur.mjs` garde le tableur des représentations (`#/representations/tableur`) tel qu'il est, avant
-    qu'il change de place : il n'ouvre que la page, jamais le source. Le rendu (une ligne par séance, les rôles et les
+    comme après sa sortie d'`admin/index.html` vers `admin/tableur.js` : il n'ouvre que la page, jamais le source. Le rendu (une ligne par séance, les rôles et les
     comptes de la grille, les colonnes vides repliées, Jour et Spectacle collées à gauche quand on défile, la case d'une
     date répétée sur ses séances), les filtres et le tri, le clavier (flèches, Ctrl+flèches, Maj+flèches, Ctrl+A, Tab,
     Entrée, F2, Échap, taper pour écrire), une case qui vaut pour toute la date (la date est enregistrée une fois avec
@@ -489,8 +489,8 @@ compte du projet inscrit dans `crescite_admins`.
   Le pied de la date tient sur une rangée : quand tout n'y tient pas (au téléphone, dans une colonne étroite), Feuille
   de route, Prévenir l'équipe, Dupliquer et Supprimer passent dans un menu « Plus » (↑ ↓, Échap rend le focus) ; seul
   « Enregistrer » reste à côté.
-- **Le tableur** (Représentations → Tableur) : une ligne par séance, comme le tableur où la compagnie récapitule ses
-  représentations ; les séances d'une même date se suivent, en bande. Colonnes : jour, spectacle, heure et fin, lieu,
+- **Le tableur** (Représentations → Tableur ; `admin/tableur.js`, chargé après le tableau de bord) : une ligne par
+  séance, comme le tableur où la compagnie récapitule ses représentations ; les séances d'une même date se suivent, en bande. Colonnes : jour, spectacle, heure et fin, lieu,
   commune, public, statut, nature, distribution, billetterie, précisions, organisateur, contact, contrat, notes, séance
   annulée, site. Ce qui est vide reste vide, et une colonne vide sur toute la vue se replie (« Colonnes vides » la
   montre). Filtres : saison, spectacle, à venir ou passées, recherche ; tri par date.
