@@ -520,7 +520,8 @@ async function regle23(page, tag, log, n = '') {
 // son nom et ses métiers) ; une personne à plusieurs places : la survoler allume toutes ses places et les relie ; au
 // clavier, un arrêt par catégorie, les flèches d'une personne à l'autre, Entrée la choisit et ouvre sa fiche (son nom, un
 // lien vers chacun de ses spectacles, le focus dedans), Échap la relâche, ferme la fiche et rend le focus à sa place ; à
-// 360 px, rien ne déborde. Une photo publiée introuvable (le fichier manque) est signalée, sans être une anomalie de la maquette.
+// 360 px, rien ne déborde. La fiche partout : sur la page d'un spectacle en tournée, chaque portrait de la distribution et
+// chaque personne nommée dans sa fiche l'ouvrent ; Échap la ferme et rend le focus. Une photo publiée introuvable (le fichier manque) est signalée, sans être une anomalie de la maquette.
 async function regle20(page, tag, log) {
   const pfx = `${tag} règle 20`;
   await page.evaluate(() => { location.hash = '#/compagnie'; });
@@ -654,6 +655,33 @@ async function regle20(page, tag, log) {
     if (d.page > 1 || d.places) log.push(`${pfx} : à 360 px, la troupe déborde (${d.page}px, ${d.places} place(s) hors de l'écran)`);
     await page.setViewportSize(vp);
     await page.waitForTimeout(300);
+  }
+  // la fiche partout : sur la page d'un spectacle à distribution, chaque portrait l'ouvre ([data-personne]), et chaque personne
+  // nommée dans la fiche du spectacle aussi ; un clic l'ouvre, Échap la ferme et rend le focus
+  const sp = await page.evaluate(() => { const s = (D.shows || []).find(x => (x.equipe || []).some(e => e.categorie === 'jeu' && (D.personnes || {})[e.personne]) && x.enTournee); return s ? s.slug : null; });
+  if (sp) {
+    await page.evaluate(s => { location.hash = `#/spectacle/${s}/voir`; }, sp);
+    await page.waitForTimeout(2200);
+    const d = await page.evaluate(s => { const sh = D.shows.find(x => x.slug === s), P = D.personnes || {}, n = x => String(x || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      const comediens = [...new Set(sh.equipe.filter(e => e.categorie === 'jeu' && P[e.personne]).map(e => e.personne))];
+      const ouvrent = new Set([...document.querySelectorAll('main .u-pt [data-personne]')].map(b => b.getAttribute('data-personne')));
+      const nommes = new Set([...document.querySelectorAll('main .nomme[data-personne]')].map(b => b.getAttribute('data-personne')));
+      const fiche = (sh.fiche || []).map(f => n(f.valeur)).join(' | '), cites = Object.entries(P).filter(([, p]) => fiche.includes(`${p.prenom} ${p.nom}`)).map(([k]) => k);
+      return { sans: comediens.filter(k => !ouvrent.has(k)), pasNommes: cites.filter(k => !nommes.has(k)) }; }, sp);
+    if (d.sans.length) log.push(`${pfx} : sur ${sp}, ces portraits n'ouvrent pas la fiche : ${d.sans.join(', ')}`);
+    if (d.pasNommes.length) log.push(`${pfx} : sur ${sp}, ces personnes nommées n'ouvrent pas leur fiche : ${d.pasNommes.join(', ')}`);
+    const b = page.locator('main .u-pt [data-personne]').first();
+    if (await b.count()) {
+      const slug = await b.getAttribute('data-personne');
+      await b.scrollIntoViewIfNeeded(); await b.click(); await page.waitForTimeout(400);
+      const o = await page.evaluate(s => { const f = document.querySelector(`[data-fiche-personne="${s}"]`); if (!f) return null; const r = f.getBoundingClientRect();
+        return { focus: f.contains(document.activeElement), dans: r.left >= 0 && r.right <= innerWidth + 1 && r.width > 100 }; }, slug);
+      if (!o) log.push(`${pfx} : sur ${sp}, le portrait de ${slug} n'ouvre pas sa fiche`);
+      else if (!o.focus || !o.dans) log.push(`${pfx} : sur ${sp}, la fiche de ${slug} ${o.focus ? 'sort de l\'écran' : 'ne prend pas le focus'}`);
+      await page.keyboard.press('Escape'); await page.waitForTimeout(400);
+      const f = await page.evaluate(s => !document.querySelector('[data-fiche-personne]') && document.activeElement && document.activeElement.getAttribute('data-personne') === s, slug);
+      if (!f) log.push(`${pfx} : sur ${sp}, Échap ne ferme pas la fiche de ${slug} ou ne rend pas le focus à son portrait`);
+    }
   }
   if (tag === 'tab') log.push(`· règle 20 : ${e.n} personnes, ${e.places} places en ${e.cats} catégories, ${e.vignettes} vignettes${e.info.length ? ` ; ${e.info.join(', ')}` : ''}`);
 }

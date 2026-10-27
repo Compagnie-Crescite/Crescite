@@ -1012,15 +1012,15 @@ section.bloc.troupe { padding-top: 0; content-visibility: auto; contain-intrinsi
   .tr6-p { min-width: 0; max-width: 100%; }
   .tr6-qui { min-width: 0; overflow-wrap: anywhere; }
 }
-/* la fiche d'une personne (un clic sur une de ses places) : posée par-dessus sa place, son portrait sur sa vignette, dont
-   elle naît (un cercle qui s'ouvre) ; ses métiers, ses spectacles, les prochaines dates de ceux qui tournent. Au-dessus des
-   catégories, gardée dans la troupe (elle ne déborde ni de l'écran ni de la section) */
-.trf { position: absolute; z-index: 4; left: 0; top: 0; width: min(360px, 100%); max-height: min(78svh, 620px); overflow: auto; overscroll-behavior: contain;
-  box-sizing: border-box; padding: 16px 18px 18px; border-radius: 24px; background: var(--blanc); color: var(--encre); text-align: left;
-  box-shadow: 0 0 0 1.5px var(--saison-texte), 0 26px 60px -24px rgb(0 0 0 / .55); scroll-margin: 12px 0 16px; }
+/* la fiche d'une personne (une place de la troupe, un portrait, son nom dans une page) : posée par-dessus, son portrait sur la
+   photo, dont elle naît (un cercle qui s'ouvre) ; ses métiers, ses spectacles, les prochaines dates de ceux qui tournent.
+   Dans la couche du dessus (popover), gardée dans l'écran utile (--fiche-marges : le menu arrimé, la barre du bas) */
+.trf { position: fixed; inset: auto; left: 0; top: 0; width: min(360px, calc(100vw - 24px)); height: auto; max-height: min(620px, calc(100dvh - var(--fiche-marges, 120px))); margin: 0; overflow: auto; overscroll-behavior: contain;
+  box-sizing: border-box; padding: 16px 18px 18px; border: 0; border-radius: 24px; background: var(--blanc); color: var(--encre); text-align: left;
+  font: 400 1rem/1.5 var(--texte); letter-spacing: normal; text-transform: none;
+  box-shadow: 0 0 0 1.5px var(--saison-texte), 0 26px 60px -24px rgb(0 0 0 / .55); }
+.trf-sans-popover { z-index: 2147483005; }
 .trf:focus { outline: none; }
-/* au téléphone, elle tient entre le menu et le sommaire arrimés, en haut, et la barre des onglets, en bas */
-@media (max-width: 899px) { .trf { max-height: calc(100svh - var(--haut) - var(--onglets) - 120px); scroll-margin-bottom: 84px; } }
 .trf:focus-visible { outline: 2px solid var(--saison-texte); outline-offset: 3px; }
 .trf-x { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%;
   background: transparent; color: var(--encre); cursor: pointer; transition: background-color var(--k-survol) var(--k-doux); }
@@ -1055,6 +1055,21 @@ section.bloc.troupe { padding-top: 0; content-visibility: auto; contain-intrinsi
 .trf-tout { margin: 10px 0 0; font-size: .85rem; }
 .trf-tout a { color: var(--saison-texte); }
 .trf-tout .fleche { width: 14px; height: 14px; margin-left: 4px; vertical-align: -2px; }
+/* ce qui l'ouvre ailleurs que dans la troupe : un nom écrit dans une page (le même texte, souligné de points, à la couleur du
+   texte), un portrait de la distribution (tout le portrait) ; en mode édition, le texte et la photo reprennent le clic */
+.nomme { display: inline; margin: 0; padding: 0; border: 0; border-radius: 2px; background: none; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; text-align: inherit;
+  cursor: pointer; text-decoration: underline dotted 1.5px; text-decoration-color: color-mix(in srgb, currentColor 55%, transparent); text-underline-offset: .2em;
+  transition: text-decoration-color var(--k-survol) var(--k-doux); }
+@media (hover: hover) { .nomme:hover { text-decoration-style: solid; text-decoration-color: currentColor; } }
+.nomme[aria-expanded="true"] { text-decoration-style: solid; text-decoration-color: currentColor; }
+.nomme:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.ed-actif .nomme { pointer-events: none; text-decoration: none; }
+.u-pt { position: relative; }
+.u-pt-ouvrir { position: absolute; inset: 0; z-index: 1; width: 100%; margin: 0; padding: 0; border: 0; border-radius: 3px; background: none; cursor: pointer; }
+.u-pt-ouvrir:focus-visible { outline: 2px solid var(--u-vif, currentColor); outline-offset: 4px; }
+.u-pt-cadre img { transition: scale .45s var(--k-doux); }
+@media (hover: hover) { .u-pt:has(.u-pt-ouvrir:hover) .u-pt-cadre img { scale: 1.04; } }
+.ed-actif .u-pt-ouvrir { display: none; }
 
 /* ———— le contact, les pages légales ———— */
 .champ { margin: 0 0 16px; }
@@ -3172,7 +3187,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   main [data-mv], main .mv-attente, main .mv-attente > *, main .apparait, main .ecrit, main .lit, main .lit *, main .rc-in, main .rc-p, main .u-titre .ligne { opacity: 1 !important; transform: none !important; translate: none !important; clip-path: none !important; visibility: visible !important; }
   /* ce qui ne s'imprime pas */
   .evitement, .top-cale, #top, #entrees, footer, .haut-page, .succion, canvas, .intro, svg.defs, .ed-barre, .ed-panneau,
-  main button:not(.rs-date), main .u-onglets, main .sp-som, main .som, main .u-cta, main .une-retour, main .une-ariane, main .une-motif, main .une-lueur, main .une-ombre,
+  main button:not(.rs-date):not(.nomme), .trf, main .u-onglets, main .sp-som, main .som, main .u-cta, main .une-retour, main .une-ariane, main .une-motif, main .une-lueur, main .une-ombre,
   main .voisins, main .rc-vis, main .rc-fil, main #c-video, main [data-lecteur], main .filet, main svg.trait, main .rs-tete, main .rs-defile, main .rs-plus, main .rs-photo, main .rs-tache,
   main svg.carte, main .carte-sp, main .ag7-carte, main .frise, main [data-frise], main .u-frise, main .v-frise, main .fs7, main .p4-frise, main .ft7, main .fr-legende,
   main .s7-outils, main .s7-rac, main .sm7, main .sf7, main .ag-index, main #v-alerte, main .bf7, main .fe7, main .s7-gel { display: none !important; }
@@ -13800,13 +13815,13 @@ const CREATURE = (() => {
   }
   // la troupe prend vie : les liens entre les places d'une personne (au clavier aussi), la créature, les icônes qui s'animent
   // une fois à leur arrivée dans l'écran
-  let troupeCtl = null, troupeIO = null, troupeRO = null, troupeCreature = null, troupeGeo = null, troupeFiche = null;
+  let troupeCtl = null, troupeIO = null, troupeRO = null, troupeCreature = null, troupeGeo = null;
   function finirTroupe() {
     if (troupeCtl) { troupeCtl.detruire(); troupeCtl = null; }
     if (troupeIO) { troupeIO.disconnect(); troupeIO = null; }
     if (troupeRO) { troupeRO.disconnect(); troupeRO = null; }
     if (troupeCreature) { troupeCreature.arreter(); troupeCreature = null; }
-    troupeGeo = null; troupeFiche = null;
+    troupeGeo = null;
   }
   // la pieuvre de la troupe : une créature (CREATURE.creer, les vraies tentacules), dessinée à la place de la pieuvre de tête,
   // toujours en mouvement (ses tentacules battent, elle respire, se balance, sa tête hoche et se tourne au bout d'un ressort, un
@@ -13893,7 +13908,7 @@ const CREATURE = (() => {
   // tentacules, lumineuses, vont tenir toutes ses places ; les fils des liens se taisent. Personne : elle lâche tout
   // (sa fiche ouverte, elle la tient aussi, avec celles de ses places que la fiche ne couvre pas)
   function tenirPersonne(slug, depuis) {
-    const tr = $('.tr6', main), f = troupeFiche && troupeFiche.el.isConnected ? troupeFiche.el : null;
+    const tr = $('.tr6', main), f = fiche && fiche.troupe && fiche.el.isConnected ? fiche.el : null;
     troupeTenues = slug && tr ? $$(`[data-troupe-place][data-troupe-personne="${slug}"]`, tr) : [];
     if (f && troupeTenues.length) {
       const b = f.getBoundingClientRect();
@@ -13907,11 +13922,14 @@ const CREATURE = (() => {
       troupeCreature.tenir(troupeTenues, { lumineux: true, prise: 'pastille' });
     } else troupeCreature.lacher();
   }
-  /* la fiche d'une personne : un clic (ou Entrée) sur une de ses places l'ouvre par-dessus sa photo ; la vignette grandit en
-     portrait et la fiche s'ouvre autour d'elle, en cercle. Son nom, ses métiers, le crédit de sa photo ; ses spectacles (sa
-     fonction, son rôle, son alternance, « En tournée » ou son statut), chacun menant à sa page ; les prochaines dates de ceux
-     qui tournent, s'il y en a (jusqu'à cinq, puis « Toutes les dates »). Rien que D. Elle se ferme quand la personne est
-     relâchée (un second clic, Échap, un clic ailleurs, sa croix) et rend le focus à sa place ; relue dans D à chaque ouverture */
+  /* la fiche d'une personne, partout sur le site : une place de la troupe, un portrait de la distribution, son nom écrit dans
+     une page (nommer, plus bas) l'ouvrent par-dessus ce qu'on a choisi ; son portrait se pose sur la photo (la vignette grandit,
+     la fiche s'ouvre autour d'elle, en cercle). Son nom, ses métiers, le crédit de sa photo ; ses spectacles (sa fonction, son
+     rôle, son alternance, « En tournée » ou son statut), chacun menant à sa page ; les prochaines dates de ceux qui tournent,
+     s'il y en a (jusqu'à cinq, puis « Toutes les dates »). Rien que D, relue à chaque ouverture. Dans la couche du dessus
+     (popover : rien ne la coupe, ni la mise en page différée des sections, ni l'univers d'un spectacle), attachée à ce qui l'a
+     ouverte quand la page défile, gardée dans l'écran à l'ouverture. Elle se ferme d'un second clic, d'Échap, d'un clic ailleurs
+     ou de sa croix, et rend le focus à ce qui l'a ouverte ; une autre page la ferme */
   const FICHE_DATES = 5;
   function ficheHTML(slug) {
     const p = (D.personnes || {})[slug];
@@ -13933,81 +13951,178 @@ const CREATURE = (() => {
       ${sps.length ? `<h4 class="trf-k">${esc(L.lesSpectacles)}</h4><ul class="trf-l">${sps.map(spectacle).join('')}</ul>` : ''}
       ${vues.length ? `<h4 class="trf-k">${esc(L.prochainesDates)}</h4><ul class="trf-l">${vues.map(date).join('')}</ul>${ds.length > vues.length ? `<p class="trf-tout"><a href="${esc(m.href)}">${esc(L.toutesLesDates)}${FLECHE}</a></p>` : ''}` : ''}`;
   }
-  // la poser par-dessus la place : son portrait (sinon son coin) sur la vignette (sinon le point) de la place, gardée dans la
-  // troupe ; rend le point d'où elle s'ouvre, dans la fiche
-  function placerFiche(f, place) {
-    const tr = f.parentNode;
-    if (!tr || !place.isConnected) return [0, 0];
-    const R = tr.getBoundingClientRect(), a = (place.querySelector('[data-troupe-ancre]') || place).getBoundingClientRect(), v = $('.trf-v', f);
-    const ox = v ? v.offsetLeft + v.offsetWidth / 2 : 30, oy = v ? v.offsetTop + v.offsetHeight / 2 : 34;
-    const cx = a.left + a.width / 2 - R.left, cy = a.top + a.height / 2 - R.top;
-    const x = clamp(cx - ox, 0, Math.max(0, R.width - f.offsetWidth)), y = clamp(cy - oy, 0, Math.max(0, R.height - f.offsetHeight));
+  // la fiche ouverte : { el, slug, ancre (la photo, la vignette ou le nom sur lequel elle se pose), declencheur (ce qui l'a
+  // ouverte, qui reprend le focus), troupe, surFermer, dx, dy (son écart à l'ancre, gardé quand la page défile), fin() }
+  let fiche = null;
+  // l'écran utile : sous le menu (et le sommaire) arrimés en haut, au-dessus de la barre d'onglets du bas au téléphone
+  function margesFiche() {
+    const haut = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 80, eb = $('#entrees.en-bas');
+    const r = eb && eb.getClientRects().length ? eb.getBoundingClientRect() : null;
+    return [haut, r && r.top < innerHeight && r.top > innerHeight / 2 ? innerHeight - r.top + 12 : 12];
+  }
+  // la poser : son portrait (sinon son coin) sur le centre de l'ancre, gardée dans l'écran (premiere), puis à la même distance
+  // de l'ancre ; rend le point d'où elle s'ouvre, dans la fiche
+  function placerFiche(F, premiere) {
+    const f = F.el, a = F.ancre.getBoundingClientRect(), cx = a.left + a.width / 2, cy = a.top + a.height / 2;
+    if (premiere) {
+      const [haut, bas] = margesFiche();
+      f.style.setProperty('--fiche-marges', `${Math.round(haut + bas)}px`);
+      const v = $('.trf-v', f), ox = v ? v.offsetLeft + v.offsetWidth / 2 : 30, oy = v ? v.offsetTop + v.offsetHeight / 2 : 34, W = f.offsetWidth, H = f.offsetHeight;
+      const x = clamp(cx - ox, 12, Math.max(12, innerWidth - 12 - W)), y = clamp(cy - oy, haut, Math.max(haut, innerHeight - bas - H));
+      F.dx = x - a.left; F.dy = y - a.top;
+    }
+    const x = a.left + F.dx, y = a.top + F.dy;
     f.style.left = `${Math.round(x)}px`; f.style.top = `${Math.round(y)}px`;
     return [clamp(cx - x, 0, f.offsetWidth), clamp(cy - y, 0, f.offsetHeight)];
   }
-  function ouvrirFiche(tr, slug, place) {
+  function ouvrirFiche(slug, { ancre, declencheur = ancre, hote = document.body, troupe = false, surFermer = null } = {}) {
     const html = ficheHTML(slug);
     fermerFiche({ anime: false, rendre: false });
-    if (!html || !place) return;
+    if (!html || !ancre || !ancre.isConnected) return;
     const f = document.createElement('div');
     f.className = 'trf';
-    f.setAttribute('data-troupe-fiche', slug);
+    f.setAttribute('data-fiche-personne', slug);
+    if (troupe) f.setAttribute('data-troupe-fiche', slug);
     f.setAttribute('role', 'dialog');
     f.setAttribute('aria-labelledby', 'trf-nom');
     f.tabIndex = -1;
     f.innerHTML = `<button type="button" class="trf-x" data-trf-fermer aria-label="${esc(L.fermer || '')}">${CROIX}</button>${html}`;
-    tr.appendChild(f);
-    troupeFiche = { el: f, slug, place };
-    const [ox, oy] = placerFiche(f, place);
+    // (dans la couche du dessus ; sans popover, posée sur la page, tout en haut)
+    const haut = typeof f.showPopover === 'function';
+    if (haut) f.popover = 'manual'; else f.classList.add('trf-sans-popover');
+    (haut ? hote : document.body).appendChild(f);
+    if (haut) f.showPopover();
+    const F = fiche = { el: f, slug, ancre, declencheur, troupe, surFermer, dx: 0, dy: 0 };
+    if (declencheur && declencheur.hasAttribute('aria-expanded')) declencheur.setAttribute('aria-expanded', 'true');
+    const [ox, oy] = placerFiche(F, true);
     f.focus({ preventScroll: true });
+    // elle suit ce qui l'a ouverte quand la page défile ; Échap, sa croix, un clic ailleurs la ferment
+    let raf = 0;
+    const suivre = () => { if (raf) return; raf = requestAnimationFrame(() => { raf = 0; if (fiche !== F) return; if (!F.ancre.isConnected) fermerFiche({ anime: false, rendre: false }); else placerFiche(F, false); }); };
+    const reposer = () => { if (fiche === F && F.ancre.isConnected) placerFiche(F, true); };
+    const touche = e => { if (e.key === 'Escape' && fiche === F) { e.preventDefault(); fermerFiche(); } };
+    const clic = e => {
+      if (fiche !== F) return;
+      const t = e.target;
+      if (t && t.closest && t.closest('[data-trf-fermer]') && f.contains(t)) { fermerFiche(); return; }
+      if (t && (f.contains(t) || (declencheur && declencheur.contains(t)))) return;
+      fermerFiche({ rendre: false });
+    };
+    addEventListener('scroll', suivre, { passive: true, capture: true });
+    addEventListener('resize', reposer, { passive: true });
+    document.addEventListener('keydown', touche);
+    document.addEventListener('click', clic, true);
+    F.fin = () => { cancelAnimationFrame(raf); removeEventListener('scroll', suivre, { capture: true }); removeEventListener('resize', reposer); document.removeEventListener('keydown', touche); document.removeEventListener('click', clic, true); };
     if (motionOK() && f.animate) {
-      const W = f.offsetWidth, H = f.offsetHeight, r0 = Math.max(6, ((place.querySelector('[data-troupe-ancre]') || place).offsetWidth || 12) / 2), r1 = Math.hypot(Math.max(ox, W - ox), Math.max(oy, H - oy)) + 2;
+      const W = f.offsetWidth, H = f.offsetHeight, r0 = Math.max(6, Math.min(48, Math.min(ancre.offsetWidth || 12, ancre.offsetHeight || 12) / 2)), r1 = Math.hypot(Math.max(ox, W - ox), Math.max(oy, H - oy)) + 2;
       f.animate([{ clipPath: `circle(${r0}px at ${ox}px ${oy}px)` }, { clipPath: `circle(${r1}px at ${ox}px ${oy}px)` }], { duration: 440, easing: 'cubic-bezier(.22, .8, .24, 1)' });
       const v = $('.trf-v', f);
-      if (v) v.animate([{ transform: `scale(${(r0 * 2 / v.offsetWidth).toFixed(3)})` }, { transform: 'none' }], { duration: 440, easing: 'cubic-bezier(.3, 1.25, .5, 1)' });
+      if (v) v.animate([{ transform: `scale(${Math.min(1, r0 * 2 / v.offsetWidth).toFixed(3)})` }, { transform: 'none' }], { duration: 440, easing: 'cubic-bezier(.3, 1.25, .5, 1)' });
       $$('.trf-qui, .trf-k, .trf-l > li, .trf-tout', f).forEach((e, i) => e.animate([{ opacity: 0, transform: 'translateY(var(--k-monte))' }, { opacity: 1, transform: 'none' }],
         { duration: 320, delay: 120 + Math.min(i, 10) * 34, easing: 'cubic-bezier(.22, .8, .24, 1)', fill: 'backwards' }));
     }
-    // (elle reste à portée : si elle dépasse le bas de l'écran, la page descend juste ce qu'il faut)
-    const b = f.getBoundingClientRect();
-    if (b.bottom > innerHeight || b.top < 0) f.scrollIntoView({ block: 'nearest', behavior: motionOK() ? 'smooth' : 'auto' });
   }
-  // la fermer : elle se referme sur la vignette ; rendre : le focus revient à la place qui l'a ouverte (s'il était dans la fiche)
+  // la fermer : elle se referme sur son ancre ; rendre : le focus revient à ce qui l'a ouverte (s'il était dans la fiche) ;
+  // surFermer prévient qui l'a ouverte (la troupe relâche la personne)
   function fermerFiche({ anime = true, rendre = true } = {}) {
-    const F = troupeFiche;
-    troupeFiche = null;
-    if (!F || !F.el.isConnected) return;
+    const F = fiche;
+    fiche = null;
+    if (!F) return;
+    F.fin && F.fin();
     const f = F.el, dedans = f.contains(document.activeElement);
-    f.removeAttribute('data-troupe-fiche');
+    f.removeAttribute('data-fiche-personne'); f.removeAttribute('data-troupe-fiche');
     const h = $('#trf-nom', f); if (h) h.removeAttribute('id');
-    if (rendre && dedans && F.place.isConnected) F.place.focus({ preventScroll: true });
-    if (!anime || !motionOK() || !f.animate) { f.remove(); return; }
+    if (F.declencheur && F.declencheur.hasAttribute('aria-expanded')) F.declencheur.setAttribute('aria-expanded', 'false');
+    if (rendre && dedans && F.declencheur && F.declencheur.isConnected) F.declencheur.focus({ preventScroll: true });
+    if (F.surFermer) F.surFermer();
+    const ote = () => { try { if (f.matches(':popover-open')) f.hidePopover(); } catch (e) { /* sans popover */ } f.remove(); };
+    if (!f.isConnected) return;
+    if (!anime || !motionOK() || !f.animate || !F.ancre.isConnected) { ote(); return; }
     f.style.pointerEvents = 'none';
-    const [ox, oy] = placerFiche(f, F.place), W = f.offsetWidth, H = f.offsetHeight;
+    const [ox, oy] = placerFiche(F, false), W = f.offsetWidth, H = f.offsetHeight;
     f.animate([{ clipPath: `circle(${Math.hypot(Math.max(ox, W - ox), Math.max(oy, H - oy)) + 2}px at ${ox}px ${oy}px)`, opacity: 1 }, { clipPath: `circle(14px at ${ox}px ${oy}px)`, opacity: 0 }],
-      { duration: 240, easing: 'cubic-bezier(.4, 0, .6, 1)', fill: 'forwards' }).onfinish = () => f.remove();
+      { duration: 240, easing: 'cubic-bezier(.4, 0, .6, 1)', fill: 'forwards' }).onfinish = ote;
   }
+  // un portrait de la distribution, un nom écrit dans une page ([data-personne]) : sa fiche (pas en mode édition : le clic y
+  // modifie le texte ou la photo) ; un second clic la referme
+  document.addEventListener('click', e => {
+    const b = e.target && e.target.closest ? e.target.closest('[data-personne]') : null;
+    if (!b || !main.contains(b) || (typeof EDITION !== 'undefined' && EDITION.actif)) return;
+    e.preventDefault();
+    if (fiche && fiche.declencheur === b) { fermerFiche(); return; }
+    const ancre = b.classList.contains('u-pt-ouvrir') ? b.parentNode.querySelector('.u-pt-cadre') || b : b;
+    ouvrirFiche(b.getAttribute('data-personne'), { ancre, declencheur: b });
+  });
+  /* les personnes nommées dans les pages : chaque nom complet d'une personne publiée de D (« Prénom Nom »), écrit dans le texte
+     d'une page (la fiche d'un spectacle, sa distribution, « avec : … », l'équipe de création, la présentation de la compagnie…),
+     devient un bouton qui ouvre sa fiche ; le texte reste le même, mot pour mot. Ni dans les liens, les boutons, les titres de
+     page, la troupe (elle a ses places), les portraits (ils ont le leur), les pages légales ; ni en mode édition (armé, un texte
+     reprend sa valeur de D). Après le rendu, au repos, puis pour ce qui s'ajoute à la page */
+  const HORS_NOMS = 'a, button, input, select, textarea, label, script, style, svg, h1, nav, [aria-hidden="true"], [contenteditable], [data-troupe], .u-pt, .trf, .ed-boite';
+  let motifNoms = null, cleNoms = null;
+  function noms() {
+    const ps = Object.entries(D.personnes || {}).map(([slug, p]) => [slug, nomDe(p).replace(/\s+/g, ' ').trim()]).filter(([, n]) => n.includes(' '));
+    const cle = ps.map(x => x.join('=')).join('|');
+    if (cle === cleNoms) return motifNoms;
+    cleNoms = cle;
+    const parNom = new Map(ps.map(([s, n]) => [n, s])), alt = [...parNom.keys()].sort((a, b) => b.length - a.length).map(n => n.split(' ').map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s+'));
+    // (un navigateur sans lookbehind, Safari avant 16.4 : les noms restent du texte)
+    try { motifNoms = alt.length ? { re: new RegExp(`(?<![\\p{L}\\p{N}])(?:${alt.join('|')})(?![\\p{L}\\p{N}])`, 'gu'), parNom } : null; } catch (e) { motifNoms = null; }
+    return motifNoms;
+  }
+  function nommer(racine) {
+    const M = noms();
+    if (!M || !racine || !racine.isConnected || vue === 'legal' || (typeof EDITION !== 'undefined' && EDITION.actif)) return;
+    if (racine.nodeType === 1 && racine.closest(HORS_NOMS)) return;
+    const w = document.createTreeWalker(racine, NodeFilter.SHOW_TEXT, { acceptNode: t => (t.nodeValue.length > 4 && t.parentElement && !t.parentElement.closest(HORS_NOMS) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT) });
+    const ts = [];
+    for (let t; (t = w.nextNode());) { M.re.lastIndex = 0; if (M.re.test(t.nodeValue)) ts.push(t); }
+    ts.forEach(t => {
+      const v = t.nodeValue, frag = document.createDocumentFragment();
+      let i = 0;
+      M.re.lastIndex = 0;
+      for (let m; (m = M.re.exec(v));) {
+        const slug = M.parNom.get(m[0].replace(/\s+/g, ' '));
+        if (!slug) continue;
+        frag.append(v.slice(i, m.index));
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'nomme'; b.textContent = m[0];
+        b.setAttribute('data-personne', slug); b.setAttribute('aria-haspopup', 'dialog'); b.setAttribute('aria-expanded', 'false');
+        frag.append(b);
+        i = m.index + m[0].length;
+      }
+      if (!i) return;
+      frag.append(v.slice(i));
+      t.replaceWith(frag);
+    });
+  }
+  // ce qui s'ajoute à la page après le rendu (une liste remplie plus tard, une section refaite) : nommé au repos
+  let aNommer = new Set(), nommage = 0;
+  if ('MutationObserver' in window) new MutationObserver(ms => {
+    for (const m of ms) for (const n of m.addedNodes) if (n.nodeType === 1 ? !n.classList.contains('nomme') && !n.classList.contains('trf') : n.nodeType === 3 && n.parentElement) aNommer.add(n.nodeType === 1 ? n : n.parentElement);
+    if (aNommer.size && !nommage) nommage = auRepos(() => { nommage = 0; const xs = [...aNommer]; aNommer = new Set(); xs.forEach(x => { if (!xs.some(y => y !== x && y.contains(x))) nommer(x); }); });
+  }).observe(main, { childList: true, subtree: true });
   function vivreTroupe() {
     finirTroupe();
     const tr = $('.tr6', main);
     if (!tr || typeof TROUPE === 'undefined') return;
     troupeTenues = [];
-    // la place cliquée (ou validée au clavier) : la fiche s'ouvre sur elle ; un clic dans la troupe, hors des places et de la
-    // fiche, la ferme (comme un clic ailleurs) ; sa croix aussi
+    // la place cliquée (ou validée au clavier) : la fiche s'ouvre sur elle (sa vignette, sinon son point) ; la fermer relâche la
+    // personne
     let cliquee = null;
     tr.addEventListener('click', e => { cliquee = e.target.closest ? e.target.closest('[data-troupe-place]') : null; }, true);
-    tr.addEventListener('click', e => {
-      if (!troupeFiche || !troupeCtl || cliquee) return;
-      const x = e.target.closest ? e.target.closest('[data-trf-fermer]') : null;
-      if (x || !troupeFiche.el.contains(e.target)) troupeCtl.choisir(null);
-    });
     const placeDe = slug => { const ps = $$(`[data-troupe-place][data-troupe-personne="${slug}"]`, tr);
       return ps.find(p => p === cliquee) || ps.find(p => p.classList.contains('est-source')) || ps[0] || null; };
     troupeCtl = TROUPE.relier(tr, { liens: true, clavier: true, surChoix: slug => {
-      if (!slug) { fermerFiche(); tenirPersonne(null); return; }
+      if (!slug) { if (fiche && fiche.troupe) fermerFiche(); tenirPersonne(null); return; }
       const place = placeDe(slug);
       // (la fiche et les tentacules après l'image : le geste se voit d'abord, règle 15 C)
-      troupeCtl.apresImage(() => { if (!troupeCtl || troupeCtl.choisi() !== slug) return; ouvrirFiche(tr, slug, place); tenirPersonne(slug, place); });
+      troupeCtl.apresImage(() => {
+        if (!troupeCtl || troupeCtl.choisi() !== slug || !place) return;
+        ouvrirFiche(slug, { ancre: place.querySelector('[data-troupe-ancre]') || place, declencheur: place, hote: tr, troupe: true,
+          surFermer: () => { if (troupeCtl && troupeCtl.choisi() === slug) troupeCtl.choisir(null); } });
+        tenirPersonne(slug, place);
+      });
     } });
     // (la créature et la géométrie de la troupe naissent quand la troupe approche de l'écran : les lire à l'arrivée sur la page
     // forçait la mise en forme de la troupe, encore hors de l'écran (content-visibility), dans la tâche de la page : plus de 50 ms)
@@ -14017,7 +14132,7 @@ const CREATURE = (() => {
       troupeCreature = creatureTroupe(tr);
       requestAnimationFrame(() => placerTroupe(tr));
       if ('ResizeObserver' in window) {
-        troupeRO = new ResizeObserver(es => { const w = Math.round(es[0].contentRect.width); if (w !== largeur) { largeur = w; requestAnimationFrame(() => { placerTroupe(tr); if (troupeFiche) placerFiche(troupeFiche.el, troupeFiche.place); }); } });
+        troupeRO = new ResizeObserver(es => { const w = Math.round(es[0].contentRect.width); if (w !== largeur) { largeur = w; requestAnimationFrame(() => placerTroupe(tr)); } });
         troupeRO.observe(tr);
       }
     };
@@ -14283,7 +14398,7 @@ const CREATURE = (() => {
   const comediens = s => { const vus = new Map(); (s.equipe || []).forEach(e => { const p = (D.personnes || {})[e.personne]; if (e.categorie !== 'jeu' || !p) return; if (vus.has(e.personne)) vus.get(e.personne).lignes.push(e); else vus.set(e.personne, { e, p, lignes: [e] }); }); return [...vus.values()]; };   // un portrait par personne, même avec deux lignes de jeu
   const portrait = ({ e, p, lignes }, credits) => {
     const k = `personnes.${e.personne}`;   // (le portrait a alt="" : le nom est écrit dessous, altPh)
-    return `<figure class="u-pt"><span class="u-pt-cadre" data-edit-photo="${esc(k)}.photo"><span class="u-pt-mono" aria-hidden="true"><b>${esc(initiales(p))}</b></span>${p.photo ? `<img src="${esc(p.photo)}" alt="" width="320" height="400" loading="lazy" decoding="async" onerror="this.remove()">` : ''}</span>
+    return `<figure class="u-pt"><button type="button" class="u-pt-ouvrir" data-personne="${esc(e.personne)}" aria-haspopup="dialog" aria-expanded="false" aria-label="${esc(nomDe(p))}"></button><span class="u-pt-cadre" data-edit-photo="${esc(k)}.photo"><span class="u-pt-mono" aria-hidden="true"><b>${esc(initiales(p))}</b></span>${p.photo ? `<img src="${esc(p.photo)}" alt="" width="320" height="400" loading="lazy" decoding="async" onerror="this.remove()">` : ''}</span>
       <figcaption>${credits ? `<small class="u-pt-cr">${p.photo && p.credit ? esc(p.credit) : ''}</small>` : ''}<b class="u-pt-nom"><span data-edit="${esc(k)}.prenom">${esc(p.prenom)}</span> <span data-edit="${esc(k)}.nom">${esc(p.nom)}</span></b>${lignes.map(l => `${l.alternance ? `<span class="u-pt-alt">${esc(l.alternance)}</span>` : ''}${l.role ? `<span class="u-pt-role">${esc(l.role)}</span>` : ''}`).join('')}</figcaption></figure>`;
   };
   function portraits(s) {
@@ -15045,6 +15160,7 @@ const CREATURE = (() => {
     frises.forEach(f => f.detruire()); frises = [];
     lecteurs.forEach(io => io.disconnect()); lecteurs = [];
     secs = []; chaps = []; ecrans = []; dfM = null; surPlaceRendu = !!surPlace; psom = null; psomB = []; psomC = [];
+    fermerFiche({ anime: false, rendre: false });   // (la fiche d'une personne ne survit pas à sa page)
     finirTroupe();   // (la créature de la troupe s'arrête en quittant la compagnie ; la vue refaite la recrée)
     // la scène de l'accueil s'arrête en le quittant (refait en place, l'accueil la garde telle quelle)
     if (!(surPlace && vue === 'accueil')) Scene.montrer(false);
@@ -15073,6 +15189,7 @@ const CREATURE = (() => {
   // les filets se tracent, les titres montent, les fiches arrivent l'une après l'autre, les chiffres comptent ; posé avant
   // toute lecture de mise en page (le focus du titre en force une : une seule, sur la page finie)
   function decorer(surPlace) {
+    auRepos(() => nommer(main));   // (les personnes nommées dans la page ouvrent leur fiche)
     $$('section.bloc:not(.sans-filet)', main).forEach(sec => { if (!sec.querySelector(':scope > .filet')) sec.insertAdjacentHTML('afterbegin', '<span class="filet" data-mv="trace" aria-hidden="true"></span>'); });
     $$('.titre-bloc, .u-eti, .rubrique, .u-h2:not(.ecrit)', main).forEach(e => { if (!e.closest('[data-mv]')) e.setAttribute('data-mv', 'monte'); });
     $$('svg.trait', main).forEach(e => { if (!e.closest('[data-mv]')) e.setAttribute('data-mv', 'trace'); });
