@@ -7,3 +7,6 @@ site/dist/
 
 # Caches Python
 __pycache__/
+
+# Le cache de wrangler, laissé par scripts/cloudflare.py
+.wrangler/
