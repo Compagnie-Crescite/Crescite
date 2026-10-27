@@ -2942,6 +2942,38 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     Menu.descendre(() => { if (vue === 'accueil') location.hash = h; });
   });
 
+  /* ---------- l'ordre du clavier sur l'accueil, celui de l'œil ----------
+     Le menu flottant vient avant <main> dans la page (il s'arrime en haut de l'écran partout), mais sur l'accueil l'œil le
+     trouve en bas du premier écran, sous la scène. La touche Tab suit l'œil : « Aller au contenu », la scène (son nom, la
+     pause, les titres des spectacles), puis le menu, puis la suite de l'accueil ; Maj+Tab, à rebours. Seuls les passages
+     d'un groupe à l'autre sont repris (dans chacun, l'ordre de la page) ; ailleurs que sur l'accueil, rien ne change. */
+  const tabulables = r => (r ? $$('a[href], button, input, select, textarea, summary, [tabindex]', r).filter(x => x.tabIndex >= 0 && !x.disabled && !x.closest('[inert], [hidden]')
+    && (x.checkVisibility ? x.checkVisibility({ visibilityProperty: true, checkVisibilityCSS: true }) : x.getClientRects().length > 0)) : []);
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Tab' || e.altKey || e.ctrlKey || e.metaKey || e.defaultPrevented || vue !== 'accueil') return;
+    const sc = $('#scene', main), ev = $('.evitement'), a = document.activeElement;
+    if (!sc || !a || document.documentElement.classList.contains('ed-actif')) return;
+    const S1 = tabulables(sc), M1 = tabulables(Menu.el), R1 = tabulables(main).filter(x => !sc.contains(x));
+    if (!S1.length || !M1.length) return;
+    // (le bout d'un groupe : aucune de ses escales après lui, ou avant lui à rebours ; la marque du menu, qui se déplie quand
+    // il s'arrime, compte ou non selon l'instant : on regarde la place, pas la liste)
+    const avant = (x, y) => !!(x.compareDocumentPosition(y) & Node.DOCUMENT_POSITION_FOLLOWING);   // (x avant y)
+    const dernier = G => !G.some(x => x !== a && avant(a, x)), premier = G => !G.some(x => x !== a && avant(x, a));
+    const dansR = main.contains(a) && a !== main && !sc.contains(a);
+    let vers = null;
+    if (!e.shiftKey) {
+      if (a === ev) vers = S1[0];
+      else if (sc.contains(a) && dernier(S1)) vers = M1[0];
+      else if (Menu.el.contains(a) && dernier(M1)) vers = R1[0] || null;
+    } else if (dansR && premier(R1)) vers = M1[M1.length - 1];
+    else if (Menu.el.contains(a) && premier(M1)) vers = S1[S1.length - 1];
+    // (le premier de la scène, son nom qui a pris le focus à l'arrivée, ou <main> après « Aller au contenu » : avant eux, l'évitement)
+    else if (a === main || (sc.contains(a) && premier(S1))) vers = ev;
+    if (!vers || vers === a) return;
+    e.preventDefault();
+    vers.focus();
+  });
+
   /* ---------- l'encre : le second moment de la pieuvre ----------
      Entrer dans un spectacle : la page est déjà là, dessous ; l'encre de son univers couvre l'écran et s'ouvre aussitôt depuis
      le point choisi, un anneau de sa couleur au bord (440 ms). En sortir : l'encre, d'abord partout, se resserre vers la
