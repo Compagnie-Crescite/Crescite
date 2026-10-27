@@ -160,7 +160,12 @@ par `build.py` :
   nom, ses métiers, ses spectacles (sa fonction, son rôle, son alternance, « En tournée » ou son statut), chacun menant à sa
   page, et les prochaines dates de ceux qui tournent, s'il y en a (cinq au plus, puis « Toutes les dates »). Rien que D
   (`ficheHTML`, dans `index.html`). Elle se ferme quand la personne est relâchée (un second clic, Échap, un clic ailleurs,
-  sa croix) et rend le focus à sa place.
+  sa croix) et rend le focus à sa place. **La même fiche s'ouvre partout sur le site public** : un clic sur un portrait de
+  la distribution d'un spectacle, ou sur le nom d'une personne écrit dans une page (la fiche d'un spectacle, l'équipe de
+  création, « avec : … », la présentation de la compagnie…). `nommer` repère, après le rendu et au repos, chaque nom complet
+  d'une personne publiée de D dans le texte et en fait un bouton (`.nomme`, souligné de points), le texte inchangé ; ni dans
+  les liens, les boutons, les titres de page, la troupe, les pages légales, ni en mode édition. La fiche vit dans la couche
+  du dessus (popover) : rien ne la coupe, elle suit ce qui l'a ouverte quand la page défile et se ferme en changeant de page.
 - `cadrage.js` (CADRAGE) : chaque photo des spectacles garde dans son cadre sa zone d'intérêt (les comédiens, pas le
   noir du plateau), sur ordinateur comme sur téléphone ; les zones sont dans `data/cadrages.json` (une par photo, posée
   à l'œil sur chacune), et une photo ajoutée y reçoit la sienne.

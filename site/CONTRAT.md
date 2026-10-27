@@ -498,6 +498,12 @@ imaginatif. Dans le style de chaque maquette. »
   sa page, puis les prochaines dates de ces spectacles quand il y en a (`D.dates`), et rien d'autre que D et les libellés
   (`lesSpectacles`, `prochainesDates`, `toutesLesDates`, `fermer`). Relâcher la personne la ferme ; Échap rend le focus à
   sa place. Elle reste dans la troupe et dans l'écran, à 360 px comme au bureau.
+- La fiche partout (demande du client, octobre 2026 : « On doit pouvoir accéder à la fiche n'importe où sur le site public,
+  dès que les comédiens et techniciens et autres sont mentionnés dans un spectacle par exemple, dans sa distribution
+  notamment ») : chaque portrait de la distribution porte un bouton qui l'ouvre (`.u-pt-ouvrir[data-personne]`), et chaque
+  nom complet d'une personne publiée écrit dans une page devient un bouton (`.nomme[data-personne]`), au texte inchangé.
+  Pas en mode édition (le clic y modifie le texte ou la photo), ni dans les pages légales. La fiche ([data-fiche-personne])
+  est dans la couche du dessus, gardée dans l'écran à l'ouverture ; Échap la ferme et rend le focus à ce qui l'a ouverte.
 
 ## Règle 21 : la navigation par les saisons (v4, demande du client ; remplace les règles 2 et 3 là où elles diffèrent)
 « Le menu, ça doit être les saisons, au pluriel, où tu as la saison en cours, les prochaines dates, évidemment, avec un
