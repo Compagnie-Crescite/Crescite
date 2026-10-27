@@ -270,7 +270,7 @@ const PIEUVRE = (() => {
       for (let k = 0; k <= M; k++) { const l = k * h; th[k] = l < lc ? L.en(L.L - lc + l)[2] : sur(R.th, (l - lc) / this.L0 * M, M); }
       for (let k = 1; k < M; k++) sg[k] = sg[k - 1] + norm(sg[k] - sg[k - 1]);
       for (let k = 1; k <= M; k++) th[k] = th[k - 1] + norm(th[k] - th[k - 1]);
-      return { sg, th, ln, mu: 0 };
+      return { sg, th, ln, mu: 0, kl: lc / tot * M };   // (kl : où finit le pied, en segments)
     }
     racine() { const [rx, ry] = this.racineEff(); return { x: this.ox + rx * this.s, y: this.oy + ry * this.s }; }
     // la partie de la peau hors de la racine (le liseré ne coupe pas la tentacule de son corps), pour une racine de rac fois l'épine
@@ -521,7 +521,12 @@ const PIEUVRE = (() => {
           // (reliée : elle ne glisse pas, entière, à travers la tête : la pièce du logo reste à sa place, d'un seul tenant, son
           // pied s'allonge jusqu'à l'attache par-dessous (reliePose), puis elle se déplie de là, opaque, au premier plan)
           A = this.relie ? this.reliePose(ease(Math.min(1, Math.max(0, this.gl || 0))), repos0) : delai ? repos : A;
-          const av = u => lisse(0, 1, (q2 - u * OND) / (1 - OND));
+          // (et dès le premier instant, toute la tentacule commence à se détendre, un peu (FOND), jusqu'à sa pointe : rien ne
+          // reste figé dans sa forme du logo en attendant le front. Reliée, pendant que son pied s'allonge jusqu'à la tête, la
+          // pièce du logo seule se détend, tendue vers son titre, de son côté ; le pied, lui, ne se courbe qu'arrivé : courbé en
+          // route, il ferait pivoter la pièce vers la tête)
+          const FOND = .3, fond = FOND * ease(brut), kl = this.relie && A.kl != null ? A.kl : -1;
+          const av = u => Math.max(kl < 0 ? fond : fond * lisse(kl - .04 * M, kl + .04 * M, u * M), lisse(0, 1, (q2 - u * OND) / (1 - OND)));
           const wS = new Float64Array(M), wP = new Float64Array(M + 1);
           for (let k = 0; k < M; k++) wS[k] = av((k + .5) / M);
           for (let k = 0; k <= M; k++) wP[k] = av(k / M);
@@ -1066,10 +1071,10 @@ const PIEUVRE = (() => {
       return ts.sort((a, b) => (a.parent ? 1 : 0) - (b.parent ? 1 : 0) || a.i - b.i);
     },
     // l'ordre de déploiement, par vagues : les deux spirales (0), les boucles (1), les spirales extérieures (2), les queues (3) ;
-    // VAGUE : l'écart entre deux vagues (ms) ; ATTENTE : à l'ouverture, ce que la pieuvre met à rejoindre sa place avant la
-    // première vague (ms après le geste)
+    // VAGUE : l'écart entre deux vagues (ms) : nul, les huit tentacules partent ensemble (aucune n'attend, figée, que les
+    // autres aient bougé) ; ATTENTE : à l'ouverture, ce que la pieuvre met à rejoindre sa place avant le départ (ms après le geste)
     // DEPLOI : la durée du premier dépliement, du logo jusqu'aux titres (ms) : lent, qu'on le suive
-    VAGUE: 110, ATTENTE: 630, DEPLOI: 1900,
+    VAGUE: 0, ATTENTE: 630, DEPLOI: 1900,
     rang(cle) { const m = /^(spiraleExt|spirale|boucle|queue)/.exec(cle || ''); return m ? { spirale: 0, boucle: 1, spiraleExt: 2, queue: 3 }[m[1]] : 0; },
     // ce que la tête occupe, en unités du dessin : le corps vivant s'y limite. Des polygones [x, y, x, y…] (ou des rectangles
     // [x, y, w, h]) : l'arche et ses jambes, coupées là où les tentacules qui les prolongent prennent racine (comme leur peau),

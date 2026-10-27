@@ -4562,9 +4562,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // temps (tPres : il paraît quand son bras l'atteint)
     function presenter() {
       const P = pres, V = new Map();
-      // chaque bras part à son instant, par vagues de 70 ms depuis la tête (les deux spirales, les boucles, les spirales
-      // extérieures, les queues : ensemble, mais lisible) vers le premier de ses titres, et y reste ; chaque titre paraît quand
-      // son bras arrive ; les bras sans titre (les longs) s'étirent, puis reviennent
+      // chaque bras part à son instant (PIEUVRE.VAGUE après le précédent, par rang : nul, tous ensemble) vers le premier de
+      // ses titres, et y reste ; chaque titre paraît quand son bras arrive ; les bras sans titre (les longs) s'étirent, puis
+      // reviennent
       const depart = a => P.t0 + PIEUVRE.rang(a.cle) * PIEUVRE.VAGUE;
       let fin = P.t0;
       TIT.forEach(T => { T.tPres = P.t0; });
