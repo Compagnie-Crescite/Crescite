@@ -6055,7 +6055,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
      dates scolaires à côté de leur carte, l'appel final ---------- */
   function etablissement(q, surPlace) {
     vue = 'etablissement';
-    if (!surPlace) etatEtab = { lieu: null, pub: null };
+    // (les filtres de l'adresse, relus à l'arrivée et au retour arrière : ?lieu=, ?public= ; ce qui ne se retrouve pas dans
+    // les puces est oublié, lierFiltresEtab)
+    if (!surPlace) etatEtab = { lieu: q.get('lieu') || null, pub: q.get('public') || null };
     const e = E.etablissement, A = S.actions && S.actions.blocs ? S.actions : null, sco = D.dates.filter(d => d.scolaire), lieux = CARTE.aVenir('scolaire');
     const ac = s => s.actionCulturelle || {}, avecAction = D.shows.filter(s => s.actionCulturelle);   // un spectacle sans action culturelle n'est pas ici (règle 14)
     const groupes = [['etablissement', L.lieu.etablissement], ['salle', L.lieu.salle]].map(([k, t]) => [t, avecAction.filter(s => ac(s).lieu === k)]).filter(g => g[1].length);
@@ -6113,8 +6115,19 @@ html.still .sc-image { transition: opacity .35s ease !important; }
      dit de l'action culturelle de chaque spectacle, son lieu (dans l'établissement, en salle) et son public quand il est dit,
      chacune avec le nombre de ses spectacles ; une puce choisie ne garde que les siens (la choisir encore la rend), les groupes
      vides s'effacent avec leur pièce du sommaire arrimé ; le nombre de spectacles gardés est écrit à côté et dit aux lecteurs
-     d'écran quand il change. Les filtres tiennent tant que la vue se refait sur place (D qui change), pas d'une visite à l'autre */
+     d'écran quand il change. Les filtres tiennent tant que la vue se refait sur place (D qui change) ; ils vont dans l'adresse
+     (?lieu=, ?public=, comme ceux des saisons) : une adresse filtrée se partage, le retour arrière les rend */
   let etatEtab = { lieu: null, pub: null };
+  // les filtres d'une vue dans l'adresse, après la route (à la manière de ceux des saisons) : history.replaceState, ni
+  // rechargement ni entrée d'historique (sa clé, k, reste) ; une valeur vide retire la clé
+  function adresseVue(vals) {
+    try {
+      const h = location.hash || '#/', i = h.indexOf('?'), chemin = i < 0 ? h : h.slice(0, i), p = new URLSearchParams(i < 0 ? '' : h.slice(i + 1)), avant = p.toString();
+      Object.entries(vals).forEach(([k, v]) => { if (v == null || v === '') p.delete(k); else p.set(k, String(v)); });
+      const t = p.toString();
+      if (t !== avant) history.replaceState(history.state, '', `${location.pathname}${location.search}${chemin}${t ? '?' + t : ''}`);
+    } catch (e) { /* l'adresse reste telle quelle */ }
+  }
   // (le nombre en chiffres gras, à part de ses mots : « <b>4</b> spectacles »)
   const nSpectacles = n => esc(n === 1 ? L.unSpectacle || '1' : String(L.nSpectacles || '{n}').replace('{n}', n)).replace(/\d+/, x => `<b>${x}</b>`);
   function filtresEtab(xs) {
@@ -6131,6 +6144,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   function lierFiltresEtab() {
     const zone = $('#e-filtres', main); if (!zone) return;
     const fiches = $$('li.ac[data-ef-lieu]', main), F = etatEtab;
+    const existe = (k, v) => !!v && $$(`[data-ef="${k}"]`, zone).some(b => b.dataset.v === v);
+    if (!existe('lieu', F.lieu)) F.lieu = null;
+    if (!existe('pub', F.pub)) F.pub = null;
     $('#ef-n', zone).__h = nSpectacles(fiches.length);   // (le nombre écrit à l'arrivée : rien n'est dit tant qu'il ne change pas)
     const garde = li => (!F.lieu || li.dataset.efLieu === F.lieu) && (!F.pub || li.dataset.efPublic === F.pub);
     const appliquer = () => {
@@ -6143,6 +6159,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       $$('[data-ef]', zone).forEach(b => b.setAttribute('aria-pressed', String((b.dataset.ef === 'lieu' ? F.lieu : F.pub) === b.dataset.v)));
       const t = $('[data-ef-tout]', zone); if (t) t.hidden = !(F.lieu || F.pub);
       const p = $('#ef-n', zone), h = nSpectacles(n); if (p.__h !== h) { p.__h = h; p.innerHTML = h; }
+      if (vue === 'etablissement' && zone.isConnected) adresseVue({ lieu: F.lieu, public: F.pub });
     };
     zone.addEventListener('click', e => {
       const b = e.target.closest('button'); if (!b) return;
