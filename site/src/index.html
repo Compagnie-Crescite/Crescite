@@ -668,6 +668,21 @@ html[data-theme="nuit"] .df[data-motif="paperboard"] .df-in { --u-texte: var(--u
 /* une saison ouverte : ses dates à côté de sa carte, posée dans une grande arche qui suit la lecture */
 .sai-corps { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: clamp(24px, 4vw, 56px); align-items: start; padding: 14px 8px 48px; }
 .sai-corps:empty { display: none; }
+/* d'une saison passée à l'autre : au bout de la saison ouverte, sous ses dates (la carte, arrimée, descend dans l'autre
+   colonne), la précédente à gauche, la suivante à droite, deux liens en cartes discrètes (leur sens, puis le titre de la
+   saison) ; au téléphone, l'une sous l'autre */
+.sai-voisins { grid-column: 1; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; padding-top: 18px; border-top: 1px solid var(--filet); }
+.sai-v { display: inline-flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 18px; border: 1px solid var(--filet); border-radius: 14px; color: var(--encre); text-decoration: none;
+  transition: border-color var(--k-survol) var(--k-doux), background-color var(--k-survol) var(--k-doux); }
+.sai-v.sai-ap { margin-left: auto; text-align: right; }
+.sai-v > span { display: grid; gap: 2px; }
+.sai-vk { font: 700 .7rem/1.2 var(--etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--gris); }
+.sai-vt { font: 500 1.08rem/1.2 var(--titre); }
+.sai-v svg { flex: none; width: 20px; height: 20px; fill: none; stroke: var(--saison-vive); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: translate var(--k-survol) var(--k-souple); }
+.sai-v:hover { border-color: var(--saison-vive); background: color-mix(in srgb, var(--saison-vive) 8%, transparent); }
+.sai-av:is(:hover, :focus-visible) svg { translate: -3px 0; }
+.sai-ap:is(:hover, :focus-visible) svg { translate: 3px 0; }
+@media (max-width: 559px) { .sai-v { flex: 1 1 100%; } }
 .sai-carte { position: sticky; top: calc(var(--haut) + 76px); margin: 0; }
 .p4-carte { padding: clamp(34px, 4vw, 56px) clamp(14px, 2vw, 28px) clamp(16px, 2vw, 26px); border-radius: min(220px, 40%) min(220px, 40%) 24px 24px; overflow-x: clip;
   background: radial-gradient(80% 60% at 45% 35%, color-mix(in srgb, var(--saison) 26%, var(--papier-2)) 0%, var(--nuit) 72%); }
@@ -5494,7 +5509,19 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       rows.forEach(r => { const m = groupeDe(r), g = groupes[groupes.length - 1]; if (g && g.m === m) g.rs.push(r); else groupes.push({ m, rs: [r] }); });
       return `<div class="sai-liste">${groupes.map(g => { const t = g.m ? titreGroupe(g.m) : '';
           return `<section class="p4-groupe">${moisLu(t, g.rs) ? `<h4 class="p4-mois" data-mv-cle="m:${s.k}:${g.m}">${esc(t)}</h4>` : ''}<ol class="p4-dates" data-agenda="">${g.rs.map(ligneP4).join('')}</ol></section>`; }).join('')}</div>
-        <div class="sai-carte p4-carte">${lx.length ? carte({ lieux: lx, titre: s.titre, couleurs: true, simple: true }) : ''}</div>`;
+        <div class="sai-carte p4-carte">${lx.length ? carte({ lieux: lx, titre: s.titre, couleurs: true, simple: true }) : ''}</div>${voisinesSaison(s)}`;
+    }
+    // d'une saison passée à l'autre, sans revenir à la liste : au bout de la saison ouverte, la précédente (plus ancienne) et la
+    // suivante (plus récente), parmi celles que les filtres gardent, en vrais liens vers #/saisons/<saison> (l'adresse suit : la
+    // page s'y pose, cette saison ouverte) ; les filtres de toute la page (spectacle, commune, recherche) les suivent
+    function voisinesSaison(s) {
+      if (!L.saisonPrecedente || !L.saisonSuivante) return '';
+      const vis = visibles().map(x => x.s), i = vis.findIndex(x => x.k === s.k); if (i < 0) return '';
+      const base = (menuDe('saisons') || {}).href || '#/saisons', p = new URLSearchParams();
+      if (F.slug) p.set('spectacle', F.slug); if (F.l !== null) p.set('l', F.l); if (F.q.trim()) p.set('recherche', F.q.trim());
+      const qs = p.toString(), lien = (x, k, cl, rel, av) => (x ? `<a class="sai-v ${cl}" href="${base}/${x.k}${qs ? '?' + qs : ''}" rel="${rel}">${av ? GAUCHE : ''}<span><span class="sai-vk">${esc(k)}</span><span class="sai-vt">${esc(x.titre)}</span></span>${av ? '' : DROITE}</a>` : '');
+      const av = vis[i + 1], ap = vis[i - 1];
+      return av || ap ? `<nav class="sai-voisins" aria-label="${esc(L.saisonsPassees)}">${lien(av, L.saisonPrecedente, 'sai-av', 'prev', true)}${lien(ap, L.saisonSuivante, 'sai-ap', 'next', false)}</nav>` : '';
     }
     function lierSaison(dt, s) {
       const sv = $('.sai-carte svg', dt), ul = $('.sai-liste', dt);
