@@ -161,16 +161,20 @@ const GESTES = (() => {
     e.preventDefault();
     rendre(c.el, c.f, actions, { x: e.clientX, y: e.clientY }, 'clic');
   });
-  // l'appui long (le doigt, le stylet) : 480 ms sans bouger ; le clic qui suit l'appui est avalé
+  // l'appui long (le doigt, le stylet) : 480 ms sans bouger ; le clic qui suit l'appui est avalé. La durée est celle du
+  // doigt (l'heure des événements, e.timeStamp), pas celle de la page : quand elle est occupée (elle se dessine), le minuteur
+  // part en retard et le doigt levé pouvait passer avant lui ; levé après 480 ms, l'appui ouvre son menu quand même
+  const APPUI = 480;
   document.addEventListener('pointerdown', e => {
     appui = null;
     if (e.pointerType === 'mouse' || !e.isPrimary || (e.button !== 0 && e.button !== -1) || ouvert) return;
     if (dansChamp(e.target)) return;
     const c = fournisseurPour(e.target);
     if (!c) return;
-    const a = { x: e.clientX, y: e.clientY, c, id: e.pointerId, t: null };
-    a.t = setTimeout(() => {
+    const a = { x: e.clientX, y: e.clientY, c, id: e.pointerId, t: null, quand: e.timeStamp };
+    a.ouvrir = (leve = false) => {
       if (appui !== a) return;
+      clearTimeout(a.t);
       appui = null;
       const actions = actionsDe(c.f, c.el, { source: 'appui', x: a.x, y: a.y });
       if (!actions.length) return;
@@ -180,16 +184,20 @@ const GESTES = (() => {
       const oublier = () => document.removeEventListener('click', avaler, { capture: true });
       document.addEventListener('click', avaler, { capture: true, once: true });
       const releve = () => setTimeout(oublier, 150);
-      document.addEventListener('pointerup', releve, { capture: true, once: true });
-      document.addEventListener('pointercancel', releve, { capture: true, once: true });
+      if (leve) releve();      // (le doigt est déjà levé : son clic vient juste après)
+      else {
+        document.addEventListener('pointerup', releve, { capture: true, once: true });
+        document.addEventListener('pointercancel', releve, { capture: true, once: true });
+      }
       setTimeout(oublier, 1500);
       rendre(c.el, c.f, actions, { x: a.x, y: a.y }, 'appui');
-    }, 480);
+    };
+    a.t = setTimeout(() => a.ouvrir(), APPUI);
     appui = a;
   }, { passive: true, capture: true });
   const annulerAppui = () => { if (appui) { clearTimeout(appui.t); appui = null; } };
   document.addEventListener('pointermove', e => { if (appui && e.pointerId === appui.id && Math.hypot(e.clientX - appui.x, e.clientY - appui.y) > 10) annulerAppui(); }, { passive: true, capture: true });
-  document.addEventListener('pointerup', annulerAppui, { passive: true, capture: true });
+  document.addEventListener('pointerup', e => { if (appui && e.pointerId === appui.id && e.timeStamp - appui.quand >= APPUI) appui.ouvrir(true); else annulerAppui(); }, { passive: true, capture: true });
   document.addEventListener('pointercancel', annulerAppui, { passive: true, capture: true });
   document.addEventListener('scroll', annulerAppui, { passive: true, capture: true });
   // au clavier : Maj+F10 ou la touche Menu sur l'élément qui a le focus ; un bouton [data-gestes-menu] ouvre le menu de sa cible
@@ -239,12 +247,12 @@ const GESTES = (() => {
       if (e.touches.length !== 1 || dansChamp(e.target) || aIgnorer(e.target) || ouvert || modaleOuverte()) return;
       const t = e.touches[0];
       if (t.clientX < bord || t.clientX > window.innerWidth - bord) return;   // le bord : le retour du navigateur, de l'application
-      d = { x: t.clientX, y: t.clientY, dx: 0, dy: 0, t: Date.now() };
+      d = { x: t.clientX, y: t.clientY, dx: 0, dy: 0, t: e.timeStamp };
     }, { passive: true });
     el.addEventListener('touchmove', e => { if (!d || e.touches.length !== 1) { d = null; return; } d.dx = e.touches[0].clientX - d.x; d.dy = e.touches[0].clientY - d.y; }, { passive: true });
     el.addEventListener('touchend', e => {
       if (!d) return;
-      const { dx, dy } = d, dt = Date.now() - d.t;
+      const { dx, dy } = d, dt = e.timeStamp - d.t;     // (la durée du geste, à l'heure du doigt : une page occupée ne le ralentit pas)
       d = null;
       if (dt > 800 || Math.abs(dx) < seuil || Math.abs(dx) < Math.abs(dy) * 1.6 || ouvert || modaleOuverte()) return;
       const f = dx < 0 ? gauche : droite;
@@ -449,8 +457,10 @@ const GESTES = (() => {
     let finir;
     const promesse = new Promise(r => { finir = r; });
     // un appui qui a ouvert la boîte (le doigt sur un onglet, là où monte la boîte) ne répond pas à sa place : les clics
-    // des 350 premières millisecondes ne comptent pas (le clavier, Échap, si)
+    // des 350 premières millisecondes ne comptent pas (le clavier, Échap, si) ; à l'heure du doigt (e.timeStamp), et la boîte
+    // dit quand elle les écoute (data-pret)
     const ouverteLe = performance.now();
+    setTimeout(() => { dlg.dataset.pret = ''; }, 350);
     question = { promesse };
     const repondre = oui => {
       if (!question) return;
@@ -462,7 +472,7 @@ const GESTES = (() => {
       finir(oui);
     };
     dlg.addEventListener('cancel', e => { e.preventDefault(); repondre(false); });            // Échap : on reste
-    dlg.addEventListener('click', e => { if (performance.now() - ouverteLe < 350 && e.detail !== 0) return; const b = e.target.closest('[data-gq]'); if (b) repondre(b.dataset.gq === 'oui'); else if (e.target === dlg) repondre(false); });
+    dlg.addEventListener('click', e => { if (e.timeStamp - ouverteLe < 350 && e.detail !== 0) return; const b = e.target.closest('[data-gq]'); if (b) repondre(b.dataset.gq === 'oui'); else if (e.target === dlg) repondre(false); });
     // Échap et Tab restent à la boîte : les boîtes de la page (qui écoutent le clavier en capture) ne les voient pas
     dlg.addEventListener('keydown', e => { if (e.key === 'Escape' || e.key === 'Tab') e.stopPropagation(); });
     dlg.showModal();
@@ -495,6 +505,7 @@ const GESTES = (() => {
       <div class="gq-pied"><button type="button" class="gf-btn principal" data-gq-fermer>Fermer</button></div></div>`;
     document.body.append(dlg);
     const ouverteLe = performance.now();
+    setTimeout(() => { dlg.dataset.pret = ''; }, 350);     // (comme la question : les clics des 350 premières ms ne comptent pas)
     const fermer = () => {
       if (aideOuverte !== fermer) return;
       aideOuverte = null;
@@ -505,7 +516,7 @@ const GESTES = (() => {
     aideOuverte = fermer;
     dlg.addEventListener('cancel', e => { e.preventDefault(); fermer(); });
     dlg.addEventListener('close', fermer);
-    dlg.addEventListener('click', e => { if (performance.now() - ouverteLe < 350 && e.detail !== 0) return; if (e.target === dlg || e.target.closest('[data-gq-fermer]')) fermer(); });
+    dlg.addEventListener('click', e => { if (e.timeStamp - ouverteLe < 350 && e.detail !== 0) return; if (e.target === dlg || e.target.closest('[data-gq-fermer]')) fermer(); });
     // Échap reste à la boîte (le tiroir, la sélection, les filtres du tableau ne le voient pas) ; « ? » la referme aussi
     dlg.addEventListener('keydown', e => { if (e.key === 'Escape' || e.key === 'Tab') e.stopPropagation(); if (e.key === '?') { e.preventDefault(); e.stopPropagation(); fermer(); } });
     dlg.showModal();

@@ -1122,24 +1122,27 @@ function majTemoin() {
 const erreurReseau = e => navigator.onLine === false || /fetch|network|réseau|load failed|timeout/i.test(String(e?.message || e || ''));
 // relire toute la base (le bouton du témoin, le retour du réseau, le retour du direct) et redessiner la page à sa place ;
 // une saisie en cours n'est pas touchée : seules les listes se redessinent, comme au temps réel
+// Une demande (le bouton) pendant une relecture discrète (le retour du réseau) ne se perd pas : celle-ci dira son résultat
 async function actualiser({ discret = false } = {}) {
   if (!E.pret) return false;
-  if (E.relit) return E.relit;
+  if (E.relit) { if (!discret) E.relitDire = true; return E.relit; }
   if (navigator.onLine === false) { E.horsLigne = true; majTemoin(); if (!discret) annoncer('Hors ligne : la base se relira au retour du réseau.', { erreur: true }); return false; }
   // une lecture qui échoue ne dit rien de ce que la base a (chargerEquipe la croirait sans l'équipe) : ce qu'on en savait reste
   const savait = Object.fromEntries(['equipeInstallee', 'equipeErreur', 'sql3', 'sql4', 'sql4Erreur'].map(k => [k, E[k]]));
+  E.relitDire = !discret;
   E.relit = (async () => {
+    await null;      // (E.relit posé d'abord : le témoin dit « Lecture… » dès le départ, pas « À jour »)
     majTemoin();
     try { await chargerTout(); } catch (e) {
       Object.assign(E, savait);
       if (erreurReseau(e)) E.horsLigne = true;
-      if (!discret) annoncer(`Lecture impossible : ${erreurReseau(e) ? 'le réseau ne répond pas' : e?.message || e}.`, { erreur: true });
+      if (E.relitDire) annoncer(`Lecture impossible : ${erreurReseau(e) ? 'le réseau ne répond pas' : e?.message || e}.`, { erreur: true });
       return false;
     }
     Object.assign(E, { luLe: Date.now(), horsLigne: false });
     if (saisieEnCours()) rafraichirListes();
     else { const y = window.scrollY; router(); window.scrollTo(0, y); if (typeof TIROIR !== 'undefined' && TIROIR.ouvert()) TIROIR.redessiner(); }
-    if (!discret) annoncer('La base est relue : tout est à jour.');
+    if (E.relitDire) annoncer('La base est relue : tout est à jour.');
     return true;
   })();
   try { return await E.relit; } finally { E.relit = null; majTemoin(); }
@@ -1392,8 +1395,13 @@ window.addEventListener('hashchange', () => {
   const lienSuivi = !history.state || typeof history.state.n !== 'number';
   if (saisieEnCours()) {
     visee = null;
+    // une question déjà posée pour ce départ (le même pas annoncé deux fois) : rien de plus ; un autre pas pendant la
+    // question (le précédent du navigateur) : l'adresse revient, mais seule la première réponse rejoue un chemin
+    if (E.depart && E.depart === vers) return;
     const pas = revenir();
-    partirSansPerdre({ titre: 'Quitter sans enregistrer ?' }).then(oui => { if (oui) refaire(pas, vers); });
+    if (E.depart) return;
+    E.depart = vers;
+    partirSansPerdre({ titre: 'Quitter sans enregistrer ?' }).then(oui => { E.depart = null; if (oui) refaire(pas, vers); });
     return;
   }
   noterAdresse();
@@ -1403,8 +1411,12 @@ window.addEventListener('hashchange', () => {
   router();
 });
 // le précédent ou le suivant entre deux adresses qui diffèrent aussi par leur partie ?… (les filtres d'une liste) : le
-// navigateur ne le dit que par popstate, sans hashchange ; la page qui change se traite alors comme ci-dessus
-window.addEventListener('popstate', () => setTimeout(() => { if (location.hash !== E.hash) window.dispatchEvent(new HashChangeEvent('hashchange')); }, 0));
+// navigateur ne le dit que par popstate, sans hashchange ; la page qui change se traite alors comme ci-dessus. Seulement
+// s'il ne l'a pas dit lui-même : un lien suivi, un pas entre deux rubriques donnent popstate puis hashchange, et le
+// redire ferait poser la question deux fois et revenir de deux pas (l'historique alors s'emballait, d'avant en arrière)
+let hashchangesVus = 0;
+window.addEventListener('hashchange', e => { if (e.isTrusted) hashchangesVus++; }, true);
+window.addEventListener('popstate', () => { const vus = hashchangesVus; setTimeout(() => { if (hashchangesVus === vus && location.hash !== E.hash) window.dispatchEvent(new HashChangeEvent('hashchange')); }, 0); });
 window.addEventListener('beforeunload', e => { if (saisieEnCours()) { e.preventDefault(); e.returnValue = ''; } });
 // « Aller au contenu » : le titre de la rubrique reçoit le focus, sans toucher à l'adresse (#vue n'est pas une route)
 document.addEventListener('click', e => {
