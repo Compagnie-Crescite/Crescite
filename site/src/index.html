@@ -173,13 +173,15 @@ body { display: flow-root; }   /* (la cale et la marge de l'en-tête restent dan
    l'écran (0 au bureau) ; --bas : ce que ce qui se pose en bas de l'écran laisse sous lui (les filtres des saisons,
    l'indicateur de section, le haut de page) : la barre et la safe-area au téléphone, la safe-area seule au bureau.
    L'édition sur place (EDITION) pose sa barre juste au-dessus de la barre d'onglets (--ed-bas) ; tant qu'elle est là, elle dit
-   la place qu'elle prend (--ed-barre-h) et ce qui se pose en bas de l'écran monte au-dessus d'elle : rien ne se recouvre */
-:root { --tab-h: 58px; --tab: 0px; --bas: env(safe-area-inset-bottom, 0px); --ed-bas: var(--tab); }
-html.ed-actif { --bas: var(--ed-barre-h, var(--tab)); }
-html.ed-actif body { padding-bottom: var(--bas); }
+   la place qu'elle prend (--ed-barre-h) et ce qui se pose en bas de l'écran monte au-dessus d'elle : rien ne se recouvre
+   (--bas0 : ce qui est tout en bas, la barre d'onglets ou celle de l'édition ; --bas : ce qui s'y ajoute, la barre « Réserver »
+   d'un spectacle au téléphone) */
+:root { --tab-h: 58px; --tab: 0px; --bas0: env(safe-area-inset-bottom, 0px); --bas: var(--bas0); --ed-bas: var(--tab); }
+html.ed-actif { --bas0: var(--ed-barre-h, var(--tab)); }
+html.ed-actif body { padding-bottom: var(--bas0); }
 .entrees .ic { display: none; }
 @media (max-width: 759px) {
-  :root { --tab: calc(var(--tab-h) + env(safe-area-inset-bottom, 0px)); --bas: var(--tab); }
+  :root { --tab: calc(var(--tab-h) + env(safe-area-inset-bottom, 0px)); --bas0: var(--tab); }
   html { scroll-padding-bottom: calc(var(--bas) + 12px); }
   body { padding-bottom: var(--tab); }
   .entrees.en-bas { position: fixed; z-index: 61; left: 0; right: 0; bottom: 0; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); align-items: stretch; gap: 0;
@@ -2797,6 +2799,27 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
 @media (max-width: 759px) {
   .som { transition: opacity var(--k-survol) var(--k-doux), visibility 0s; }
   article.rs-vu .som:not(:focus-within) { opacity: 0; visibility: hidden; transition: opacity var(--k-survol) var(--k-doux), visibility 0s var(--k-survol); }
+}
+/* réserver à portée de pouce : au téléphone, sur la page d'un spectacle qui a des dates à venir, une petite barre « Réserver »
+   (la date choisie dans la bande, sa forme courte et sa commune) se pose au-dessus de la barre d'onglets tant que ni l'ouverture
+   (qui a son propre « Réserver ») ni la carte de réservation ne sont à l'écran ; elle y mène. Dans l'univers du spectacle,
+   comme le bouton « Réserver » de la carte ; ce qui se pose en bas (le sommaire flottant, le haut de page) monte au-dessus
+   d'elle (--bas). Au bureau, rien */
+.rsb { display: none; }
+@media (max-width: 759px) {
+  .rsb { position: fixed; z-index: 36; left: 8px; right: 8px; bottom: calc(8px + var(--bas0)); display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 6px 6px 6px 20px;
+    border: 0; border-radius: 999px; background: var(--u-accent); color: var(--u-sur-accent); text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent;
+    box-shadow: 0 16px 34px -14px rgba(0, 0, 0, .85), 0 0 0 1px color-mix(in srgb, var(--u-sur-accent) 18%, transparent);
+    opacity: 0; visibility: hidden; translate: 0 calc(100% + 16px); transition: opacity var(--k-survol) var(--k-doux), translate .3s var(--k-doux), visibility 0s .3s; }
+  .sp-tournee:not(.une-vu, .rs-vu) .rsb { opacity: 1; visibility: visible; translate: none; transition: opacity var(--k-survol) var(--k-doux), translate .3s var(--k-doux), visibility 0s; }
+  html:has(.sp-tournee:not(.une-vu, .rs-vu) .rsb) { --bas: calc(var(--bas0) + 64px); }
+  .rsb-c { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .rsb-k { font: 700 1.05rem/1.1 var(--sans); letter-spacing: .01em; }
+  .rsb-d { overflow: hidden; font: 500 .8rem/1.25 var(--sans); white-space: nowrap; text-overflow: ellipsis; opacity: .92; }
+  .rsb .fleche { flex: none; box-sizing: content-box; width: 20px; height: 20px; padding: 12px; border-radius: 50%; background: color-mix(in srgb, var(--u-sur-accent) 16%, transparent);
+    fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .rsb:focus-visible { outline: 3px solid var(--u-vif); outline-offset: 3px; }
+  .rsb.mv-presse { scale: .97; transition-duration: var(--k-presse); }
 }
 @media (max-width: 640px) {
   .rs-carte { min-height: 0; border-radius: 12px; }
@@ -7341,13 +7364,23 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // ?date=…, ou celle d'avant quand la vue se refait en place) ; l'adresse garde le choix ; la carte de France suit
     rsSp = null;
     if (ioRs) { ioRs.disconnect(); ioRs = null; }
+    $$('.rsb', main).forEach(x => x.remove());   // (d'un onglet à l'autre, l'article reste : sa barre « Réserver » part avec l'onglet)
     const zone = $('#rs-zone', main);
     if (zone && RS) {
       const svg = $('.carte-sp svg', zone), bande = $('.rs-bande', zone), res = RS.dates(slug), voulue = q && q.get('date');
       const k0 = surPlace && etatRs.slug === slug && etatRs.cle ? etatRs.cle : voulue && res.some(d => RS.cle(d) === voulue) ? voulue : 'premiere';
       // (l'univers : celui de l'article, hérité, de jour comme de nuit ; rien à poser sur la carte)
+      // (au téléphone, la barre « Réserver » : la date choisie, sa forme courte et sa commune, FORME_DATES ; elle mène à la carte)
+      const artR = $('article.u', main);
+      if (artR && res.length) artR.insertAdjacentHTML('beforeend', `<button type="button" class="rsb" aria-controls="rs-zone"><span class="rsb-c"><span class="rsb-k">${esc(L.reserver)}</span><span class="rsb-d"></span></span>${BAS}</button>`);
+      const rsb = artR && $(':scope > .rsb', artR);
+      const poserRsb = d => { if (!rsb || !d) return; const j = RS.jours(d), mots = xs => xs.map(x => `<span>${esc(x)}</span>`).join(ENTRE);
+        $('.rsb-d', rsb).innerHTML = `${j.semaine.length ? `${mots(j.semaine)} ` : ''}<span>${esc(j.jour)}</span>${j.mois.length ? ` ${mots(j.mois)}` : ''}<span> — </span><span>${esc(RS.commune(d))}</span>`; };
       rsSp = RS.monter(bande, { dates: res, carte: $('#rs-carte', zone), choisie: k0, adresse: true, univers: () => '',
-        effet: effetReserver(() => svg), surChoix: (d, k) => { etatRs = { slug, cle: k }; } });
+        effet: effetReserver(() => svg), surChoix: (d, k) => { etatRs = { slug, cle: k }; poserRsb(d); } });
+      poserRsb(rsSp.date() || res[0]);
+      if (rsb) rsb.addEventListener('click', () => { if (!rsSp) return; rsSp.montrer(); vers('rs-zone');
+        const b = $('.rs-date[aria-pressed="true"]', zone); if (b) b.focus({ preventScroll: true }); });
       if (svg) {
         // survoler une commune l'allume, la choisir choisit sa première date ; survoler un bouton de date allume sa commune
         lierCarte(svg, { survol: l => marquer(svg, l), choix: l => { const d = res.find(x => x.l === l); if (d) rsSp.choisir(RS.cle(d)); } });

@@ -21,6 +21,7 @@
    RESERVER.lien(d)            où l'on réserve : le lien de la date, sinon celui de sa première séance tout public qui en a un ;
                                null s'il n'y en a pas (la carte dit alors « Réservation auprès du lieu », sans faux bouton)
    RESERVER.lieu(d)            le nom du lieu, ou null
+   RESERVER.commune(d)         sa commune (« Pont-Audemer » : sans son département)
    RESERVER.jours(d)           { semaine: ['ven.'], jour: '18', mois: ['déc.'] } : la date écrite court (AGENDA.court, avec les
                                noms courts de D.site.libelles) ; deux jours qui se suivent : ['jeu.', 'ven.'], '19 – 20' ;
                                plusieurs : '8 – 11' ; une période : '12 – 20' ; un mois : 'mars', ['2027'] (l'intervalle :
@@ -393,5 +394,5 @@ const RESERVER = (() => {
     });
   })();
 
-  return { dates, cle, trouver, seances, heures, lien, lieu, jours, bouton, bande, carte, univers, photo, permis, monter, ics, telecharger };
+  return { dates, cle, trouver, seances, heures, lien, lieu, commune, jours, bouton, bande, carte, univers, photo, permis, monter, ics, telecharger };
 })();
