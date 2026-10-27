@@ -2191,9 +2191,9 @@ html { view-transition-name: none; }
 .encre-page { position: fixed; inset: 0; z-index: 90; width: 100%; height: 100%; pointer-events: none; }
 .encre-page.couvre { pointer-events: auto; }
 /* une page qui arrive : son titre fleurit (il se dépose), le bras d'encre arrive du bord de l'écran, le souligne et s'enroule */
-.fleur { position: relative; display: inline-block; max-width: 100%; padding-bottom: 22px; --trait: var(--saison-vive); }   /* (max-width : un mot trop long s'y coupe, voir h1) */
-.fleur::after { content: ""; position: absolute; left: -100vw; right: 29px; bottom: 2px; height: 3px; border-radius: 2px; background: var(--trait); }
-.fleur::before { content: ""; position: absolute; right: 0; bottom: -1px; width: 30px; height: 30px; background: var(--trait);
+.fleur { position: relative; display: inline-block; max-width: 100%; padding-bottom: 22px; --trait: var(--saison-vive); }   /* (max-width : un mot trop long s'y coupe, voir h1 ; la boucle est à son échelle 1:1, son trait de 3 px au bas du bloc, dans l'axe du bras) */
+.fleur::after { content: ""; position: absolute; left: -100vw; right: 31px; bottom: 2px; height: 3px; border-radius: 2px; background: var(--trait); }
+.fleur::before { content: ""; position: absolute; right: 0; bottom: 0; width: 32px; height: 32px; background: var(--trait);
   -webkit-mask: var(--boucle) 0 0 / 100% 100% no-repeat; mask: var(--boucle) 0 0 / 100% 100% no-repeat; }
 main.arrive .fleur { animation: k-fleurit .36s var(--k-doux) both; }
 main.arrive .fleur::after { transform-origin: 0 50%; animation: k-bras .42s var(--k-doux) .02s both; }
