@@ -7741,7 +7741,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     frisesDiffusion(main);
     secs = $$('[data-scrolly]', main);
     chaps = $$('.chap', main); chapK = -1;
-    return { titre: !entree || entree === 'voir' ? s.titre : `${s.titre} - ${E[entree].court}`, lecture: entree || 'voir' };
+    return { titre: !entree || entree === 'voir' ? s.titre : `${s.titre} · ${E[entree].court}`, lecture: entree || 'voir' };
   }
   // d'un onglet à l'autre du même spectacle : l'ouverture reste (sa photo, son motif, son titre, sans rien rejouer), seuls
   // son texte d'appel, la marque de l'onglet et ce qui suit la barre des entrées changent
@@ -8199,7 +8199,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       const l = lienDe(m.lien);
       if (!bouge) { const y = Math.max(0, Math.round(l && m.haut != null ? l.getBoundingClientRect().top + scrollY - m.haut : m.y));
         if (Math.abs(scrollY - y) > 1) scrollTo({ top: y, left: 0, behavior: 'instant' }); }
-      const f = !pris && (l ? lienFocus(l) : !m.lien && m.dehors && m.dehors.isConnected ? m.dehors : null);
+      // (sans lien retenu, la loupe d'où l'on avait cherché, sinon le titre de la page, tout de suite)
+      const f = !pris && (l ? lienFocus(l) : !m.lien ? (m.dehors && m.dehors.isConnected ? m.dehors : $('h1[tabindex="-1"]', main)) : null);
       if (f) { pris = true; f.focus({ preventScroll: true }); }
       if (!bouge && performance.now() - t0 < 1000) requestAnimationFrame(viser); else fin();
     };
@@ -8240,6 +8241,16 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const t = $('.sp-chaps [tabindex="-1"]', main) || $('h1[tabindex="-1"]', main);
     if (t) t.focus({ preventScroll: true });
     return true;
+  }
+  // l'annonce de la page (hors de <main> : elle survit aux pages), polie, dite après ce que le focus fait dire ; vidée quand le
+  // titre de la page prend le focus (il dit déjà la page : pas de doublon)
+  const annoncePage = document.createElement('p');
+  annoncePage.className = 'sr'; annoncePage.id = 'annonce-page'; annoncePage.setAttribute('aria-live', 'polite');
+  document.body.appendChild(annoncePage);
+  let tAnnoncePage = 0;
+  function annoncerPage(t) {
+    clearTimeout(tAnnoncePage); annoncePage.textContent = '';
+    if (t) tAnnoncePage = setTimeout(() => { annoncePage.textContent = t; }, 250);
   }
   function route() {
     lire();
@@ -8290,13 +8301,16 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // la vue se pose à l'image suivante (avant d'être peinte : la mise en page se fait une fois, dans la tâche de l'image) : en
     // haut, son titre prend le focus ; #/saisons/<saison>, sa saison ; un onglet, sous les menus. Sous l'encre qui s'ouvre, la
     // page ne se peint qu'à l'image d'après (la première n'a que l'encre à peindre) ; elle prend alors le focus
+    // (la page qui change s'entend une fois : son titre pris au focus ; quand le focus va ailleurs, le lien d'où l'on était
+    // parti au retour, une saison passée, le premier chapitre d'un onglet, son titre se dit en plus, poliment, annoncerPage)
     const poser = () => {
-      if (relue) { rendreLecture(relue, b); return; }
+      if (relue) { rendreLecture(relue, b); annoncerPage(relue.lien || relue.dehors ? r.titre : ''); return; }
       const x = r.ancre && document.getElementById(r.ancre);
-      if (x) { x.scrollIntoView({ block: 'start', behavior: 'instant' }); ($('summary', x) || x).focus({ preventScroll: true }); return; }
-      if (type === 'onglet' && sousLesMenus()) return;
+      if (x) { x.scrollIntoView({ block: 'start', behavior: 'instant' }); ($('summary', x) || x).focus({ preventScroll: true }); annoncerPage(r.titre); return; }
+      if (type === 'onglet' && sousLesMenus()) { annoncerPage(r.titre); return; }
       scrollTo({ top: 0, left: 0, behavior: 'instant' });
       ($('h1[tabindex="-1"]', main) || main).focus({ preventScroll: true });
+      annoncerPage('');
     };
     if (encre) {
       main.style.visibility = 'hidden';
