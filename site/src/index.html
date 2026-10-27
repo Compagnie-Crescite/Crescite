@@ -2154,6 +2154,8 @@ html:not(.still) .une-ph img { transform: translateY(calc(var(--p, 0) * 8%)) sca
 .dos-h4 { margin: 1.5em 0 .45em; font: 700 .86rem/1.4 var(--u-etiq); letter-spacing: .08em; text-transform: uppercase; color: var(--u-accent); }
 .boite > .dos-h4:first-child { margin-top: 0; }
 .table-wrap { overflow-x: auto; border-radius: 8px; background: var(--u-fond2); }
+/* (au téléphone, le tableau des programmes défile de côté : la bande prend le focus du clavier, ses flèches le font défiler) */
+.table-wrap:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px; }
 .dos-table { width: 100%; min-width: 620px; border-collapse: collapse; font-size: .95rem; line-height: 1.5; }
 .dos-table th, .dos-table td { padding: 12px 14px; text-align: left; vertical-align: top; border-bottom: 1px solid color-mix(in srgb, var(--u-accent2) 45%, transparent); }
 .dos-table th[scope="rowgroup"] { width: 4.8rem; background: var(--u-accent); color: #fff; font: 700 1.05rem/1.2 var(--u-titre-f); text-align: center; vertical-align: middle; border-bottom-color: rgba(255, 255, 255, .4); }
@@ -4078,7 +4080,11 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       const a = jourDu(p.jour), b = p.fin && p.fin !== p.jour ? jourDu(p.fin) : a; return b !== a ? `${a}${ENTRE}${b}` : String(a); };
     // (ce que la pastille montre, le lecteur d'écran l'entend : « Scolaire », « Résidence », l'état, et une date jouée, vidée
     // et cochée, « jouée »)
-    const nom = p => [p.quand, p.titre, p.l != null && CARTE.lieux[p.l] ? CARTE.nom(CARTE.lieux[p.l]) : '', p.scolaire && L.scolaire, p.residence && L.residence,
+    // (le nom commence par ce qu'on lit sur la pastille, WCAG 2.5.3 : « 19 – 20 (19 et 20 novembre 2026), … » ; un seul jour,
+    // « 12 novembre 2026 », le contient déjà)
+    const motsLus = t => norm(t).split(/[^a-z0-9]+/).filter(Boolean).join(' ');
+    const quandLu = p => { const e = ecrit(p), q = p.quand || ''; return !q || ` ${motsLus(q)} `.includes(` ${motsLus(e)} `) ? q : `${e} (${q})`; };
+    const nom = p => [quandLu(p), p.titre, p.l != null && CARTE.lieux[p.l] ? CARTE.nom(CARTE.lieux[p.l]) : '', p.scolaire && L.scolaire, p.residence && L.residence,
       p.etat || (p.passe && !p.residence && !p.annulee && L.jouee)].filter(Boolean).join(', ');
     const el = document.createElement('div');
     el.className = 'frise fm7';
@@ -4091,6 +4097,12 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const anime = motionOK() && !immediat && 'IntersectionObserver' in window;
     if (anime) el.classList.add('est-attente');
     const piste = () => $('.fm7-piste', el);
+    // (le nom d'un mois commence par ce qu'on lit sur lui, dans l'ordre, WCAG 2.5.3 : son nom court, l'année quand elle est
+    // écrite, le nombre ; le nom entier et l'année non écrite entre parenthèses : « sept. (septembre) 2026, 1 date »,
+    // « oct. (octobre 2026), 1 date »)
+    const nomMois = (x, n) => { const c = MC[x.m] || MOIS_NOMS[x.m], l = MOIS_NOMS[x.m], vu = x.i === 0 || x.m === 0, long = norm(c) !== norm(l);
+      const t = vu ? `${c}${long ? ` (${l})` : ''} ${x.a}` : `${c} (${long ? `${l} ` : ''}${x.a})`;
+      return `${t}${n && L.uneDate && L.nDates ? `, ${n === 1 ? L.uneDate : L.nDates.replace('{n}', n)}` : ''}`; };
     function rendre() {
       const parM = new Map(ms.map(x => [x.k, []]));
       pts.forEach(p => { let k = String(p.jour || '').slice(0, 7); if (!parM.has(k)) k = k < ms[0].k ? ms[0].k : ms[11].k; parM.get(k).push(p); });
@@ -4100,7 +4112,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         const ps = parM.get(x.k), courant = x.k === kAuj, passe = x.k < kAuj;
         const xa = courant ? `;--x:${((jourDu(auj) - .5) / nbJours(x.a, x.m) * 100).toFixed(1)}%` : '';
         return `<li class="fm7-m${passe ? ' est-passe' : ''}${courant ? ' est-courant' : ''}${ps.length ? '' : ' est-vide'}" data-m="${x.k}" style="--i:${x.i}${xa}">`
-          + `<button class="fm7-tete" type="button" data-mois="${x.k}" aria-pressed="false" tabindex="-1" aria-label="${esc(`${MOIS_NOMS[x.m]} ${x.a}${ps.length && L.uneDate && L.nDates ? `, ${ps.length === 1 ? L.uneDate : L.nDates.replace('{n}', ps.length)}` : ''}`)}"${ps.length ? '' : ' aria-disabled="true"'}><span class="fm7-nom">${esc(MC[x.m] || MOIS_NOMS[x.m])}</span><span class="fm7-sous"><span class="fm7-an">${x.i === 0 || x.m === 0 ? x.a : ''}</span>${ps.length ? `<span class="fm7-n">${ps.length}</span>` : ''}</span></button>`
+          + `<button class="fm7-tete" type="button" data-mois="${x.k}" aria-pressed="false" tabindex="-1" aria-label="${esc(nomMois(x, ps.length))}"${ps.length ? '' : ' aria-disabled="true"'}><span class="fm7-nom">${esc(MC[x.m] || MOIS_NOMS[x.m])}</span> <span class="fm7-sous"><span class="fm7-an">${x.i === 0 || x.m === 0 ? x.a : ''}</span> ${ps.length ? `<span class="fm7-n">${ps.length}</span>` : ''}</span></button>`
           + `<span class="fm7-axe" aria-hidden="true">${courant ? `<span class="fm7-auj"><span class="fm7-souffle"></span>${L.aujourdhui ? `<span class="fm7-auj-nom">${esc(L.aujourdhui)}</span>` : ''}</span>` : ''}</span>`
           + `<ol class="fm7-jours">${ps.map(p => `<li class="frise-point${p.passe ? ' est-passe' : ''}${p.residence ? ' est-residence' : ''}${p.annulee ? ' est-annule' : ''}" data-id="${esc(p.id)}" data-j="${esc(p.j)}" data-mv-cle="${esc('j:' + p.id)}" style="--fr-c:${p.couleur};--t:${n > 1 ? (p.rang / (n - 1)).toFixed(3) : 0}"><button class="fm7-d" type="button" aria-pressed="false" tabindex="-1" aria-label="${esc(nom(p))}">${esc(ecrit(p))}</button></li>`).join('')}</ol></li>`;
       }).join('')}</ol></div>`;
@@ -5655,6 +5667,10 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     let pts = [], barre = null;
     // (les mois de la saison, ses noms courts ; une date de la frise que ses filtres gardent)
     const MC = L.moisCourts || [];
+    // (le nom d'un bouton de mois commence par ce qu'on lit sur lui, son nom court, WCAG 2.5.3 ; le nom entier et l'année
+    // entre parenthèses : « sept. (septembre 2026), 1 date »)
+    const nomMoisBouton = (x, n) => { const c = MC[x.m] || MOIS_NOMS[x.m], l = MOIS_NOMS[x.m];
+      return `${c} (${norm(c) !== norm(l) ? `${l} ` : ''}${x.a})${n && L.uneDate && L.nDates ? `, ${n === 1 ? L.uneDate : L.nDates.replace('{n}', n)}` : ''}`; };
     const moisSaison = Array.from({ length: 12 }, (_, i) => { const m = (8 + i) % 12, a = +D.saison.slice(0, 4) + (8 + i >= 12 ? 1 : 0); return { k: `${a}-${String(m + 1).padStart(2, '0')}`, m, a }; });
     const gardeP = p => (!F.jour || p.j === F.jour) && (!F.mois || dansMois(p.d0, p.d1, F.mois));
 
@@ -6341,7 +6357,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         $('.bf7-n', bt).textContent = fs.length ? String(fs.length) : '';
         bar.classList.toggle('a-filtres', fs.length > 0);
         const ms = moisSaison.filter(x => x.k !== F.mois && nb(x.k));
-        zone.innerHTML = fs.map(puce).join('') + (fs.length > 1 && L.effacerFiltres ? `<button type="button" class="bf7-tout" data-eff="tout">${esc(L.effacerFiltres)}</button>` : '') + ms.map(x => `<button type="button" class="s7-chip bf7-m${x.k < D.aujourdhui.slice(0, 7) ? ' est-passe' : ''}" data-mois="${x.k}" aria-pressed="false" aria-label="${esc(`${MOIS_NOMS[x.m]} ${x.a}${nb(x.k) && L.uneDate && L.nDates ? `, ${nb(x.k) === 1 ? L.uneDate : L.nDates.replace('{n}', nb(x.k))}` : ''}`)}">${esc(MC[x.m] || MOIS_NOMS[x.m])}</button>`).join('');
+        zone.innerHTML = fs.map(puce).join('') + (fs.length > 1 && L.effacerFiltres ? `<button type="button" class="bf7-tout" data-eff="tout">${esc(L.effacerFiltres)}</button>` : '') + ms.map(x => `<button type="button" class="s7-chip bf7-m${x.k < D.aujourdhui.slice(0, 7) ? ' est-passe' : ''}" data-mois="${x.k}" aria-pressed="false" aria-label="${esc(nomMoisBouton(x, nb(x.k)))}">${esc(MC[x.m] || MOIS_NOMS[x.m])}</button>`).join('');
         // (les filtres en cours se voient d'abord ; sans eux, la bande se pose sur le premier mois à venir)
         deja = new Set(fs.map(([c]) => c));
         if (fs.length) zone.scrollLeft = 0;
@@ -6364,7 +6380,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
           <div class="fe7-tete"><h2 class="fe7-t" id="fe7-t" tabindex="-1">${esc(L.filtres)}</h2><button type="button" class="fe7-x" data-fermer aria-label="${esc(L.fermer || '')}" title="${esc(L.fermer || '')}">${CROIX}</button></div></div>
           <div class="fe7-corps">
             <div class="s7-cherche-c"><label class="s7-cherche"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5"/><path d="M11 11l4 4"/></svg><input type="search" id="fe7-q" placeholder="${esc(L.rechercher)}" aria-label="${esc(L.rechercher)}" autocomplete="off" value="${esc(F.q)}"></label></div>
-            <section aria-labelledby="fe7-hm"><h3 class="fe7-h" id="fe7-hm">${esc(S0.titre)}</h3><div class="fe7-mois">${moisSaison.map(x => `<button type="button" class="fe7-m" data-mois="${x.k}" aria-pressed="false" aria-label="${esc(`${MOIS_NOMS[x.m]} ${x.a}${nb(x.k) && L.uneDate && L.nDates ? `, ${nb(x.k) === 1 ? L.uneDate : L.nDates.replace('{n}', nb(x.k))}` : ''}`)}"><b>${esc(MC[x.m] || MOIS_NOMS[x.m])}</b><small></small></button>`).join('')}</div></section>
+            <section aria-labelledby="fe7-hm"><h3 class="fe7-h" id="fe7-hm">${esc(S0.titre)}</h3><div class="fe7-mois">${moisSaison.map(x => `<button type="button" class="fe7-m" data-mois="${x.k}" aria-pressed="false" aria-label="${esc(nomMoisBouton(x, nb(x.k)))}"><b>${esc(MC[x.m] || MOIS_NOMS[x.m])}</b><small></small></button>`).join('')}</div></section>
             ${spSaison.length ? `<section aria-labelledby="fe7-hs"><h3 class="fe7-h" id="fe7-hs">${esc(L.spectacles)}</h3><div class="fe7-puces fe7-lg">${spSaison.map(x => puceSp(x, nSaison.get(x.cle))).join('')}</div></section>` : ''}
             ${spPasses.some(x => !nSaison.has(x.cle)) ? `<section aria-labelledby="fe7-hp"><h3 class="fe7-h" id="fe7-hp">${esc(L.saisonsPassees)}</h3><div class="fe7-puces" data-passe>${spPasses.filter(x => !nSaison.has(x.cle)).map(x => puceSp(x)).join('')}</div></section>` : ''}
             ${L.communes ? `<section aria-labelledby="fe7-hl"><h3 class="fe7-h" id="fe7-hl">${esc(L.communes)}</h3><div class="fe7-puces">${communes().map(([l, t]) => `<button class="s7-chip" type="button" data-l="${l}" aria-pressed="false">${esc(t)}</button>`).join('')}</div></section>` : ''}
@@ -7593,7 +7609,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
           <div class="boite dos-prod">${(B.production || []).map((l, i) => `<p${edD('production', i)}>${esc(l)}</p>`).join('')}${B.partenaires ? `<p${edD('partenaires')}>${esc(B.partenaires)}</p>` : ''}</div>
         </div>
         ${B.pourquoi ? `<section class="dos-s" aria-labelledby="dos-pq"><h3 class="dos-h3" id="dos-pq"${edD('pourquoi', 'titre')}>${esc(B.pourquoi.titre)}</h3><div class="boite">${B.pourquoi.sections.map((x, i) => `<h4 class="dos-h4"${edD('pourquoi', 'sections', i, 'titre')}>${esc(x.titre)}</h4><p${edD('pourquoi', 'sections', i, 'texte')}>${x.texte}</p>`).join('')}</div></section>` : ''}
-        ${B.programmes ? `<section class="dos-s" aria-labelledby="dos-pg"><h3 class="dos-h3" id="dos-pg"${edD('programmes', 'titre')}>${esc(B.programmes.titre)}</h3><div class="table-wrap"><table class="dos-table" aria-labelledby="dos-pg">
+        ${B.programmes ? `<section class="dos-s" aria-labelledby="dos-pg"><h3 class="dos-h3" id="dos-pg"${edD('programmes', 'titre')}>${esc(B.programmes.titre)}</h3><div class="table-wrap" role="region" tabindex="0" aria-labelledby="dos-pg"><table class="dos-table" aria-labelledby="dos-pg">
           ${B.programmes.niveaux.map((n, ni) => `<tbody>${n.lignes.map((l, i) => { const lg = (...k) => edD('programmes', 'niveaux', ni, 'lignes', i, ...k);
             return `<tr>${i ? '' : `<th scope="rowgroup" rowspan="${n.lignes.length}"${edD('programmes', 'niveaux', ni, 'niveau')}>${esc(n.niveau)}</th>`}<th scope="row"${lg('matiere')}>${esc(l.matiere)}</th><td${lg('intitule')}>${esc(l.intitule)}</td><td${lg('objectif')}>${esc(l.objectif)}</td></tr>`; }).join('')}</tbody>`).join('')}
           </table></div></section>` : ''}
