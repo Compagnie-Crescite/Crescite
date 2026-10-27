@@ -99,7 +99,7 @@ Lance `python3 site/build.py mNN` puis lis `site/dist/data.json` pour les valeur
 - **Mémoire de l'entrée** : la dernière entrée choisie (page d'entrée visitée ou onglet d'entrée d'un spectacle) est
   retenue (`sessionStorage`, dans un try/catch) et sert de défaut : `#/spectacle/<slug>` sans entrée remplace l'adresse
   par `#/spectacle/<slug>/<entrée retenue ou voir>` (`location.replace`). Aucune phrase n'annonce cette mémoire.
-- Redirections : `D.site.redirections` (`location.replace`). Une adresse inconnue mène à l'accueil.
+- Redirections : `D.site.redirections` (`location.replace`). Une adresse inconnue montre « Page introuvable » (les liens du menu, l'accueil, Contact), l'adresse tapée gardée.
 - `document.title` : « <h1 ou libellé> - crescite », un titre par vue : « Je viens voir un spectacle - crescite »,
   « Bérénice - crescite » (onglet voir), « Bérénice - Programmer - crescite », « Bérénice - Établissement scolaire - crescite »,
   « Saison 2019-2020 - crescite »… Focus sur le h1 à chaque vue (tabindex="-1", sans contour) ; la vue remonte en haut.
