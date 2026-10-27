@@ -126,8 +126,8 @@ tentacule attrape le médaillon du métier qu'on lit, qui s'anime. Choisir quelq
 sa fiche s'ouvre par-dessus sa photo (plus bas) ; la pieuvre sursaute, puis ses tentacules, lumineuses, vont tenir la
 fiche et ses autres places (`c.tenir`), à la place des fils des liens.
 
-**Le rideau et la page qui se compose.** Ouvrir une page par le menu (ou arriver sur le site ailleurs que par l'ouverture
-de l'accueil) fait tomber un court noir, le rideau (`Rideau`, dans `index.html`) : la pieuvre y nage au milieu, une
+**Le rideau et la page qui se compose.** Passer d'une partie du menu à une autre (jamais vers l'accueil, ni à l'arrivée
+sur le site : lancé à sa racine, le site s'ouvre toujours sur le logo, `INTRO`) fait tomber un court noir, le rideau (`Rideau`, dans `index.html`) : la pieuvre y nage au milieu, une
 créature aux vraies tentacules, à la couleur de la saison. Après 420 ms, le rideau s'ouvre en deux comme au théâtre
 (480 ms), la pieuvre remonte à sa place dans le menu, et la page, déjà là dessous (son titre a le focus), se compose
 (`composer`) : un trait de lumière descend l'écran et chaque ligne s'écrit quand il l'atteint, de gauche à droite (un
