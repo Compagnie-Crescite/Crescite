@@ -17,6 +17,7 @@ L'audit complet, les 10 évolutions proposées et la feuille de route sont dans 
 | `data/` | Relevé des dates publiées sur crescite.fr de 2016 à 2027 : 464 lignes géolocalisées, en JSON et en CSV. Texte exact des pages publiques du site (`site-crescite.json`, relevé par `site_crescite.py`), fiche de Cassandres (`cassandres.json`), dossier scolaire de Bérénice (`berenice-dossier.json`), univers et action culturelle de chaque spectacle (`univers-spectacles.json`). |
 | `supabase/` | La base de la compagnie : le script qui la crée (`migrations/20261020_crescite_base.sql`) et celui qui la remplit (`importer.py`). |
 | `admin/` | L'administration du site : tableau de bord, spectacles, dates et représentations, ateliers, lieux, textes, journal. En ligne à côté des maquettes (`docs/admin/`). |
+| `guide/` | La Générale : le guide ludique de l’espace de l’équipe, pour les comédiens. Une page d’artefact (`guide/src/la-generale.html`), assemblée par `guide/build.py`. |
 | `private/` (non versionné) | `brand/` logo 2.0 en SVG et le tracé de ses huit bras, `photos/` une photo par spectacle et celles de leurs univers, `dossiers/` les dossiers de la compagnie (scolaire de Bérénice, artistique 2027-2028). |
 
 ## Prototype
@@ -51,6 +52,24 @@ Ce qui est proposé : les univers, les textes marqués « proposition ». Ce qui
 Accessibilité : chaque titre de la pieuvre est un bouton (Tab, flèches, Entrée), « Mode calme » coupe les
 animations et l’épinglage des pages, la carte a une version tableau, le réglage système « réduire les
 animations » est respecté.
+
+## La Générale (le guide de l'espace de l'équipe)
+
+```sh
+python3 guide/build.py          # guide/dist/la-generale.html, la page d'artefact (non versionnée)
+python3 guide/build.py --page   # en plus, guide/dist/la-generale-page.html, à ouvrir telle quelle dans un navigateur
+```
+
+Une répétition générale de l'espace de l'équipe, pour donner envie aux comédiens de l'adopter : une audition de quatre
+questions (prénom, aisance avec le téléphone, compte, ce qui compte en tournée) règle le ton et marque les scènes « Pour
+toi » ; puis onze scènes en quatre actes, chacune jouée sur un téléphone simulé aux couleurs de l'application (la porte,
+l'installation, la prochaine date, le jour J, qui part et l'itinéraire, les dispos, les textes, la cloche, l'appui long,
+le balayage, les notes de frais). Les récompenses : des applaudissements (bonus sans le souffleur), une ampoule et un
+accessoire de loge par scène, des rôles de la Figuration à Tête d'affiche, le trac qui baisse, et à la fin l'affiche au
+prénom du comédien avec le lien du vrai espace (`crescite.pages.dev/equipe/`). Qui est à l'aise valide une scène en une
+question (« Prouve-le »). Les dates sont celles du relevé public (Ci-gisait Cyrano à Eu, Cléophène à Pont-Audemer) ; les
+horaires, les personnes, la proposition et les notes de frais sont des exemples, marqués comme tels. La progression reste
+dans le navigateur ; rien n'est envoyé.
 
 ## Maquettes
 
