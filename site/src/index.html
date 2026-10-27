@@ -994,6 +994,20 @@ footer a { color: #fff; text-decoration-color: rgba(255, 255, 255, .4); }
 footer a:hover { color: var(--saison-vive); }
 footer :focus-visible { outline-color: var(--saison-vive); }
 .liens { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+/* le plan du site, en tête du pied : une ligne de rubriques (les éléments du menu, le contact), séparée du reste par un filet ;
+   au téléphone, en deux colonnes */
+.pied-nav { grid-column: 1 / -1; padding-bottom: 22px; border-bottom: 1px solid rgba(255, 255, 255, .14); }
+.pied-nav ul { display: flex; flex-wrap: wrap; gap: 4px clamp(18px, 3vw, 40px); margin: 0; padding: 0; list-style: none; }
+.pied-nav a { display: inline-flex; align-items: center; min-height: 44px; font: 600 .8rem/1.3 var(--etiq); letter-spacing: .14em; text-transform: uppercase; text-decoration: none; }
+.pied-nav a:hover { text-decoration: underline; text-underline-offset: 4px; }
+@media (max-width: 640px) { .pied-nav ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; } }
+/* la page introuvable : sa phrase, puis d'où repartir (l'accueil, le menu, le contact), une large cible chacun */
+.nf { min-height: 32vh; }
+.nf-x { max-width: 40rem; margin: 0 0 24px; font-size: 1.12rem; }
+.nf-liens { display: flex; flex-wrap: wrap; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.nf-liens a { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 10px 18px; border: 1.5px solid color-mix(in srgb, var(--encre) 30%, transparent); border-radius: 999px; color: var(--encre); font: 600 .95rem/1.2 var(--sans); text-decoration: none; }
+.nf-liens a:hover { border-color: var(--saison-vive); }
+.nf-liens .fleche { width: 16px; height: 16px; color: var(--saison-vive); }
 .petit { font-size: .82rem; color: #b9adb2; }
 /* « Modifier le site » : discret, au pied de chaque vue */
 .modifier { display: inline-flex; align-items: center; gap: 7px; margin: 0; padding: 0; border: 0; background: none; color: #fff; font: inherit; text-decoration: underline; text-decoration-color: rgba(255, 255, 255, .4); text-underline-offset: 3px; cursor: pointer; }
@@ -1492,16 +1506,34 @@ body:has(#som-l:not([hidden])) .haut-page, html.intro-active .haut-page { opacit
 .u-appel .wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; }
 .u-appel p { margin: 0; }
 .u-appel .bu { font-size: 1.08rem; padding: 15px 26px; }
-.suivant { position: relative; display: block; overflow: clip; padding: clamp(44px, 6vw, 80px) 0; border-top: 1px solid var(--u-filet); text-decoration: none; }
-.suivant::before { content: ""; position: absolute; inset: 0; background: radial-gradient(50% 120% at 15% 50%, var(--u-lueur), transparent 70%); opacity: .7; transition: opacity var(--k-survol) var(--k-doux); }
+/* au pied de la page d'un spectacle, ses voisins dans l'ordre des spectacles : deux moitiés, chacune dans son univers (son
+   fond, sa lueur, sa police de titre), sa vignette cerclée de sa couleur vive, « Spectacle précédent » ou « suivant », son
+   titre, sa création ; le précédent à gauche (sa flèche vers la gauche), le suivant à droite ; au téléphone, l'un sous l'autre */
+.voisins { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); border-top: 1px solid var(--u-filet); }
+.suivant { position: relative; display: flex; align-items: center; gap: clamp(14px, 1.8vw, 24px); min-width: 0; overflow: clip; padding: clamp(30px, 4.2vw, 58px) clamp(20px, 3vw, 44px) clamp(30px, 4.2vw, 58px) max(16px, var(--bord, var(--gout))); text-decoration: none; }
+.voisin--ap { justify-content: flex-end; padding: clamp(30px, 4.2vw, 58px) max(16px, var(--bord, var(--gout))) clamp(30px, 4.2vw, 58px) clamp(20px, 3vw, 44px); text-align: right; }
+.voisin--ap .suivant-c { order: -1; justify-items: end; }
+.voisin--av .fleche { order: -1; scale: -1 1; }
+.suivant::before { content: ""; position: absolute; inset: 0; background: radial-gradient(60% 130% at 20% 50%, var(--u-lueur), transparent 72%); opacity: .55; transition: opacity var(--k-survol) var(--k-doux); }
+.voisin--ap::before { background: radial-gradient(60% 130% at 80% 50%, var(--u-lueur), transparent 72%); }
 .suivant:hover::before { opacity: 1; }
-.suivant .wrap { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
-.suivant-c { display: grid; gap: 8px; }
-.suivant-c .u-sur { margin: 0; }
-.suivant-c .u-sur .mo { flex: none; width: 26px; height: 26px; }
-.suivant b { font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: clamp(2rem, 1.3rem + 2.8vw, 3.8rem); line-height: 1.02; color: var(--u-texte); }
-.suivant .fleche { width: 46px; height: 46px; color: var(--u-vif); transition: translate var(--k-survol) var(--k-souple); }
-.suivant:hover .fleche { translate: 8px 0; }
+.suivant-c { position: relative; display: grid; gap: 6px; min-width: 0; }
+.voisin-k { font: 600 .74rem/1.3 var(--u-etiq); letter-spacing: .16em; text-transform: uppercase; color: var(--u-vif); }
+.suivant-c .u-sur { margin: 0; color: var(--u-texte2); }
+.suivant-c .u-sur .mo { flex: none; width: 22px; height: 22px; }
+.suivant b { font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: clamp(1.55rem, 1rem + 1.7vw, 2.6rem); line-height: 1.04; color: var(--u-texte); overflow-wrap: anywhere; text-wrap: balance; }
+.voisin-v { position: relative; flex: none; width: clamp(64px, 6.6vw, 96px); aspect-ratio: 1; border-radius: 50%; overflow: clip; background: var(--u-fond2); box-shadow: 0 0 0 2px var(--u-vif), 0 0 26px var(--u-lueur); }
+.voisin-v img { display: block; width: 100%; height: 100%; object-fit: cover; transition: scale var(--k-survol) var(--k-doux); }
+.suivant:hover .voisin-v img { scale: 1.06; }
+.suivant .fleche { position: relative; flex: none; width: 40px; height: 40px; color: var(--u-vif); transition: translate var(--k-survol) var(--k-souple); }
+.voisin--ap:hover .fleche { translate: 8px 0; }
+.voisin--av:hover .fleche { translate: -8px 0; }
+@media (max-width: 640px) {
+  .suivant, .voisin--ap { padding-top: 22px; padding-bottom: 22px; }
+  .voisin-v { width: 58px; }
+  .suivant .fleche { width: 30px; height: 30px; }
+  .voisins > .suivant + .suivant { border-top: 1px solid var(--u-filet); }
+}
 
 /* ———— la page d'un spectacle, composée : l'univers de la 07, réserver et le bilan de la 10 ————
    Un spectacle en tournée (ou en création) : l'ouverture de la 07 (sa photo principale plein cadre dans le noir de son
@@ -1550,6 +1582,15 @@ html:not(.still) .une-ph img { transform: translateY(calc(var(--p, 0) * 8%)) sca
 .une-acc { margin: 14px 0 0; max-width: 40rem; font-size: clamp(1.06rem, 1rem + .3vw, 1.22rem); line-height: 1.55; color: var(--u-texte); }
 .une-date { margin: 18px 0 0; font: 600 1.06rem/1.4 var(--sans); color: var(--u-texte); }
 .sp-une .u-cta { margin-top: 24px; }
+/* le retour discret à la liste des spectacles, en tête de l'ouverture (comme « ← Espace pro » des pages de l'espace pro) */
+.une-retour { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; margin: 0 0 6px; color: var(--u-texte); font: 700 .78rem/1.3 var(--u-etiq); letter-spacing: .14em; text-transform: uppercase; text-decoration: none; }
+.une-retour .fleche { width: 18px; height: 18px; scale: -1 1; color: var(--u-vif); transition: translate var(--k-survol) var(--k-souple); }
+.une-retour:hover span { text-decoration: underline; text-underline-offset: 4px; }
+.une-retour:hover .fleche { translate: -4px 0; }
+/* partager : un bouton comme les autres appels ; « Lien copié » se dit dans une bulle sous lui, puis s'efface */
+.partage { position: relative; display: inline-flex; }
+.partage-msg { position: absolute; z-index: 3; left: 50%; top: calc(100% + 8px); translate: -50% -4px; padding: 6px 12px; border-radius: 6px; background: var(--u-texte); color: var(--u-fond); font: 600 .84rem/1.3 var(--sans); white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity var(--k-survol) var(--k-doux), translate var(--k-survol) var(--k-doux); }
+.partage-msg:not(:empty) { opacity: 1; translate: -50% 0; }
 /* l'ouverture de la 10 (la page seule) : la photo à droite, le noir de l'univers à gauche, le motif en haut ; le fil d'Ariane, la
    compagnie qui signe, le titre et son filet qui s'allonge avec la lecture */
 .sp-une10 .une-ombre { background: linear-gradient(90deg, var(--u-fond) 0, var(--u-fond) 22%, color-mix(in srgb, var(--u-fond) 84%, transparent) 42%, color-mix(in srgb, var(--u-fond) 28%, transparent) 64%, transparent 84%),
@@ -1850,7 +1891,8 @@ section.bloc { position: relative; border-top: 0; }
   transition-property: background-color, color, border-color, box-shadow, scale; transition-duration: var(--k-survol), var(--k-survol), var(--k-survol), var(--k-survol), .12s; transition-timing-function: var(--k-doux); }
 :is(.bouton, .bu, .puce, .idx-tout, .idx, .som-b, .entrees a, .dos-bt, .u-onglets a, .rs-date, .rs-reserver, .rs-seance, .lc-b, .s7-chip, .s7-rac button, .ep-bt, .ep-rac button, .tr6-p).mv-presse { scale: .96; transition-duration: var(--k-presse); }
 :is(.fu-a, .tdm-a, .ep-porte, .fp-ph, .ac-ph, .dos-appel, .sai > summary).mv-presse { scale: .985; transition: scale var(--k-presse); }
-.suivant.mv-presse .fleche { translate: 6px 0; }
+.voisin--ap.mv-presse .fleche { translate: 6px 0; }
+.voisin--av.mv-presse .fleche { translate: -6px 0; }
 .dates > li .t.mv-presse, .prochaines a.mv-presse { opacity: .75; }
 /* ce qui vit : « en tournée » respire comme une ventouse (elle se creuse et se gonfle) */
 .fu-badge.tournee::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 6px; border-radius: 50%; background: currentColor; vertical-align: .1em; animation: respire 2.2s ease-in-out infinite; }
@@ -2586,9 +2628,9 @@ article.u { --onglets: 58px; }
      l'écran, et le voile ne vient qu'à la fin, quand le menu, sous le dernier titre, monte s'arrimer) */
   html:not(.still) .scene.mobile :is(.sc-toile, .sc-h, .sc-t) { animation: none; }
   html:not(.still) .scene.mobile::after { animation-range: exit 55% exit 100%; }
-  /* 4. le spectacle suivant monte : au bout de la page d'un spectacle, la photo du suivant se lève avec son bandeau */
-  html:not(.still) .suivant-fond img { animation: suivant-monte linear backwards; animation-timeline: view(); animation-range: entry 0% entry 100%; }
-  @keyframes suivant-monte { from { translate: 0 42%; opacity: 0; } to { translate: 0 0; opacity: .34; } }
+  /* 4. les spectacles voisins montent : au bout de la page d'un spectacle, la vignette de chacun se lève dans son cercle */
+  html:not(.still) .voisin-v img { animation: voisin-monte linear backwards; animation-timeline: view(); animation-range: entry 0% entry 100%; }
+  @keyframes voisin-monte { from { translate: 0 60%; opacity: 0; } to { translate: 0 0; opacity: 1; } }
   /* 5. l'histoire de la compagnie en chapitres : l'étape qui traverse le milieu de l'écran prend l'encre, les autres pâlissent */
   html:not(.still) .frise-l > li { animation: etape-lue linear backwards; animation-timeline: view(); animation-range: cover 0% cover 100%; }
   @keyframes etape-lue { 0%, 16% { opacity: .28; } 34%, 64% { opacity: 1; } 84%, 100% { opacity: .28; } }
@@ -2613,14 +2655,9 @@ article.u { --onglets: 58px; }
   transition: background-color var(--k-survol) var(--k-doux), box-shadow var(--k-survol) var(--k-doux); }
 .u .dates > li.lu { background: color-mix(in srgb, var(--u-vif) 11%, transparent); box-shadow: inset 3px 0 0 var(--u-vif); }
 .frise[data-frise] .frise-point.lu > .frise-repere::before { scale: 1.4; opacity: 1; }
-/* le bandeau du spectacle suivant, dans son univers : sa photo sous un voile, pour que son titre se lise */
+/* les voisins d'un spectacle, chacun dans son univers : son fond (la lueur au-dessous du texte) */
 .suivant { background: var(--u-fond); }
-.suivant .u-sur .mo { width: 26px; height: 26px; }   /* (le petit motif de l'univers, à sa taille : sans elle, il emplissait le bandeau) */
-.suivant::before { z-index: 1; }
-.suivant > .wrap { z-index: 2; }
-.suivant-fond { position: absolute; inset: 0; z-index: 0; overflow: clip; }   /* (clip : pas un conteneur de défilement, la photo garde la page pour ligne du temps) */
-.suivant-fond img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; opacity: .34; filter: saturate(.85); }
-.suivant-fond::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, var(--u-fond) 0, color-mix(in srgb, var(--u-fond) 78%, transparent) 46%, color-mix(in srgb, var(--u-fond) 30%, transparent) 100%); }
+.suivant::before { z-index: 0; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; } }
 /* (moins d'animations demandé à la page, ?anim=0 : html.still, la même chose) */
 html.still *, html.still *::before, html.still *::after { transition: none !important; animation: none !important; }
@@ -6032,6 +6069,16 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       <section class="bloc sans-filet"><div class="wrap legal">${Lg.blocs.map((b, i) => bloc(b, `site.legal.${chemin}.blocs.${i}`)).join('')}</div></section>`;
     return { titre: Lg.titre };
   }
+  // une adresse qui ne mène à aucune vue (ni une vue, ni une redirection de D, ni une ancienne adresse) : une vraie page, son
+  // titre, une phrase, et d'où repartir (l'accueil, les éléments du menu, le contact) ; l'adresse reste celle qu'on a tapée
+  function introuvable() {
+    vue = 'introuvable';
+    const titre = L.introuvable || S.accueil, liens = [{ href: '#/', texte: S.accueil }, ...(S.menu || []).filter(x => x && x.href), { href: S.ecrire.href, texte: L.contact }];
+    main.innerHTML = `<div class="wrap page-titre"><h1 tabindex="-1"><span class="fleur">${esc(titre)}</span></h1></div>
+      <section class="bloc sans-filet"><div class="wrap nf">${L.introuvableTexte ? `<p class="nf-x">${esc(L.introuvableTexte)}</p>` : ''}
+        <ul class="nf-liens">${liens.map(x => `<li><a href="${esc(x.href)}">${esc(x.texte)}${FLECHE}</a></li>`).join('')}</ul></div></section>`;
+    return { titre };
+  }
 
   /* ---------- la page d'un spectacle, composée : l'univers de la 07, réserver et le bilan de la 10 ----------
      Un spectacle en tournée (ou en création) : l'ouverture de la 07 (sa photo principale plein cadre dans le noir de son
@@ -6095,6 +6142,22 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   // un chapitre : il entre au sommaire (dans l'ordre de la page) ; cls : une classe de plus
   const chapitre = (chap, id, nom, html, cls = '') => { chap.push({ id, nom }); return `<section class="chap${cls ? ' ' + cls : ''}" id="c-${id}" data-chap="${esc(nom)}">${html}</section>`; };
   const titreChap = (t, attrs = '') => `<h2 class="chap-t" tabindex="-1" data-mv="monte"${attrs}>${t}</h2>`;
+  // partager la page d'un spectacle : le bouton, près de ses appels ; son message (« Lien copié ») dit pour les lecteurs d'écran
+  // ce qui s'est fait, dans une bulle sous lui (le geste : plus bas, partagerPage)
+  const PARTAGE = '<svg class="fleche" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.3 10.8l7.4-4.4M8.3 13.2l7.4 4.4"/></svg>';
+  const partage = () => (L.partager ? `<span class="partage"><button type="button" class="bu" data-partager>${PARTAGE}<span>${esc(L.partager)}</span></button><span class="partage-msg" role="status" aria-live="polite"></span></span>` : '');
+  // au pied de la page d'un spectacle, ses voisins dans l'ordre des spectacles (D.shows, en boucle) : le précédent et le
+  // suivant, chacun dans son univers (ses couleurs, sa police de titre, sa vignette) ; le lien garde l'entrée qu'on lit quand
+  // le voisin l'a (lienSp : sinon la sienne, celle retenue ou « voir » ; un spectacle qui ne tourne plus, sa seule page)
+  function voisins(s, entree) {
+    const n = D.shows.length, i = D.shows.indexOf(s);
+    if (n < 2 || i < 0) return '';
+    const av = D.shows[(i - 1 + n) % n], ap = D.shows[(i + 1) % n];
+    const lien = (x, sens) => `<a class="suivant voisin voisin--${sens} ${uClasse(x)}" style="${uVars(x)}" href="${lienSp(x.slug, entree)}" rel="${sens === 'av' ? 'prev' : 'next'}">
+      <span class="voisin-v" aria-hidden="true">${D.photos[x.slug] ? `<img src="${D.photos[x.slug]}" alt="" loading="lazy" decoding="async">` : ''}</span>
+      <span class="suivant-c"><span class="voisin-k">${esc(sens === 'av' ? L.spectaclePrecedent : L.spectacleSuivant)}</span><b${edS(x, 'titre')}>${esc(x.titre)}</b><span class="u-sur">${petit(mo(x))}<span${edS(x, 'creation')}>${esc(x.creation)}</span></span></span>${FLECHE}</a>`;
+    return `<nav class="voisins" aria-label="${esc(L.lesSpectacles)}">${n > 2 ? lien(av, 'av') : ''}${lien(ap, 'ap')}</nav>`;
+  }
   // l'ouverture : celle de la 07 pour un spectacle en tournée (entree), celle de la 10 pour la page seule d'un spectacle qui
   // ne l'est plus ; la photo principale plein cadre ; le titre fleurit ligne à ligne sous l'encre qui s'ouvre, l'accroche à sa
   // suite (la 10)
@@ -6104,21 +6167,22 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const titre = `<h1 class="u-titre${n > 22 ? ' long' : ''}" tabindex="-1">${lignes.map((l, k) => `<span class="ligne" style="--k:${k}"${tl ? edS(s, 'titreLignes', k) : edS(s, 'titre')}>${esc(l)}</span>`).join(' ')}</h1>`;
     const st = s.sousTitre ? `<p class="une-st"${edS(s, 'sousTitre')}>${s.sousTitre}</p>` : '';
     const acc = s.accroche ? `<p class="une-acc"${edS(s, 'accroche')}>${esc(s.accroche)}</p>` : '';
+    const sp = menuDe('spectacles') || { href: '#/spectacles', texte: L.spectacles };
     let texte;
     if (!entree) {
-      // la 10 : le fil d'Ariane, la compagnie qui signe, le titre et son filet, la création et le lieu et le temps
-      const sp = menuDe('spectacles') || { href: '#/spectacles', texte: L.spectacles };
+      // la 10 : le fil d'Ariane, la compagnie qui signe, le titre et son filet, la création et le lieu et le temps ; partager
       texte = `<p class="une-ariane"><a href="#/">${esc(S.accueil)}</a> / <a href="${esc(sp.href)}">${esc(sp.texte)}</a></p><p class="une-nom"${ed('site.nom')}>${esc(S.nom)}</p>${titre}${st}
-        <p class="une-meta"><span${edS(s, 'creation')}>${esc(s.creation)}</span>${s.lieuTemps ? `<span${edS(s, 'lieuTemps')}>${esc(s.lieuTemps)}</span>` : ''}</p>${acc}`;
+        <p class="une-meta"><span${edS(s, 'creation')}>${esc(s.creation)}</span>${s.lieuTemps ? `<span${edS(s, 'lieuTemps')}>${esc(s.lieuTemps)}</span>` : ''}</p>${acc}${partage() ? `<p class="u-cta">${partage()}</p>` : ''}`;
     } else {
       // la 07 : la création, le lieu et le temps, le titre, « en tournée » qui respire, l'accroche ; dans « voir », la
       // prochaine date et l'invitation à réserver (elle mène à la bande des dates, règle 17) ; la bande-annonce se lit plus bas
       const res = entree === 'voir' && !s.statut && RS ? RS.dates(s.slug) : [], prochaine = entree === 'voir' && !s.statut ? res[0] || pub[0] : null;
-      const cta = entree === 'voir' ? `${res.length ? `<button type="button" class="bu plein" data-va="rs-zone">${esc(L.reserver)}${BAS}</button>` : `<button type="button" class="bu plein" data-va="c-dates">${esc(!s.statut && !pub.length ? L.lieuxDiffusion : L.dates)}${BAS}</button>`}${lienVideo(s)}`
+      const cta = (entree === 'voir' ? `${res.length ? `<button type="button" class="bu plein" data-va="rs-zone">${esc(L.reserver)}${BAS}</button>` : `<button type="button" class="bu plein" data-va="c-dates">${esc(!s.statut && !pub.length ? L.lieuxDiffusion : L.dates)}${BAS}</button>`}${lienVideo(s)}`
         : entree === 'programmer' ? `<a class="bu plein" href="${S.ecrire.href}">${esc(L.ecrire)}${FLECHE}</a>${lienVideo(s)}`
-        : `${s.dossier ? `<button type="button" class="bu plein" data-va="c-dossier">${esc(L.dossierScolaire)}${BAS}</button>` : ''}<a class="bu${s.dossier ? '' : ' plein'}" href="${S.ecrire.href}">${esc(L.ecrire)}${FLECHE}</a>`;
+        : `${s.dossier ? `<button type="button" class="bu plein" data-va="c-dossier">${esc(L.dossierScolaire)}${BAS}</button>` : ''}<a class="bu${s.dossier ? '' : ' plein'}" href="${S.ecrire.href}">${esc(L.ecrire)}${FLECHE}</a>`) + partage();
       const etat = s.statut ? `<p class="une-statut"${edS(s, 'statut')}>${esc(s.statut)}</p>` : s.enTournee ? `<p class="une-statut">${esc(L.enTournee)}</p>` : '';
-      texte = `<p class="une-sur"><span${edS(s, 'creation')}>${esc(s.creation)}</span>${s.lieuTemps ? `<span${edS(s, 'lieuTemps')}>${esc(s.lieuTemps)}</span>` : ''}</p>${titre}${etat}${st}${acc}
+      // (en tête, le retour discret à la liste des spectacles, comme celui des pages de l'espace pro)
+      texte = `<a class="une-retour" href="${esc(sp.href)}">${FLECHE}<span>${esc(sp.texte)}</span></a><p class="une-sur"><span${edS(s, 'creation')}>${esc(s.creation)}</span>${s.lieuTemps ? `<span${edS(s, 'lieuTemps')}>${esc(s.lieuTemps)}</span>` : ''}</p>${titre}${etat}${st}${acc}
         ${prochaine ? `<p class="une-date">${esc(prochaine.ligne)}</p>` : ''}<p class="u-cta">${cta}</p>`;
     }
     return `<section class="sp-une sp-une${entree ? 7 : 10}${ouvDeja ? ' deja' : ''}" id="c-une" data-scrolly data-fx="une">
@@ -6444,7 +6508,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     vue = 'spectacle';
     // d'un onglet à l'autre du même spectacle (ou une vue refaite en place) : l'ouverture est déjà là, son titre ne se réécrit pas
     ouvDeja = !!surPlace || !!(courant && courant.chemin.startsWith(`spectacle/${slug}/`));
-    const s = bySlug[slug], i = D.shows.indexOf(s), nx = D.shows[(i + 1) % D.shows.length];
+    const s = bySlug[slug];
     const pub = D.dates.filter(d => d.slug === slug && !d.scolaire);
     // un spectacle qui n'est plus en tournée : une seule page, sans onglets (entree vaut null), et la mémoire de l'entrée reste
     if (fini(s)) entree = null; else retenir(entree);
@@ -6454,7 +6518,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       ${ouverture(s, entree, pub)}
       ${entree ? onglets(s, entree) : ''}
       <div class="wrap sp-grille">${sommaireSp(s, entree, chap)}<div class="sp-chaps">${corps}</div></div>
-      <a class="suivant ${uClasse(nx)}" style="${uVars(nx)}" href="${lienSp(nx.slug, entree || 'voir')}"><span class="suivant-fond" aria-hidden="true">${D.photos[nx.slug] ? `<img src="${D.photos[nx.slug]}" alt="" loading="lazy" decoding="async">` : ''}</span><span class="wrap"><span class="suivant-c"><span class="u-sur">${petit(mo(nx))}<span${edS(nx, 'creation')}>${esc(nx.creation)}</span></span><b${edS(nx, 'titre')}>${esc(nx.titre)}</b></span>${FLECHE}</span></a>
+      ${voisins(s, entree)}
       ${entree && chap.length ? sommaire(s, entree, chap) : ''}
     </article>`;
     // d'un onglet à l'autre : l'ouverture et la barre des entrées restent (rien ne s'y repeint), ce qui suit change
@@ -6526,7 +6590,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     if (t0 && t1) t0.replaceWith(t1);
     const as0 = $$('.u-onglets a', art), as1 = $$('.u-onglets a', neuf);
     as0.forEach((a, i) => { const b = as1[i]; if (!b) return; a.setAttribute('href', b.getAttribute('href')); if (b.hasAttribute('aria-current')) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
-    for (const sel of ['.sp-grille', '.suivant', '.som']) {
+    for (const sel of ['.sp-grille', '.voisins', '.som']) {
       const a = $(`:scope > ${sel}`, art), b = $(`:scope > ${sel}`, neuf);
       if (a && b) a.replaceWith(b); else if (a) a.remove(); else if (b) art.appendChild(b);
     }
@@ -6612,10 +6676,12 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const parts = {
       entrees: M.map(lien).join(''),
       second: '',
-      pied: `<div><p><strong${ed('site.coordonnees.nom')}>${esc(co.nom)}</strong></p><p>${co.adresse.map((x, i) => `<span${ed(`site.coordonnees.adresse.${i}`)}>${esc(x)}</span>`).join('<br>')}</p>
+      // (en tête du pied, le plan du site : les éléments du menu et le contact, pour repartir sans remonter ; « Espace pro » y
+      // est, il n'est plus parmi les liens légaux)
+      pied: `${M.length ? `<nav class="pied-nav" aria-label="${esc(L.planDuSite || L.menu)}"><ul>${[...M, { href: S.ecrire.href, texte: L.contact }].map(x => `<li><a href="${x.href}">${esc(x.texte)}</a></li>`).join('')}</ul></nav>` : ''}<div><p><strong${ed('site.coordonnees.nom')}>${esc(co.nom)}</strong></p><p>${co.adresse.map((x, i) => `<span${ed(`site.coordonnees.adresse.${i}`)}>${esc(x)}</span>`).join('<br>')}</p>
         <p class="liens"><a href="${S.ecrire.href}">${esc(S.ecrire.texte)}</a>${S.facebook ? (S.facebook.href ? `<a href="${esc(S.facebook.href)}" rel="noopener">${esc(S.facebook.texte)}</a>` : `<span>${esc(S.facebook.texte)}</span>`) : ''}</p></div>
         <div><p${ed('site.partenaires')}>${S.partenaires}</p></div>
-        <div><p class="petit">${co.legal.map((x, i) => `<span${ed(`site.coordonnees.legal.${i}`)}>${esc(x)}</span>`).join('<br>')}</p><p class="liens">${S.espacePro ? `<a href="#/espace-pro">${esc(S.espacePro.titre)}</a>` : ''}${S.liensLegaux.map(x => `<a href="${x.href}">${esc(x.texte)}</a>`).join('')}${typeof EDITION !== 'undefined' && L.modifierSite ? `<button type="button" class="modifier" data-modifier>${CRAYON}${esc(L.modifierSite)}</button>` : ''}</p></div>`,
+        <div><p class="petit">${co.legal.map((x, i) => `<span${ed(`site.coordonnees.legal.${i}`)}>${esc(x)}</span>`).join('<br>')}</p><p class="liens">${S.espacePro && !M.some(x => x.href === '#/espace-pro') ? `<a href="#/espace-pro">${esc(S.espacePro.titre)}</a>` : ''}${S.liensLegaux.map(x => `<a href="${x.href}">${esc(x.texte)}</a>`).join('')}${typeof EDITION !== 'undefined' && L.modifierSite ? `<button type="button" class="modifier" data-modifier>${CRAYON}${esc(L.modifierSite)}</button>` : ''}</p></div>`,
     };
     // les couleurs des spectacles, et celles de la saison (règle 22 : le thème, relu dans D à chaque changement)
     const couleurs = couleursSp() + couleursSaison();
@@ -6678,7 +6744,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       if (S.legal && S.legal[chemin]) return legal(chemin);
       const V = vues();
       if (Object.prototype.hasOwnProperty.call(V, chemin)) return V[chemin](q, surPlace);
-      return null;
+      // (une adresse que rien ne connaît : sa page, « Page introuvable »)
+      return introuvable();
     } finally { surPlaceRendu = false; }
   }
   // les vues simples ; une vue l'emporte sur une redirection de D (#/espace-pro, autrefois redirigé, est une page). Le
@@ -6825,7 +6892,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     document.documentElement.classList.remove(vers0);
     cadre();
     let r = rendre(a, false), b = a;
-    if (!r) { history.replaceState(null, '', '#/'); b = { chemin: '', qs: '', q: new URLSearchParams() }; r = rendre(b, false); }   // une adresse inconnue mène à l'accueil
+    if (!r) { r = introuvable(); }   // (une adresse inconnue : sa page, l'adresse gardée)
     courant = b;
     decorer(false);
     document.title = titreDoc(r);
@@ -6993,6 +7060,25 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   hautPage.addEventListener('click', () => {
     scrollTo({ top: 0, left: 0, behavior: motionOK() ? 'smooth' : 'instant' });
     ($('h1[tabindex="-1"]', main) || main).focus({ preventScroll: true });
+  });
+  // partager la page d'un spectacle : son adresse (sans les réglages de l'adresse, ?anim, ?edition… ; la date choisie, ?date=,
+  // reste), par le partage de l'appareil quand il existe ; sinon elle est copiée, et « Lien copié » se dit un instant (role
+  // status, dans la bulle sous le bouton). Un partage refermé sans rien choisir ne dit rien
+  const copier = async t => {
+    try { await navigator.clipboard.writeText(t); return true; } catch (e) { /* sans presse-papiers : la copie à l'ancienne */ }
+    const x = document.createElement('textarea'); x.value = t; x.setAttribute('readonly', ''); x.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+    document.body.appendChild(x); x.select(); let ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    x.remove(); return ok;
+  };
+  main.addEventListener('click', async e => {
+    const b = e.target.closest('[data-partager]'); if (!b) return;
+    const adresse = `${location.origin}${location.pathname}${location.hash}`;
+    if (navigator.share) { try { await navigator.share({ title: document.title, url: adresse }); return; } catch (err) { if (err && err.name === 'AbortError') return; } }
+    const ok = await copier(adresse), msg = b.parentElement && $('.partage-msg', b.parentElement);
+    if (b.isConnected) b.focus({ preventScroll: true });
+    if (!ok || !msg) return;
+    msg.textContent = L.lienCopie; clearTimeout(msg.__t); msg.__t = setTimeout(() => { msg.textContent = ''; }, 2600);
   });
   // la créature : la petite pieuvre de l'en-tête (la marque, posée par cadre()) vit, avec ses vraies tentacules ; elle prend la
   // relève du dessin à la fin de l'ouverture. route() la fait naître (la vue connue) et joue ses moments : chaque page,
