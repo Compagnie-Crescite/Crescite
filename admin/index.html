@@ -53,10 +53,11 @@ button, input, select, textarea { font: inherit; color: inherit; }
 main.ad-chargement { padding: 0; max-width: none; }
 
 /* le pied commun des espaces réservés (PIED) : sobre, en fin de contenu */
-.pied-espace { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 22px; max-width: 1500px; margin: 8px auto 0; padding: 18px 20px 26px; border-top: 1px solid var(--trait); color: var(--gris); font-size: 13px; }
+.pied-espace { display: flex; flex-wrap: wrap; align-items: center; gap: 0 22px; max-width: 1500px; margin: 8px auto 0; padding: 18px 20px 26px; border-top: 1px solid var(--trait); color: var(--gris); font-size: 13px; }
 .pied-espace .pied-nom { margin: 0; font-family: var(--titres); font-weight: 500; color: var(--encre); }
-.pied-espace nav { display: flex; flex-wrap: wrap; gap: 4px 18px; }
-.pied-espace a { color: var(--gris); text-underline-offset: .2em; }
+.pied-espace nav { display: flex; flex-wrap: wrap; gap: 0 18px; }
+/* chaque lien du pied, une cible de 44 px (la ligne reste sobre : la hauteur ne se voit pas) */
+.pied-espace a { display: inline-flex; align-items: center; min-height: 44px; color: var(--gris); text-underline-offset: .2em; }
 .pied-espace a:hover { color: var(--accent); }
 .connexion:has(+ .pied-espace) { min-height: calc(100vh - 80px); }
 .connexion + .pied-espace, .connexion + .pied-espace nav { justify-content: center; margin-top: 0; border-top: 0; text-align: center; }

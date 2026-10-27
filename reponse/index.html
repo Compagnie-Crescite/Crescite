@@ -62,10 +62,11 @@
 .marque-nom { font: 500 1.12rem/1.1 var(--serif); }
 .marque small { font: 700 .66rem/1 var(--etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--magenta); }
 /* le pied commun des espaces réservés : sobre, en fin de contenu */
-.pied-espace { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 20px; border-top: 1px solid var(--filet); color: var(--gris); font-size: .84rem; }
+.pied-espace { display: flex; flex-wrap: wrap; align-items: center; gap: 0 20px; border-top: 1px solid var(--filet); color: var(--gris); font-size: .84rem; }
 .pied-espace .pied-nom { margin: 0; font: 500 .95rem/1.3 var(--serif); color: var(--encre); }
-.pied-espace nav { display: flex; flex-wrap: wrap; gap: 2px 16px; }
-.pied-espace a { display: inline-block; padding: 6px 0; color: var(--gris); }
+.pied-espace nav { display: flex; flex-wrap: wrap; gap: 0 16px; }
+/* chaque lien du pied, une cible de 44 px (la ligne reste sobre : la hauteur ne se voit pas) */
+.pied-espace a { display: inline-flex; align-items: center; min-height: 44px; color: var(--gris); }
 .pied-espace a:hover { color: var(--magenta); }
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
@@ -116,6 +117,9 @@ h1 { font: 500 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
 .close { margin-top: 18px; color: var(--gris); }
 .pied { margin-top: 26px; color: var(--gris); font-size: .94rem; }
 .pied p + p { margin-top: 6px; }
+/* un lien seul sur sa ligne (« Les dates de la compagnie », « Ne plus la recevoir ») : une cible de 44 px ; au fil d'une
+   phrase, il reste un lien */
+.lien-seul { display: inline-flex; align-items: center; min-height: 44px; }
 
 /* une alerte de tournée : ses secteurs (le spectacle à la ligne), et ce qu'on peut en faire */
 .secteurs { list-style: none; margin: 12px 0 0; padding: 0; }
@@ -291,7 +295,7 @@ h1 { font: 500 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
   let va = null;                               // l'alerte vue par son jeton : { alerte, attente, autres }
   let faitAlerte = null;                       // ce qui vient d'être fait : { action, n, liste, tout }
   const secteurs = xs => `<ul class="secteurs">${xs.map(a => `<li>${esc(a.secteur)}<span>${esc(a.spectacle || 'Tous les spectacles')}</span></li>`).join('')}</ul>`;
-  const piedAlerte = () => `<div class="pied"><p><a href="${DATES}">Les dates de la compagnie</a></p><p>Une question ? <a href="mailto:${CONTACT}">${CONTACT}</a></p></div>`;
+  const piedAlerte = () => `<div class="pied"><p><a class="lien-seul" href="${DATES}">Les dates de la compagnie</a></p><p>Une question ? <a href="mailto:${CONTACT}">${CONTACT}</a></p></div>`;
 
   function alerteIntrouvable() {
     document.title = 'Lien expiré · Compagnie Crescite';
@@ -326,7 +330,7 @@ h1 { font: 500 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
         <p class="note-alerte">${plus ? 'Tant qu’elles ne sont pas confirmées' : 'Tant qu’elle n’est pas confirmée'}, rien ne vous est envoyé. Ce n’est pas vous ? Fermez simplement cette page.</p></section>`;
     } else if (a.active && a.confirmee) {
       corps = `<h1 tabindex="-1">Votre alerte est déjà active</h1><p class="bonjour">Vous recevez par courriel les dates de la compagnie confirmées dans ce secteur :</p>${secteurs([a])}
-        <p class="bonjour"><a href="?alerte=${encodeURIComponent(jetonAlerte)}&amp;action=arreter">Ne plus la recevoir</a></p>`;
+        <p class="bonjour"><a class="lien-seul" href="?alerte=${encodeURIComponent(jetonAlerte)}&amp;action=arreter">Ne plus la recevoir</a></p>`;
     } else {
       corps = `<h1 tabindex="-1">Cette alerte est désactivée</h1><p class="bonjour">La compagnie l’a désactivée : elle ne vous écrit plus.
         Pour en créer une nouvelle : <a href="${DATES}">les dates de la compagnie</a>.</p>`;

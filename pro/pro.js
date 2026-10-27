@@ -29,6 +29,8 @@
   // une date d'un seul tenant (« 29 novembre 2026 » ne se coupe pas en fin de ligne)
   const dateLongue = j => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(j || ''); return m ? `${+m[3] === 1 ? '1er' : +m[3]}\u00a0${MOIS[+m[2] - 1]}\u00a0${m[1]}` : ''; };
   if (new URLSearchParams(location.search).get('anim') === '0') document.documentElement.classList.add('sans-mouvement');
+  // « Aller au contenu » : le contenu reçoit le focus, sans toucher à l'adresse (#contenu n'est pas un jeton)
+  document.querySelector('.evitement')?.addEventListener('click', e => { e.preventDefault(); main.focus(); });
   const annoncer = m => { const a = $('#annonce'); a.textContent = ''; setTimeout(() => { a.textContent = m; }, 30); };
 
   // ---------------------------------------------------------------------------------------------- le jeton
