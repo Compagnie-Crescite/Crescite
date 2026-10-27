@@ -8523,6 +8523,13 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     ventouse(e.clientX, e.clientY, c);
   }, { capture: true, passive: true });
   addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') Scene.suspendre(650); }, { capture: true, passive: true });
+  // (un geste dans la page qui la refait sur place, un filtre, une date, une lettre de recherche : les créatures laissent passer
+  // leurs images le temps qu'il se fasse, 450 ms ; la petite pieuvre de l'en-tête dessinait les siennes, 10 ms par image au
+  // bureau, dans les images mêmes du geste, au-delà de 50 ms. Un lien qui change de page a son moment à lui, route())
+  const repitGeste = e => { const t = e.target; if (typeof CREATURE === 'undefined' || !CREATURE.suspendre || !t || !t.closest || !t.closest('main') || t.closest('a[href^="#/"]')) return; CREATURE.suspendre(450); };
+  addEventListener('pointerdown', repitGeste, { capture: true, passive: true });
+  addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ' || e.key.length === 1) repitGeste(e); }, { capture: true, passive: true });
+  addEventListener('input', repitGeste, { capture: true, passive: true });
   if (MV) MV.presse(document);
 
   /* ---------- la langue des titres étrangers ----------
