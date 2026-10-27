@@ -33,7 +33,8 @@
      classe  : une classe en plus sur .intro, pour l'habiller en CSS (.intro, .intro-logo, .intro-indice)
      apres   : appelée quand le site est révélé (le focus va ensuite au titre h1 de la page)
    INTRO.ouverte()  vrai tant que l'ouverture est affichée ; l'évènement « intro:fin » est émis sur window à la fin
-   ?intro=0 dans l'adresse : pas d'ouverture (captures, tests). Changer d'adresse ferme l'ouverture sans animation. */
+   ?intro=0 dans l'adresse : pas d'ouverture (captures, tests). Changer d'adresse ferme l'ouverture sans animation.
+   L'ouverture ne joue qu'une fois par session (sessionStorage) : à la première arrivée sur l'accueil. */
 const INTRO = (() => {
   const L = D.logo, [TG, TETE_G, TETE_D, TD] = L.octopusPaths;
   const CIBLE = [702, 706];                         // un point plein de la tête, où le zoom s'enfonce
@@ -44,6 +45,7 @@ const INTRO = (() => {
   let el = null, etat = 'ferme', opts = {}, raf = 0, inertes = [];
   const COEUR = [771, 640];                          // le cœur de la pieuvre (comme la scène et la créature)
   let vie = null;                                    // la pieuvre vivante : { cv, ctx, TS, t, tPrec, dpr }
+  const VUE = 'crescite-intro-vue';                  // (sessionStorage : l'ouverture a déjà été vue dans cette session)
 
   function css() {
     if (document.getElementById('intro-style')) return;
@@ -87,6 +89,9 @@ const INTRO = (() => {
     if (el || etat !== 'ferme') return;
     const route = location.hash.replace(/^#\/?/, '').split('?')[0];
     if (route || new URLSearchParams(location.search).get('intro') === '0') return;
+    // une fois par session : la première arrivée sur l'accueil l'ouvre, les suivantes (un rechargement, un retour depuis un
+    // autre site) arrivent sur la page ; sans stockage (navigation privée stricte), elle s'ouvre comme avant
+    try { if (sessionStorage.getItem(VUE)) return; sessionStorage.setItem(VUE, '1'); } catch (e) { /* stockage indisponible : elle s'ouvre */ }
     opts = o;
     css();
     const encre = o.encre || '#fff', fond = o.fond || '#14070f';
