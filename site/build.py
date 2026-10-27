@@ -447,7 +447,7 @@ LIBELLES = {
     "public": "Public", "ateliers": "Ateliers", "duree": "Durée", "jauge": "Jauge", "format": "Format",
     "distribution": "Distribution", "representations": "Représentations", "lieuxDiffusion": "Lieux de diffusion",
     "ficheTechnique": "Fiche technique", "conditionsAccueil": "Conditions d’accueil", "bandeAnnonce": "Bande-annonce",
-    "ecrire": "Écrire à la compagnie", "leSpectacle": "Le spectacle", "lesSpectacles": "Les spectacles",
+    "ecrire": "Écrire à la compagnie", "leSpectacle": "Le spectacle", "lesSpectacles": "Les spectacles", "ancienneDistribution": "Ancienne distribution",
     "ouverture": "Ouverture", "dates": "Dates", "photos": "Photos", "dossierScolaire": "Dossier scolaire",
     "modifierSite": "Modifier le site",
     # « Je souhaite programmer » : ce qu'il faut à un programmateur ou un directeur de salle
@@ -679,7 +679,8 @@ def equipe_data():
                              "photo": f"{STOCKAGE}/{quote(photos[p['slug']][0])}" if p["slug"] in photos else None,
                              "credit": photos[p["slug"]][1] if p["slug"] in photos else None} for p in E["personnes"]}
     equipes = {slug: [{"personne": x["personne"], "categorie": x["categorie"], "fonction": x.get("fonction", ""),
-                       "role": x.get("role"), "alternance": x.get("alternance")} for x in lignes if x.get("publie", True)]
+                       "role": x.get("role"), "alternance": x.get("alternance"),
+                       "enTournee": x.get("en_tournee", True)} for x in lignes if x.get("publie", True)]
                for slug, lignes in E["distributions"].items()}
     return personnes, equipes
 
