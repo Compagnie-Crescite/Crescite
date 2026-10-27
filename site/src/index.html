@@ -8266,6 +8266,19 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   const marquerTot = () => { const h = location.hash.split('?')[0], a = $$('#entrees a').find(x => x.getAttribute('href') === h);
     if (a && a.getAttribute('aria-current') !== 'page') { $$('#entrees a[aria-current]').forEach(x => x.removeAttribute('aria-current')); a.setAttribute('aria-current', 'page'); } };
   const routeEnsuite = () => { const j = ++NAV; marquerTot(); ensuite(() => { if (j === NAV) route(); }); };
+  // une rubrique du menu (au téléphone, la barre d'onglets), comme dans une application : touchée, elle se marque à l'image même
+  // du geste (avant que l'adresse change : le hashchange vient une tâche plus tard, une image de plus au téléphone ralenti) ;
+  // touchée quand on y est déjà, sa page revient en haut d'un coup, sans glisser, son titre reprend le focus (sinon rien ne se
+  // passait, la page restait où on l'avait laissée)
+  document.addEventListener('click', e => {
+    const a = e.target.closest && e.target.closest('#entrees a[href^="#/"]');
+    if (!a || e.defaultPrevented || e.button > 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+    const h = a.getAttribute('href');
+    if (location.hash !== h) { if (a.getAttribute('aria-current') !== 'page') { $$('#entrees a[aria-current]').forEach(x => x.removeAttribute('aria-current')); a.setAttribute('aria-current', 'page'); } return; }
+    e.preventDefault();
+    scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    ($('h1[tabindex="-1"]', main) || main).focus({ preventScroll: true });
+  });
   // la créature de l'en-tête, à chaque page : elle se contracte, ses tentacules s'agitent ; en entrant dans un spectacle, une fois
   // l'encre ouverte et le titre posé, sa tentacule va souligner le titre, à la couleur vive du spectacle, puis revient
   let tCreature = 0;
