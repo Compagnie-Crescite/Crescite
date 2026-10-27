@@ -5307,7 +5307,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // (les filtres de l'adresse, relus à l'arrivée : ?spectacle=, ?mois= (un mois de la saison en cours), ?l= (une commune de la
     // carte), ?recherche= ; ce qui ne se retrouve pas dans D est oublié, plus bas)
     if (!surPlace || !etat.voir) { const l0 = q.get('l'), m0 = q.get('mois') || '', moisOk = /^\d{4}-\d{2}$/.test(m0) && m0 >= `${D.saison.slice(0, 4)}-09` && m0 <= `${D.saison.slice(5)}-08`;
-      etat.voir = { q: (q.get('recherche') || '').slice(0, 120), slug: q.get('spectacle') || null, l: l0 !== null && [...lieux, ...passeC].some(x => x.l === +l0) ? +l0 : null, ouv: new Set(ouvrir ? [ouvrir] : []), avant: null, date: q.get('date'), mois: moisOk ? m0 : null, moisPar: moisOk ? 'clic' : null, jour: null }; }
+      etat.voir = { q: (q.get('recherche') || '').slice(0, 120), slug: q.get('spectacle') || null, l: l0 !== null && ([...lieux, ...passeC].some(x => x.l === +l0) || passe.some(sa => sa.rows.some(r => r.d.l === +l0))) ? +l0 : null, ouv: new Set(ouvrir ? [ouvrir] : []), avant: null, date: q.get('date'), mois: moisOk ? m0 : null, moisPar: moisOk ? 'clic' : null, jour: null }; }
     else if (ouvrir) etat.voir.ouv.add(ouvrir);
     const F = etat.voir;
     if (F.slug && !puces.some(s => s.cle === F.slug)) F.slug = null;
@@ -5554,10 +5554,14 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       const av = vis[i + 1], ap = vis[i - 1];
       return av || ap ? `<nav class="sai-voisins" aria-label="${esc(L.saisonsPassees)}">${lien(av, L.saisonPrecedente, 'sai-av', 'prev', true)}${lien(ap, L.saisonSuivante, 'sai-ap', 'next', false)}</nav>` : '';
     }
+    // la carte d'une saison passée ouverte filtre aussi, comme la loupe de la saison en cours : choisir une commune (clic, Entrée)
+    // pose le filtre de la commune (dans l'adresse, ?l=), la met en évidence, la choisir encore la rend ; « Tout effacer » et
+    // son étiquette la retirent. La saison se refait sur ses lignes gardées : sa carte reste sous le doigt (ancreSaison)
+    let ancreSaison = null;
     function lierSaison(dt, s) {
       const sv = $('.sai-carte svg', dt), ul = $('.sai-liste', dt);
       if (!sv) return;
-      relier(sv, ul, l => { const li = $(`li[data-l="${l}"]`, ul); if (li) li.scrollIntoView({ behavior: motionOK() ? 'smooth' : 'auto', block: 'center' }); });
+      relier(sv, ul, l => { ancreSaison = { k: s.k, haut: sv.getBoundingClientRect().top }; F.l = F.l === l ? null : l; dessine(true); });
       marquerCommune(dt);
       bientot(() => { pousser(sv); echelle(); });
       auFil(ul, sv);   // (scrollytelling) la saison passée se dessine au fil de ses dates
@@ -5598,6 +5602,11 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         <div class="sai-corps">${F.ouv.has(s.k) ? corpsSaison(s, rows) : ''}</div></details>`).join('');
       vis.forEach(({ s }) => { if (F.ouv.has(s.k)) lierSaison($(`#sai-${s.k}`, racine), s); });
       dessineIndex(vis);
+      // (la saison dont la carte vient de filtrer la page : sa carte revient où elle était à l'écran, la commune choisie et
+      // ses lignes à côté ; refermée par le filtre, la saison s'efface et la page reste où elle est)
+      const a = ancreSaison; ancreSaison = null;
+      const sv = a && $(`#sai-${a.k}[open] .sai-carte svg`, racine);
+      if (sv) { const d = sv.getBoundingClientRect().top - a.haut; if (Math.abs(d) > 1) scrollBy({ top: d, behavior: 'instant' }); }
     }
     // (une puce de spectacle ou de commune qui, ajoutée aux filtres en cours, ne garderait rien s'éteint, eteindre : dans la
     // saison en cours, ce qu'elle garderait de la saison (les mêmes repères que la frise, le mois choisi compris ; une date
