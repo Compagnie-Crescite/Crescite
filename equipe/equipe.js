@@ -922,9 +922,15 @@
   window.addEventListener('scroll', surDefilement, { passive: true });
   window.addEventListener('resize', () => placerCurseur(true));
 
+  // le titre de l'onglet dit ce qui est ouvert : une date, « Bérénice · sam. 31 oct. · Ma saison · Équipe · Compagnie
+  // Crescite » ; une vue plus loin qu'un onglet, le nom de l'onglet après le sien ; les notifications non lues devant
   function majTitre() {
-    const n = E.notifs.filter(x => !x.lue_le).length;
-    document.title = `${n ? `(${n}) ` : ''}${E.titre && E.titre !== 'Équipe' ? `${E.titre} · ` : ''}Équipe · Compagnie Crescite`;
+    const n = E.notifs.filter(x => !x.lue_le).length, r = E.route;
+    const d = r && (r.k === 'date' || r.k === 'feuille') ? E.dates.find(x => x.id === r.id) : null;
+    const quoi = d && d.spectacle ? [d.spectacle.titre, d.debut ? jourCourt(d.debut) : ''] : [E.titre && E.titre !== 'Équipe' ? E.titre : ''];
+    const onglet = r && r.profondeur > 0 && TITRES[r.onglet] && !quoi.includes(TITRES[r.onglet]) ? TITRES[r.onglet] : '';
+    const morceaux = [...quoi, onglet].filter(Boolean);
+    document.title = `${n ? `(${n}) ` : ''}${morceaux.length ? `${morceaux.join(' · ')} · ` : ''}Équipe · Compagnie Crescite`;
   }
   function afficher(r, titre, html, { focus = false, large = false } = {}) {
     if (E.planning) demonterPlanning();
@@ -986,18 +992,48 @@
   const VUES = { saison: vueSaison, date: vueDate, feuilles: vueFeuilles, feuille: vueFeuille, spectacles: vueSpectacles, spectacle: vueSpectacle, notifications: vueNotifications, moi: vueMoi,
     planning: vuePlanning, indisponibilites: vueIndispos, agendas: vueAgendas, propositions: vuePropositions, proposition: vueProposition, frais: vueFrais };
 
+  // ---- ne rien perdre en partant : la fiche « Moi » pas enregistrée, une feuille de modification changée
+  // (../admin/gestes.js), un formulaire gardé (une indisponibilité, un agenda, une note de frais commencés), une boîte
+  // changée (une date, un fichier). Changer de vue, le bouton précédent, « Retour » : l'adresse revient d'abord à la
+  // sienne, sans rien redessiner, puis une boîte de la charte pose la question (GESTES.quitter, jamais confirm()) ;
+  // « Quitter sans enregistrer » mène où l'on allait. Rien de changé : aucune question. Fermer l'onglet : beforeunload.
+  const GG = () => (typeof GESTES !== 'undefined' ? GESTES : null);
+  const garderForm = f => { const g = GG(); if (f && g && g.garder) g.garder(f); };
+  const modaleChangee = () => $$('.modale-fond').some(f => typeof f.modaleChangee === 'function' && f.modaleChangee());
+  const saisieEnCours = () => !!((E.vue === 'moi' && E.ficheSale) || (GG() && GG().saisie && GG().saisie()) || modaleChangee());
+  function oublierSaisies() { E.ficheSale = false; if (GG() && GG().oublier) GG().oublier(); $$('.modale-fond').forEach(f => { if (typeof f.fermerModale === 'function') f.fermerModale(true); }); }
+  async function partirSansPerdre({ titre = 'Quitter sans enregistrer ?', texte = 'Vos modifications ne sont pas enregistrées : elles seront perdues.', ok = 'Quitter sans enregistrer' } = {}) {
+    if (!saisieEnCours()) return true;
+    const g = GG();
+    const oui = g && g.quitter ? await g.quitter({ titre, texte, ok }) : confirm(texte);
+    if (oui) oublierSaisies();
+    return oui;
+  }
+  // l'adresse acceptée, et son rang dans l'historique (history.state.n ; une entrée neuve, celle d'un lien suivi, prend le
+  // rang suivant) : revenirAdresse() y ramène sans redessiner, par le pas inverse (l'historique reste entier) ;
+  // refaireAdresse() rejoue le pas si l'on quitte quand même
+  function noterAdresse() {
+    let st = history.state;
+    if (!st || typeof st !== 'object' || typeof st.n !== 'number') { st = { ...(st && typeof st === 'object' ? st : {}), n: typeof E.n === 'number' ? E.n + 1 : 0 }; history.replaceState(st, '', location.href); }
+    E.n = st.n; E.adresse = location.search + location.hash;
+  }
+  function revenirAdresse() {
+    const st = history.state, n = st && typeof st.n === 'number' ? st.n : null, pas = n == null ? -1 : E.n - n;
+    if (pas) history.go(pas); else history.replaceState(history.state, '', `${location.pathname}${E.adresse}`);
+    return pas;
+  }
+  function refaireAdresse(pas, vers) { if (pas) history.go(-pas); else { history.pushState(null, '', `${location.pathname}${vers}`); window.dispatchEvent(new HashChangeEvent('hashchange')); } }
+
   function router(o = {}) {
     if (!E.pret) return;
     const r = lireRoute();
-    if (r.redirige) { history.replaceState(null, '', r.redirige); return router(o); }
+    if (r.redirige) { history.replaceState(history.state, '', r.redirige); return router(o); }
     // les notes de frais demandent le septième script : sans lui, #/frais mène à #/moi (à l'ouverture, la page attend la
     // réponse de la base avant d'en décider)
-    if (r.k === 'frais' && !avecIdeale() && !(SONDES.ideale === 'inconnu' && (E.provisoire || E.ouverture))) { history.replaceState(null, '', '#/moi'); return router(o); }
+    if (r.k === 'frais' && !avecIdeale() && !(SONDES.ideale === 'inconnu' && (E.provisoire || E.ouverture))) { history.replaceState(history.state, '', '#/moi'); return router(o); }
+    noterAdresse();
     const avant = E.route;
-    if (avant && avant.k === 'moi' && r.k !== 'moi' && E.ficheSale && !o.rafraichir) {
-      if (!confirm('Vos modifications de fiche ne sont pas enregistrées. Les abandonner ?')) { history.replaceState(null, '', '#/moi'); return; }
-      E.ficheSale = false;
-    }
+    if (avant && avant.k === 'moi' && r.k !== 'moi' && !o.rafraichir) E.ficheSale = false;   // la question est posée au changement d'adresse
     // la pile des vues ouvertes depuis un onglet : le retour y mène, et l'onglet reste celui d'où l'on vient
     let sens = 'aucun';
     if (avant && !o.rafraichir && !o.arrivee && avant.hash !== r.hash) {
@@ -1018,8 +1054,13 @@
     };
     changerVue(rendre, sens, partage);
   }
-  window.addEventListener('hashchange', () => router());
-  window.addEventListener('beforeunload', e => { if (E.ficheSale) { e.preventDefault(); e.returnValue = ''; } });
+  window.addEventListener('hashchange', () => {
+    const vers = location.search + location.hash;
+    if (E.pret && vers === E.adresse) return;               // revenu à l'adresse acceptée (la question posée) : rien à refaire
+    if (E.pret && saisieEnCours()) { const pas = revenirAdresse(); partirSansPerdre().then(oui => { if (oui) refaireAdresse(pas, vers); }); return; }
+    router();
+  });
+  window.addEventListener('beforeunload', e => { if (saisieEnCours()) { e.preventDefault(); e.returnValue = ''; } });
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
   // la vue change : avec les View Transitions, l'ancienne glisse et la nouvelle arrive (vers la gauche en allant plus loin,
@@ -2488,6 +2529,7 @@
   function brancherFormIndispo(edition) {
     const f = $('#f-indispo');
     if (!f) return;
+    garderForm(f);
     const du = $('#i-du', f), au = $('#i-au', f), de = $('#i-de', f), a = $('#i-a', f), motif = $('#i-motif', f);
     const typeDe = () => ($('input[name="type"]:checked', f) || {}).value || 'jour';
     f.addEventListener('change', e => {
@@ -2526,6 +2568,7 @@
       apresEcriture();
       if (id) { location.hash = '#/indisponibilites'; vueIndispos(E.route, { focus: false }); return; }
       f.reset(); f.dataset.type = 'jour'; $('#l-du', f).textContent = 'Le';
+      garderForm(f);
       majListeIndispos();
     });
   }
@@ -2600,6 +2643,7 @@
   function brancherFormAgenda() {
     const f = $('#f-agenda');
     if (!f) return;
+    garderForm(f);
     const url = $('#a-url', f), nom = $('#a-nom', f);
     url.addEventListener('input', () => { effacerErreur(url); if (!nom.dataset.touche) nom.placeholder = nomAgenda(url.value); });
     nom.addEventListener('input', () => { nom.dataset.touche = '1'; });
@@ -2614,7 +2658,7 @@
         if (dispoAbsente(err)) { E.dispo.etat = 'absent'; return vueAgendas(E.route, { focus: false }); }
         return dire(zoneMessage(f), `L’agenda n’est pas relié : ${esc(err.code === '22023' ? 'cette adresse n’est pas une adresse d’agenda iCal (https://… ou webcal://…)' : motsErreur(err) || err.message || 'la base a refusé')}.`);
       }
-      url.value = ''; nom.value = ''; delete nom.dataset.touche;
+      url.value = ''; nom.value = ''; delete nom.dataset.touche; garderForm(f);
       zoneMessage(f).innerHTML = '';
       vibrer(10);
       await chargerAgendas().catch(() => {});
@@ -3213,7 +3257,9 @@
   // une boîte modale : le clavier y reste (Tab tourne), Échap la ferme, le reste de la page est inerte ; le focus revient
   // au geste qui l'a ouverte. avantFermer() : faux, la boîte reste (une écriture en cours, des changements à garder) ;
   // fermer(true) passe outre. Changer de vue la ferme.
-  function ouvrirModale({ id, titre, icone = '', corps, declencheur = null, avantFermer = null }) {
+  // sale(fond) : la boîte a-t-elle changé (sans elle, ses champs depuis l'ouverture : GESTES.garder) ; changée, la fermer
+  // (✕, Annuler, Échap, le voile) pose la question, et changer de vue la laisse ouverte le temps de la question.
+  function ouvrirModale({ id, titre, icone = '', corps, declencheur = null, avantFermer = null, sale = null }) {
     $(`#${id}`)?.remove();
     const fond = document.createElement('div');
     fond.className = 'modale-fond';
@@ -3226,17 +3272,22 @@
     const app = $('#app');
     if (app) app.inert = true;
     document.documentElement.classList.add('modale-ouverte');
+    $$('form', fond).forEach(garderForm);
+    const changee = () => { try { return sale ? !!sale(fond) : !!(GG() && GG().saisie && GG().saisie(fond)); } catch (e) { return false; } };
     const fermer = (force = false) => {
       if (!fond.isConnected) return;
       if (!force && avantFermer && avantFermer() === false) return;
+      if (!force && changee()) { partirSansPerdre({ titre: 'Fermer sans enregistrer ?', ok: 'Fermer sans enregistrer' }).then(oui => { if (oui) fermer(true); }); return; }
       fond.remove();
       document.removeEventListener('keydown', clavier, true);
       window.removeEventListener('hashchange', partir);
       if (!$('.modale-fond')) { if (app) app.inert = false; document.documentElement.classList.remove('modale-ouverte'); }
       if (declencheur && declencheur.isConnected) declencheur.focus({ preventScroll: true });
     };
-    const partir = () => fermer(true);
+    const partir = () => { if (!changee()) fermer(true); };
+    fond.modaleChangee = changee; fond.fermerModale = fermer;
     function clavier(e) {
+      if (GG() && GG().question && GG().question()) return;   // la question est posée : la boîte du dessus a le clavier
       if (e.key === 'Escape') { e.preventDefault(); fermer(); return; }
       if (e.key !== 'Tab') return;
       const xs = $$('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href]', fond).filter(x => x.getClientRects().length);
@@ -3360,8 +3411,8 @@
     const { fond, fermer } = ouvrirModale({ id: 'modale-date', titre: 'Modifier cette date', icone: ICONES.crayon, corps, declencheur,
       avantFermer: () => {
         if (enCours) { annoncer('Un instant : l’enregistrement est en cours.'); return false; }
-        return !sale(fond) || confirm('Vos modifications de cette date ne sont pas enregistrées. Les abandonner ?');
-      } });
+        return true;
+      }, sale });
     const form = $('#f-modif-date', fond), zone = $('#msg-modif-date', fond);
     const redessinerPrecisions = (focus = null) => {
       $('#pm-liste', fond).innerHTML = precisions.map(lignePrecision).join('');
@@ -3815,6 +3866,7 @@
   async function initVueFrais() {
     const f = $('#f-nouvelle-frais');
     if (!f) return;
+    garderForm(f);
     const inpPhoto = $('#nf-photo', f);
     const zoneApercu = $('#nf-apercu-zone', f);
     const imgApercu = $('#nf-apercu-img', f);
@@ -3874,7 +3926,7 @@
         if (errNote) return sale(`La note de frais n’est pas enregistrée : ${motsErreur(errNote)}. Le justificatif est envoyé : réessayez, il ne repartira pas.`);
         envoye = null; fichierSelectionne = null;
         envolerJustificatif(imgApercu, zoneApercu.hidden);
-        f.reset();
+        f.reset(); garderForm(f);
         zoneApercu.hidden = true;
         etat.className = 'etat-form ok';
         etat.textContent = 'Note de frais enregistrée.';
@@ -4035,8 +4087,7 @@
       const proposer = w => {
         if (!w || !navigator.serviceWorker.controller) return;     // la première installation : rien à proposer
         annoncer('Nouvelle version disponible.', { persistant: true, action: { libelle: 'Mettre à jour', f: () => {
-          if (E.ficheSale && !confirm('Vos modifications de fiche ne sont pas enregistrées. Mettre à jour quand même ?')) return;
-          E.ficheSale = false; E.majDemandee = true; w.postMessage({ type: 'skipWaiting' });
+          partirSansPerdre({ titre: 'Mettre à jour sans enregistrer ?', ok: 'Mettre à jour' }).then(oui => { if (!oui) return; E.ficheSale = false; E.majDemandee = true; w.postMessage({ type: 'skipWaiting' }); });
         } } });
       };
       if (reg.waiting) proposer(reg.waiting);
@@ -4904,7 +4955,7 @@
 
   // ================================================================================================ actions
   async function sortir() {
-    if (E.ficheSale && !confirm('Vos modifications de fiche ne sont pas enregistrées. Se déconnecter quand même ?')) return;
+    if (!(await partirSansPerdre({ titre: 'Se déconnecter sans enregistrer ?', ok: 'Se déconnecter' }))) return;
     E.ficheSale = false; E.sortieVoulue = true;
     // cet appareil cesse de recevoir les notifications de cette personne (hors connexion : la fonction d'envoi retirera
     // l'abonnement à son premier échec)

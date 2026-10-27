@@ -424,6 +424,72 @@ fs.mkdirSync(CAPT, { recursive: true });
   await ctx.close();
 }
 
+// ================================================================================ ne rien perdre en partant, le titre de l'onglet
+// la fiche « Moi » changée : changer de vue, le bouton précédent posent la question dans une boîte de la charte (jamais
+// confirm()) ; « Rester » garde la saisie et l'adresse ; une feuille de modification changée aussi ; fermer l'onglet, la
+// question du navigateur
+{
+  const base = baseSimulee();
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { hash: '#/date/102', base });
+  let natifs = 0;
+  page.on('dialog', d => { natifs++; d.dismiss().catch(() => {}); });
+  const question = () => page.waitForFunction(() => !!document.querySelector('dialog.gq[open]'), null, { timeout: 4000 }).then(() => page.waitForTimeout(400)).then(() => true).catch(() => false);   // (la boîte ignore les clics de ses 350 premières ms)
+  const adresse = () => page.evaluate(() => location.hash);
+  // un vrai geste sur la barre des onglets (une entrée d'historique sans geste, le précédent du navigateur la saute)
+  const onglet = k => page.locator(`.nav-item[data-onglet="${k}"]:visible`).first().tap();
+  await page.waitForSelector('.heros[data-date="102"]', { timeout: 10000 }).catch(() => {});
+  await page.waitForFunction(() => /La Folle Idée · /.test(document.title), null, { timeout: 5000 }).catch(() => {});
+  ok('titre · une date : le spectacle, le jour, l’onglet (« La Folle Idée · … · Ma saison · Équipe · Compagnie Crescite »)', /^(\(\d+\) )?La Folle Idée · \S+ \S+ \S+ · Ma saison · Équipe · Compagnie Crescite$/.test(await page.title()), await page.title());
+  await onglet('moi');
+  await page.waitForSelector('#f-telephone', { timeout: 10000 });
+  await page.waitForTimeout(400);
+  ok('titre · une vue d’onglet : « Moi · Équipe · Compagnie Crescite »', /(^|\) )Moi · Équipe · Compagnie Crescite$/.test(await page.title()), await page.title());
+  await onglet('saison');
+  await page.waitForFunction(() => location.hash === '#/saison' && document.querySelector('#contenu .heros, #contenu .billet'), null, { timeout: 6000 }).catch(() => {});
+  ok('partir · la fiche sans changement : on change de vue sans question', !(await page.$('dialog.gq[open]')) && (await adresse()) === '#/saison');
+  await page.goBack();
+  await page.waitForSelector('#f-telephone', { timeout: 10000 });
+  await page.fill('#f-telephone', '06 00 00 00 01');
+  await onglet('planning');
+  ok('partir · la fiche changée : changer de vue pose la question, pas confirm()', await question() && natifs === 0 && (await adresse()) === '#/moi', await adresse());
+  await page.waitForTimeout(300); await page.screenshot({ path: `${CAPT}/partir-question.png`, fullPage: false });
+  await page.tap('dialog.gq [data-gq="non"]');
+  ok('partir · « Rester » : la fiche et sa saisie restent', !(await page.$('dialog.gq[open]')) && (await page.$eval('#f-telephone', e => e.value)) === '06 00 00 00 01' && (await adresse()) === '#/moi');
+  await page.goBack();
+  ok('partir · le bouton précédent pose la même question, l’adresse revient à la fiche', await question() && (await adresse()) === '#/moi', await adresse());
+  await page.tap('dialog.gq [data-gq="oui"]').catch(() => {});
+  // (la vue d'avant la fiche : la date, « Planning » ayant pris la place de « Ma saison » dans l'historique)
+  await page.waitForFunction(() => location.hash === '#/date/102', null, { timeout: 6000 }).catch(() => {});
+  ok('partir · « Quitter sans enregistrer » : la vue d’avant (le précédent rejoué)', (await adresse()) === '#/date/102' && !(await page.$('dialog.gq[open]')), await adresse());
+  await page.goForward();
+  await page.waitForSelector('#f-telephone', { timeout: 10000 });
+  ok('partir · le suivant revient à la fiche, telle qu’enregistrée, sans question', (await page.$eval('#f-telephone', e => e.value)) === '06 12 34 56 78' && !(await page.$('dialog.gq[open]')), await page.$eval('#f-telephone', e => e.value));
+  // une feuille de modification changée : Annuler, puis changer de vue
+  await page.evaluate(() => { GESTES.formulaire({ titre: 'Essai', champs: [{ k: 'texte', t: 'texte', l: 'Texte', valeur: 'avant' }] }); });
+  await page.waitForSelector('.gf form', { timeout: 4000 });
+  await page.fill('.gf [name="texte"]', 'après');
+  await page.tap('.gf button[data-gf-annuler]');
+  ok('feuille · changée : Annuler pose la question par-dessus la feuille', await question() && (await compte(page, '.gf form')) === 1);
+  await page.tap('dialog.gq [data-gq="non"]');
+  await page.evaluate(() => { location.hash = '#/saison'; });   // (la feuille couvre la barre des onglets)
+  ok('feuille · changée : changer de vue pose la question, la feuille reste', await question() && (await compte(page, '.gf form')) === 1 && (await adresse()) === '#/moi');
+  await page.tap('dialog.gq [data-gq="oui"]').catch(() => {});
+  await page.waitForFunction(() => !document.querySelector('.gf') && location.hash === '#/saison', null, { timeout: 6000 }).catch(() => {});
+  ok('feuille · « Quitter sans enregistrer » ferme la feuille et change de vue', !(await page.$('.gf')) && (await adresse()) === '#/saison' && natifs === 0);
+  // fermer l'onglet sur une fiche changée : la question du navigateur
+  await onglet('moi');
+  await page.waitForSelector('#f-telephone', { timeout: 10000 });
+  await page.tap('#f-telephone');   // (un geste : le navigateur ne pose sa question qu'à une page touchée)
+  await page.fill('#f-telephone', '06 00 00 00 02');
+  page.removeAllListeners('dialog');
+  const vu = new Promise(r => { page.once('dialog', d => { r(d.type()); d.dismiss().catch(() => {}); }); setTimeout(() => r(null), 5000); });
+  ok('partir · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' / '));
+  await page.close({ runBeforeUnload: true });
+  const avantQuitter = await vu;
+  ok('partir · fermer l’onglet sur la fiche changée : la question du navigateur (beforeunload)', avantQuitter === 'beforeunload', String(avantQuitter));
+  await ctx.close();
+}
+
 await navigateur.close();
 serveur.close();
 let ko = 0;

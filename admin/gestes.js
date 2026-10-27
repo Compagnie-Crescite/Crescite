@@ -15,6 +15,10 @@
    - Le formulaire (GESTES.formulaire) : une feuille de modification, depuis le bas au téléphone, au centre à
      l'ordinateur, avec ses champs, Annuler, Enregistrer ; ce que l'espace de l'équipe ouvre d'un appui long pour
      modifier une date, ses horaires, son lieu, son équipe, son suivi, une note de frais…
+   - Ne rien perdre (GESTES.garder, GESTES.saisie, GESTES.quitter, GESTES.oublier) : une saisie commencée (une feuille du
+     formulaire changée, un formulaire gardé : une note, une fenêtre) ne se perd pas en silence ; la question se pose dans
+     une boîte de la charte (« Rester », « Quitter sans enregistrer »), jamais par confirm(), et seulement si quelque chose
+     a changé.
    Rien ne vibre ni ne s'anime si l'appareil demande moins d'animations (prefers-reduced-motion, html.still, ?anim=0). */
 const GESTES = (() => {
   const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -326,8 +330,10 @@ const GESTES = (() => {
       document.documentElement.classList.add('gf-ouvert');
       const form = $('form', m), declencheur = document.activeElement;
       ouvertF = { m, resolve: null };
-      const finir = valeur => { if (ouvertF && ouvertF.m === m) ouvertF = null; m.remove(); if (!$('.gf')) document.documentElement.classList.remove('gf-ouvert'); if (declencheur && declencheur.isConnected && typeof declencheur.focus === 'function') declencheur.focus({ preventScroll: true }); resolve(valeur); };
+      const finir = valeur => { if (ouvertF && ouvertF.m === m) ouvertF = null; m.dataset.fini = '1'; m.remove(); if (!$('.gf')) document.documentElement.classList.remove('gf-ouvert'); if (declencheur && declencheur.isConnected && typeof declencheur.focus === 'function') declencheur.focus({ preventScroll: true }); resolve(valeur); };
       ouvertF.resolve = finir;
+      // fermer sans enregistrer (Annuler, Échap, le voile) : la question, seulement si un champ a changé depuis l'ouverture
+      const abandonner = async () => { if (!modifie() || await quitter({ texte: 'Les changements de cette feuille ne sont pas enregistrés.' })) finir(null); };
       // les valeurs : par nom, les chemins a.b.c en objets, les groupes en tableaux, les cases en booléens, les nombres en nombres
       const lire = () => {
         const out = {};
@@ -347,10 +353,14 @@ const GESTES = (() => {
         return out;
       };
       const champsPlats = xs => xs.map(c => ({ c, nom: c.k }));
+      const empreinte = () => { try { return JSON.stringify(lire(), (k, v) => (typeof File !== 'undefined' && v instanceof File ? `${v.name}:${v.size}` : v)); } catch (e) { return ''; } };
+      const depart = empreinte(), modifie = () => !m.dataset.fini && empreinte() !== depart;
+      ouvertF.modifie = modifie;
+      $('.gf-voile', m).addEventListener('click', e => { e.preventDefault(); abandonner(); });
       form.addEventListener('click', e => {
         const seg = e.target.closest('[data-gf-seg] button');
         if (seg) { const z = seg.closest('[data-gf-seg]'); $$('button', z).forEach(b => b.setAttribute('aria-pressed', String(b === seg))); $('input[type=hidden]', z).value = seg.dataset.val; return; }
-        if (e.target.closest('[data-gf-annuler]')) { e.preventDefault(); finir(null); return; }
+        if (e.target.closest('[data-gf-annuler]')) { e.preventDefault(); abandonner(); return; }
         if (e.target.closest('[data-gf-danger]')) { e.preventDefault(); finir(null); try { danger.faire(); } catch (err) { console.error(err); } return; }
         const ret = e.target.closest('[data-gf-retirer]');
         if (ret) { e.preventDefault(); const it = ret.closest('[data-gf-item]'); const g = it.closest('[data-gf-groupe]'); it.remove(); renumeroter(g); return; }
@@ -377,17 +387,82 @@ const GESTES = (() => {
         finir(v);
       });
       form.addEventListener('keydown', e => {
-        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); finir(null); return; }
+        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); abandonner(); return; }
         if (e.key === 'Tab') { const xs = $$('input:not([type=hidden]), select, textarea, button', form).filter(x => !x.disabled && x.offsetParent !== null); if (!xs.length) return; const i = xs.indexOf(document.activeElement); if (e.shiftKey && (i <= 0)) { e.preventDefault(); xs[xs.length - 1].focus(); } else if (!e.shiftKey && i === xs.length - 1) { e.preventDefault(); xs[0].focus(); } }
       });
-      requestAnimationFrame(() => { ($('input:not([type=hidden]):not([type=checkbox]), select, textarea, [data-gf-seg] button[aria-pressed="true"], input[type=checkbox]', form) || $('button[type=submit]', form))?.focus({ preventScroll: true }); });
+      // le premier champ prend le focus, sauf si un doigt (ou le clavier) en a déjà choisi un : on ne le lui reprend pas
+      requestAnimationFrame(() => { if (form.contains(document.activeElement)) return; ($('input:not([type=hidden]):not([type=checkbox]), select, textarea, [data-gf-seg] button[aria-pressed="true"], input[type=checkbox]', form) || $('button[type=submit]', form))?.focus({ preventScroll: true }); });
     });
   }
   function fermerFormulaire() { if (ouvertF) { const o = ouvertF; ouvertF = null; o.resolve(null); } }
-  window.addEventListener('hashchange', fermerFormulaire);
+  // changer de page ferme la feuille ; changée, elle reste : la page (l'administration, l'espace de l'équipe) revient à
+  // son adresse et pose la question (GESTES.saisie), puis GESTES.oublier() la ferme si l'on quitte quand même
+  window.addEventListener('hashchange', () => { if (!(ouvertF && ouvertF.modifie && ouvertF.modifie())) fermerFormulaire(); });
+
+  // ===================================================================================================== ne rien perdre
+  /* Une saisie commencée hors d'une fiche (une note, la fenêtre d'une opportunité, des lignes collées) : garder(el) note
+     son état de départ (ses champs) ; saisie(dans) dit si un formulaire gardé (dans cette zone) ou la feuille ouverte a
+     changé depuis. quitter({ titre, texte, ok, rester }) pose la question dans une boîte de la charte, une <dialog> modale
+     (par-dessus une feuille, une boîte, un tiroir : la couche du haut), depuis le bas au téléphone, au centre à
+     l'ordinateur : « Rester » a le focus (Échap, le voile y mènent aussi), « Quitter sans enregistrer » ; résout vrai
+     pour quitter. oublier() referme la feuille et prend l'état présent des formulaires gardés comme départ. */
+  const empreinteDe = el => JSON.stringify($$('input, select, textarea', el).filter(x => x.type !== 'hidden' && x.type !== 'search').map(x => x.type === 'checkbox' || x.type === 'radio' ? x.checked : x.type === 'file' ? (x.files ? x.files.length : 0) : x.value));
+  function garder(el) { if (el) el.dataset.garde = empreinteDe(el); return el; }
+  const gardes = dans => [...(dans.matches && dans.matches('[data-garde]') ? [dans] : []), ...$$('[data-garde]', dans)];   // (la zone elle-même comprise)
+  const gardesChanges = (dans = document) => gardes(dans).filter(el => el.isConnected && empreinteDe(el) !== el.dataset.garde);
+  function saisie(dans = document) { return !!(ouvertF && ouvertF.modifie && ouvertF.modifie()) || gardesChanges(dans).length > 0; }
+  function oublier(dans = document) { fermerFormulaire(); gardes(dans).forEach(garder); }
+  let question = null;
+  function quitter({ titre = 'Quitter sans enregistrer ?', texte = 'Des modifications ne sont pas enregistrées.', ok = 'Quitter sans enregistrer', rester = 'Rester' } = {}) {
+    if (question) return question.promesse;
+    const declencheur = document.activeElement;
+    const dlg = document.createElement('dialog');
+    dlg.className = `gq${reduit() ? ' gq-calme' : ''}`;
+    dlg.setAttribute('role', 'alertdialog');
+    dlg.setAttribute('aria-labelledby', 'gq-titre'); dlg.setAttribute('aria-describedby', 'gq-texte');
+    dlg.innerHTML = `<div class="gq-boite"><span class="gm-poignee" aria-hidden="true"></span><h2 id="gq-titre">${esc(titre)}</h2><p id="gq-texte">${esc(texte)}</p>
+      <div class="gq-pied"><button type="button" class="gf-btn gq-quitter" data-gq="oui">${esc(ok)}</button><button type="button" class="gf-btn principal" data-gq="non">${esc(rester)}</button></div></div>`;
+    document.body.append(dlg);
+    let finir;
+    const promesse = new Promise(r => { finir = r; });
+    // un appui qui a ouvert la boîte (le doigt sur un onglet, là où monte la boîte) ne répond pas à sa place : les clics
+    // des 350 premières millisecondes ne comptent pas (le clavier, Échap, si)
+    const ouverteLe = performance.now();
+    question = { promesse };
+    const repondre = oui => {
+      if (!question) return;
+      question = null;
+      try { dlg.close(); } catch (e) { /* déjà fermée */ }
+      dlg.remove();
+      if (!oui && declencheur && declencheur.isConnected && typeof declencheur.focus === 'function') declencheur.focus({ preventScroll: true });
+      vibrer(oui ? 12 : 6);
+      finir(oui);
+    };
+    dlg.addEventListener('cancel', e => { e.preventDefault(); repondre(false); });            // Échap : on reste
+    dlg.addEventListener('click', e => { if (performance.now() - ouverteLe < 350 && e.detail !== 0) return; const b = e.target.closest('[data-gq]'); if (b) repondre(b.dataset.gq === 'oui'); else if (e.target === dlg) repondre(false); });
+    // Échap et Tab restent à la boîte : les boîtes de la page (qui écoutent le clavier en capture) ne les voient pas
+    dlg.addEventListener('keydown', e => { if (e.key === 'Escape' || e.key === 'Tab') e.stopPropagation(); });
+    dlg.showModal();
+    $('[data-gq="non"]', dlg).focus();
+    return promesse;
+  }
+  window.addEventListener('keydown', e => { if (question && (e.key === 'Escape' || e.key === 'Tab') && document.querySelector('dialog.gq[open]')) { e.stopImmediatePropagation(); if (e.key === 'Escape') { e.preventDefault(); $('dialog.gq [data-gq="non"]')?.click(); } } }, true);
 
   // ===================================================================================================== styles
   document.head.insertAdjacentHTML('beforeend', `<style id="styles-gestes">
+/* la question avant de perdre une saisie (GESTES.quitter) : une <dialog> modale, depuis le bas au téléphone, au centre à l'ordinateur */
+dialog.gq { box-sizing: border-box; width: 100%; max-width: none; max-height: calc(100dvh - 24px); margin: auto 0 0; padding: 0; border: 1px solid var(--trait, var(--filet, #ddd)); border-bottom: 0; border-radius: 20px 20px 0 0; background: var(--carte, var(--surface, #fff)); color: var(--encre, #222); font: 15px/1.45 var(--police, var(--sans, system-ui, sans-serif)); box-shadow: 0 -12px 40px rgba(20, 10, 20, .3); }
+dialog.gq::backdrop { background: rgba(23, 15, 26, .5); }
+.gq-boite { padding: 6px 20px calc(14px + env(safe-area-inset-bottom, 0px)); }
+.gq h2 { margin: 0 0 6px; font: 500 18px/1.3 var(--titres, var(--serif, inherit)); }
+.gq p { margin: 0 0 16px; color: var(--gris, #777); }
+.gq-pied { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.gq-pied .gf-btn { flex: 1 1 auto; }
+.gq .gf-btn.gq-quitter { color: var(--alerte, #b3261e); }
+.gq .gf-btn.principal { background: var(--accent, var(--action, var(--magenta, #5f565a))); border-color: var(--accent, var(--action, var(--magenta, #5f565a))); color: var(--sur-accent, var(--sur-action, #fff)); }
+.gq .gf-btn:focus-visible { outline: 3px solid var(--accent, var(--magenta, #5f565a)); outline-offset: 2px; }
+@media (min-width: 641px) { dialog.gq { width: min(460px, calc(100vw - 32px)); margin: auto; border-radius: 18px; border-bottom: 1px solid var(--trait, var(--filet, #ddd)); } .gq-boite { padding: 20px 22px 18px; } .gq .gm-poignee { display: none; } .gq-pied .gf-btn { flex: 0 0 auto; } }
+@media (prefers-reduced-motion: no-preference) { dialog.gq:not(.gq-calme)[open] { animation: gm-monte .22s cubic-bezier(.2, .8, .2, 1); } dialog.gq:not(.gq-calme)[open]::backdrop { animation: gm-paraitre .2s ease-out; } }
 /* le formulaire (GESTES.formulaire) : une feuille depuis le bas au téléphone, au centre à l'ordinateur */
 html.gf-ouvert { overflow: hidden; }
 .gf { position: fixed; inset: 0; z-index: 92; font: 15px/1.4 var(--police, var(--sans, system-ui, sans-serif)); color: var(--encre, #222); }
@@ -470,5 +545,5 @@ html.gf-ouvert { overflow: hidden; }
 .gps-texte .gps-t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>`);
 
-  return { menu, ouvrir, fermer, fleches, glisser, precSuiv, clavierPrecSuiv, formulaire, fermerFormulaire, vibrer, reduit, tactile, etroit, ICO, ouvert: () => !!ouvert };
+  return { menu, ouvrir, fermer, fleches, glisser, precSuiv, clavierPrecSuiv, formulaire, fermerFormulaire, garder, saisie, quitter, oublier, vibrer, reduit, tactile, etroit, ICO, ouvert: () => !!ouvert, question: () => !!question };
 })();
