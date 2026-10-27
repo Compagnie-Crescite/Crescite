@@ -432,6 +432,10 @@ LIBELLES = {
     # les filtres des saisons (la synthèse) : effacer ceux en cours, et au téléphone, leur barre en bas de l'écran et leur
     # panneau, qui mène aux dates gardées
     "filtres": "Filtres", "effacerFiltres": "Tout effacer", "voirLesDates": "Voir les dates", "touteLaFrance": "Toute la France", "rapprocher": "Rapprocher",
+    # ce que l'œil voit, dit aux lecteurs d'écran (texte masqué) : une date déjà jouée (vidée et cochée sur la frise, éteinte
+    # dans la liste), le geste d'une étiquette de filtre en cours (elle l'efface), et le nombre de dates que gardent les
+    # filtres, annoncé quand ils changent ({n} : le nombre)
+    "jouee": "jouée", "retirerFiltre": "Retirer le filtre", "nDates": "{n} dates", "uneDate": "1 date", "aucuneDate": "Aucune date",
     "actionsMenees": "Les actions culturelles menées",
     # les chiffres du bilan (le nombre de dates : « dates », de communes, de saisons)
     "communes": "Communes", "saisons": "Saisons",
@@ -466,6 +470,9 @@ LIBELLES = {
     # la page d'un spectacle : partager son adresse (le partage de l'appareil, sinon l'adresse copiée), et ses voisins dans
     # l'ordre des spectacles, au pied de la page
     "partager": "Partager", "lienCopie": "Lien copié",
+    # un lien qui s'ouvre dans un nouvel onglet (une billetterie, un document, un autre site) : sa petite flèche, et ce texte
+    # masqué pour les lecteurs d'écran
+    "nouvelOnglet": "(nouvel onglet)",
     "spectaclePrecedent": "Spectacle précédent", "spectacleSuivant": "Spectacle suivant",
     # une adresse qui ne mène à aucune vue : sa page, et d'où repartir
     "introuvable": "Page introuvable", "introuvableTexte": "Cette adresse ne mène à aucune page du site.",

@@ -72,6 +72,8 @@ const FRISE = (() => {
   'use strict';
   // le nom d'une semaine de résidence (règle 23), un texte de D
   const LIB_RESIDENCE = () => (typeof D !== 'undefined' && D && D.site && D.site.libelles && D.site.libelles.residence) || '';
+  // une date déjà jouée (son repère évidé, en retrait) : le lecteur d'écran l'entend aussi, un texte de D
+  const LIB_JOUEE = () => (typeof D !== 'undefined' && D && D.site && D.site.libelles && D.site.libelles.jouee) || '';
   const MOIS = typeof AGENDA !== 'undefined' && AGENDA.MOIS ? AGENDA.MOIS
     : ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
   const COUPE = (() => { try { return new URLSearchParams(location.search).get('anim') === '0'; } catch (e) { return false; } })();
@@ -423,7 +425,8 @@ const FRISE = (() => {
       // les repères
       const courant = M.pts.find(q => !q.passe) || M.pts[M.pts.length - 1];
       const lieux = new Map(), lieu = l => { if (l == null) return ''; let n = lieux.get(l); if (n === undefined) { n = nomLieu(l); lieux.set(l, n); } return n; };
-      const nom = q => { const p = q.p, c = lieu(p.l) || p.commune || ''; let s = quandDe(p); if (p.titre) s += (s ? ', ' : '') + p.titre; if (c) s += ', ' + c; if (p.residence && LIB_RESIDENCE()) s += ', ' + LIB_RESIDENCE(); if (p.etat) s += ', ' + p.etat; return s; };
+      const nom = q => { const p = q.p, c = lieu(p.l) || p.commune || ''; let s = quandDe(p); if (p.titre) s += (s ? ', ' : '') + p.titre; if (c) s += ', ' + c; if (p.residence && LIB_RESIDENCE()) s += ', ' + LIB_RESIDENCE(); if (p.etat) s += ', ' + p.etat;
+        else if (q.passe && !p.residence && !p.annulee && LIB_JOUEE()) s += ', ' + LIB_JOUEE(); return s; };
       const repere = (q) => {
         const p = q.p, cls = 'frise-point' + (q.passe ? ' est-passe' : '') + (p.scolaire ? ' est-scolaire' : '') + (p.residence ? ' est-residence' : '') + (p.annulee ? ' est-annule' : '') + (q.duree ? ' est-duree' : '')
           + (q.grappe ? ' est-groupe' : '') + (q.droite ? ' est-a-droite' : '');
