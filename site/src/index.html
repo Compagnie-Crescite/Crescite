@@ -104,7 +104,8 @@ img { display: block; max-width: 100%; }
    tant que sa place est plus bas (sticky, bottom). On descend, ou on touche une de ses pièces (la page descend d'elle-même,
    puis s'en va) : elle monte avec la page et s'arrime en haut de l'écran (position: sticky, rien ne se calcule au
    défilement) ; arrimée, sa marque se déplie et son ombre se creuse (.est-arrime, posée par un IntersectionObserver).
-   Ailleurs, elle est arrimée d'emblée. Au téléphone aussi : elle remplace la barre du bas. */
+   Ailleurs, elle est arrimée d'emblée. Au téléphone, elle ne garde que la marque et la loupe, en haut partout (l'accueil
+   compris : posée sur la scène) ; le menu y est la barre d'onglets du bas (.entrees.en-bas). */
 body { display: flow-root; }   /* (la cale et la marge de l'en-tête restent dans le corps : sur l'accueil, elles posent le menu sous la scène) */
 /* (la cale, et non une marge de l'en-tête : sa marge compte dans ce que sticky garde dans le corps, il ne pourrait plus monter
    se coller au bas de l'écran) */
@@ -164,6 +165,44 @@ body { display: flow-root; }   /* (la cale et la marge de l'en-tête restent dan
 .loupe-b:hover { background-color: rgba(255, 255, 255, .13); }
 .loupe-b:is(:hover, :focus-visible) svg { scale: 1.12; }
 .loupe-b[aria-expanded="true"] { background: #fff; color: var(--saison); }
+/* le menu au téléphone, sous le pouce : la barre d'onglets du bas, comme une application (la pilule du haut, à 360 px, ne tenait
+   plus la pieuvre, quatre pièces et la loupe). Les pièces du menu (#entrees, déplacé hors de l'en-tête par placerEntrees) s'y
+   posent en quatre cases égales : une icône simple et le nom court ; celle de la vue a son icône dans une ventouse blanche,
+   celle dont la vue dépend (un spectacle, une page de l'espace pro) un anneau. La barre reste quand le haut se range
+   (Range) ; elle prend la place de la barre d'accueil de l'iPhone (safe-area). --tab : la place qu'elle prend en bas de
+   l'écran (0 au bureau) ; --bas : ce que ce qui se pose en bas de l'écran laisse sous lui (les filtres des saisons,
+   l'indicateur de section, le haut de page) : la barre et la safe-area au téléphone, la safe-area seule au bureau */
+:root { --tab-h: 58px; --tab: 0px; --bas: env(safe-area-inset-bottom, 0px); }
+.entrees .ic { display: none; }
+@media (max-width: 759px) {
+  :root { --tab: calc(var(--tab-h) + env(safe-area-inset-bottom, 0px)); --bas: var(--tab); }
+  html { scroll-padding-bottom: calc(var(--tab) + 12px); }
+  body { padding-bottom: var(--tab); }
+  .entrees.en-bas { position: fixed; z-index: 61; left: 0; right: 0; bottom: 0; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); align-items: stretch; gap: 0;
+    height: var(--tab); padding: 0 max(4px, env(safe-area-inset-right)) env(safe-area-inset-bottom, 0px) max(4px, env(safe-area-inset-left)); background: var(--saison); color: #fff;
+    box-shadow: 0 -1px 0 rgba(255, 255, 255, .16), 0 -14px 30px -18px rgba(0, 0, 0, .95); }
+  .entrees.en-bas a { flex-direction: column; justify-content: center; gap: 4px; min-width: 0; height: var(--tab-h); padding: 0 2px; border: 0; border-radius: 0; background: none; color: #fff;
+    font: 700 .66rem/1.1 var(--etiq); letter-spacing: .05em; text-align: center; -webkit-tap-highlight-color: transparent; }
+  .entrees.en-bas a:hover, .entrees.en-bas a[aria-current="page"] { background: none; color: #fff; }
+  .entrees.en-bas .pt, .entrees.en-bas .long { display: none; }
+  .entrees.en-bas .court { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .entrees.en-bas .ic { display: grid; place-items: center; width: 54px; height: 28px; border-radius: 999px; transition: background-color var(--k-survol) var(--k-doux), color var(--k-survol) var(--k-doux), box-shadow var(--k-survol) var(--k-doux); }
+  .entrees.en-bas .ic svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: scale var(--k-survol) var(--k-souple); }
+  .entrees.en-bas a:is(:hover, :focus-visible) .ic svg { scale: 1.1; }
+  .entrees.en-bas a[aria-current="page"] .ic { background: #fff; color: var(--saison); }
+  .entrees.en-bas a[aria-current="true"] .ic { box-shadow: inset 0 0 0 2px #fff; }
+  .entrees.en-bas a:focus-visible { outline: 2px solid #fff; outline-offset: -3px; border-radius: 12px; }
+  /* (l'accueil : le haut posé sur la scène, sans fond, sa marque repliée sous le nom de la scène ; la loupe d'un anneau, comme
+     la pause de la scène, qui passe à gauche, en face d'elle ; le nom de la scène entre les deux) */
+  .top { transition: box-shadow var(--k-survol) var(--k-doux), background-color var(--k-survol) var(--k-doux); }
+  .top.sur-scene { background-color: transparent; box-shadow: none; }
+  .top.sur-scene .marque { opacity: 0; visibility: hidden; transition-delay: 0s, 0s, 0s, var(--k-survol); }
+  .top.sur-scene .loupe-b { background: color-mix(in srgb, var(--sc-c, var(--saison)) 50%, transparent); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, #fff 60%, transparent); }
+  .scene .sc-h { padding: calc(22px + env(safe-area-inset-top)) 64px 0; }
+  .scene .sc-pause { left: 12px; right: auto; top: calc(8px + env(safe-area-inset-top)); }
+  .rc { --rc-bas: var(--tab); }   /* (le cadre d'un récit, à l'écran entre les menus : au-dessus de la barre) */
+  @media (forced-colors: active) { .entrees.en-bas { border-top: 1px solid CanvasText; } .entrees.en-bas a[aria-current] .ic { outline: 2px solid LinkText; } }
+}
 /* la boîte de recherche (CHERCHE) : le papier de nuit sur un voile, posée haut ; ses propositions par groupe, celle qu'on vise
    teintée de la saison et marquée d'un filet ; au téléphone, tout l'écran. Elle monte de 10 px en s'ouvrant (posée d'emblée
    avec moins d'animations) */
@@ -1489,7 +1528,7 @@ html:not(.still):not(.sur-place) :is(.ecrit, .apparait).vu { transition: opacity
 /* le retour en haut d'une page longue : un bouton rond, discret, en bas à droite, qui paraît après deux écrans lus ; il se
    pose au-dessus de ce qui occupe déjà le bas de l'écran (l'indicateur de section d'un spectacle, les filtres des saisons),
    et s'efface quand la liste des sections est ouverte */
-.haut-page { --hp-bas: 16px; position: fixed; right: 16px; bottom: calc(var(--hp-bas) + env(safe-area-inset-bottom)); z-index: 34; display: grid; place-items: center; width: 44px; height: 44px; padding: 0;
+.haut-page { --hp-bas: 16px; position: fixed; right: 16px; bottom: calc(var(--hp-bas) + var(--bas)); z-index: 34; display: grid; place-items: center; width: 44px; height: 44px; padding: 0;
   border: 1px solid color-mix(in srgb, var(--encre) 18%, transparent); border-radius: 50%; background: color-mix(in srgb, var(--papier-2) 94%, transparent); color: var(--encre); cursor: pointer;
   box-shadow: 0 12px 26px -14px rgba(0, 0, 0, .9); opacity: 0; visibility: hidden; translate: 0 10px;
   transition: opacity var(--k-survol) var(--k-doux), translate var(--k-survol) var(--k-doux), bottom var(--k-survol) var(--k-doux), border-color var(--k-survol) var(--k-doux), visibility 0s var(--k-survol); }
@@ -1502,8 +1541,8 @@ body:has(.bf7.est-visible.a-filtres) .haut-page { --hp-bas: 86px; }
 body:has(#som-l:not([hidden])) .haut-page, html.intro-active .haut-page { opacity: 0; visibility: hidden; }
 /* (ce qui prend le focus au clavier s'arrête au-dessus de ce qui occupe le bas de l'écran : le bouton du haut de page, la barre
    des filtres des saisons au téléphone, l'indicateur de section d'un spectacle) */
-html:has(.haut-page.est-visible), html:has(main .som) { scroll-padding-bottom: 72px; }
-html:has(.bf7.est-visible) { scroll-padding-bottom: 96px; }
+html:has(.haut-page.est-visible), html:has(main .som) { scroll-padding-bottom: calc(72px + var(--tab)); }
+html:has(.bf7.est-visible) { scroll-padding-bottom: calc(96px + var(--tab)); }
 @media (max-width: 759px) {
   .haut-page { --hp-bas: 14px; right: 12px; }
   .haut-page.sur-som { --hp-bas: 64px; }
@@ -1946,7 +1985,7 @@ html:not(.still) .une-ph img { transform: translateY(calc(var(--p, 0) * 8%)) sca
   html.menu-range :is(.recit-panneau, .rc-vis) { top: calc(var(--haut) + var(--onglets) - var(--range)); }
   html.menu-range .carte-sp { top: calc(var(--haut) + var(--onglets) + 16px - var(--range)); }
   html.menu-range .u-faits { top: calc(var(--haut) + var(--onglets) + 20px - var(--range)); }
-  html:not(.still) .top { transition: box-shadow var(--k-survol) var(--k-doux), translate .3s var(--k-doux); }
+  html:not(.still) .top { transition: box-shadow var(--k-survol) var(--k-doux), background-color var(--k-survol) var(--k-doux), translate .3s var(--k-doux); }
   html:not(.still) :is(.u-onglets, .recit-panneau, .rc-vis, .carte-sp, .u-faits) { transition: top .3s var(--k-doux); }
 }
 @media (max-width: 640px) {
@@ -2346,7 +2385,7 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
    en cours, dès qu'il y en a : la frise et les puces sont à portée */
 .bf7, .fe7 { display: none; }
 @media (max-width: 759px) {
-  .bf7 { position: fixed; z-index: 38; left: 8px; right: 8px; bottom: calc(10px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 4px; height: 56px; padding: 6px; border-radius: 999px;
+  .bf7 { position: fixed; z-index: 38; left: 8px; right: 8px; bottom: calc(10px + var(--bas)); display: flex; align-items: center; gap: 4px; height: 56px; padding: 6px; border-radius: 999px;
     background: color-mix(in srgb, var(--papier-2) 97%, transparent);
     box-shadow: 0 0 0 1px color-mix(in srgb, var(--encre) 14%, transparent), 0 18px 38px -12px rgba(0, 0, 0, .95); transform: translateY(calc(100% + 28px)); visibility: hidden;
     transition: transform .34s var(--k-doux), visibility 0s .34s; }
@@ -2365,7 +2404,7 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
   .bf7-puces .bf7-m.est-passe { color: var(--gris); }
   .fe7:not([hidden]) { position: fixed; inset: 0; z-index: 60; display: block; }
   .fe7-voile { position: absolute; inset: 0; background: rgba(6, 3, 5, .64); animation: fm7-parait .24s var(--k-doux) backwards; }
-  .fe7-panneau { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; max-height: min(88svh, 760px); padding-bottom: env(safe-area-inset-bottom);
+  .fe7-panneau { position: absolute; left: 0; right: 0; bottom: var(--tab); display: flex; flex-direction: column; max-height: min(calc(88svh - var(--tab)), 760px);
     border-radius: 24px 24px 0 0; background: var(--papier-2); box-shadow: 0 -18px 44px -12px rgba(0, 0, 0, .85); animation: fe7-monte .32s var(--k-doux) backwards; }
   .fe7-panneau.est-tire { animation: none; transition: none; }
   .fe7-panneau.est-lache { transition: transform .26s var(--k-doux); }
@@ -2741,20 +2780,16 @@ article.u { --onglets: 58px; }
   .dos-appel-ph { min-height: 200px; }
 }
 @media (max-width: 759px) {
-  /* (au téléphone, le menu flottant a les noms courts, une ligne de 44 px ; la pieuvre seule y fait la marque, à toutes les
-     largeurs, sans le nom : le lien de l'accueil, une cible de 44 px au début de la ligne ; à 360 px, les pièces se serrent
-     d'un rien pour lui laisser sa place) */
+  /* (au téléphone, le haut n'a plus que la marque, la pieuvre et le nom de la compagnie, le lien de l'accueil, et la loupe au
+     bout : une ligne de 44 px sur toute la largeur ; le menu est la barre d'onglets du bas, plus bas. Sans la place du nom,
+     la pieuvre seule, une cible de 44 px) */
   :root { --haut: 60px; --barre-h: 44px; }
-  .top-in { padding: 0 4px; }
-  #nom { display: none; }
-  .marque, .top.compact .marque { justify-content: center; width: 44px; height: 44px; padding: 0; }
+  .top { width: auto; margin: 8px 8px 0; }
+  .top-in { justify-content: space-between; padding: 0 4px; }
+  .marque { height: 44px; padding: 0 14px 0 7px; font-size: 1rem; }
+  .top.compact .marque { justify-content: center; width: 44px; padding: 0; }
   .marque .l { width: 30px; }
-  .top.fin .entrees a { padding: 0 5px; }
-  .entrees .long { display: none; }
-  .entrees .court { display: inline; }
-  .entrees a { gap: 6px; height: 36px; padding: 0 9px 0 8px; font-size: .68rem; letter-spacing: .06em; }
-  .entrees .pt { width: 8px; height: 8px; }
-  .som { right: 12px; bottom: calc(14px + env(safe-area-inset-bottom)); }
+  .som { right: 12px; bottom: calc(14px + var(--bas)); }
   .et { padding: 26px 0 20px; }
   .et-rac { flex-wrap: nowrap; overflow-x: auto; margin: 18px calc(-1 * var(--gout)) 0; padding: 2px var(--gout) 4px; scrollbar-width: none; }
   .et-rac li { flex: none; }
@@ -2884,7 +2919,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   main, main *, main *::before, main *::after { color: #000 !important; background: transparent !important; border-color: #aaa !important; }
   main [data-mv], main .mv-attente, main .mv-attente > *, main .apparait, main .ecrit, main .lit, main .lit *, main .rc-in, main .rc-p, main .u-titre .ligne { opacity: 1 !important; transform: none !important; translate: none !important; clip-path: none !important; visibility: visible !important; }
   /* ce qui ne s'imprime pas */
-  .evitement, .top-cale, #top, footer, .haut-page, .succion, canvas, .intro, svg.defs, .ed-barre, .ed-panneau,
+  .evitement, .top-cale, #top, #entrees, footer, .haut-page, .succion, canvas, .intro, svg.defs, .ed-barre, .ed-panneau,
   main button:not(.rs-date), main .u-onglets, main .sp-som, main .som, main .u-cta, main .une-retour, main .une-ariane, main .une-motif, main .une-lueur, main .une-ombre,
   main .voisins, main .rc-vis, main .rc-fil, main #c-video, main [data-lecteur], main .filet, main svg.trait, main .rs-tete, main .rs-defile, main .rs-plus, main .rs-photo, main .rs-tache,
   main svg.carte, main .carte-sp, main .ag7-carte, main .frise, main [data-frise], main .u-frise, main .v-frise, main .fs7, main .p4-frise, main .ft7, main .fr-legende,
@@ -3046,7 +3081,11 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     return {
       el,
       sousPieuvre(v) { const n = Math.round(v); if (n === y && el.classList.contains('sous-pieuvre')) return; y = n; cale.style.height = `${Math.max(0, y - 8)}px`; main.style.marginTop = `${-(y + hauteur())}px`; el.classList.add('sous-pieuvre'); },
-      enHaut() { if (y == null) return; y = null; cale.style.height = ''; main.style.marginTop = ''; el.classList.remove('sous-pieuvre'); },
+      enHaut() { el.classList.remove('sur-scene'); if (y == null) return; y = null; cale.style.height = ''; main.style.marginTop = ''; el.classList.remove('sous-pieuvre'); },
+      // au téléphone, sur l'accueil : le menu est la barre du bas ; le haut (la marque, la loupe) reste en haut, posé sur la scène
+      // (<main> remonte sous lui), sans fond et la marque repliée tant que le nom de la scène est à l'écran (sous lui, la
+      // grande pieuvre fait la marque) ; on descend, il prend son fond et sa marque se déplie (.sur-scene, que la scène pose)
+      surScene() { if (y === 8 && !el.classList.contains('sous-pieuvre')) return; y = 8; cale.style.height = ''; main.style.marginTop = `${-(8 + hauteur())}px`; el.classList.remove('sous-pieuvre'); },
       // sa place à l'écran, la page tout en haut
       place: () => (y != null ? y : 8),
       // sur l'accueil, avant qu'il soit arrimé : la page descend d'elle-même jusqu'à ce qu'il s'arrime en haut, puis fait()
@@ -3092,7 +3131,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   const tabulables = r => (r ? $$('a[href], button, input, select, textarea, summary, [tabindex]', r).filter(x => x.tabIndex >= 0 && !x.disabled && !x.closest('[inert], [hidden]')
     && (x.checkVisibility ? x.checkVisibility({ visibilityProperty: true, checkVisibilityCSS: true }) : x.getClientRects().length > 0)) : []);
   document.addEventListener('keydown', e => {
-    if (e.key !== 'Tab' || e.altKey || e.ctrlKey || e.metaKey || e.defaultPrevented || vue !== 'accueil') return;
+    if (e.key !== 'Tab' || e.altKey || e.ctrlKey || e.metaKey || e.defaultPrevented || vue !== 'accueil' || !Menu.el.classList.contains('sous-pieuvre')) return;   // (au téléphone, le haut est en haut : l'ordre de la page est celui de l'œil)
     const sc = $('#scene', main), ev = $('.evitement'), a = document.activeElement;
     if (!sc || !a || document.documentElement.classList.contains('ed-actif')) return;
     const S1 = tabulables(sc), M1 = tabulables(Menu.el), R1 = tabulables(main).filter(x => !sc.contains(x));
@@ -4079,6 +4118,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       <button type="button" class="sc-pause" aria-pressed="false"><svg class="i-p" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 2.5h3v11h-3zM9.5 2.5h3v11h-3z"/></svg><svg class="i-l" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.5 2.2l9.2 5.8-9.2 5.8z"/></svg></button>
       <ul class="sc-titres"></ul>`;
     const cv = $('.sc-toile', el), ctx = cv.getContext('2d'), cadreD = $('.sc-cadre', el), ul = $('.sc-titres', el), tete = $('.sc-h', el), bPause = $('.sc-pause', el);
+    // (au téléphone, le haut posé sur la scène reste sans fond, sa marque repliée, tant que le nom de la scène est à l'écran :
+    // Menu.surScene)
+    if ('IntersectionObserver' in window) new IntersectionObserver(es => { const e = es[es.length - 1]; Menu.el.classList.toggle('sur-scene', affiche && e.isIntersecting && TEL.matches); }).observe(tete);
     // la pieuvre : le corps du logo et huit tentacules qui en partent (la marque : ni la base ni l'administration n'y touchent)
     const BOX = D.arms.box, TS = PIEUVRE.creer();
     TS.forEach(t => { t.collant = true; });   // (déployée une fois, une tentacule reste accrochée à la tête : remontée, elle s'y enroule)
@@ -4294,11 +4336,15 @@ html.still .sc-image { transition: opacity .35s ease !important; }
           T.bx = g ? gut + 20 + ind : W - gut - 20 - ind - T.w; T.by = y;
           y += T.bh + 30;
         });
+        // (le menu dans la barre d'onglets du bas : la scène va jusqu'au dernier titre, au-dessus de la barre, au moins le
+        // premier écran ; le haut se pose sur elle, Menu.surScene)
+        const nav = $('#entrees'), bas = nav && nav.classList.contains('en-bas') ? nav.offsetHeight : 0;
         yMenu = Math.round(Math.max(y, hEcran - hMenu - 20));
-        H = yMenu + hMenu + 24;
+        H = bas ? Math.max(Math.round(y + 8 + bas), hEcran) : yMenu + hMenu + 24;
+        if (bas) yMenu = null;
       }
       el.style.height = H + 'px';
-      if (affiche) Menu.sousPieuvre(yMenu);
+      if (affiche) { if (yMenu == null) Menu.surScene(); else Menu.sousPieuvre(yMenu); }
       // les deux bouts du texte de chaque titre (tx0, tx1), par rapport à lui : c'est le texte que la tentacule souligne, pas le
       // médaillon. Mesuré une fois le côté posé (la classe droite renverse le médaillon)
       TIT.forEach(T => T.el.classList.toggle('droite', T.droite));
@@ -7180,9 +7226,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     if (secs.length || chaps.length || ecrans.length || psom) defile(); }); });
 
   /* ---------- de la place pour lire au téléphone ----------
-     Sur la page d'un spectacle au téléphone, le menu flottant et la rangée des entrées arrimée prenaient ensemble le haut de
-     l'écran. Quand on descend, la rangée arrimée (.colle, posée par defile), le menu se range au-dessus de l'écran
-     (html.menu-range) et la rangée monte à sa place ; il revient dès qu'on remonte d'un rien, qu'on revient en haut de la page,
+     Sur la page d'un spectacle au téléphone, le haut (la marque et la loupe) et la rangée des entrées arrimée prenaient ensemble
+     le haut de l'écran. Quand on descend, la rangée arrimée (.colle, posée par defile), le haut se range au-dessus de l'écran
+     (html.menu-range ; le menu, la barre d'onglets du bas, reste) et la rangée monte à sa place ; il revient dès qu'on remonte d'un rien, qu'on revient en haut de la page,
      que le focus y va, et à chaque page. Le défilement ne fait que lire scrollY (une fois par image) ; au bureau, rien. */
   const ETROIT_MENU = matchMedia('(max-width: 759px)');
   const Range = (() => {
@@ -7365,12 +7411,36 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   });
 
   /* ---------- l'en-tête et le pied de page, refaits seulement quand D change ---------- */
+  // les icônes de la barre d'onglets du téléphone, une par élément du menu (sa clé) : des traits simples, à la couleur du texte ;
+  // un élément que D ajouterait sans icône prend la ventouse du menu
+  const ICONES_MENU = {
+    saisons: '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M7.5 14h2M11 14h2M14.5 14h2M7.5 17h2M11 17h2"/>',
+    spectacles: '<path d="M5 4.5c4.6 1.4 9.4 1.4 14 0v6.8a7 7 0 0 1-14 0z"/><path d="M8.6 9.6c.6-.5 1.4-.5 2 0M13.4 9.6c.6-.5 1.4-.5 2 0"/><path d="M9.3 13.6a3.6 3.6 0 0 0 5.4 0"/>',
+    compagnie: '<circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19.5a5.5 5.5 0 0 1 11 0"/><circle cx="16.6" cy="9.4" r="2.5"/><path d="M15.6 14.3a4.6 4.6 0 0 1 5 4.7"/>',
+    espacePro: '<rect x="3.5" y="7.5" width="17" height="12" rx="2.5"/><path d="M9 7.5V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1.5M3.5 12.5h17M12 11.3v2.4"/>',
+  };
+  const iconeMenu = x => { const i = ICONES_MENU[x.cle] || ICONES_MENU[x.id] || '<circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="1.6"/>';
+    return `<svg viewBox="0 0 24 24" focusable="false">${i}</svg>`; };
+  // le menu au téléphone (≤ 759 px) : ses pièces quittent l'en-tête pour la barre d'onglets du bas (après l'en-tête dans la page :
+  // l'ordre du clavier reste marque, loupe, menu, contenu) ; au bureau, elles y reviennent, avant la loupe. Le même élément
+  // déménage : ses écoutes, ses marques aria-current le suivent
+  const TEL = matchMedia('(max-width: 759px)');
+  function placerEntrees() {
+    const nav = $('#entrees'), top = $('#top'), bas = TEL.matches;
+    if (bas && nav.parentNode !== document.body) top.after(nav);
+    else if (!bas && !top.contains(nav)) $('.top-in', top).insertBefore(nav, $('#loupe-b', top));
+    nav.classList.toggle('en-bas', bas);
+  }
+  placerEntrees();
+  TEL.addEventListener('change', () => { placerEntrees(); ajuste(); });
   let cadreFait = '';
   function cadre() {
     // le menu par les saisons (règle 21, D.site.menu) est toute la navigation première : dans le menu flottant, sur une ligne
     // (son libellé entier, ou court quand la place manque), à la couleur de la saison, au téléphone aussi ; les trois parcours
     // ne restent que sur la page d'un spectacle (ses onglets). Plus de menu second : « Contact » est dans le pied de page
-    const lien = x => `<a href="${x.href}" data-id="${x.id || x.cle}" style="--ec:var(--saison);--ev:var(--saison-vive)"><span class="pt" aria-hidden="true"></span><span class="long">${esc(x.texte)}</span><span class="court">${esc(x.court || x.texte)}</span></a>`;
+    // (au téléphone, la barre d'onglets du bas : chaque pièce a son icône, ICONES_MENU, et son nom court ; au bureau, l'icône ne
+    // paraît pas)
+    const lien = x => `<a href="${x.href}" data-id="${x.id || x.cle}" style="--ec:var(--saison);--ev:var(--saison-vive)"><span class="pt" aria-hidden="true"></span><span class="ic" aria-hidden="true">${iconeMenu(x)}</span><span class="long">${esc(x.texte)}</span><span class="court">${esc(x.court || x.texte)}</span></a>`;
     const co = S.coordonnees, M = (S.menu || []).filter(x => x && x.href);
     const parts = {
       entrees: M.map(lien).join(''),
@@ -7652,7 +7722,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   // n'existe pas encore, ni toile ni calcul au défilement, et naît quand il s'arrime. ajuste(), route() et l'arrimage la
   // rappellent)
   function habiterCreature() {
-    if (typeof CREATURE === 'undefined' || !CREATURE.actif || Menu.el.classList.contains('mince')) return;
+    if (typeof CREATURE === 'undefined' || !CREATURE.actif || Menu.el.classList.contains('mince') || TEL.matches) return;
     if (!vue || (vue === 'accueil' && !Menu.el.classList.contains('est-arrime'))) return;   // (avant la première vue : route() la fera naître)
     CREATURE.habiter($('#marque'), { encre: '#ffffff' });
   }
