@@ -492,5 +492,36 @@ fs.mkdirSync(CAPT, { recursive: true });
   await ctx.close();
 }
 
+// ================================================================================ les repères (axe-core : landmark-one-main, region)
+// l'en-tête, le menu des rubriques (nommé, la rubrique ouverte marquée), le contenu, le pied ; « Aller au contenu » en
+// premier arrêt du clavier, qui pose le focus sur le titre sans changer l'adresse ; la porte a aussi son repère principal
+for (const [largeur, hauteur, nom] of [[1440, 900, 'bureau'], [390, 844, 'téléphone']]) {
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur, hauteur, hash: '#/representations' });
+  await page.waitForSelector('main#vue h1', { timeout: 15000 });
+  const reperes = await page.evaluate(() => {
+    const hors = [...document.querySelectorAll('#app > *')].filter(e => !e.matches('header, main, footer, .evitement'));
+    return { mains: document.querySelectorAll('main').length, tete: !!document.querySelector('#app > header .marque'), nav: document.querySelector('header nav[aria-label="Rubriques"] a[aria-current="page"]')?.textContent,
+      pied: !!document.querySelector('#app > footer'), hors: hors.map(e => e.className || e.tagName) };
+  });
+  ok(`repères (${nom}) : un en-tête, le menu des rubriques (Représentations marquée), un contenu, un pied, rien hors d’eux`, reperes.mains === 1 && reperes.tete && reperes.nav === 'Représentations' && reperes.pied && !reperes.hors.length, JSON.stringify(reperes));
+  await page.keyboard.press('Tab');
+  const lien = await page.evaluate(() => { const a = document.activeElement; return { texte: a.textContent, classe: a.className, haut: Math.round(a.getBoundingClientRect().top) }; });
+  ok(`« Aller au contenu » (${nom}) : le premier arrêt du clavier, visible quand il a le focus`, lien.texte === 'Aller au contenu' && lien.classe === 'evitement' && lien.haut >= 0, JSON.stringify(lien));
+  if (nom === 'bureau') await page.screenshot({ path: `${CAPT}/evitement.png` });
+  await page.keyboard.press('Enter');
+  ok(`« Aller au contenu » (${nom}) : le titre de la rubrique reçoit le focus, l’adresse ne change pas`, await page.evaluate(() => document.activeElement === document.querySelector('main#vue h1') && location.hash === '#/representations'));
+  ok(`repères (${nom}) : aucune erreur de script`, erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+{
+  const ctx = await navigateur.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'fr-FR' });
+  await ctx.route(/supabase\.co|fonts\.g/, r => r.abort());
+  const page = await ctx.newPage();
+  await page.goto(URL0);
+  await page.waitForSelector('#f-connexion', { timeout: 15000 });
+  ok('la porte (sans session) : le formulaire et la marque dans le repère principal, le pied à côté', await page.evaluate(() => document.querySelectorAll('main').length === 1 && !!document.querySelector('main #f-connexion .marque') && !!document.querySelector('main + footer.pied-espace')));
+  await ctx.close();
+}
+
 await navigateur.close();
 bilan(CAPT);

@@ -47,6 +47,10 @@ a { color: var(--accent); }
 button, input, select, textarea { font: inherit; color: inherit; }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* le lien d'évitement, comme sur le site et dans l'équipe : hors de l'écran, il paraît au premier Tab */
+.evitement { position: absolute; left: 8px; top: -80px; z-index: 90; padding: 10px 14px; border-radius: 10px; background: var(--encre); color: var(--carte); font-weight: 600; text-decoration: none; }
+.evitement:focus { top: 8px; }
+main.ad-chargement { padding: 0; max-width: none; }
 
 /* le pied commun des espaces réservés (PIED) : sobre, en fin de contenu */
 .pied-espace { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 22px; max-width: 1500px; margin: 8px auto 0; padding: 18px 20px 26px; border-top: 1px solid var(--trait); color: var(--gris); font-size: 13px; }
@@ -98,6 +102,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .chercher:hover { border-color: var(--gris); color: var(--encre); }
 .chercher svg { flex: none; }
 .chercher .mot { padding-right: 22px; }
+/* le raccourci s'écrit par la feuille de style : ce que montre le bouton reste dans son nom (« Rechercher ») */
+.chercher kbd[data-touche]::before { content: attr(data-touche); }
 kbd { font: 650 11.5px/1 var(--police); padding: 3px 5px 2px; border: 1px solid var(--trait); border-bottom-width: 2px; border-radius: 5px; background: var(--carte); color: var(--gris); white-space: nowrap; }
 @media (max-width: 1199px), (min-width: 1940px) { .chercher .mot { display: none; } }
 @media (max-width: 860px) { .chercher { margin-left: auto; width: 40px; height: 40px; padding: 0; justify-content: center; border-radius: 50%; } .chercher .mot, .chercher kbd { display: none; } .barre .qui { margin-left: 0; } }
@@ -304,6 +310,7 @@ table.simple tr.cliquable:hover td { background: var(--doux); }
 .avant { margin-bottom: 10px; background: var(--carte); border: 1px solid var(--trait); border-left: 4px solid var(--option); border-radius: var(--rayon); }
 .avant > summary { display: flex; align-items: center; gap: 8px; padding: 11px 14px; cursor: pointer; list-style: none; font-weight: 750; }
 .avant > summary::-webkit-details-marker { display: none; }
+.avant-titre { margin: 0; font: inherit; letter-spacing: inherit; }
 .avant > summary::before { content: ""; width: 7px; height: 7px; border: solid var(--gris); border-width: 0 2px 2px 0; transform: rotate(-45deg); transition: transform .15s; margin: 0 2px; }
 .avant[open] > summary::before { transform: rotate(45deg); }
 .avant-corps { display: grid; gap: 6px; padding: 0 12px 12px; }
@@ -765,14 +772,14 @@ function ecranConnexion(message = '') {
   E.pret = false;     // déconnecté : ni les rubriques ni la recherche ne montrent ce qui reste en mémoire
   E.hashVue = '';     // le prochain premier rendu paraîtra après le squelette
   $('#recherche')?.close();
-  $('#app').innerHTML = `<div class="connexion"><form class="bloc${message ? ' secoue' : ''}" id="f-connexion">
+  $('#app').innerHTML = `<main class="connexion"><form class="bloc${message ? ' secoue' : ''}" id="f-connexion">
     <p class="marque marque-connexion"><span class="pieuvre" data-pieuvre aria-hidden="true"></span>Compagnie Crescite <small>Administration</small></p>
     <h1>Se connecter</h1><p>Les spectacles, les dates, les ateliers et les textes du site de la compagnie.</p>
     ${message ? `<p role="alert" style="color:var(--alerte)">${esc(message)}</p>` : ''}
     <div class="champ"><label for="c-mel">Adresse électronique</label><input id="c-mel" type="email" autocomplete="username" required></div>
     <div class="champ"><label for="c-mdp">Mot de passe</label><input id="c-mdp" type="password" autocomplete="current-password" required></div>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn principal" type="submit">Se connecter</button>
-    <button class="btn lien" type="button" id="c-oubli">Mot de passe oublié ?</button></div></form></div>${PIED}`;
+    <button class="btn lien" type="button" id="c-oubli">Mot de passe oublié ?</button></div></form></main>${PIED}`;
   tt('pieuvre');     // la marque de la porte : la même pieuvre que l'en-tête
   $('#c-mel').focus();
   $('#f-connexion').addEventListener('submit', async e => {
@@ -791,9 +798,9 @@ function ecranConnexion(message = '') {
 }
 // le nouveau mot de passe : après le lien reçu par courriel, ou depuis l'administration (« Mot de passe », avec Annuler)
 function ecranMotDePasse(depuisLaBarre = false) {
-  $('#app').innerHTML = `<div class="connexion"><form class="bloc" id="f-mdp"><h1>Nouveau mot de passe</h1>
+  $('#app').innerHTML = `<main class="connexion"><form class="bloc" id="f-mdp"><h1>Nouveau mot de passe</h1>
     <div class="champ"><label for="n-mdp">Nouveau mot de passe</label><input id="n-mdp" type="password" minlength="8" autocomplete="new-password" required></div>
-    <button class="btn principal" type="submit">Enregistrer</button>${depuisLaBarre ? ' <button class="btn" type="button" id="n-annuler">Annuler</button>' : ''}</form></div>`;
+    <button class="btn principal" type="submit">Enregistrer</button>${depuisLaBarre ? ' <button class="btn" type="button" id="n-annuler">Annuler</button>' : ''}</form></main>`;
   $('#n-mdp').focus();
   // l'administration déjà chargée se redessine telle quelle ; sinon (le lien du courriel), elle démarre
   const reprendre = () => { if (E.pret) router(); else { demarre = false; demarrer(); } };
@@ -812,13 +819,13 @@ async function demarrer() {
   if (!E.session) { demarre = false; return ecranConnexion(); }
   if (demarre) return;
   demarre = true;
-  $('#app').innerHTML = `<div class="ad-squelette" aria-hidden="true"><div class="sq-barre"><span class="sq sq-rond"></span><span class="sq" style="width:120px"></span><span class="sq" style="width:160px;margin-left:auto"></span></div>
-    <div class="sq-main"><span class="sq" style="width:220px;height:26px"></span><div class="sq-deux"><div>${'<span class="sq sq-ligne"></span>'.repeat(6)}</div><span class="sq sq-bloc"></span></div></div></div><p class="sr" role="status">Chargement de la base…</p>`;
+  $('#app').innerHTML = `<main class="ad-chargement" aria-busy="true"><div class="ad-squelette" aria-hidden="true"><div class="sq-barre"><span class="sq sq-rond"></span><span class="sq" style="width:120px"></span><span class="sq" style="width:160px;margin-left:auto"></span></div>
+    <div class="sq-main"><span class="sq" style="width:220px;height:26px"></span><div class="sq-deux"><div>${'<span class="sq sq-ligne"></span>'.repeat(6)}</div><span class="sq sq-bloc"></span></div></div></div><p class="sr" role="status">Chargement de la base…</p></main>`;
   const { data, error } = await sb.from('crescite_admins').select('user_id').eq('user_id', E.session.user.id);
   if (error) { demarre = false; return ecranConnexion(/crescite_admins/.test(error.message) ? 'La base de la compagnie n’est pas encore installée.' : error.message); }
   if (!data.length) {
     demarre = false;
-    $('#app').innerHTML = `<div class="connexion"><div class="bloc"><h1>Accès réservé</h1><p>Le compte ${esc(E.session.user.email)} n’administre pas le site de la compagnie.</p><button class="btn" id="b-sortir">Se déconnecter</button></div></div>`;
+    $('#app').innerHTML = `<main class="connexion"><div class="bloc"><h1>Accès réservé</h1><p>Le compte ${esc(E.session.user.email)} n’administre pas le site de la compagnie.</p><button class="btn" id="b-sortir">Se déconnecter</button></div></main>`;
     $('#b-sortir').addEventListener('click', () => sb.auth.signOut());
     return;
   }
@@ -936,12 +943,12 @@ const rubriquesVisibles = () => RUBRIQUES.filter(([k]) => k !== 'diffusion' || E
 const idealeAbsente = titre => `<div class="bloc"><h3>${titre}</h3><p>Exécutez <code>supabase/migrations/20261026_crescite_ideale.sql</code> dans Supabase (SQL Editor → New query → coller le fichier → Run), puis rechargez cette page.</p><p class="aide">Le reste de l’administration marche comme avant.</p></div>`;
 function cadre(rubrique, contenu) {
   const nRub = rubriquesVisibles().length;
-  $('#app').innerHTML = `<header class="barre${nRub > 11 ? ' onze douze' : nRub > 10 ? ' onze' : ''}"><a class="marque" href="#/accueil" title="Tableau de bord"><span class="pieuvre" data-pieuvre aria-hidden="true"></span>Compagnie Crescite <small>Administration</small></a>
-    <button type="button" class="chercher" id="b-chercher" aria-label="Rechercher" aria-haspopup="dialog" aria-keyshortcuts="${SUR_MAC ? 'Meta+K' : 'Control+K'}" title="Rechercher une date, une personne, un lieu… (${RACCOURCI_RCH})">${LOUPE}<span class="mot" aria-hidden="true">Rechercher</span><kbd aria-hidden="true">${RACCOURCI_RCH}</kbd></button>
+  $('#app').innerHTML = `<a class="evitement" href="#vue">Aller au contenu</a><header class="barre${nRub > 11 ? ' onze douze' : nRub > 10 ? ' onze' : ''}"><a class="marque" href="#/accueil" title="Tableau de bord"><span class="pieuvre" data-pieuvre aria-hidden="true"></span>Compagnie Crescite <small>Administration</small></a>
+    <button type="button" class="chercher" id="b-chercher" aria-label="Rechercher" aria-haspopup="dialog" aria-keyshortcuts="${SUR_MAC ? 'Meta+K' : 'Control+K'}" title="Rechercher une date, une personne, un lieu… (${RACCOURCI_RCH})">${LOUPE}<span class="mot" aria-hidden="true">Rechercher</span><kbd aria-hidden="true" data-touche="${RACCOURCI_RCH}"></kbd></button>
     <nav class="nav" aria-label="Rubriques">${rubriquesVisibles().map(([k, l]) => `<a href="#/${k}"${k === rubrique ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>
     <div class="qui"><span class="direct${E.direct ? ' on' : ''}" title="${E.direct ? 'Connecté en temps réel' : 'Temps réel en cours de connexion'}"><span class="mot">direct</span></span>
     <a href="${SITE}" target="_blank" rel="noopener">Voir le site ↗</a><a href="${SITE}?edition" target="_blank" rel="noopener" title="Écrire les textes et les dates dans la page elle-même">Modifier<span class="long"> sur le site</span> ↗</a><span class="moi">${esc(E.session.user.email)}</span>
-    <button class="btn petit" type="button" id="b-mdp" aria-label="Mot de passe" title="Changer mon mot de passe"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3M16.5 6.5l3 3M14.5 8.5l2 2"/></svg><span class="long"> Mot de passe</span></button><button class="btn petit" type="button" id="b-sortir">Déconnexion</button></div></header><main id="vue"${ouvertureMuette || CALME_ADMIN() ? '' : ' class="entree"'}>${contenu}</main>${PIED}`;
+    <button class="btn petit" type="button" id="b-mdp" aria-label="Mot de passe" title="Changer mon mot de passe"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3M16.5 6.5l3 3M14.5 8.5l2 2"/></svg><span class="long"> Mot de passe</span></button><button class="btn petit" type="button" id="b-sortir">Déconnexion</button></div></header><main id="vue" tabindex="-1"${ouvertureMuette || CALME_ADMIN() ? '' : ' class="entree"'}>${contenu}</main>${PIED}`;
   setTimeout(() => $('#vue')?.classList.remove('entree'), 900);
   $('#b-sortir').addEventListener('click', async () => { if (!E.sale || confirm('Des modifications ne sont pas enregistrées. Se déconnecter quand même ?')) { E.sale = false; await sb.auth.signOut(); } });
   $('#b-mdp').addEventListener('click', () => { if (!E.sale || confirm('Des modifications ne sont pas enregistrées. Changer de mot de passe quand même ?')) { E.sale = false; ecranMotDePasse(true); } });
@@ -1048,6 +1055,13 @@ window.addEventListener('hashchange', () => {
   router();
 });
 window.addEventListener('beforeunload', e => { if (E.sale) { e.preventDefault(); e.returnValue = ''; } });
+// « Aller au contenu » : le titre de la rubrique reçoit le focus, sans toucher à l'adresse (#vue n'est pas une route)
+document.addEventListener('click', e => {
+  if (!e.target.closest?.('.evitement')) return;
+  e.preventDefault();
+  const h = $('#vue h1') || $('#vue');
+  if (h) { if (h !== $('#vue')) h.setAttribute('tabindex', '-1'); h.focus(); }
+});
 document.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { const b = $('[data-enregistrer]', racineActive()); if (b) { e.preventDefault(); b.click(); } }
   if ((SUR_MAC ? e.metaKey : e.ctrlKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'k' && E.pret) { e.preventDefault(); ouvrirRecherche(); }
@@ -1544,7 +1558,7 @@ function dessinerAvant(el) {
   const quand = ds => `${ds.length > 1 ? 'les' : 'le'} ${ds.slice(0, 3).map(d => jourSansAn(d.debut)).join(', ')}${ds.length > 3 ? ` et ${ds.length - 3 > 1 ? `${ds.length - 3} autres` : 'un autre'}` : ''}`;
   const ouDe = d => { const l = lieu(d.lieu_id); return l ? l.commune : 'lieu à préciser'; };
   const section = (titre, xs) => xs.length ? `<h3>${titre}</h3><ul>${xs.join('')}</ul>` : '';
-  el.innerHTML = `<details class="avant"${r.ouvert ? ' open' : ''}><summary><span class="avant-titre">À compléter avant la tournée</span>${a.n ? `<span class="badge option">${a.n}</span>` : '<span class="badge ok">Rien</span>'}</summary>
+  el.innerHTML = `<details class="avant"${r.ouvert ? ' open' : ''}><summary><h2 class="avant-titre">À compléter avant la tournée</h2>${a.n ? `<span class="badge option">${a.n}</span>` : '<span class="badge ok">Rien</span>'}</summary>
     <div class="avant-corps"><p class="avant-fenetre"><label for="avant-jours">Les dates confirmées des</label><select id="avant-jours">${JOURS_AVANT.map(n => `<option value="${n}"${n === r.jours ? ' selected' : ''}>${n}</option>`).join('')}</select><span>prochains jours : ${a.ds.length ? `${a.ds.length} date${a.ds.length > 1 ? 's' : ''}` : 'aucune'}.</span></p>
     ${a.n ? '' : `<p class="avant-rien">${a.ds.length ? 'Rien ne manque : téléphones, lieux et feuilles de route sont complets.' : 'Aucune date confirmée dans cette période.'}</p>`}
     ${section('Téléphones', a.pers.map(x => `<li><a href="#/equipe/${x.p.id}" data-viser="telephone">${esc(nomDe(x.p))}</a><span class="compte">pas de téléphone · part ${esc(quand(x.dates))}</span></li>`))}
@@ -1686,7 +1700,7 @@ function editeurDate(id, depart = null) {
       <label class="case"><input type="checkbox" id="d-visible"${F.visible && PUBLIABLE(F.nature) ? ' checked' : ''}${PUBLIABLE(F.nature) ? '' : ' disabled'}> Publiée sur le site</label></div>
 
     <div class="bloc"><h3 id="d-reps-titre">${(F.nature || 'representations') === 'representations' ? 'Représentations' : 'Séances'}</h3>
-      <table class="reps"><thead><tr><th>Jour</th><th>Heure</th>${E.sql3 ? '<th>Fin</th>' : ''}<th>Public</th><th>Précision</th><th>Billetterie</th><th></th></tr></thead><tbody id="d-reps"></tbody></table>
+      <table class="reps"><thead><tr><th>Jour</th><th>Heure</th>${E.sql3 ? '<th>Fin</th>' : ''}<th>Public</th><th>Précision</th><th>Billetterie</th><th><span class="sr">Retirer</span></th></tr></thead><tbody id="d-reps"></tbody></table>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"><button type="button" class="btn petit" id="d-meme-jour">＋ Le même jour</button><button type="button" class="btn petit" id="d-lendemain">＋ Le lendemain</button><button type="button" class="btn petit" id="d-vide">＋ Représentation</button>${typeof SERIES !== 'undefined' ? '<button type="button" class="btn petit" id="d-serie" title="Les mêmes heures chaque jour choisi, du premier au dernier">Série…</button>' : ''}</div>
       <div id="d-sans" style="margin-top:12px"></div></div>
 
