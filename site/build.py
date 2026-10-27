@@ -471,6 +471,8 @@ LIBELLES = {
     "introuvable": "Page introuvable", "introuvableTexte": "Cette adresse ne mène à aucune page du site.",
     # la ligne de navigation du pied de page (son nom pour les lecteurs d'écran)
     "planDuSite": "Plan du site",
+    # la page lue sans JavaScript (le <noscript> de la page assemblée) : ce qu'il lui faut
+    "sansScript": "Ce site a besoin de JavaScript pour afficher ses pages.",
     # les vidéos lues dans le site (règle 18, LECTEUR)
     "lire": "Lire la vidéo", "pleinEcran": "Plein écran", "assombrir": "Assombrir", "rallumer": "Rallumer", "fermer": "Fermer",
     # le jour et la nuit (règle 19, THEME) : le nom du bouton du menu (lecteurs d'écran, bulle), et les deux thèmes
@@ -963,8 +965,47 @@ APERCU = ('<meta name="description" content="{d}">\n<meta property="og:type" con
 PRESENTATION = "Compagnie de théâtre professionnelle basée à Rouen, dirigée par Angelo Jossec."
 
 
+def sans_script(D):
+    """Le site lu sans JavaScript : la page est vide (tout est dessiné par le script). Un <noscript> sobre, à la nuit du site et
+    à la couleur de la saison (D.site.couleurSaison), le dit (LIBELLES.sansScript) et donne de quoi joindre la compagnie, tirés
+    de D au moment du build : le logo, le nom, l'adresse, « Écrire à la compagnie » (le courriel du contact diffusion) et les
+    textes légaux, dépliables (<details>, sans script) ; l'en-tête et le pied vides du site sont masqués."""
+    from html import escape as e
+    S, L = D["site"], D["site"]["libelles"]
+    co, T = S["coordonnees"], S.get("couleurSaison") or {}
+    courriel = ((S.get("programmation") or {}).get("contact") or {}).get("email")
+    bloc = lambda b: b if b.lstrip().startswith("<h") else f"<p>{b}</p>"
+    legaux = "".join(
+        f'<details id="sj-{e(x["href"][2:])}"><summary>{e(x["texte"])}</summary>{"".join(bloc(b) for b in S["legal"][x["href"][2:]]["blocs"])}</details>'
+        for x in S.get("liensLegaux", []) if x["href"][2:] in S.get("legal", {}))
+    css = (":root{--saison:%s;--saison-vive:%s}" % (T.get("couleur", "currentColor"), T.get("vive", "currentColor"))
+           + ".top,.top-cale,.evitement,#main,body>footer{display:none!important}"
+           ".sj{max-width:40rem;margin:0 auto;padding:clamp(40px,8vw,96px) var(--gout) 64px}"
+           ".sj-logo{display:block;width:88px;margin:0 0 20px}.sj-logo svg{display:block;width:100%;height:auto}"
+           ".sj h1{margin:0;font:500 clamp(2.25rem,1.6rem + 2.6vw,3.25rem)/1.05 var(--titre);color:var(--encre)}"
+           ".sj address{margin:16px 0 0;font-style:normal;color:var(--gris)}"
+           ".sj-x{margin:28px 0 0;padding:14px 18px;border-left:3px solid var(--saison-vive);background:var(--papier-2)}"
+           ".sj-bt{display:inline-flex;align-items:center;min-height:48px;margin-top:24px;padding:0 24px;border-radius:999px;background:var(--saison-vive);color:var(--nuit);"
+           "font:700 .86rem/1.1 var(--etiq);letter-spacing:.08em;text-transform:uppercase;text-decoration:none}"
+           ".sj-l{margin-top:40px;border-top:1px solid var(--filet)}.sj details{border-bottom:1px solid var(--filet)}"
+           ".sj summary{min-height:44px;padding:10px 0;cursor:pointer;font:600 1rem/1.5 var(--texte)}"
+           ".sj details>:not(summary){font-size:.94rem}.sj details h2{margin:20px 0 6px;font:500 1.15rem var(--titre)}"
+           ".sj a{color:var(--saison-vive)}.sj .sj-bt{color:var(--nuit)}"
+           ".sj :focus-visible{outline:2px solid var(--saison-vive);outline-offset:3px}")
+    return (f'<noscript><style>{css}</style><div class="sj">'
+            f'<span class="sj-logo" aria-hidden="true">{D["logo"]["mark"]}</span>'
+            f'<h1>{e(co["nom"])}</h1><address>{"<br>".join(e(x) for x in co["adresse"])}</address>'
+            f'<p class="sj-x">{e(L["sansScript"])}</p>'
+            + (f'<p><a class="sj-bt" href="mailto:{e(courriel)}">{e(S["ecrire"]["texte"])}</a></p>' if courriel else '')
+            + (f'<div class="sj-l">{legaux}</div>' if legaux else '')
+            + '</div></noscript>')
+
+
 def assemble(name, D, photo_urls):
     src = avec_outils(name, (SRC / f"{name}.html").read_text(encoding="utf-8"))
+    # sans JavaScript (le site public) : la nuit d'emblée (theme.js la pose sinon) et le <noscript>, juste après <body>
+    if name == "index":
+        src = src.replace('<html lang="fr">', '<html lang="fr" data-theme="nuit">', 1).replace("<body>", "<body>\n" + sans_script(D), 1)
     if 'rel="icon"' not in src:
         m = re.search(r'<meta name="viewport"[^>]*>', src)
         if m:
