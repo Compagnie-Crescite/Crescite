@@ -79,8 +79,8 @@ puis fusionnés par toi. Entre deux vagues : fusion sur la branche de travail, b
 | --- | --- | --- |
 | 0 | 1 | le socle touche partout (prefs.js, harnais, bancs, README) : seul |
 | 1 | 2 | icones.js puis l'extraction de TABLEUR : index.html bouge de mille lignes, seul |
-| 2 | 3 ∥ 8 ∥ 9 | la coque (cadre.js, l'en-tête, le CSS, le routeur) ; le schéma et le rail (la région de la fiche de date) ; la base (SQL seul) : trois worktrees |
-| 3 | (4 → 5) ∥ 6 ∥ 7 | accès rapides puis thème (cadre.js, en série) ; fenetres.js (tiroir, boîtes, CSS) ; les vues (vueDates, tableur.js, tournee.js) : trois worktrees |
+| 2 | 3 ∥ 8 ∥ 9 | la coque (cadre.js, l'en-tête, le CSS, le routeur) ; le schéma et le rail (la région de la fiche de date) ; la base (SQL seul, son branchement client se fait à la fusion, après 8) : trois worktrees |
+| 3 | (7 → 4 → 5) ∥ 6 | les vues (vueDates, tableur.js, tournee.js), puis les accès rapides, puis le thème (cadre.js : en série, le plan veut 7 avant 4) ; fenetres.js (tiroir, boîtes, CSS ; il lit `--large-menu`, donc après 3) : deux worktrees |
 | 4 | (10 → 11 → 12 → 13) ∥ (14 → 15) | le tableur en série (tableur.js, un seul fil) ; planning, carte, tuiles, A4 puis la carte de travail : deux worktrees |
 | 5 | 16 → 17 | l'habillage final puis la planche : en série, sur la branche |
 
