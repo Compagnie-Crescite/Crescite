@@ -256,5 +256,46 @@ const adresse = page => page.evaluate(() => location.search + location.hash);
   }
 }
 
+// ================================================================================ les listes gardent leur état, dans l'adresse
+{
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1440, hauteur: 900, hash: '#/representations' });
+  await page.waitForSelector('#f-statut', { timeout: 15000 });
+  const pas0 = await page.evaluate(() => history.length);
+  await page.selectOption('#f-statut', 'option');
+  await page.fill('#f-q', 'flers');
+  await attendre(page, () => /statut=option/.test(location.search) && /q=flers/.test(location.search));
+  ok('listes · les filtres et la recherche passent dans l’adresse, sans pas de plus dans l’historique', /^\?(?=.*statut=option)(?=.*q=flers)[^#]*#\/representations$/.test(await adresse(page)) && await page.evaluate(() => history.length) === pas0, await adresse(page));
+  await page.click('#l-dates a.ligne[href="#/representations/105"]');
+  await attendre(page, () => location.hash === '#/representations/105' && document.querySelector('#ed-date .titre-ed'));
+  ok('listes · une fiche ouverte de la liste garde les filtres dans son adresse', /statut=option/.test(await adresse(page)) && /q=flers/.test(await adresse(page)), await adresse(page));
+  await page.click('#vue .fil-ariane .fil-parent a');
+  await attendre(page, () => location.hash === '#/representations' && document.querySelector('#f-statut'));
+  ok('listes · le retour d’une fiche rouvre la liste filtrée', await page.evaluate(() => document.querySelector('#f-statut').value === 'option' && document.querySelector('#f-q').value === 'flers' && document.querySelectorAll('#l-dates a.ligne').length === 1), await adresse(page));
+  await page.click('.nav a[href="#/lieux"]');
+  await attendre(page, () => location.hash === '#/lieux' && document.querySelector('#li-q'));
+  ok('listes · une autre rubrique ne prend pas les filtres de la précédente, l’adresse les quitte', !/statut=|q=/.test(await adresse(page)) && await page.$eval('#li-q', e => e.value === ''), await adresse(page));
+  await page.selectOption('#li-type', 'etablissement');
+  await attendre(page, () => /type=etablissement/.test(location.search));
+  await page.goBack();
+  await attendre(page, () => location.hash === '#/representations' && document.querySelector('#f-statut'));
+  ok('listes · le précédent du navigateur revient à la liste telle qu’on l’avait laissée', /statut=option/.test(await adresse(page)) && await page.$eval('#f-statut', e => e.value === 'option'), await adresse(page));
+  await page.click('.nav a[href="#/lieux"]');
+  await attendre(page, () => location.hash === '#/lieux' && document.querySelector('#li-type'));
+  ok('listes · rouvrir une rubrique depuis l’en-tête la retrouve comme on l’a laissée, et la réécrit dans l’adresse', await page.$eval('#li-type', e => e.value === 'etablissement') && /type=etablissement/.test(await adresse(page)), await adresse(page));
+  await page.reload();
+  await page.waitForSelector('#li-type', { timeout: 15000 });
+  ok('listes · un rechargement rouvre la liste filtrée', await page.$eval('#li-type', e => e.value === 'etablissement') && (await compte(page, '#l-lieux a.ligne')) === 1, await adresse(page));
+  ok('listes · aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+  // un lien partagé, dans un onglet neuf : la liste s'ouvre filtrée, ce que l'adresse ne dit pas reprend sa valeur d'office
+  const b = await ouvrir(navigateur, { largeur: 1440, hauteur: 900, hash: '?statut=confirmee&public=scolaire#/representations' });
+  await b.page.waitForSelector('#f-statut', { timeout: 15000 });
+  ok('listes · un lien partagé (?statut=confirmee&public=scolaire) ouvre la liste filtrée', await b.page.evaluate(() => document.querySelector('#f-statut').value === 'confirmee' && document.querySelector('#f-public').value === 'scolaire' && document.querySelectorAll('#l-dates a.ligne').length === 1), await adresse(b.page));
+  // au bureau, l'en-tête du mois reste en vue quand la liste défile
+  const colle = await b.page.evaluate(() => { const m = document.querySelector('.deux > .liste .mois'); return m ? getComputedStyle(m).position : ''; });
+  ok('listes · au bureau, l’en-tête du mois colle en haut de la liste qui défile', colle === 'sticky', colle);
+  await b.ctx.close();
+}
+
 await navigateur.close();
 bilan(CAPT);

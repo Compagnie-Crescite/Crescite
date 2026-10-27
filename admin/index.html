@@ -178,6 +178,9 @@ main { padding: 20px; max-width: 1500px; margin: 0 auto; }
 .puce { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--trait); background: var(--carte); cursor: pointer; font-size: 13px; font-weight: 600; color: var(--gris); }
 .puce[aria-pressed="true"] { border-color: var(--c, var(--accent)); color: var(--encre); background: color-mix(in srgb, var(--c, var(--accent)) 14%, var(--carte)); }
 .mois { margin: 14px 4px 6px; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--gris); }
+/* au bureau, une longue liste qui défile à côté de sa fiche garde en vue l'en-tête de ce qu'on parcourt : le mois (ou « À
+   venir »), collé en haut de la liste jusqu'au suivant */
+@media (min-width: 1101px) { .deux > .liste .mois { position: sticky; top: 0; z-index: 2; margin: 0 0 6px; padding: 10px 4px 6px; background: color-mix(in srgb, var(--fond) 92%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); } }
 .ligne { display: grid; grid-template-columns: 58px 1fr auto; gap: 10px; align-items: start; padding: 10px 12px; margin-bottom: 6px; border-radius: 10px; background: var(--carte); border: 1px solid var(--trait); text-decoration: none; color: var(--encre); border-left: 4px solid var(--c, var(--accent)); }
 .ligne:hover { border-color: var(--gris); border-left-color: var(--c, var(--accent)); }
 .ligne[aria-current="true"] { box-shadow: 0 0 0 3px var(--accent-doux); border-color: var(--accent); }
@@ -405,6 +408,8 @@ table.simple tr.cliquable:hover td { background: var(--doux); }
 .frais-defile { position: relative; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: var(--rayon); }   /* relative : ce qu'il porte de caché (.sr) défile avec lui */
 .frais-defile:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .frais-defile table.simple { min-width: 820px; }
+/* au bureau, une longue liste de notes défile dans son cadre, ses titres de colonne restent en vue */
+@media (min-width: 1101px) { .frais-defile { max-height: calc(100vh - 220px); overflow: auto; overscroll-behavior: contain; } .frais-defile table.simple { overflow: visible; } .frais-defile thead th { position: sticky; top: 0; z-index: 1; background: var(--carte); box-shadow: 0 1px 0 var(--trait); } }
 .frais-table-actions { display: flex; gap: 4px; }
 .mat-groupe { margin-bottom: 18px; }
 .mat-groupe h4 { margin: 0 0 8px; font-size: 14px; color: var(--accent); }
@@ -712,7 +717,49 @@ const repsDe = id => E.reps.filter(r => r.date_id === id).sort((a, b) => a.jour 
 const h5 = h => h ? String(h).slice(0, 5) : '';
 let session = {};
 try { session = JSON.parse(sessionStorage.getItem('crescite-admin-filtres') || '{}'); } catch { session = {}; }
-const garderFiltres = () => { try { sessionStorage.setItem('crescite-admin-filtres', JSON.stringify(session)); } catch { /* navigation privée */ } };
+const garderFiltres = () => { try { sessionStorage.setItem('crescite-admin-filtres', JSON.stringify(session)); } catch { /* navigation privée */ } ecrireFiltres(); };
+// Les listes gardent leur état, et le portent dans leur adresse : la recherche, les filtres et le tri en cours d'une liste
+// s'écrivent dans la partie ?… de l'adresse à mesure (?statut=option&q=caen#/representations, sans nouveau pas dans
+// l'historique, seulement ce qui diffère de la valeur d'office) et la suivent dans ses fiches (#/lieux/5 garde ?type=salle) :
+// le retour d'une fiche, le précédent du navigateur, un rechargement, un lien partagé rouvrent la liste telle qu'on l'a
+// laissée. Rouvrir la rubrique plus tard depuis l'en-tête la retrouve aussi (session, gardée dans l'onglet), et la réécrit
+// dans l'adresse ; une autre rubrique retire ces filtres de l'adresse. ?tiroir=… (tiroir.js) et ?anim=0 n'y sont pas touchés.
+// [l'adresse de la liste et de ses fiches, sa clé dans session, ce qui va dans l'adresse avec sa valeur d'office]
+const LISTES_ADRESSE = [
+  [/^#\/representations\/tableur$/, 'tableur', { q: '', saison: '', spectacle: '', periode: 'avenir', tri: 'asc' }],
+  [/^#\/representations(?:\/(?:nouvelle|\d+))?$/, 'dates', { q: '', spectacle: '', public: '', statut: '' }],
+  [/^#\/feuilles(?:\/\d+)?$/, 'feuilles', { q: '', etat: '' }],
+  [/^#\/equipe(?:\/(?:nouvelle|\d+))?$/, 'equipe', { q: '', categorie: '' }],
+  [/^#\/lieux(?:\/(?:nouveau|\d+))?$/, 'lieux', { q: '', type: '' }],
+  [/^#\/pro(?:\/(?:nouvelle|\d+))?$/, 'pro', { q: '', etat: '' }],
+  [/^#\/diffusion\/devis(?:\/\d+)?$/, 'devis', { q: '', statut: '' }],
+  [/^#\/diffusion\/alertes$/, 'alertes', { q: '', etat: '' }],
+  [/^#\/planning\/(?:propositions|proposition\/\d+)$/, 'propositions', { q: '', etat: '' }],
+  [/^#\/ateliers(?:\/seances(?:\/(?:nouvelle|\d+))?)?$/, 'seances', { periode: 'avenir', saison: '' }],
+  [/^#\/journal$/, 'journal', { q: '', quoi: '', qui: '', periode: '', du: '', au: '' }],
+];
+const CLES_FILTRES = [...new Set(LISTES_ADRESSE.flatMap(x => Object.keys(x[2])))];
+const listeDeHash = h => LISTES_ADRESSE.find(([re]) => re.test(h || '')) || null;
+// la liste ouverte écrit ses filtres dans l'adresse (à chaque changement, et après chaque vue) ; ailleurs, ils s'en vont
+function ecrireFiltres() {
+  const l = listeDeHash(location.hash), q = new URLSearchParams(location.search);
+  CLES_FILTRES.forEach(k => q.delete(k));
+  if (l) { const [, cle, defauts] = l, f = session[cle] || {}; Object.entries(defauts).forEach(([k, d]) => { const v = f[k] ?? d; if (v != null && v !== '' && String(v) !== String(d)) q.set(k, String(v)); }); }
+  const s = q.toString().replace(/%2F/gi, '/').replace(/%2C/gi, ','), url = `${location.pathname}${s ? `?${s}` : ''}${location.hash}`;
+  if (url === location.pathname + location.search + location.hash) return;
+  history.replaceState(history.state, '', url);
+  if (typeof E !== 'undefined' && E.n != null) noterAdresse();
+}
+// l'adresse ouverte à l'arrivée, au rechargement, au précédent ou au suivant donne ses filtres à sa liste, avant qu'elle se
+// dessine (ce qu'elle n'a pas reprend sa valeur d'office) ; un lien suivi, lui, hérite de la partie ?… de la page qu'on
+// quitte : la liste reprend alors ce que l'onglet gardait pour elle, et le réécrit
+function lireFiltres() {
+  const l = listeDeHash(location.hash); if (!l) return;
+  const [, cle, defauts] = l, q = new URLSearchParams(location.search);
+  if (!Object.keys(defauts).some(k => q.has(k))) return;
+  session[cle] = { ...(session[cle] || {}), ...Object.fromEntries(Object.entries(defauts).map(([k, d]) => [k, q.has(k) ? q.get(k) : d])) };
+  try { sessionStorage.setItem('crescite-admin-filtres', JSON.stringify(session)); } catch { /* navigation privée */ }
+}
 
 function annoncer(msg, { erreur = false, action = null, libelle = 'Annuler', delai = 5000 } = {}) {
   const el = document.createElement('div');
@@ -999,7 +1046,7 @@ const ROUTES = [
   [/^#\/textes(?:\/(.+))?$/, m => vueTextes(m[1] && decodeURIComponent(m[1]))],
   [/^#\/journal$/, () => vueJournal()],
 ];
-const APRES_VUE = [];   // ce qui se pose une fois la vue dessinée (menus.js : précédent / suivant dans les fiches)
+const APRES_VUE = [ecrireFiltres];   // ce qui se pose une fois la vue dessinée (ses filtres dans l'adresse ; menus.js : précédent / suivant dans les fiches)
 // une fiche ouverte ailleurs qu'à sa place (depuis le tableau de bord, le Kanban, le planning…) s'ouvre dans un tiroir
 // (tiroir.js) : ces aides savent où elle est. racineActive : le tiroir ouvert, sinon la page
 const racineActive = () => (typeof TIROIR !== 'undefined' && TIROIR.racine()) || document;
@@ -1089,6 +1136,8 @@ new MutationObserver(() => { if (!E.pret) return; clearTimeout(minuteurFil); min
 function router() {
   if (!E.pret) return;
   const h = location.hash || '#/accueil';
+  if (!E.lienSuivi) lireFiltres();                        // les filtres de l'adresse (pas ceux qu'un lien suivi a hérités)
+  E.lienSuivi = false;
   for (const [re, f] of ROUTES) {
     const m = h.match(re);
     if (!m) continue;
@@ -1171,6 +1220,8 @@ const confirmerAction = o => (typeof GESTES !== 'undefined' && GESTES.confirmer 
 window.addEventListener('hashchange', () => {
   const vers = location.search + location.hash;
   if (vers === E.adresse) return;                         // revenu à l'adresse acceptée (la question posée) : rien à refaire
+  // une entrée neuve de l'historique (un lien suivi) n'a pas encore de rang ; le précédent, le suivant en ont un
+  const lienSuivi = !history.state || typeof history.state.n !== 'number';
   if (saisieEnCours()) {
     visee = null;
     const pas = revenir();
@@ -1180,8 +1231,12 @@ window.addEventListener('hashchange', () => {
   noterAdresse();
   // changer de page ferme les tiroirs ; le bouton précédent d'un tiroir revient à la page sans la redessiner (tiroir.js)
   if (typeof TIROIR !== 'undefined' && TIROIR.surAdresse()) return;
+  E.lienSuivi = lienSuivi;
   router();
 });
+// le précédent ou le suivant entre deux adresses qui diffèrent aussi par leur partie ?… (les filtres d'une liste) : le
+// navigateur ne le dit que par popstate, sans hashchange ; la page qui change se traite alors comme ci-dessus
+window.addEventListener('popstate', () => setTimeout(() => { if (location.hash !== E.hash) window.dispatchEvent(new HashChangeEvent('hashchange')); }, 0));
 window.addEventListener('beforeunload', e => { if (saisieEnCours()) { e.preventDefault(); e.returnValue = ''; } });
 // « Aller au contenu » : le titre de la rubrique reçoit le focus, sans toucher à l'adresse (#vue n'est pas une route)
 document.addEventListener('click', e => {
