@@ -178,6 +178,9 @@ main { padding: 20px; max-width: 1500px; margin: 0 auto; }
 .puce { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--trait); background: var(--carte); cursor: pointer; font-size: 13px; font-weight: 600; color: var(--gris); }
 .puce[aria-pressed="true"] { border-color: var(--c, var(--accent)); color: var(--encre); background: color-mix(in srgb, var(--c, var(--accent)) 14%, var(--carte)); }
 .mois { margin: 14px 4px 6px; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--gris); }
+/* au bureau, une longue liste qui défile à côté de sa fiche garde en vue l'en-tête de ce qu'on parcourt : le mois (ou « À
+   venir »), collé en haut de la liste jusqu'au suivant */
+@media (min-width: 1101px) { .deux > .liste .mois { position: sticky; top: 0; z-index: 2; margin: 0 0 6px; padding: 10px 4px 6px; background: color-mix(in srgb, var(--fond) 92%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); } }
 .ligne { display: grid; grid-template-columns: 58px 1fr auto; gap: 10px; align-items: start; padding: 10px 12px; margin-bottom: 6px; border-radius: 10px; background: var(--carte); border: 1px solid var(--trait); text-decoration: none; color: var(--encre); border-left: 4px solid var(--c, var(--accent)); }
 .ligne:hover { border-color: var(--gris); border-left-color: var(--c, var(--accent)); }
 .ligne[aria-current="true"] { box-shadow: 0 0 0 3px var(--accent-doux); border-color: var(--accent); }
@@ -197,6 +200,13 @@ main { padding: 20px; max-width: 1500px; margin: 0 auto; }
 .badge.sco { background: #e6f0fb; color: #1e4f8a; }
 .badge.ok { background: var(--ok-doux); color: var(--ok); }
 .vide { padding: 30px 16px; text-align: center; color: var(--gris); }
+/* une liste vide dit pourquoi (listeVide) : une phrase, puis le geste utile (« Effacer les filtres », « ＋ Nouvelle date ») */
+.vide.liste-vide { display: grid; justify-items: center; gap: 12px; margin: 0; }
+.vide.liste-vide p { margin: 0; }
+.vide.liste-vide .btn { min-height: 44px; }
+td.tab-vide .btn { margin-top: 10px; min-height: 44px; }
+/* une colonne du Kanban sans piste le dit, à la place où une carte se dépose (et s'efface dès qu'une carte y arrive) */
+.crm-cartes:not(:has(.crm-carte))::before { content: 'Aucune piste à cette étape'; display: block; padding: 14px 10px; border: 1.5px dashed var(--trait); border-radius: 10px; color: var(--gris); font-size: 13px; text-align: center; }
 .compte { color: var(--gris); font-size: 13px; }
 
 /* le fil d'Ariane d'une fiche (poserFil) : les niveaux au-dessus en liens, la fiche en dernier ; au téléphone, le seul
@@ -405,6 +415,8 @@ table.simple tr.cliquable:hover td { background: var(--doux); }
 .frais-defile { position: relative; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: var(--rayon); }   /* relative : ce qu'il porte de caché (.sr) défile avec lui */
 .frais-defile:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .frais-defile table.simple { min-width: 820px; }
+/* au bureau, une longue liste de notes défile dans son cadre, ses titres de colonne restent en vue */
+@media (min-width: 1101px) { .frais-defile { max-height: calc(100vh - 220px); overflow: auto; overscroll-behavior: contain; } .frais-defile table.simple { overflow: visible; } .frais-defile thead th { position: sticky; top: 0; z-index: 1; background: var(--carte); box-shadow: 0 1px 0 var(--trait); } }
 .frais-table-actions { display: flex; gap: 4px; }
 .mat-groupe { margin-bottom: 18px; }
 .mat-groupe h4 { margin: 0 0 8px; font-size: 14px; color: var(--accent); }
@@ -712,7 +724,72 @@ const repsDe = id => E.reps.filter(r => r.date_id === id).sort((a, b) => a.jour 
 const h5 = h => h ? String(h).slice(0, 5) : '';
 let session = {};
 try { session = JSON.parse(sessionStorage.getItem('crescite-admin-filtres') || '{}'); } catch { session = {}; }
-const garderFiltres = () => { try { sessionStorage.setItem('crescite-admin-filtres', JSON.stringify(session)); } catch { /* navigation privée */ } };
+const garderFiltres = () => { try { sessionStorage.setItem('crescite-admin-filtres', JSON.stringify(session)); } catch { /* navigation privée */ } ecrireFiltres(); };
+// Les listes gardent leur état, et le portent dans leur adresse : la recherche, les filtres et le tri en cours d'une liste
+// s'écrivent dans la partie ?… de l'adresse à mesure (?statut=option&q=caen#/representations, sans nouveau pas dans
+// l'historique, seulement ce qui diffère de la valeur d'office) et la suivent dans ses fiches (#/lieux/5 garde ?type=salle) :
+// le retour d'une fiche, le précédent du navigateur, un rechargement, un lien partagé rouvrent la liste telle qu'on l'a
+// laissée. Rouvrir la rubrique plus tard depuis l'en-tête la retrouve aussi (session, gardée dans l'onglet), et la réécrit
+// dans l'adresse ; une autre rubrique retire ces filtres de l'adresse. ?tiroir=… (tiroir.js) et ?anim=0 n'y sont pas touchés.
+// [l'adresse de la liste et de ses fiches, sa clé dans session, ce qui va dans l'adresse avec sa valeur d'office]
+const LISTES_ADRESSE = [
+  [/^#\/representations\/tableur$/, 'tableur', { q: '', saison: '', spectacle: '', periode: 'avenir', tri: 'asc' }],
+  [/^#\/representations(?:\/(?:nouvelle|\d+))?$/, 'dates', { q: '', spectacle: '', public: '', statut: '' }],
+  [/^#\/feuilles(?:\/\d+)?$/, 'feuilles', { q: '', etat: '' }],
+  [/^#\/equipe(?:\/(?:nouvelle|\d+))?$/, 'equipe', { q: '', categorie: '' }],
+  [/^#\/lieux(?:\/(?:nouveau|\d+))?$/, 'lieux', { q: '', type: '' }],
+  [/^#\/pro(?:\/(?:nouvelle|\d+))?$/, 'pro', { q: '', etat: '' }],
+  [/^#\/diffusion\/devis(?:\/\d+)?$/, 'devis', { q: '', statut: '' }],
+  [/^#\/diffusion\/alertes$/, 'alertes', { q: '', etat: '' }],
+  [/^#\/planning\/(?:propositions|proposition\/\d+)$/, 'propositions', { q: '', etat: '' }],
+  [/^#\/ateliers(?:\/seances(?:\/(?:nouvelle|\d+))?)?$/, 'seances', { periode: 'avenir', saison: '' }],
+  [/^#\/journal$/, 'journal', { q: '', quoi: '', qui: '', periode: '', du: '', au: '' }],
+];
+const CLES_FILTRES = [...new Set(LISTES_ADRESSE.flatMap(x => Object.keys(x[2])))];
+const listeDeHash = h => LISTES_ADRESSE.find(([re]) => re.test(h || '')) || null;
+// la liste ouverte écrit ses filtres dans l'adresse (à chaque changement, et après chaque vue) ; ailleurs, ils s'en vont
+function ecrireFiltres() {
+  const l = listeDeHash(location.hash), q = new URLSearchParams(location.search);
+  CLES_FILTRES.forEach(k => q.delete(k));
+  if (l) { const [, cle, defauts] = l, f = session[cle] || {}; Object.entries(defauts).forEach(([k, d]) => { const v = f[k] ?? d; if (v != null && v !== '' && String(v) !== String(d)) q.set(k, String(v)); }); }
+  const s = q.toString().replace(/%2F/gi, '/').replace(/%2C/gi, ','), url = `${location.pathname}${s ? `?${s}` : ''}${location.hash}`;
+  if (url === location.pathname + location.search + location.hash) return;
+  history.replaceState(history.state, '', url);
+  if (typeof E !== 'undefined' && E.n != null) noterAdresse();
+}
+// l'adresse ouverte à l'arrivée, au rechargement, au précédent ou au suivant donne ses filtres à sa liste, avant qu'elle se
+// dessine (ce qu'elle n'a pas reprend sa valeur d'office) ; un lien suivi, lui, hérite de la partie ?… de la page qu'on
+// quitte : la liste reprend alors ce que l'onglet gardait pour elle, et le réécrit
+function lireFiltres() {
+  const l = listeDeHash(location.hash); if (!l) return;
+  const [, cle, defauts] = l, q = new URLSearchParams(location.search);
+  if (!Object.keys(defauts).some(k => q.has(k))) return;
+  session[cle] = { ...(session[cle] || {}), ...Object.fromEntries(Object.entries(defauts).map(([k, d]) => [k, q.has(k) ? q.get(k) : d])) };
+  try { sessionStorage.setItem('crescite-admin-filtres', JSON.stringify(session)); } catch { /* navigation privée */ }
+}
+// Les listes vides disent pourquoi, en une phrase, et proposent le geste utile : filtrée (filtree vrai) et sans résultat,
+// « Effacer les filtres » ; encore vide, ce qui l'ouvre (ajouter : [l'adresse, le libellé], ou rien quand la liste se
+// remplit d'ailleurs : les demandes de devis viennent du site). balise : 'li' dans une liste <ul>.
+function listeVide(filtree, { rien, aucun, ajouter = null, balise = 'div' }) {
+  const geste = filtree ? '<button type="button" class="btn" data-effacer-filtres>Effacer les filtres</button>'
+    : ajouter ? `<a class="btn principal" href="${esc(ajouter[0])}">${esc(ajouter[1])}</a>` : '';
+  return `<${balise} class="vide liste-vide"><p>${esc(filtree ? rien : aucun)}</p>${geste}</${balise}>`;
+}
+// « Effacer les filtres » : chaque filtre de la vue reprend sa valeur d'office par son propre chemin (l'événement que la vue
+// écoute : la liste se refait, l'adresse suit), puis le focus va à la recherche. La vue d'un tiroir n'est pas touchée.
+function effacerFiltres() {
+  const vue = $('#vue');
+  if (!vue) return;
+  const changer = (el, v) => { el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); };
+  $$('.filtres', vue).forEach(f => {
+    $$('input[type="search"], input[type="date"]', f).forEach(i => { if (i.value) changer(i, ''); });
+    $$('select', f).forEach(s => { const d = s.options[0]; if (d && s.value !== d.value) changer(s, d.value); });
+    $$('.puces [aria-pressed="true"]', f).forEach(p => p.click());
+    $$('.seg', f).forEach(g => { const b = g.querySelector('button'); if (b && b.getAttribute('aria-pressed') !== 'true') b.click(); });
+  });
+  requestAnimationFrame(() => { const q = $('.filtres input[type="search"]', vue); if (q) q.focus(); annoncer('Filtres effacés.'); });
+}
+document.addEventListener('click', e => { if (e.target.closest?.('[data-effacer-filtres]')) { e.preventDefault(); effacerFiltres(); } });
 
 function annoncer(msg, { erreur = false, action = null, libelle = 'Annuler', delai = 5000 } = {}) {
   const el = document.createElement('div');
@@ -999,7 +1076,7 @@ const ROUTES = [
   [/^#\/textes(?:\/(.+))?$/, m => vueTextes(m[1] && decodeURIComponent(m[1]))],
   [/^#\/journal$/, () => vueJournal()],
 ];
-const APRES_VUE = [];   // ce qui se pose une fois la vue dessinée (menus.js : précédent / suivant dans les fiches)
+const APRES_VUE = [ecrireFiltres];   // ce qui se pose une fois la vue dessinée (ses filtres dans l'adresse ; menus.js : précédent / suivant dans les fiches)
 // une fiche ouverte ailleurs qu'à sa place (depuis le tableau de bord, le Kanban, le planning…) s'ouvre dans un tiroir
 // (tiroir.js) : ces aides savent où elle est. racineActive : le tiroir ouvert, sinon la page
 const racineActive = () => (typeof TIROIR !== 'undefined' && TIROIR.racine()) || document;
@@ -1089,6 +1166,8 @@ new MutationObserver(() => { if (!E.pret) return; clearTimeout(minuteurFil); min
 function router() {
   if (!E.pret) return;
   const h = location.hash || '#/accueil';
+  if (!E.lienSuivi) lireFiltres();                        // les filtres de l'adresse (pas ceux qu'un lien suivi a hérités)
+  E.lienSuivi = false;
   for (const [re, f] of ROUTES) {
     const m = h.match(re);
     if (!m) continue;
@@ -1171,6 +1250,8 @@ const confirmerAction = o => (typeof GESTES !== 'undefined' && GESTES.confirmer 
 window.addEventListener('hashchange', () => {
   const vers = location.search + location.hash;
   if (vers === E.adresse) return;                         // revenu à l'adresse acceptée (la question posée) : rien à refaire
+  // une entrée neuve de l'historique (un lien suivi) n'a pas encore de rang ; le précédent, le suivant en ont un
+  const lienSuivi = !history.state || typeof history.state.n !== 'number';
   if (saisieEnCours()) {
     visee = null;
     const pas = revenir();
@@ -1180,8 +1261,12 @@ window.addEventListener('hashchange', () => {
   noterAdresse();
   // changer de page ferme les tiroirs ; le bouton précédent d'un tiroir revient à la page sans la redessiner (tiroir.js)
   if (typeof TIROIR !== 'undefined' && TIROIR.surAdresse()) return;
+  E.lienSuivi = lienSuivi;
   router();
 });
+// le précédent ou le suivant entre deux adresses qui diffèrent aussi par leur partie ?… (les filtres d'une liste) : le
+// navigateur ne le dit que par popstate, sans hashchange ; la page qui change se traite alors comme ci-dessus
+window.addEventListener('popstate', () => setTimeout(() => { if (location.hash !== E.hash) window.dispatchEvent(new HashChangeEvent('hashchange')); }, 0));
 window.addEventListener('beforeunload', e => { if (saisieEnCours()) { e.preventDefault(); e.returnValue = ''; } });
 // « Aller au contenu » : le titre de la rubrique reçoit le focus, sans toucher à l'adresse (#vue n'est pas une route)
 document.addEventListener('click', e => {
@@ -1752,6 +1837,7 @@ function listeDates(zone, actif) {
   const parMois = ds => { let m = '', h = ''; ds.forEach(d => { const k = d.debut.slice(0, 7); if (k !== m) { m = k; h += `<div class="mois">${AGENDA.MOIS[+k.slice(5) - 1]} ${k.slice(0, 4)}</div>`; } h += ligne(d); }); return h; };
   const saisonEnCours = AGENDA.saisonDe(AUJ);
   const saisons = [...new Set(passees.map(d => d.saison))].sort().reverse();
+  if (!xs.length) { zone.innerHTML = listeVide(cherche, { rien: 'Aucune date ne correspond à ces filtres.', aucun: 'Aucune date pour l’instant.', ajouter: ['#/representations/nouvelle', '＋ Nouvelle date'] }); return; }
   zone.innerHTML = `<h2 class="mois" style="font-size:13px;color:var(--accent)">À venir</h2>${avenir.length ? parMois(avenir) : '<p class="vide">Aucune date à venir.</p>'}
     <h2 class="mois" style="font-size:13px;color:var(--accent);margin-top:24px">Dates passées</h2>
     ${saisons.map(sa => { const ouverte = cherche || sa === saisonEnCours || f.ouvertes.includes(sa) || passees.some(d => String(d.id) === String(actif) && d.saison === sa);
@@ -2318,7 +2404,7 @@ const TABLEUR = (() => {
       const t = c.texte(x); T.textes.set(cleCase(x, c), t);
       const lecture = c.type === 'lecture' || c.fige?.(x);
       return `<td role="gridcell" aria-colindex="${j + 1}" data-c="${j}" class="c-${c.k}${c.niveau !== 'seance' && !x.premier ? ' repete' : ''}" tabindex="-1"${lecture ? ' aria-readonly="true"' : ''}${t.length > 16 ? ` title="${esc(t)}"` : ''}>${c.html ? c.html(x) : esc(t)}</td>`;
-    }).join('')}</tr>`).join('') || `<tr role="row"><td role="gridcell" colspan="${T.cols.length}" class="tab-vide">${E.dates.length ? 'Aucune séance ne correspond.' : 'Aucune date pour l’instant : « ＋ Séance » en ajoute une.'}</td></tr>`;
+    }).join('')}</tr>`).join('') || `<tr role="row"><td role="gridcell" colspan="${T.cols.length}" class="tab-vide">${E.dates.length ? `Aucune séance ne correspond.${T.f.q || T.f.saison || T.f.spectacle || T.f.periode !== 'avenir' ? '<br><button type="button" class="btn" data-effacer-filtres>Effacer les filtres</button>' : ''}` : 'Aucune date pour l’instant : « ＋ Séance » en ajoute une.'}</td></tr>`;
     const n = T.lignes.length, nd = new Set(T.lignes.map(x => x.d.id)).size;
     $('#tab-compte').textContent = `${pl(n, 'séance')} · ${pl(nd, 'date')}${plie.length && !T.f.vides ? ` · colonnes vides repliées : ${plie.map(c => c.l.toLowerCase()).join(', ')}` : ''}`;
     // la case active : la même qu'avant (par sa ligne et sa colonne), sinon la plus proche
@@ -3355,7 +3441,7 @@ function listeAteliers(zone, actif) {
   const groupes = [...E.spectacles.filter(s => E.ateliers.some(a => a.spectacle_id === s.id)), null];
   zone.innerHTML = groupes.map(s => { const xs = E.ateliers.filter(a => (s ? a.spectacle_id === s.id : !a.spectacle_id)).sort((a, b) => a.ordre - b.ordre); if (!xs.length) return '';
     return `<div class="mois">${esc(s ? s.titre : 'Sans spectacle')}</div>${xs.map(a => `<a class="ligne" style="--c:${couleurSp(s)};grid-template-columns:1fr auto" href="#/ateliers/catalogue/${a.id}"${String(actif) === String(a.id) ? ' aria-current="true"' : ''}>
-      <span class="corps"><span class="t">${esc(a.titre)}</span><span class="ou">${esc(a.public || '')}</span></span><span class="badges">${a.obligatoire ? '<span class="badge option">Obligatoire</span>' : ''}${a.publie ? '' : '<span class="badge masquee">Non publié</span>'}</span></a>`).join('')}`; }).join('') || '<p class="vide">Aucun atelier.</p>';
+      <span class="corps"><span class="t">${esc(a.titre)}</span><span class="ou">${esc(a.public || '')}</span></span><span class="badges">${a.obligatoire ? '<span class="badge option">Obligatoire</span>' : ''}${a.publie ? '' : '<span class="badge masquee">Non publié</span>'}</span></a>`).join('')}`; }).join('') || listeVide(false, { aucun: 'Aucun atelier pour l’instant.', ajouter: ['#/ateliers/catalogue/nouveau', '＋ Nouvel atelier'] });
 }
 function editeurAtelier(id) {
   const a0 = id ? E.ateliers.find(a => a.id === id) : null;
@@ -3403,7 +3489,7 @@ function listeSeances(zone, actif) {
         <span class="corps"><span class="t">${esc(l?.nom || s.etablissement || 'Établissement à préciser')}${s.classe ? ` · ${esc(s.classe)}` : ''}</span>
         <span class="ou">${esc(a?.titre || sp?.titre || 'Atelier')}${s.heure_debut ? ` · ${AGENDA.heureTexte(h5(s.heure_debut))}${s.heure_fin ? `–${AGENDA.heureTexte(h5(s.heure_fin))}` : ''}` : ''}${s.intervenants ? ` · ${esc(s.intervenants)}` : ''}</span></span>
         <span class="badges">${s.statut === 'option' ? '<span class="badge option">Option</span>' : s.statut === 'realisee' ? '<span class="badge ok">Réalisée</span>' : s.statut === 'annulee' ? '<span class="badge annulee">Annulée</span>' : ''}${s.dispositif ? `<span class="badge">${esc(s.dispositif.split(' (')[0])}</span>` : ''}</span></a>`;
-    }).join('') : '<p class="vide">Aucune séance.</p>');
+    }).join('') : listeVide(f.periode !== 'avenir' || !!f.saison, { rien: 'Aucune séance ne correspond à ces filtres.', aucun: E.seances.length ? 'Aucune séance à venir.' : 'Aucune séance pour l’instant.', ajouter: ['#/ateliers/seances/nouvelle', '＋ Nouvelle séance'] }));
   $$('[data-sp-per]', zone).forEach(b => b.addEventListener('click', () => { f.periode = b.dataset.spPer; garderFiltres(); listeSeances(zone, actif); }));
   $('#se-saison', zone).addEventListener('change', e => { f.saison = e.target.value; garderFiltres(); listeSeances(zone, actif); });
 }
@@ -3469,7 +3555,7 @@ function vueLieux(param) {
     const n = new Map(); E.dates.forEach(d => n.set(d.lieu_id, (n.get(d.lieu_id) || 0) + 1));
     const xs = E.lieux.filter(l => (!f.type || l.type === f.type) && (!q || norm(`${l.nom || ''} ${l.commune} ${l.departement}`).includes(q))).sort((a, b) => norm(a.commune).localeCompare(norm(b.commune)) || norm(a.nom).localeCompare(norm(b.nom)));
     $('#li-compte').textContent = `${xs.length} lieu${xs.length > 1 ? 'x' : ''}`;
-    zone.innerHTML = xs.slice(0, 400).map(l => `<a class="ligne" style="grid-template-columns:1fr auto" href="#/lieux/${l.id}"${String(param) === String(l.id) ? ' aria-current="true"' : ''}><span class="corps"><span class="t">${esc(l.nom || l.commune)}</span><span class="ou">${esc(l.commune)} (${esc(l.departement)})${l.latitude == null ? ' · sans position sur la carte' : ''}</span></span><span class="badges"><span class="badge">${n.get(l.id) || 0} date${(n.get(l.id) || 0) > 1 ? 's' : ''}</span>${l.type === 'etablissement' ? '<span class="badge sco">Établissement</span>' : ''}</span></a>`).join('') || '<p class="vide">Aucun lieu.</p>';
+    zone.innerHTML = xs.slice(0, 400).map(l => `<a class="ligne" style="grid-template-columns:1fr auto" href="#/lieux/${l.id}"${String(param) === String(l.id) ? ' aria-current="true"' : ''}><span class="corps"><span class="t">${esc(l.nom || l.commune)}</span><span class="ou">${esc(l.commune)} (${esc(l.departement)})${l.latitude == null ? ' · sans position sur la carte' : ''}</span></span><span class="badges"><span class="badge">${n.get(l.id) || 0} date${(n.get(l.id) || 0) > 1 ? 's' : ''}</span>${l.type === 'etablissement' ? '<span class="badge sco">Établissement</span>' : ''}</span></a>`).join('') || listeVide(!!(q || f.type), { rien: 'Aucun lieu ne correspond à ces filtres.', aucun: 'Aucun lieu pour l’instant.', ajouter: ['#/lieux/nouveau', '＋ Nouveau lieu'] });
   };
   zone.rafraichir();
   $('#li-q').addEventListener('input', e => { f.q = e.target.value; garderFiltres(); zone.rafraichir(); });
@@ -3988,7 +4074,7 @@ function listeDevis(zone, actif) {
       <span class="jj">${j ? `<b>${+j.slice(8, 10)}</b>${MC[+j.slice(5, 7) - 1]}` : ''}</span>
       <span class="corps"><span class="t">${esc(d.structure_nom)}</span><span class="ou">${esc([d.commune, sp?.titre, d.contact_nom].filter(Boolean).join(' · '))}</span></span>
       <span class="badges">${badgeDevis(d.statut)}</span></a>`;
-  }).join('') || `<p class="vide">${(E.devis || []).length ? 'Aucune demande ne correspond.' : 'Aucune demande pour l’instant.'}</p>`;
+  }).join('') || listeVide((E.devis || []).length > 0, { rien: 'Aucune demande ne correspond.', aucun: 'Aucune demande pour l’instant.' });
 }
 function editeurDevis(id) {
   const d0 = (E.devis || []).find(x => x.id === id);
@@ -4124,7 +4210,7 @@ function dessinerAlertes(zone) {
       <span class="al-quoi"><span class="badge ${c}">${l}</span> ${esc(quoi)}</span></div>
       <div class="al-actions"><button type="button" class="btn petit" data-al-actif="${a.id}">${a.active ? 'Désactiver' : 'Réactiver'}</button><button type="button" class="btn petit danger" data-al-effacer="${a.id}" aria-label="Effacer l’alerte de ${esc(a.email)}">Effacer</button></div></li>`;
   }).join('') + (vues.length > 200 ? `<li class="al-ligne al-plus">Et ${vues.length - 200} autres : précisez la recherche.</li>` : '')
-    || `<li class="vide">${xs.length ? 'Aucune alerte ne correspond.' : 'Aucune alerte pour l’instant.'}</li>`;
+    || listeVide(xs.length > 0, { rien: 'Aucune alerte ne correspond.', aucun: 'Aucune alerte pour l’instant.', balise: 'li' });
 }
 
 // ===================================================================================================== journal
@@ -4216,7 +4302,7 @@ async function vueJournal() {
       return `<div class="journal-ligne"><span class="quand">${new Date(j.quand).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })}<br>${esc(qui(j.qui))}</span>
         <span class="quoi"><b>${OPS_JOURNAL[j.operation]} · ${esc(NOMS_TABLES[j.table_nom] || j.table_nom)}</b>${surlignerRch(resume(j) || '', mots)}${ch.length ? `<span class="diff"> — ${surlignerRch(ch.join(', '), mots)}</span>` : ''}${ap.length ? `<span class="diff appris"> — gardé dans les fiches : ${esc(ap.join(', '))}</span>` : ''}</span>
         <span>${j.operation === 'INSERT' ? `<button class="btn petit" data-j="${j.id}" data-tt="retour">Retirer</button>` : `<button class="btn petit" data-j="${j.id}" data-tt="retour">Revenir</button>`}</span></div>`; }).join('')
-      || `<p class="vide">${total ? 'Aucune modification ne correspond.' : 'Rien encore.'}</p>`;
+      || listeVide(total > 0, { rien: 'Aucune modification ne correspond.', aucun: 'Rien encore.' });
     if (premier && !CALME_ADMIN()) zone.classList.add('ad-neuf');       // la première liste se pose
     const plusVieux = E.journal.length ? jourDe(E.journal[E.journal.length - 1]) : AUJ, de = debutPeriode();
     $('#j-compte').textContent = `${filtre ? `${xs.length} sur ${total}` : total} modification${total > 1 ? 's' : ''}${E.journalFin ? '' : `, depuis le ${jourCourt(plusVieux)}`}`;

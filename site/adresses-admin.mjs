@@ -7,7 +7,10 @@
 // - un tiroir a son adresse (?tiroir=…) : le précédent du navigateur le referme sans redessiner la page, le suivant le
 //   rouvre, un rechargement (un lien partagé) le rouvre ; le titre de l'onglet dit ce qui est ouvert ;
 // - une fiche ouverte dit où l'on est par un fil d'Ariane cliquable (« Spectacles › Bérénice »), réduit au téléphone au
-//   retour vers le niveau d'au-dessus ; l'en-tête d'un tiroir nomme sa rubrique, en lien.
+//   retour vers le niveau d'au-dessus ; l'en-tête d'un tiroir nomme sa rubrique, en lien ;
+// - une liste garde son état dans l'adresse (?statut=…&q=…) : ses fiches, le retour, le précédent, un rechargement, un
+//   lien partagé la rouvrent filtrée, une autre rubrique ne prend pas ses filtres ; l'en-tête du mois reste en vue ;
+// - une liste vide dit pourquoi et propose le geste utile (« Effacer les filtres »), une colonne du Kanban aussi.
 //   python3 site/build.py && node site/adresses-admin.mjs
 // Captures dans site/dist/shots-adresses/. Sort en erreur si une vérification manque.
 import fs from 'node:fs';
@@ -254,6 +257,81 @@ const adresse = page => page.evaluate(() => location.search + location.hash);
     ok(`fil (${nom}) · aucune erreur de script`, erreurs.length === 0, erreurs.join(' / '));
     await ctx.close();
   }
+}
+
+// ================================================================================ les listes gardent leur état, dans l'adresse
+{
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1440, hauteur: 900, hash: '#/representations' });
+  await page.waitForSelector('#f-statut', { timeout: 15000 });
+  const pas0 = await page.evaluate(() => history.length);
+  await page.selectOption('#f-statut', 'option');
+  await page.fill('#f-q', 'flers');
+  await attendre(page, () => /statut=option/.test(location.search) && /q=flers/.test(location.search));
+  ok('listes · les filtres et la recherche passent dans l’adresse, sans pas de plus dans l’historique', /^\?(?=.*statut=option)(?=.*q=flers)[^#]*#\/representations$/.test(await adresse(page)) && await page.evaluate(() => history.length) === pas0, await adresse(page));
+  await page.click('#l-dates a.ligne[href="#/representations/105"]');
+  await attendre(page, () => location.hash === '#/representations/105' && document.querySelector('#ed-date .titre-ed'));
+  ok('listes · une fiche ouverte de la liste garde les filtres dans son adresse', /statut=option/.test(await adresse(page)) && /q=flers/.test(await adresse(page)), await adresse(page));
+  await page.click('#vue .fil-ariane .fil-parent a');
+  await attendre(page, () => location.hash === '#/representations' && document.querySelector('#f-statut'));
+  ok('listes · le retour d’une fiche rouvre la liste filtrée', await page.evaluate(() => document.querySelector('#f-statut').value === 'option' && document.querySelector('#f-q').value === 'flers' && document.querySelectorAll('#l-dates a.ligne').length === 1), await adresse(page));
+  await page.click('.nav a[href="#/lieux"]');
+  await attendre(page, () => location.hash === '#/lieux' && document.querySelector('#li-q'));
+  ok('listes · une autre rubrique ne prend pas les filtres de la précédente, l’adresse les quitte', !/statut=|q=/.test(await adresse(page)) && await page.$eval('#li-q', e => e.value === ''), await adresse(page));
+  await page.selectOption('#li-type', 'etablissement');
+  await attendre(page, () => /type=etablissement/.test(location.search));
+  await page.goBack();
+  await attendre(page, () => location.hash === '#/representations' && document.querySelector('#f-statut'));
+  ok('listes · le précédent du navigateur revient à la liste telle qu’on l’avait laissée', /statut=option/.test(await adresse(page)) && await page.$eval('#f-statut', e => e.value === 'option'), await adresse(page));
+  await page.click('.nav a[href="#/lieux"]');
+  await attendre(page, () => location.hash === '#/lieux' && document.querySelector('#li-type'));
+  ok('listes · rouvrir une rubrique depuis l’en-tête la retrouve comme on l’a laissée, et la réécrit dans l’adresse', await page.$eval('#li-type', e => e.value === 'etablissement') && /type=etablissement/.test(await adresse(page)), await adresse(page));
+  await page.reload();
+  await page.waitForSelector('#li-type', { timeout: 15000 });
+  ok('listes · un rechargement rouvre la liste filtrée', await page.$eval('#li-type', e => e.value === 'etablissement') && (await compte(page, '#l-lieux a.ligne')) === 1, await adresse(page));
+  ok('listes · aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+  // un lien partagé, dans un onglet neuf : la liste s'ouvre filtrée, ce que l'adresse ne dit pas reprend sa valeur d'office
+  const b = await ouvrir(navigateur, { largeur: 1440, hauteur: 900, hash: '?statut=confirmee&public=scolaire#/representations' });
+  await b.page.waitForSelector('#f-statut', { timeout: 15000 });
+  ok('listes · un lien partagé (?statut=confirmee&public=scolaire) ouvre la liste filtrée', await b.page.evaluate(() => document.querySelector('#f-statut').value === 'confirmee' && document.querySelector('#f-public').value === 'scolaire' && document.querySelectorAll('#l-dates a.ligne').length === 1), await adresse(b.page));
+  // au bureau, l'en-tête du mois reste en vue quand la liste défile
+  const colle = await b.page.evaluate(() => { const m = document.querySelector('.deux > .liste .mois'); return m ? getComputedStyle(m).position : ''; });
+  ok('listes · au bureau, l’en-tête du mois colle en haut de la liste qui défile', colle === 'sticky', colle);
+  await b.ctx.close();
+}
+
+// ================================================================================ les listes vides disent pourquoi
+for (const [largeur, hauteur, nom] of [[1440, 900, 'bureau'], [390, 844, 'téléphone']]) {
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur, hauteur, hash: '#/representations' });
+  await page.waitForSelector('#f-statut', { timeout: 15000 });
+  await page.selectOption('#f-statut', 'annulee');
+  await page.click('#vue [data-sp="1"]');
+  const vide = () => page.evaluate(() => { const v = document.querySelector('#vue .liste-vide'); return v ? { phrase: v.querySelector('p')?.textContent, geste: v.querySelector('.btn')?.textContent, haut: Math.round(v.querySelector('.btn')?.getBoundingClientRect().height || 0) } : null; });
+  const v1 = await vide();
+  ok(`vides (${nom}) · une liste filtrée sans résultat le dit, et propose « Effacer les filtres » (44 px)`, v1?.phrase === 'Aucune date ne correspond à ces filtres.' && v1.geste === 'Effacer les filtres' && v1.haut >= 44, JSON.stringify(v1));
+  await calme(page);
+  await page.screenshot({ path: path.join(CAPT, `vide-dates-${largeur < 600 ? 'telephone' : 'bureau'}.png`) });
+  await page.click('#vue .liste-vide [data-effacer-filtres]');
+  await attendre(page, () => !document.querySelector('#vue .liste-vide') && document.querySelectorAll('#l-dates a.ligne').length > 0);
+  ok(`vides (${nom}) · « Effacer les filtres » rend toute la liste, les filtres à leur valeur d’office, l’adresse aussi, le focus à la recherche`, await page.evaluate(() => document.querySelector('#f-statut').value === '' && !document.querySelector('#vue [data-sp][aria-pressed="true"]') && !/statut=|spectacle=/.test(location.search) && document.activeElement?.id === 'f-q'), await adresse(page));
+  for (const [h, champ, attendu] of [['#/lieux', '#li-q', 'Aucun lieu ne correspond à ces filtres.'], ['#/equipe', '#eq-q', 'Personne ne correspond.'], ['#/journal', '#j-q', 'Aucune modification ne correspond.'], ['#/diffusion/devis', '#dv-q', 'Aucune demande ne correspond.']]) {
+    await page.evaluate(x => { location.hash = x; }, h);
+    await page.waitForSelector(champ, { timeout: 8000 });
+    if (h === '#/journal') await page.waitForSelector('.journal-ligne', { timeout: 8000 }).catch(() => {});
+    await page.fill(champ, 'zzz');
+    await attendre(page, () => !!document.querySelector('#vue .liste-vide [data-effacer-filtres]'));
+    const v = await vide();
+    ok(`vides (${nom}) · ${h} : « ${attendu} », et « Effacer les filtres »`, v?.phrase === attendu && v.geste === 'Effacer les filtres', JSON.stringify(v));
+    await page.click('#vue .liste-vide [data-effacer-filtres]');
+    await attendre(page, a => !document.querySelector('#vue .liste-vide') && document.querySelector(a).value === '', 4000, champ);
+    if (h === '#/lieux') ok(`vides (${nom}) · « Effacer les filtres » rend les lieux`, (await compte(page, '#l-lieux a.ligne')) === 4);
+  }
+  await page.evaluate(() => { location.hash = '#/diffusion'; });
+  await page.waitForSelector('.crm-colonne', { timeout: 8000 });
+  const kanban = await page.evaluate(() => getComputedStyle(document.querySelector('.crm-colonne[data-colonne="option_posee"] .crm-cartes, .crm-colonne:nth-child(3) .crm-cartes'), '::before').content);
+  ok(`vides (${nom}) · une colonne du Kanban sans piste le dit`, /Aucune piste/.test(kanban), kanban);
+  ok(`vides (${nom}) · aucune erreur de script`, erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
 }
 
 await navigateur.close();

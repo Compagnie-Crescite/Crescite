@@ -255,13 +255,19 @@ const GESTES = (() => {
   // deux boutons, nommés d'après ce qu'ils ouvrent (libelle(x)) ; chacun porte son adresse (data-href) : un clic y va.
   // axe : 'vertical' (↑ ↓, les listes de l'administration) ou 'horizontal' (← →, les pages de l'espace de l'équipe) ;
   // texte : le nom visible dans le bouton (sinon l'icône seule, le nom en infobulle)
-  function precSuiv({ prec = null, suiv = null, libelle = x => String(x?.titre ?? x ?? ''), classe = 'btn petit', axe = 'vertical', texte = false, raccourcis = true, nom = 'Précédent, suivant' } = {}) {
+  // quoi (facultatif) : ce que chaque bouton ouvre, écrit au-dessus de son nom ({ prec: 'Date précédente', suiv: 'Date
+  // suivante', aucun: 'aucune' }), avec la touche qui fait de même, pour qui a un clavier ; long : le nom complet, pour le
+  // lecteur d'écran et l'infobulle, quand le nom visible est court
+  function precSuiv({ prec = null, suiv = null, libelle = x => String(x?.titre ?? x ?? ''), long: nomLong = null, quoi = null, classe = 'btn petit', axe = 'vertical', texte = false, raccourcis = true, nom = 'Précédent, suivant' } = {}) {
     const vertical = axe === 'vertical';
     const b = (x, sens) => {
-      const quoi = sens < 0 ? 'Précédent' : 'Suivant', l = x ? libelle(x) : '', r = raccourcis ? (vertical ? (sens < 0 ? 'Alt+↑' : 'Alt+↓') : (sens < 0 ? '←' : '→')) : '';
-      const long = x ? `${quoi} : ${l}` : `${quoi} : aucun`;
+      const q = quoi ? (sens < 0 ? quoi.prec : quoi.suiv) : (sens < 0 ? 'Précédent' : 'Suivant'), l = x ? libelle(x) : '', r = raccourcis ? (vertical ? (sens < 0 ? 'Alt+↑' : 'Alt+↓') : (sens < 0 ? '←' : '→')) : '';
+      const long = x ? `${q} : ${nomLong ? nomLong(x) : l}` : `${q} : ${quoi?.aucun || 'aucun'}`;
       const icone = vertical ? (sens < 0 ? ICO.haut : ICO.bas) : (sens < 0 ? ICO.gauche : ICO.droite);
-      return `<button type="button" class="${esc(classe)} gps-b gps-${sens < 0 ? 'prec' : 'suiv'}" data-gps="${sens}"${x && x.href ? ` data-href="${esc(x.href)}"` : ''}${x ? '' : ' disabled'} aria-label="${esc(long)}${r ? ` (${r})` : ''}" title="${esc(long)}${r ? ` (${r})` : ''}">${sens < 0 ? icone : ''}${texte ? `<span class="gps-t">${esc(x ? l : quoi)}</span>` : ''}${sens > 0 ? icone : ''}</button>`;
+      const corps = !texte ? '' : quoi
+        ? `<span class="gps-t"><span class="gps-quoi">${esc(q)}${r ? `<kbd class="gps-touche" aria-hidden="true">${esc(r)}</kbd>` : ''}</span><span class="gps-l">${esc(x ? l : quoi.aucun || 'aucun')}</span></span>`
+        : `<span class="gps-t">${esc(x ? l : q)}</span>`;
+      return `<button type="button" class="${esc(classe)} gps-b gps-${sens < 0 ? 'prec' : 'suiv'}${quoi && texte ? ' gps-deux' : ''}" data-gps="${sens}"${x && x.href ? ` data-href="${esc(x.href)}"` : ''}${x ? '' : ' disabled'} aria-label="${esc(long)}${r ? ` (${r})` : ''}" title="${esc(long)}${r ? ` (${r})` : ''}">${sens < 0 ? icone : ''}${corps}${sens > 0 ? icone : ''}</button>`;
     };
     return `<span class="gps${texte ? ' gps-texte' : ''}" role="group" aria-label="${esc(nom)}">${b(prec, -1)}${b(suiv, 1)}</span>`;
   }
@@ -278,7 +284,9 @@ const GESTES = (() => {
       if (ouvert || e.ctrlKey || e.metaKey || e.shiftKey || modaleOuverte()) return;
       if (modif === 'alt' ? !e.altKey : e.altKey) return;
       if (modif !== 'alt' && dansChamp(e.target)) return;
-      const sens = { ArrowUp: -1, ArrowLeft: -1, ArrowDown: 1, ArrowRight: 1 }[e.key];
+      // Alt+↑ Alt+↓ dans l'administration (Alt+← Alt+→ restent au navigateur : la page d'avant, d'après) ; ← → dans
+      // l'espace de l'équipe (↑ ↓ y restent au défilement de la page)
+      const sens = (modif === 'alt' ? { ArrowUp: -1, ArrowDown: 1 } : { ArrowLeft: -1, ArrowRight: 1 })[e.key];
       if (!sens) return;
       // dans une liste, ← → restent aux flèches des lignes ; Alt les libère
       if (modif !== 'alt' && e.target.closest?.('a.ligne, a.tb-l, [role="grid"], [role="listbox"], .gm')) return;
@@ -556,8 +564,18 @@ html.gf-ouvert { overflow: hidden; }
 .gps .gps-b svg { flex: none; }
 .gps-texte { width: 100%; justify-content: space-between; gap: 8px; }
 .gps-texte .gps-b { flex: 1 1 0; min-width: 0; max-width: 50%; }
+.gps-texte .gps-prec { justify-content: flex-start; }
 .gps-texte .gps-suiv { justify-content: flex-end; }
 .gps-texte .gps-t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* nommés deux fois (quoi) : ce qu'ils ouvrent, en étiquette (« Date précédente »), au-dessus de son nom (le jour, le
+   lieu) ; la touche qui fait de même se montre là où il y a une souris (donc un clavier) */
+.gps-deux .gps-t { display: grid; gap: 2px; min-width: 0; text-align: left; }
+.gps-deux.gps-suiv .gps-t { text-align: right; }
+.gps-deux .gps-quoi { display: flex; align-items: center; gap: 6px; font-family: Raleway, 'Open Sans', system-ui, sans-serif; font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; opacity: .78; }
+.gps-deux.gps-suiv .gps-quoi { justify-content: flex-end; }
+.gps-deux .gps-l { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gps-touche { display: none; padding: 0 5px; border: 1px solid currentColor; border-radius: 4px; font: inherit; font-size: .68rem; line-height: 1.4; letter-spacing: 0; }
+@media (hover: hover) and (pointer: fine) { .gps-touche { display: inline-block; } }
 </style>`);
 
   return { menu, ouvrir, fermer, fleches, glisser, precSuiv, clavierPrecSuiv, formulaire, fermerFormulaire, garder, saisie, quitter, confirmer, oublier, vibrer, reduit, tactile, etroit, ICO, ouvert: () => !!ouvert, question: () => !!question };

@@ -199,7 +199,7 @@ function listePersonnes(zone, actif) {
       <span class="corps"><span class="t">${esc(nomDe(p))}</span><span class="ou">${esc((p.metiers || []).join(', ') || 'Métier à préciser')}</span>
       ${sps.length ? `<span class="pastilles">${sps.map(s => `<span><span class="pastille" style="--c:${couleurSp(s)}"></span>${esc(s.titre.split(' – ')[0])}</span>`).join('')}</span>` : ''}</span>
       <span class="badges">${pr?.user_id ? '<span class="badge ok">Compte</span>' : ''}${p.publie ? '' : '<span class="badge masquee">Non publiée</span>'}</span></a>`;
-  }).join('') || '<p class="vide">Personne ne correspond.</p>';
+  }).join('') || listeVide(!!(q || f.categorie), { rien: 'Personne ne correspond.', aucun: 'Aucune fiche pour l’instant.', ajouter: ['#/equipe/nouvelle', '＋ Nouvelle fiche'] });
 }
 
 const SPEC_PERSONNE = [
@@ -1009,6 +1009,7 @@ function listeFeuilles(zone) {
       <span class="badges">${badgeFeuille(d.id)}${resteFeuille(d.id)}${d.statut === 'option' ? '<span class="badge option">Option</span>' : d.statut === 'annulee' ? '<span class="badge annulee">Annulée</span>' : d.statut === 'reportee' ? '<span class="badge option">Reportée</span>' : ''}</span></a>`;
   };
   const saisons = [...new Set(passees.map(d => d.saison))].sort().reverse(), enCours = AGENDA.saisonDe(AUJ);
+  if (!xs.length) { zone.innerHTML = listeVide(cherche, { rien: 'Aucune date ne correspond à ces filtres.', aucun: 'Aucune date pour l’instant.', ajouter: ['#/representations/nouvelle', '＋ Nouvelle date'] }); return; }
   zone.innerHTML = `<h2 class="mois" style="font-size:13px;color:var(--accent)">À venir</h2>${avenir.map(ligne).join('') || '<p class="vide">Aucune date à venir.</p>'}
     <h2 class="mois" style="font-size:13px;color:var(--accent);margin-top:24px">Dates passées</h2>
     ${saisons.map(sa => `<details class="saison-ad" data-saison="${sa}"${cherche || sa === enCours || f.ouvertes.includes(sa) ? ' open' : ''}><summary class="ligne" style="grid-template-columns:1fr auto;cursor:pointer;border-left-color:var(--trait)"><span class="t">Saison ${sa}</span><span class="badge">${passees.filter(d => d.saison === sa).length}</span></summary><div class="contenu-saison"></div></details>`).join('') || '<p class="vide">Aucune date passée.</p>'}`;
@@ -2521,7 +2522,7 @@ function listeAcces(zone, actif) {
     return `<a class="ligne acces-l${st.ouverte ? '' : ' close'}" href="#/pro/${a.id}"${String(actif) === String(a.id) ? ' aria-current="true"' : ''}>
       <span class="corps"><span class="t">${esc(a.nom)}</span><span class="ou">${esc([a.contact, sps].filter(Boolean).join(' · '))}</span><span class="vu">${esc(visitesTexte(a))}</span></span>
       <span class="badges"><span class="badge ${st.classe}">${esc(st.texte)}</span></span></a>`;
-  }).join('') || `<p class="vide">${E.acces.length ? 'Aucune invitation ne correspond.' : 'Aucune invitation pour l’instant.'}</p>`;
+  }).join('') || listeVide(E.acces.length > 0, { rien: 'Aucune invitation ne correspond.', aucun: 'Aucune invitation pour l’instant.', ajouter: ['#/pro/nouvelle', '＋ Nouvelle invitation'] });
 }
 // sans invitation choisie : ce qu'est l'espace pro, et ce que chaque spectacle y montre
 function accueilPro() {

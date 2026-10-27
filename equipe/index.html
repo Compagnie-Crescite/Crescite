@@ -430,10 +430,16 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 
 /* ———————————————— la page d'une date */
 .gestes { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px; margin: 12px 0 0; }
-/* la date d'avant, celle d'après (navDates, equipe.js ; les boutons de gestes.js) : sous les gestes, deux boutons nommés */
+/* la date d'avant, celle d'après (navDates, equipe.js ; les boutons de gestes.js) : sous les gestes et au pied de la page,
+   deux boutons nommés deux fois : « Date précédente » en étiquette, à la couleur de la saison, puis le jour et le lieu */
 .nav-dates { margin: 12px 0 0; }
-.nav-dates .gps-b { min-height: 44px; padding: 8px 12px; }
+.nav-dates-bas { margin: 18px 0 0; }
+.nav-dates .gps-b { min-height: 52px; padding: 8px 14px; border-radius: var(--rayon-s); }
 .nav-dates .gps-t { font-size: .92rem; }
+.nav-dates .gps-quoi { font-family: var(--etiq); color: var(--magenta); opacity: 1; }
+.nav-dates .gps-b[disabled] .gps-quoi { color: var(--gris); }
+/* au téléphone, le jour et le lieu passent sur deux lignes plutôt que de se couper */
+@media (max-width: 520px) { .nav-dates .gps-deux .gps-l { white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; } }
 .geste { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 72px; padding: 10px 6px; border: 1px solid var(--filet); border-radius: 16px; background: var(--surface); color: var(--encre); font: 600 .86rem/1.2 var(--sans); text-align: center; text-decoration: none; cursor: pointer; transition: transform .12s, background-color .2s; }
 .geste:hover { background: color-mix(in srgb, var(--u-fond, var(--surface-2)) 60%, var(--surface)); color: var(--encre); }
 .geste:active { transform: scale(.96); }

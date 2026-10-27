@@ -1593,7 +1593,7 @@
       if (!lignes || lignes.length) html += `<section class="bloc" id="bloc-planning"${attrU(sp)} aria-labelledby="b-planning"><h2 id="b-planning">${ICONES.feuille}${joursDe(d).includes(auj) ? 'Le jour J' : 'Le planning'}</h2>
         ${lignes ? frise(lignes) : '<p class="attente-bloc" role="status">Lecture du planning…</p>'}</section>`;
     }
-    html += blocLieu(d) + (avecChiffres() ? blocChiffres(d) : '') + (avecIdeale() ? blocCamion(d) : '') + blocEquipe(d, passee) + blocDocuments(d);
+    html += blocLieu(d) + (avecChiffres() ? blocChiffres(d) : '') + (avecIdeale() ? blocCamion(d) : '') + blocEquipe(d, passee) + blocDocuments(d) + navDates(d, 'date', 'bas');
     afficher(r, sp.titre || 'Date', html, { focus });
     if (avecChiffres()) chargerChiffres(d.id);
     preparerPartages(documentsDe(d.spectacle?.id).filter(x => x.type === 'fiche_technique'));
@@ -1823,7 +1823,7 @@
     let html = `<div class="titre-vue"><h1>Feuilles de route</h1><p class="sous">Une par date : le planning, le trajet, l’hébergement, les contacts. Celles à venir se lisent aussi hors connexion.</p></div>`;
     if (!outilFeuille() && avec.length) html += '<p class="message erreur" role="alert">Les feuilles de route ne peuvent pas s’afficher pour le moment : l’outil qui les met en page n’a pas pu être chargé. Rechargez la page.</p>';
     if (avenir.length) html += `<ul class="liste-feuilles">${avenir.map(d => itemFeuille(d)).join('')}</ul>`;
-    else html += etatVide('feuille', 'Aucune feuille de route à venir', sans ? `${pluriel(sans, 'date à venir', 'dates à venir')} : l’administration publie chaque feuille quelques jours avant le départ. Elle apparaîtra ici.` : 'Dès qu’une feuille de route sera publiée pour l’une de vos dates, elle apparaîtra ici.');
+    else html += etatVide('feuille', 'Aucune feuille de route à venir', sans ? `${pluriel(sans, 'date à venir', 'dates à venir')} : l’administration publie chaque feuille quelques jours avant le départ. Elle apparaîtra ici.` : 'Dès qu’une feuille de route sera publiée pour l’une de vos dates, elle apparaîtra ici.', sans ? '<p><a class="btn" href="#/saison">Ma saison</a></p>' : '');
     if (sans && avenir.length) html += `<p class="aide note-feuilles">Et ${pluriel(sans, 'date à venir', 'dates à venir')} dont la feuille de route est en préparation.</p>`;
     if (passees.length) html += `<details class="saison feuilles-passees"><summary><span class="s-texte"><span class="s-nom">Feuilles passées</span> <span class="s-compte">${pluriel(passees.length, 'feuille')}</span></span></summary><div class="saison-corps"><ul class="liste-feuilles">${passees.map(d => itemFeuille(d, true)).join('')}</ul></div></details>`;
     html += piedVue();
@@ -1896,7 +1896,7 @@
     if (!corps) return afficher(r, 'Feuille de route', `${tete}${barre}<p class="message erreur" role="alert">La feuille de route n’a pas pu être mise en page ici. Le PDF reste à votre disposition.</p>`, { focus });
     // la feuille porte d'ordinaire son titre (h1) ; sinon, la page en donne un, pour les lecteurs d'écran
     const titrePage = /<h1[\s>]/i.test(corps) ? '' : `<h1 class="sr">Feuille de route : ${esc(d.spectacle?.titre || '')}, ${esc(quandTexte(d))}</h1>`;
-    afficher(r, 'Feuille de route', `<div class="vue-feuille">${titrePage}${barre}${navDates(d, 'feuille')}<div class="feuille-cadre"${attrU(d.spectacle || {})}>${corps}</div></div>`, { focus });
+    afficher(r, 'Feuille de route', `<div class="vue-feuille">${titrePage}${barre}${navDates(d, 'feuille')}<div class="feuille-cadre"${attrU(d.spectacle || {})}>${corps}</div>${navDates(d, 'feuille', 'bas')}</div>`, { focus });
     // les fichiers que la feuille cite : leur lien signé se redemande au clic s'il a vieilli
     const parUrl = new Map([...E.liens.entries()].map(([chemin, x]) => [x.url, chemin]));
     $$('.feuille-cadre a[href]').forEach(a => { const c = parUrl.get(a.href); if (c) a.dataset.fichier = c; });
@@ -3995,7 +3995,12 @@
       $('#tot-attente').textContent = euros(totAttente);
       if (neuve && !reduit()) { const t = $('#tot-attente'); t.classList.remove('pop'); void t.offsetWidth; t.classList.add('pop'); }
       $('#tot-rembourse').textContent = euros(totRembourse);
-      if (!data || !data.length) { zone.innerHTML = '<p class="aide">Aucune note de frais pour le moment.</p>'; return; }
+      // rien encore : la phrase, et le geste utile, le formulaire juste au-dessus (au téléphone, il est loin)
+      if (!data || !data.length) {
+        zone.innerHTML = '<p class="aide">Aucune note de frais pour le moment.</p><p><button type="button" class="btn petit" data-vers-frais>Ajouter un justificatif</button></p>';
+        $('[data-vers-frais]', zone).addEventListener('click', () => { const c = $('#nf-date'); if (!c) return; c.scrollIntoView({ block: 'center', behavior: reduit() ? 'auto' : 'smooth' }); c.focus({ preventScroll: true }); });
+        return;
+      }
 
       E.fraisLus = data;
       zone.innerHTML = data.map((item, i) => {
@@ -4164,14 +4169,18 @@
   // vue avec le pouce ; assez loin, ou assez vite, elle part et la vue d'avant revient (revenir). Un défilement vertical, un
   // élément qui défile de côté, la feuille de route et la carte ne le déclenchent pas.
   // la date d'avant, celle d'après (toute la tournée, dans l'ordre ; sur une feuille de route, les dates qui en ont une) :
-  // deux boutons nommés sous la page, ← → au clavier, un balayage au doigt (brancherGestes)
-  function navDates(d, genre = 'date') {
+  // deux boutons sous le haut de la page et de nouveau à son pied (une page de date est longue au téléphone), ← → au
+  // clavier, un balayage au doigt (brancherGestes). Chaque bouton dit ce qu'il ouvre (« Date suivante »), puis le jour et
+  // le lieu (« jeu. 19 nov. · Paris ») ; le spectacle s'y ajoute pour le lecteur d'écran et l'infobulle. L'adresse et le
+  // titre de l'onglet suivent la date ouverte (router, majTitre).
+  function navDates(d, genre = 'date', ou = 'haut') {
     if (typeof GESTES === 'undefined' || !GESTES) return '';
     const xs = E.dates.filter(x => genre === 'date' || x.feuille).sort((a, b) => (a.debut < b.debut ? -1 : a.debut > b.debut ? 1 : a.id - b.id));
     const i = xs.findIndex(x => x.id === d.id);
     if (i < 0 || xs.length < 2) return '';
-    const v = x => (x ? { href: `#/${genre}/${x.id}`, titre: `${jourCourt(x.debut)} · ${x.spectacle?.titre || 'Date'}` } : null);
-    return `<nav class="nav-dates">${GESTES.precSuiv({ prec: v(xs[i - 1]), suiv: v(xs[i + 1]), libelle: x => x.titre, classe: 'btn petit', axe: 'horizontal', texte: true, nom: genre === 'date' ? 'Date précédente, date suivante' : 'Feuille précédente, feuille suivante' })}</nav>`;
+    const v = x => (x ? { href: `#/${genre}/${x.id}`, titre: [jourCourt(x.debut), x.lieu ? x.lieu.commune || x.lieu.nom : ''].filter(Boolean).join(' · '), spectacle: x.spectacle?.titre || '' } : null);
+    const quoi = genre === 'date' ? { prec: 'Date précédente', suiv: 'Date suivante', aucun: 'aucune' } : { prec: 'Feuille précédente', suiv: 'Feuille suivante', aucun: 'aucune' };
+    return `<nav class="nav-dates${ou === 'bas' ? ' nav-dates-bas' : ''}" aria-label="${genre === 'date' ? 'D’une date à l’autre' : 'D’une feuille à l’autre'}">${GESTES.precSuiv({ prec: v(xs[i - 1]), suiv: v(xs[i + 1]), libelle: x => x.titre, long: x => [x.titre, x.spectacle].filter(Boolean).join(', '), quoi, classe: 'btn petit', axe: 'horizontal', texte: true, nom: genre === 'date' ? 'Date précédente, date suivante' : 'Feuille précédente, feuille suivante' })}</nav>`;
   }
   // les gestes (../admin/gestes.js) : un appui long ou un clic droit sur un billet, une notification, un document, une
   // proposition ouvre ce qu'on peut en faire ; ← → et le balayage passent à la date (ou la feuille) d'avant, d'après
