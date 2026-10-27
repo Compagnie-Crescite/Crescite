@@ -151,6 +151,54 @@ body { display: flow-root; }   /* (la cale et la marge de l'en-tête restent dan
 .top.fin .top-in, .top.fin .entrees { gap: 0; }
 .top.fin .top-in { padding: 0 3px; }
 .top.fin .entrees a { padding: 0 7px; font-size: .64rem; letter-spacing: .02em; }
+/* (la loupe tient encore : les pièces sans leur filet transparent, leur anneau d'élément lu dessiné en dedans ; sinon, dernier
+   recours, la loupe quitte la ligne : la recherche reste à « / » et Ctrl K) */
+.top.fin.etroit .top-in { padding: 0; }
+.top.fin.etroit .entrees a { border-width: 0; }
+.top.fin.etroit .entrees a[aria-current="true"] { box-shadow: inset 0 0 0 2px #fff; }
+.top.fin.etroit.tasse .entrees a { padding: 0 3px; letter-spacing: 0; }
+.top.sans-loupe .loupe-b { display: none; }
+/* la loupe du menu (CHERCHE) : un rond à la suite des pièces, la boîte de recherche ouverte, il se remplit */
+.loupe-b { flex: none; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: none; color: #fff; cursor: pointer; }
+.loupe-b svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; transition: scale var(--k-survol) var(--k-souple); }
+.loupe-b:hover { background-color: rgba(255, 255, 255, .13); }
+.loupe-b:is(:hover, :focus-visible) svg { scale: 1.12; }
+.loupe-b[aria-expanded="true"] { background: #fff; color: var(--saison); }
+/* la boîte de recherche (CHERCHE) : le papier de nuit sur un voile, posée haut ; ses propositions par groupe, celle qu'on vise
+   teintée de la saison et marquée d'un filet ; au téléphone, tout l'écran. Elle monte de 10 px en s'ouvrant (posée d'emblée
+   avec moins d'animations) */
+.cs { position: fixed; inset: 0; z-index: 70; }
+.cs-voile { position: absolute; inset: 0; background: rgba(6, 3, 5, .66); }
+.cs-boite { position: absolute; left: 50%; top: max(9vh, 72px); translate: -50% 0; display: flex; flex-direction: column; width: min(680px, calc(100vw - 32px)); max-height: min(74vh, 700px);
+  overflow: hidden; border-radius: 20px; background: var(--papier-2); color: var(--encre); box-shadow: 0 0 0 1px color-mix(in srgb, var(--encre) 14%, transparent), 0 30px 70px -20px rgba(0, 0, 0, .95); }
+html:not(.still) .cs-voile { animation: fm7-parait .24s var(--k-doux) backwards; }
+html:not(.still) .cs-boite { animation: cs-monte .26s var(--k-doux) backwards; }
+@keyframes cs-monte { from { opacity: 0; transform: translateY(var(--k-monte, 10px)); } }
+.cs-tete { flex: none; display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 20px; border-bottom: 1px solid var(--filet); transition: box-shadow var(--k-survol) var(--k-doux); }
+.cs-tete:focus-within { box-shadow: inset 0 -2px 0 var(--saison-vive); }
+.cs-champ { flex: 1; display: flex; align-items: center; gap: 12px; min-width: 0; }
+.cs-champ svg { flex: none; width: 20px; height: 20px; fill: none; stroke: var(--saison-vive); stroke-width: 2; stroke-linecap: round; }
+.cs-champ input { flex: 1; min-width: 0; height: 52px; padding: 0; border: 0; background: none; color: var(--encre); font: 400 1.2rem/1.2 var(--texte); outline: none; -webkit-appearance: none; appearance: none; }
+.cs-champ input::placeholder { color: var(--gris); }
+.cs-champ input::-webkit-search-cancel-button { display: none; }
+.cs-x { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: none; color: var(--encre); cursor: pointer; }
+.cs-x:hover { background: color-mix(in srgb, var(--encre) 10%, transparent); }
+.cs-x .croix { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.cs-l { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 4px 8px 14px; }
+.cs-g { margin: 14px 12px 6px; color: var(--gris); font: 700 .72rem/1.3 var(--etiq); letter-spacing: .14em; text-transform: uppercase; }
+.cs-o { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 12px; min-height: 48px; padding: 6px 12px; border-radius: 10px; color: var(--encre); text-decoration: none; cursor: pointer; }
+.cs-o i { grid-row: 1 / span 2; width: 9px; height: 9px; border-radius: 50%; background: var(--c, transparent); box-shadow: inset 0 0 0 1.5px var(--c, var(--gris)); }
+.cs-ot { min-width: 0; font: 500 1.02rem/1.25 var(--titre); overflow-wrap: anywhere; }
+.cs-os { grid-column: 2; min-width: 0; color: var(--gris); font-size: .86rem; line-height: 1.3; }
+.cs-o[aria-selected="true"] { background: color-mix(in srgb, var(--saison-vive) 20%, transparent); box-shadow: inset 3px 0 0 var(--saison-vive); }
+@media (forced-colors: active) { .cs-o[aria-selected="true"] { outline: 2px solid Highlight; } }
+.cs-vide { margin: 18px 12px; color: var(--gris); }
+html.cs-ouvert { overflow: hidden; }
+@media (max-width: 759px) {
+  .cs-voile { display: none; }
+  .cs-boite { inset: 0; translate: none; width: auto; max-height: none; padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); border-radius: 0; box-shadow: none; }
+  .cs-tete { padding-left: 16px; }
+}
 /* (mesuré marque dépliée, ajuste()) */
 .top.mesure .marque { transition: none; }
 
@@ -2888,6 +2936,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
 <header class="top" id="top"><div class="top-in">
   <a class="marque" href="#/"><span class="l" id="marque" data-pieuvre aria-hidden="true"></span><span id="nom"></span></a>
   <nav class="entrees" id="entrees"></nav>
+  <button type="button" class="loupe-b" id="loupe-b" aria-haspopup="dialog" aria-expanded="false" aria-controls="cs" aria-keyshortcuts="/ Control+K" hidden><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg></button>
 </div></header>
 <main id="main" tabindex="-1"></main>
 <footer><div class="wrap pied" id="pied"></div></footer>
@@ -6020,7 +6069,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
      vides s'effacent avec leur pièce du sommaire arrimé ; le nombre de spectacles gardés est écrit à côté et dit aux lecteurs
      d'écran quand il change. Les filtres tiennent tant que la vue se refait sur place (D qui change), pas d'une visite à l'autre */
   let etatEtab = { lieu: null, pub: null };
-  const nSpectacles = n => (n === 1 ? L.unSpectacle || '1' : String(L.nSpectacles || '{n}').replace('{n}', n));
+  // (le nombre en chiffres gras, à part de ses mots : « <b>4</b> spectacles »)
+  const nSpectacles = n => esc(n === 1 ? L.unSpectacle || '1' : String(L.nSpectacles || '{n}').replace('{n}', n)).replace(/\d+/, x => `<b>${x}</b>`);
   function filtresEtab(xs) {
     const A = s => s.actionCulturelle || {}, lieux = ['etablissement', 'salle'].map(k => [k, L.lieu[k], xs.filter(s => A(s).lieu === k).length]).filter(x => x[2]);
     const pubs = [...new Set(xs.map(s => A(s).public).filter(Boolean))].map(p => [p, xs.filter(s => A(s).public === p).length]);
@@ -6029,12 +6079,13 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const groupe = (id, t, puces) => (puces.length ? `<div class="ef-g" role="group" aria-labelledby="${id}"><p class="ef-k" id="${id}">${esc(t)}</p><div class="ef-puces">${puces.join('')}</div></div>` : '');
     return `<div class="ep-sec ef" id="e-filtres"><div class="wrap"><div class="ef-in">
       ${groupe('ef-kl', L.actionCulturelle, lieux.map(([k, t, n]) => puce('lieu', k, t, n)))}${groupe('ef-kp', L.public, pubs.map(([p, n]) => puce('pub', p, p, n)))}
-      <div class="ef-bout"><p class="ef-n" id="ef-n" role="status">${esc(nSpectacles(xs.length))}</p>${L.effacerFiltres ? `<button type="button" class="ft7-tout" data-ef-tout hidden>${esc(L.effacerFiltres)}</button>` : ''}</div>
+      <div class="ef-bout"><p class="ef-n" id="ef-n" role="status">${nSpectacles(xs.length)}</p>${L.effacerFiltres ? `<button type="button" class="ft7-tout" data-ef-tout hidden>${esc(L.effacerFiltres)}</button>` : ''}</div>
     </div></div></div>`;
   }
   function lierFiltresEtab() {
     const zone = $('#e-filtres', main); if (!zone) return;
     const fiches = $$('li.ac[data-ef-lieu]', main), F = etatEtab;
+    $('#ef-n', zone).__h = nSpectacles(fiches.length);   // (le nombre écrit à l'arrivée : rien n'est dit tant qu'il ne change pas)
     const garde = li => (!F.lieu || li.dataset.efLieu === F.lieu) && (!F.pub || li.dataset.efPublic === F.pub);
     const appliquer = () => {
       let n = 0;
@@ -6045,7 +6096,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       psomB.forEach((b, i) => { const c = document.getElementById(b.dataset.som); const cache = !!(c && c.hidden); b.closest('li').hidden = cache; psomC[i] = cache ? null : c; });
       $$('[data-ef]', zone).forEach(b => b.setAttribute('aria-pressed', String((b.dataset.ef === 'lieu' ? F.lieu : F.pub) === b.dataset.v)));
       const t = $('[data-ef-tout]', zone); if (t) t.hidden = !(F.lieu || F.pub);
-      const p = $('#ef-n', zone), txt = nSpectacles(n); if (p.textContent !== txt) p.textContent = txt;
+      const p = $('#ef-n', zone), h = nSpectacles(n); if (p.__h !== h) { p.__h = h; p.innerHTML = h; }
     };
     zone.addEventListener('click', e => {
       const b = e.target.closest('button'); if (!b) return;
@@ -7136,13 +7187,16 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   const ETROIT_MENU = matchMedia('(max-width: 759px)');
   const Range = (() => {
     const html = document.documentElement;
-    let y0 = scrollY, cumul = 0, raf = 0;
+    let y0 = scrollY, cumul = 0, raf = 0, calme = 0;
     const poser = oui => { if (html.classList.contains('menu-range') === oui) return; html.classList.toggle('menu-range', oui); const o = $('.u-onglets', main); if (o) o.__haut = undefined; };
     const lire = () => {
       raf = 0;
       const y = scrollY, d = y - y0; y0 = y;
       const ong = vue === 'spectacle' && ETROIT_MENU.matches ? $('.u-onglets', main) : null;
       if (!ong || !ong.classList.contains('colle') || y < 40 || Menu.el.contains(document.activeElement)) { cumul = 0; poser(false); return; }
+      // (un saut, la page posée par le site — une page qui arrive, un onglet posé sous les menus — n'est pas une lecture : le
+      // menu reste)
+      if (performance.now() < calme || Math.abs(d) > VH * .6) { cumul = 0; return; }
       // (un sens tenu : 24 px vers le bas le range, 10 px vers le haut le rend)
       cumul = (d > 0) === (cumul > 0) ? cumul + d : d;
       if (cumul > 24) poser(true); else if (cumul < -10) poser(false);
@@ -7151,8 +7205,122 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     Menu.el.addEventListener('focusin', () => { cumul = 0; poser(false); });
     ETROIT_MENU.addEventListener('change', () => poser(false));
     // (à chaque page : rendu d'un coup, sans glisser, la place des pièces arrimées se lit juste aussitôt — sousLesMenus)
-    return { rendre() { y0 = scrollY; cumul = 0; if (!html.classList.contains('menu-range')) return;
+    return { rendre() { y0 = scrollY; cumul = 0; calme = performance.now() + 500; if (!html.classList.contains('menu-range')) return;
       html.classList.add('sans-glisse'); poser(false); void html.offsetWidth; html.classList.remove('sans-glisse'); } };
+  })();
+
+  /* ---------- chercher partout (CHERCHE) ----------
+     La loupe du menu (et « / » ou Ctrl K) ouvre une boîte de recherche, à la charte, posée haut sur un voile ; au téléphone, elle
+     prend tout l'écran. À chaque lettre, elle propose, tirés de D : les spectacles (leur titre, leur sous-titre, leur genre), les
+     communes de toutes les saisons (leur prochaine date, sinon le nombre de leurs dates) et les pages du site (le menu, les deux
+     pages de l'espace pro, le contact, les saisons passées, les mentions) ; ceux qui commencent par elle d'abord ; vide, elle
+     propose les spectacles et les pages. Le motif combobox de l'ARIA : le focus reste dans le champ, les flèches parcourent les
+     propositions (aria-activedescendant), Entrée ouvre celle qu'on vise (la première sinon), un clic aussi ; le nombre de
+     propositions est dit un instant après la dernière lettre ; Échap ou la croix referment la boîte et rendent le focus là où il
+     était. Tant qu'elle est ouverte, le reste de la page est inerte (Tab va du champ à la croix). Une commune de la saison en
+     cours ouvre les saisons filtrées sur elle (?l=), une autre la recherche des saisons sur son nom : ses saisons s'ouvrent. */
+  const CHERCHE = (() => {
+    const html = document.documentElement, bouton = $('#loupe-b');
+    let boite = null, champ, liste, annonce, ops = [], i = -1, retour = null, tDire = 0, inertes = [];
+    const ouverte = () => !!boite && !boite.hidden;
+    const compte = (n, un, plusieurs) => (n === 1 ? un : String(plusieurs || '').replace('{n}', n));
+    // les propositions possibles, relues dans D à chaque ouverture : [{t, s (la ligne d'en dessous), h (l'adresse), c (la couleur), n (le texte cherché)}]
+    let tout = null;
+    function lister() {
+      const saisons = (menuDe('saisons') || {}).href || '#/saisons';
+      const sp = D.shows.map(s => ({ t: s.titre, s: s.creation || '', h: lienSp(s.slug), c: couleurDe(s.slug), n: norm(`${s.titre} ${s.sousTitre || ''} ${s.genre || ''}`) }));
+      const enCours = new Set([...CARTE.aVenir(), ...CARTE.saison(D.saison)].map(x => x.l));
+      const co = retenu('tout', () => CARTE.tout()).map(x => { const d = D.dates.find(y => y.l === x.l), nom = CARTE.nom(x);
+        return { t: nom, s: d ? `${d.ligneDate} · ${d.titre}` : compte(x.n, L.uneDate, L.nDates), h: enCours.has(x.l) ? `${saisons}?l=${x.l}` : `${saisons}?recherche=${encodeURIComponent(x.c)}`, n: norm(nom) }; })
+        .sort((a, b) => a.t.localeCompare(b.t, 'fr'));
+      const ep = S.espacePro && S.espacePro.titre;
+      const pg = [...(S.menu || []).filter(x => x && x.href).map(x => ({ t: x.texte, h: x.href })),
+        ...['programmer', 'etablissement'].filter(k => E[k]).map(k => ({ t: E[k].texte, s: ep || '', h: `#/espace-pro/${k}` })),
+        { t: L.contact, h: S.ecrire.href }, ...(S.saisons || []).slice(1).filter(x => x.href).map(x => ({ t: x.titre, h: x.href, passe: true })),
+        ...(S.liensLegaux || []).map(x => ({ t: x.texte, h: x.href }))].map(x => ({ ...x, n: norm(`${x.t} ${x.s || ''}`) }));
+      return { sp, co, pg };
+    }
+    function construire() {
+      boite = document.createElement('div');
+      boite.className = 'cs'; boite.id = 'cs'; boite.hidden = true;
+      boite.setAttribute('role', 'dialog'); boite.setAttribute('aria-modal', 'true'); boite.setAttribute('aria-labelledby', 'cs-t');
+      boite.innerHTML = `<div class="cs-voile" data-fermer></div><div class="cs-boite"><h2 class="sr" id="cs-t"></h2>
+        <div class="cs-tete"><label class="cs-champ"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg><input id="cs-q" type="search" autocomplete="off" spellcheck="false" enterkeyhint="go" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="cs-l"></label><button type="button" class="cs-x" data-fermer>${CROIX}</button></div>
+        <div class="cs-l" id="cs-l" role="listbox"></div><p class="sr" id="cs-n" role="status"></p></div>`;
+      document.body.appendChild(boite);
+      champ = $('#cs-q', boite); liste = $('#cs-l', boite); annonce = $('#cs-n', boite);
+      champ.addEventListener('input', () => { dessiner(); clearTimeout(tDire); tDire = setTimeout(dire, 600); });
+      champ.addEventListener('keydown', e => {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); const n = ops.length; if (n) viser(e.key === 'ArrowDown' ? (i + 1) % n : (i <= 0 ? n - 1 : i - 1)); return; }
+        if (e.key === 'Enter') { e.preventDefault(); const o = ops[i] || ops[0]; if (o) o.el.click(); }
+      });
+      boite.addEventListener('keydown', e => {
+        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); fermer(); return; }
+        // (le focus reste dans la boîte : du champ à la croix, et retour)
+        if (e.key === 'Tab') { const x = $('.cs-x', boite), a = document.activeElement;
+          if (!e.shiftKey && a === x) { e.preventDefault(); champ.focus(); } else if (e.shiftKey && a === champ) { e.preventDefault(); x.focus(); } }
+      });
+      boite.addEventListener('click', e => {
+        if (e.target.closest('[data-fermer]')) { fermer(); return; }
+        const o = e.target.closest('[role="option"]'); if (!o) return;
+        // (la même page : la boîte se referme seulement ; une autre : elle se referme et la page change, le focus va à son titre)
+        if (o.getAttribute('href') === location.hash) { e.preventDefault(); fermer(); } else fermer(false);
+      });
+      liste.addEventListener('pointerdown', e => { if (e.target.closest('[role="option"]')) e.preventDefault(); });   // (le focus reste dans le champ)
+      liste.addEventListener('mousemove', e => { const o = e.target.closest('[role="option"]'); if (o && +o.dataset.n !== i) viser(+o.dataset.n); });
+    }
+    function viser(j) {
+      i = j; ops.forEach((o, k) => o.el.setAttribute('aria-selected', String(k === i)));
+      if (ops[i]) { champ.setAttribute('aria-activedescendant', ops[i].el.id); ops[i].el.scrollIntoView({ block: 'nearest' }); } else champ.removeAttribute('aria-activedescendant');
+    }
+    function dessiner() {
+      const t = norm(champ.value).trim(), mots = x => x.n.split(/[\s'’-]+/).some(w => w.startsWith(t));
+      const tri = (xs, max) => (t ? xs.filter(x => x.n.includes(t)).sort((a, b) => (b.n.startsWith(t) - a.n.startsWith(t)) || (mots(b) - mots(a))) : xs).slice(0, max);
+      const sp = tri(tout.sp, t ? 6 : 8), co = t ? tri(tout.co, 8) : [], pg = tri(t ? tout.pg : tout.pg.filter(x => !x.passe), t ? 6 : 12);
+      let k = 0;
+      const groupe = (id, titre, xs) => (xs.length ? `<div role="group" aria-labelledby="cs-g-${id}"><p class="cs-g" id="cs-g-${id}" role="presentation">${esc(titre)}</p>${xs.map(x => `<a class="cs-o" role="option" id="cs-o-${k}" data-n="${k++}" aria-selected="false" tabindex="-1" href="${esc(x.h)}"${x.c ? ` style="--c:${x.c}"` : ''}><i aria-hidden="true"></i><span class="cs-ot">${esc(x.t)}</span>${x.s ? `<span class="cs-os">${esc(x.s)}</span>` : ''}</a>`).join('')}</div>` : '');
+      const tous = [...sp, ...co, ...pg];
+      liste.innerHTML = tous.length ? groupe('s', L.spectacles, sp) + groupe('c', L.communes, co) + groupe('p', L.pages, pg) : `<p class="cs-vide">${esc(L.aucunResultat || '')}</p>`;
+      ops = tous.map((x, j) => ({ ...x, el: liste.querySelector(`[data-n="${j}"]`) }));
+      champ.setAttribute('aria-expanded', String(tous.length > 0));
+      viser(-1);
+      liste.scrollTop = 0;
+    }
+    // (le nombre de propositions, dit au lecteur d'écran, seulement quand on a tapé quelque chose)
+    const dire = () => { if (!ouverte()) return; annonce.textContent = norm(champ.value).trim() ? (ops.length ? compte(ops.length, L.unResultat, L.nResultats) : L.aucunResultat || '') : ''; };
+    function ouvrir() {
+      if (!L.chercherSite) return;
+      if (!boite) construire();
+      if (ouverte()) { champ.focus(); champ.select(); return; }
+      $('#cs-t', boite).textContent = L.chercherSite;
+      champ.placeholder = L.rechercher; champ.setAttribute('aria-label', L.chercherSite); liste.setAttribute('aria-label', L.chercherSite);
+      $('.cs-x', boite).setAttribute('aria-label', L.fermer || '');
+      tout = lister(); retour = document.activeElement;
+      inertes = [...document.body.children].filter(x => x !== boite && !x.inert && !/^(SCRIPT|STYLE|CANVAS)$/.test(x.tagName));
+      inertes.forEach(x => { x.inert = true; });
+      boite.hidden = false; html.classList.add('cs-ouvert'); bouton.setAttribute('aria-expanded', 'true');
+      champ.value = ''; annonce.textContent = ''; dessiner();
+      champ.focus({ preventScroll: true });
+    }
+    function fermer(rendre = true) {
+      if (!ouverte()) return;
+      clearTimeout(tDire);
+      boite.hidden = true; html.classList.remove('cs-ouvert'); bouton.setAttribute('aria-expanded', 'false');
+      inertes.forEach(x => { x.inert = false; }); inertes = [];
+      if (rendre) (retour && retour.isConnected && retour !== document.body ? retour : bouton).focus({ preventScroll: true });
+    }
+    bouton.addEventListener('click', () => (ouverte() ? fermer() : ouvrir()));
+    // « / » (hors d'un champ) ou Ctrl K, ⌘ K : la boîte s'ouvre ; ouverte, Ctrl K revient au champ
+    document.addEventListener('keydown', e => {
+      if (e.defaultPrevented || e.altKey) return;
+      const k = (e.ctrlKey || e.metaKey) && !e.shiftKey && (e.key === 'k' || e.key === 'K'), barre = e.key === '/' && !e.ctrlKey && !e.metaKey;
+      if (!k && !barre) return;
+      const a = e.target;
+      if (!ouverte() && a && (a.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) return;
+      if (ouverte() ? !k : (!L || !L.chercherSite || html.classList.contains('fe7-ouvert') || (typeof INTRO !== 'undefined' && INTRO.ouverte()))) return;
+      e.preventDefault(); ouvrir();
+    });
+    return { ouvrir, fermer, ouverte };
   })();
 
   // les phrases s'écrivent et les photos apparaissent quand elles arrivent à l'écran
@@ -7225,17 +7393,22 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     $('.marque').setAttribute('aria-label', S.titreSuffixe);
     $('#entrees').setAttribute('aria-label', L.menu);
     $('#entrees').innerHTML = parts.entrees;
+    // (la loupe : la recherche sur tout le site, CHERCHE ; sans son libellé dans D, elle ne paraît pas)
+    const lb = $('#loupe-b'); lb.hidden = !L.chercherSite; if (L.chercherSite) { lb.setAttribute('aria-label', L.chercherSite); lb.title = L.chercherSite; }
     $('#pied').innerHTML = parts.pied;
     ajuste();
   }
   // une seule ligne, à toutes les largeurs : le texte entier des pièces si la place le permet, sinon leur nom court, puis plus
-  // serrées, puis sans leurs ventouses ni (au bureau) la marque, puis d'une lettre plus petite (360 px) ; mesuré marque dépliée (celle qu'il a, arrimé), quand le menu change, quand
-  // la largeur change et quand les polices arrivent (jamais au fil d'un rendu)
+  // serrées, puis sans leurs ventouses ni (au bureau) la marque, puis d'une lettre plus petite, puis (la loupe au bout de la
+  // ligne : le téléphone) sans filet ni marge, puis plus serrées encore (360 px), et en dernier recours sans la loupe ; mesuré
+  // marque dépliée (celle qu'il a, arrimé), quand le menu change, quand la largeur change et quand les polices arrivent
+  // (jamais au fil d'un rendu)
   function ajuste() {
     const top = $('#top'), inn = $('.top-in', top);
-    top.classList.remove('serre', 'compact', 'mince', 'fin');
+    const PAS = ['serre', 'compact', 'mince', 'fin', 'etroit', 'tasse', 'sans-loupe'];
+    top.classList.remove(...PAS);
     top.classList.add('mesure');
-    for (const c of ['serre', 'compact', 'mince', 'fin']) { if (inn.scrollWidth <= inn.clientWidth + 1) break; top.classList.add(c); }
+    for (const c of PAS) { if (inn.scrollWidth <= inn.clientWidth + 1) break; top.classList.add(c); }
     // (rien ne saute : sur l'accueil, la marque repliée a été mesurée dépliée ; sans cela, en se repliant de nouveau, elle
     // glissait de toute sa largeur en 300 ms, et le menu centré avec elle, à chaque police arrivée et quand la base répondait)
     const mq = $('.marque', top);
@@ -7427,6 +7600,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const ong = type === 'onglet' ? $('.u-onglets a[aria-current="page"]', main) : null, q0 = ong ? ong.getBoundingClientRect() : null;
     Encre.arreter();
     Range.rendre();
+    CHERCHE.fermer(false);   // (le retour du navigateur, la boîte ouverte : elle se referme, la page prend le focus)
     document.documentElement.classList.remove(vers0);
     cadre();
     let r = rendre(a, false), b = a;
