@@ -1358,7 +1358,10 @@ html:not(.still):not(.sur-place) :is(.ecrit, .apparait).vu { transition: opacity
 .u-onglets.colle::before { opacity: 1; }
 .u-onglets-in { display: flex; align-items: center; gap: clamp(18px, 2.6vw, 44px); min-height: 56px; overflow-x: auto; scrollbar-width: none; }
 .u-onglets-in::-webkit-scrollbar { display: none; }
-.u-onglets .ut { flex: none; max-width: 0; overflow: hidden; white-space: nowrap; opacity: 0; font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: 1.12rem; color: var(--u-texte); transition: max-width var(--k-page) var(--k-doux), opacity var(--k-survol) var(--k-doux); }
+/* (arrimée, la rangée montre le titre du spectacle devant ses entrées : le titre cède la place, coupé d'une ellipse, jamais les
+   entrées, qui restent entières ; un long titre, Mon Royaume pour un cheval, poussait « Établissement scolaire » hors de la
+   rangée de 760 à 1280 px) */
+.u-onglets .ut { flex: 0 1 auto; min-width: 0; max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0; font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: 1.12rem; color: var(--u-texte); transition: max-width var(--k-page) var(--k-doux), opacity var(--k-survol) var(--k-doux); }
 .u-onglets.colle .ut { max-width: 360px; opacity: 1; }
 .u-onglets a { position: relative; flex: none; display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 12px 0; color: var(--u-texte2); font: 600 .97rem/1.2 var(--sans); text-decoration: none; white-space: nowrap; }
 .u-onglets a .pt { flex: none; width: 10px; height: 10px; border-radius: 50%; background: radial-gradient(circle, var(--e) 0 1.8px, transparent 2.3px); box-shadow: inset 0 0 0 1.5px var(--e);
@@ -1819,7 +1822,7 @@ html:not(.still) .une-ph img { transform: translateY(calc(var(--p, 0) * 8%)) sca
   .u-onglets { padding: 6px var(--gout); border: 0; }
   .u-onglets-in { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 0; min-height: 0; padding: 0; overflow: visible; border: 1px solid color-mix(in srgb, var(--u-texte) 30%, transparent); border-radius: 6px; }
   .u-onglets .ut, .u-progres, .u-onglets a .pt { display: none; }
-  .u-onglets a { justify-content: center; min-height: 44px; padding: 5px 6px 7px; white-space: normal; text-align: center; font-size: .78rem; line-height: 1.15; }
+  .u-onglets a { justify-content: center; min-height: 44px; padding: 5px 6px 7px; white-space: normal; text-align: center; font-size: .78rem; line-height: 1.15; text-wrap: balance; hyphens: manual; overflow-wrap: normal; word-break: normal; }
   .u-onglets a + a { border-left: 1px solid color-mix(in srgb, var(--u-texte) 30%, transparent); }
   .u-onglets a[aria-current="page"] { background: color-mix(in srgb, var(--e) 18%, transparent); }
   .u-onglets a::after { left: 12px; right: 12px; bottom: 3px; }
