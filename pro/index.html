@@ -149,6 +149,9 @@ main { max-width: 1120px; margin: 0 auto; padding: 8px calc(20px + var(--ds)) 40
 .porte form { margin-top: 18px; display: grid; gap: 8px; }
 .porte label { font-weight: 600; }
 .porte .ligne { display: flex; gap: 8px; flex-wrap: wrap; }
+/* le code d'accès : lu comme il est écrit dans l'invitation, en capitales espacées */
+.porte input.code { font: 600 1.25rem/1.2 var(--sans); letter-spacing: .14em; text-transform: uppercase; }
+.porte input.code::placeholder { letter-spacing: .14em; text-transform: none; }
 .porte input { flex: 1 1 220px; min-width: 0; padding: 11px 13px; border-radius: 12px; border: 1px solid var(--bord-champ); background: var(--papier); font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size: .95rem; }
 .porte input:focus-visible { outline-offset: 0; }
 .bouton { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 18px; border-radius: 12px; border: 1px solid var(--magenta); background: var(--magenta); color: var(--sur-magenta); font-weight: 600; cursor: pointer; text-decoration: none; }

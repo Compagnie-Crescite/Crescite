@@ -935,6 +935,19 @@ leur public) et donne au pied le lien de la page Facebook de la compagnie (`FACE
 Normandie). Tant qu'il n'est pas lancé, le site montre les textes de la base, donc les anciens. 15 essais
 (`node textes.mjs` : le premier script, les textes de l'import, puis lui, deux fois).
 
+**Le code d'accès des salles (pas encore lancé).** Le dix-neuvième script,
+`supabase/migrations/20261107_crescite_pro_code.sql`, se lance dans le projet de la compagnie et peut être relancé ; puis
+redéployer la fonction `crescite-pro`, qui accepte désormais un code de dix caractères à côté du jeton. Chaque invitation
+de l'espace des salles reçoit un code court (dix caractères sans I, L, O, 0 ni 1, montré « K7QM4-TZPXW »), unique,
+qu'on lit, qu'on dicte et qu'on tape : le programmateur le saisit dans « Code d'accès » de `pro/` (minuscules, tiret et
+espaces admis) ; le lien `…/pro/#<jeton>` marche toujours. Dans l'administration (Espace pro, une invitation), le code
+est écrit en grand, avec « Copier le code », « Copier le message » (le code, l'adresse de l'espace, le lien, la date de
+fin), « Partager… » là où le navigateur partage et « Par SMS » au téléphone ; le courriel de « Écrire » le donne. Les
+codes essayés en vain sont comptés : au-delà de 60 en dix minutes, plus aucun code ne s'ouvre pendant ce temps (le lien
+si). Relancer le quatrième script après lui rend aux salles le seul jeton : relancer alors le dix-neuvième. 18 essais
+(`node pro-code.mjs`), et `node site/code-salles.mjs` (22 vérifications, administration fictive) et
+`site/salles-reponse.mjs` (le code tapé) dans Chromium.
+
 **Écrire dans la base.** `python3 supabase/ecrire.py` est le seul outil par lequel Claude modifie la base quand on le lui
 demande : les tables `crescite_` et les stockages de la compagnie seulement (les tables d'adrienvada.fr restent hors
 d'atteinte), jamais sans filtre, avec un mode `--essai`. `effacer <stockage> <chemin>` efface un fichier d'un stockage de la compagnie. `lot <fichier.json>` applique une liste d'opérations dans l'ordre et s'arrête à la première erreur ;

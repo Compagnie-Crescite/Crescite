@@ -36,6 +36,7 @@ const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')
 const plus = n => { const d = new Date(d0); d.setDate(d.getDate() + n); return iso(d); };
 const J = c => c.repeat(40);                       // un jeton, une clé : 40 caractères
 const BON = J('a'), EXPIRE = J('e'), PANNE = J('p'), VIDE = J('v');
+const CODE = 'K7QM4TZPXW';                         // le code court de la même invitation (le dix-neuvième script)
 const VIDEO = 'https://video.exemple.org/berenice-captation';
 const ESPACE = {
   acces: { nom: 'Le Volcan', contact: 'Mme Leroux', expire_le: plus(7) },
@@ -82,11 +83,12 @@ async function contexte(navigateur, { largeur = 1440, hauteur = 900, mobile = fa
     if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*' } });
     if (url.pathname.startsWith('/rest/v1/crescite_textes')) return json(200, [{ valeur: { contact: { nom: 'Adrien Vada', role: 'Directeur artistique', email: 'diffusion@crescite.fr', telephone: '06 00 00 00 00' } } }]);
     const corps = JSON.parse(req.postData() || '{}');
-    APPELS.push({ fonction: url.pathname.split('/').pop(), corps });
+    APPELS.push({ fonction: url.pathname.split('/').pop(), corps: { ...corps } });
     if (lenteur) await new Promise(r => setTimeout(r, lenteur));
     if (pannes > 0) { pannes--; return json(500, { erreur: 'panne' }); }
     if (url.pathname.endsWith('/crescite-pro')) {
       if (corps.jeton === PANNE) return json(500, { erreur: 'panne' });
+      if (corps.jeton === CODE) corps.jeton = BON;
       if (corps.jeton !== BON && corps.jeton !== VIDE) return json(404, { erreur: 'acces' });
       if (corps.document_id != null) {
         if (corps.document_id === 11) return json(200, { url: VIDEO, titre: 'Captation intégrale' });
@@ -205,6 +207,25 @@ try {
     await page.reload(); await page.waitForSelector('.spectacle');
     ok('salles · un rechargement garde l’espace, le jeton hors de l’adresse', !page.url().includes(BON) && /Bonjour/.test(await texte(page, 'main h1')));
     ok('salles · aucune erreur de page', !erreurs.length, erreurs.join(' | '));
+    await ctx.close();
+  }
+  // le code court : tapé en minuscules avec son tiret, il ouvre l'espace ; un code bien formé mais inconnu le dit
+  {
+    const { ctx, page, erreurs } = await contexte(navigateur);
+    await page.goto(`${PRO}?anim=0`);
+    await page.waitForSelector('#form-code');
+    ok('salles · le champ du code se tape en capitales, avec un exemple de sa forme', await page.evaluate(() => { const c = document.getElementById('code'); return c.getAttribute('autocapitalize') === 'characters' && /XXXXX-XXXXX/.test(c.placeholder); }));
+    await page.fill('#code', 'zzzzz-zzzzz');
+    await page.click('#form-code button[type=submit]');
+    await page.waitForSelector('.porte .message');
+    ok('salles · un code bien formé mais inconnu : « n’ouvre aucun espace »', /n’ouvre aucun espace/.test(await texte(page, '.porte .message')), await texte(page, '.porte .message'));
+    await page.fill('#code', ' k7qm4-tzpxw ');
+    await page.click('#form-code button[type=submit]');
+    await page.waitForSelector('.spectacle');
+    ok('salles · le code, en minuscules avec son tiret, ouvre l’espace', /Bonjour Mme Leroux/.test(await texte(page, 'main h1')));
+    ok('salles · le code part ramené à sa forme, et reste pour la session hors de l’adresse', APPELS.some(x => x.fonction === 'crescite-pro' && x.corps.jeton === CODE) && await page.evaluate(c => sessionStorage.getItem('crescite-pro-jeton') === c && !location.hash, CODE));
+    await capture(page, 'salles-code-bureau');
+    ok('salles · code : aucune erreur de page', !erreurs.length, erreurs.join(' | '));
     await ctx.close();
   }
   // le lien reçu par courriel, un lien refusé, une panne, un espace sans spectacle
