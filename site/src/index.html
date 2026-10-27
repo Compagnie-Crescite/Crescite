@@ -4787,7 +4787,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         for (const a of BRAS) {
           const d = relais.TS.find(x => x.cle === a.cle), T = d && d.cible && TIT.find(x => x.slug === d.cible.cle);
           if (!T) continue;
-          const t = a.t, cles = ['pose', 'depuis', 'but', 'q', 'duree', 'cible', 'derniere', 'etire', 'elastique', 'rac', 'wmin', 'tourne', 'colle'];
+          const t = a.t, cles = ['pose', 'depuis', 'but', 'q', 'duree', 'cible', 'derniere', 'etire', 'elastique', 'rac', 'wmin', 'tourne', 'colle', 'relie'];
           for (const k of cles) t[k] = d[k];
           t.libreRac = -1; t.poly = null;
           a.but = T; a.tenu = T; a.col = T.col; a.teinte = relais.teinte; repris++;
