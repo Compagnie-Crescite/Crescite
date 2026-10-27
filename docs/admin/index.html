@@ -759,6 +759,9 @@ const NOMS_TABLES = { crescite_spectacles: 'Spectacle', crescite_lieux: 'Lieu', 
 // les chiffres des dates (la jauge, les spectateurs, les heures d'ateliers : supabase/migrations/20261029_crescite_chiffres.sql),
 // jamais publiés : lus et écoutés à part, et seulement quand la base les a (E.chiffresInstalles)
 const TABLES_CHIFFRES = { crescite_dates_chiffres: ['chiffres', 'date_id'] };
+// les documents générés (le dix-neuvième script, modeles.js) : E.docsGeneres, sans leur page
+const TABLES_DOCUMENTS = { crescite_documents_generes: ['docsGeneres', 'id'] };
+NOMS_TABLES.crescite_documents_generes = 'Document généré';
 NOMS_TABLES.crescite_dates_chiffres = 'Chiffres d’une date';
 
 // ===================================================================================================== outils
@@ -1037,11 +1040,16 @@ async function demarrer() {
   if (versAdmin) { versAdmin = false; requestAnimationFrame(() => tt('page', getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#5f565a')); }
 }
 
+// la clé de chaque table qu'on lit en entier (id, sinon celle-ci) : l'ordre des pages de 1 000 doit être total, sans quoi
+// deux pages se chevauchent ou se manquent dès qu'une table dépasse 1 000 lignes (trier sur debut ou jour ne suffit pas)
+const CLES_TABLES = { crescite_dates_suivi: ['date_id'], crescite_lieux_suivi: ['lieu_id'], crescite_dates_chiffres: ['date_id'], crescite_textes: ['cle'],
+  crescite_admins: ['user_id'], crescite_equipes: ['date_id', 'personne_id'], crescite_personnes_privees: ['personne_id'], crescite_personnes_suivi: ['personne_id'] };
 async function tout(table, ordre) {
   const out = [];
   for (let a = 0; ; a += 1000) {
     let q = sb.from(table).select('*').range(a, a + 999);
     if (ordre) q = q.order(ordre, { ascending: true });
+    for (const k of CLES_TABLES[table] || ['id']) if (k !== ordre) q = q.order(k, { ascending: true });
     const { data, error } = await q;
     if (error) throw error;
     out.push(...data);
@@ -1052,6 +1060,7 @@ async function chargerTout() {
   const equipe = chargerEquipe();   // l'équipe (equipe.js) : ne lève jamais d'erreur, même quand la base ne l'a pas encore
   const chiffres = tout('crescite_dates_chiffres').then(x => x, () => null);   // null : la base n'a pas encore le dixième script
   const tableau = typeof TABLEAU !== 'undefined' ? TABLEAU.charger() : null;   // la disposition du tableau de bord (tableau.js) : ne lève jamais d'erreur
+  const documents = typeof MODELES !== 'undefined' ? MODELES.charger() : null;   // les documents générés (modeles.js) : ne lève jamais d'erreur
   let ideale = false;               // la base a les tables de TABLES_IDEALE (une au moins se lit)
   const facultative = table => tout(table, 'id').then(x => { ideale = true; return x; }, () => []);   // (par id : des pages de 1 000 qui ne se chevauchent pas)
   const [sp, li, da, re, su, ls, at, se, tx, ad, pr, fr, mt, dv] = await Promise.all([
@@ -1067,6 +1076,7 @@ async function chargerTout() {
   E.chiffres = c || []; E.chiffresInstalles = !!c;
   if (ideale) await lireAlertes();
   await tableau;
+  await documents;
 }
 // les alertes de tournée, avec leur confirmation (le onzième script, supabase/migrations/20261030_crescite_alertes.sql) :
 // sans leur jeton (les liens des courriels) ni rien d'autre que ce que le résumé montre. Sans le script (confirme_le
@@ -1124,6 +1134,11 @@ function ecouter() {
     const ci = sb.channel('crescite-admin-ideale');
     Object.keys(TABLES_IDEALE).forEach(t => ci.on('postgres_changes', { event: '*', schema: 'public', table: t }, p => changement(t, p)));
     ci.subscribe();
+  }
+  if (E.docsInstalles) {
+    const cd = sb.channel('crescite-admin-documents');
+    Object.keys(TABLES_DOCUMENTS).forEach(t => cd.on('postgres_changes', { event: '*', schema: 'public', table: t }, p => changement(t, p)));
+    cd.subscribe();
   }
   if (E.chiffresInstalles) {
     const cc = sb.channel('crescite-admin-chiffres');
@@ -1219,7 +1234,7 @@ setInterval(() => { if (document.visibilityState === 'visible') majTemoin(); }, 
 document.addEventListener('visibilitychange', () => { if (document.visibilityState !== 'visible' || !E.pret) return; majTemoin(); if (!E.direct && !E.horsLigne && Date.now() - (E.luLe || 0) > 900000) actualiser({ discret: true }); });
 
 function changement(t, p) {
-  const [k, pk] = TABLES[t] || TABLES_EQUIPE[t] || TABLES_IDEALE[t] || TABLES_CHIFFRES[t];
+  const [k, pk] = TABLES[t] || TABLES_EQUIPE[t] || TABLES_IDEALE[t] || TABLES_CHIFFRES[t] || TABLES_DOCUMENTS[t];
   const pd = $('.direct.on'); if (pd) { pd.classList.remove('bat'); void pd.offsetWidth; pd.classList.add('bat'); }
   // la clé : une colonne, ou plusieurs (l'équipe d'une date : date_id et personne_id)
   const coll = E[k], ligne = p.eventType === 'DELETE' ? p.old : p.new, cles = [].concat(pk);

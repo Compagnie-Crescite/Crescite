@@ -362,8 +362,11 @@ compte du projet inscrit dans `crescite_admins`.
     d'accueil, depuis une date (ses séances, son lieu, son équipe en tournée) ou une piste (sa structure, son contact), à
     partir des modèles de la compagnie (Textes du site → « Modèle : devis »…, créés avec un texte de départ à la première
     demande, à relire), les coordonnées et le contact de la compagnie, le montant, la TVA (5,5 %) et les conditions
-    demandés dans un formulaire ; numérotés (DEV-2026-003…), en A4 avec le logo, imprimés ou enregistrés en PDF par le
-    navigateur, gardés dans la fiche (`crescite_textes`, `documents:generes`) et réimprimables.
+    demandés dans un formulaire (et l'échéance d'une facture) ; en A4 avec le logo, imprimés ou enregistrés en PDF par le
+    navigateur. Chacun est émis par la base (`crescite_documents_generes`, le dix-neuvième script, réservé à
+    l'administration) : elle donne le numéro (DEV-2026-003…, le suivant de l'année pour ce type, sous un verrou) et garde
+    la page telle qu'émise, que « Imprimer » reproduit à l'identique ; un document émis ne change plus, une facture ne
+    se supprime pas. Sans le script, rien n'est émis.
   - **Les séries et modèles de dates** (`admin/series.js`) : « Série… » dans une fiche pose d'un coup les séances du … au
     …, les jours choisis, aux heures voulues (10:00, 14:30) ; « Dupliquer vers… » sur une sélection recopie les dates
     décalées de n jours (364 : le même jour de la semaine l'an d'après), en option, avec « Annuler » ; chaque spectacle a
@@ -956,6 +959,14 @@ texte reste au journal. Il harmonise aussi les textes courts (`RETOUCHES` : « �
 leur public) et donne au pied le lien de la page Facebook de la compagnie (`FACEBOOK`, celui de sa fiche à l'ODIA
 Normandie). Tant qu'il n'est pas lancé, le site montre les textes de la base, donc les anciens. 15 essais
 (`node textes.mjs` : le premier script, les textes de l'import, puis lui, deux fois).
+
+**Les documents générés à l'abri (pas encore lancé, urgent).** Le dix-neuvième script,
+`supabase/migrations/20261107_crescite_documents_generes.sql`, se lance dans le projet de la compagnie et peut être
+relancé. Les devis, contrats, factures et fiches techniques étaient gardés dans `crescite_textes`, que le site public lit
+en entier : ils vont dans `crescite_documents_generes`, que seule l'administration lit, et la base les numérote
+(`crescite_emettre_document`). Les clés `modele:…` et `modele-date:…` des textes ne sont plus publiques (même règle dans le
+script de base, qu'une relance ne rouvre donc pas). Tant qu'il n'est pas lancé, l'administration n'émet aucun document.
+19 essais (`node documents_generes.mjs` : tous les scripts, un devis gardé à l'ancienne, puis lui, deux fois).
 
 **Écrire dans la base.** `python3 supabase/ecrire.py` est le seul outil par lequel Claude modifie la base quand on le lui
 demande : les tables `crescite_` et les stockages de la compagnie seulement (les tables d'adrienvada.fr restent hors

@@ -4,10 +4,13 @@
    première demande), les champs remplis depuis la date (le spectacle, les séances, le lieu, l'équipe en tournée, le
    contact du suivi) ou depuis la piste de diffusion (la structure, le contact), le montant, la TVA (5,5 % pour un
    spectacle vivant) et les conditions demandés dans un formulaire. Numérotés (DEV-2026-003…), mis en page en A4 avec le
-   logo et les coordonnées de la compagnie, imprimés ou enregistrés en PDF par le navigateur. Chaque document généré est
-   gardé (crescite_textes, documents:generes : son numéro, ses champs) et se réimprime depuis la fiche. Les modèles sont
-   un texte de départ : la compagnie les relit et les adapte dans Textes du site. Chargé après tiroir.js et selection.js.
-   MODELES.generer({ date, prospect, type })   MODELES.bloc(el, { date, prospect })   MODELES.TYPES   MODELES.champs(ctx) */
+   logo et les coordonnées de la compagnie, imprimés ou enregistrés en PDF par le navigateur. Chaque document est émis par
+   la base (crescite_documents_generes, le dix-neuvième script, réservé à l'administration) : elle donne le numéro, le
+   suivant de l'année pour ce type, et garde la page telle qu'émise, que « Imprimer » reproduit à l'identique ; un
+   document émis ne change plus, une facture ne se supprime pas. Sans le script, rien n'est émis (les documents ne vont
+   plus dans les textes publics du site). Les modèles sont un texte de départ : la compagnie les relit et les adapte dans
+   Textes du site. Chargé après tiroir.js et selection.js.
+   MODELES.charger()   MODELES.generer({ date, prospect, type })   MODELES.bloc(el, { date, prospect })   MODELES.TYPES   MODELES.champs(ctx) */
 const MODELES = (() => {
   const TYPES = {
     devis: { nom: 'Devis', prefixe: 'DEV', montant: true, validite: 'deux mois' },
@@ -15,7 +18,20 @@ const MODELES = (() => {
     facture: { nom: 'Facture', prefixe: 'FAC', montant: true },
     fiche_technique: { nom: 'Fiche technique d’accueil', prefixe: 'FT', montant: false },
   };
-  const CLE_GENERES = 'documents:generes', TVA = 5.5;
+  const TVA = 5.5, SCRIPT = '20261107_crescite_documents_generes.sql';
+  // les documents émis, sans leur page (lue à la demande) : E.docsGeneres ; E.docsInstalles faux tant que le script manque
+  const COLS = 'id,type,annee,rang,numero,date_id,dates,prospect_id,demande_id,structure,montant_ht,montant_ttc,valeurs,emis_le,echeance,paye_le,annule_le,note';
+  async function charger() {
+    const out = [];
+    for (let a = 0; ; a += 1000) {
+      const { data, error } = await sb.from('crescite_documents_generes').select(COLS).order('id', { ascending: false }).range(a, a + 999);
+      if (error) { E.docsGeneres = []; E.docsInstalles = false; return false; }
+      out.push(...data);
+      if (data.length < 1000) break;
+    }
+    E.docsGeneres = out; E.docsInstalles = true;
+    return true;
+  }
   const CHAMPS = ['numero', 'date_du_jour', 'objet', 'compagnie', 'compagnie_adresse', 'compagnie_ville', 'compagnie_legal', 'contact_nom', 'contact_role', 'contact_email', 'contact_telephone',
     'structure', 'structure_adresse', 'structure_contact', 'spectacle', 'duree', 'genre', 'dates', 'premiere_date', 'nb_representations', 'lieu', 'jauge', 'plateau', 'equipe', 'equipe_nombre',
     'montant_ht', 'tva_taux', 'tva', 'montant_ttc', 'conditions', 'validite'];
@@ -56,14 +72,16 @@ const MODELES = (() => {
     if (error) console.error(error); else if (!E.textes.some(t => t.cle === cle)) E.textes.push({ cle, valeur: v });
     return v;
   }
-  const generes = () => { const v = texteDe(CLE_GENERES); return Array.isArray(v) ? v : []; };
-  async function garder(doc) {
-    const xs = [doc, ...generes()].slice(0, 500);
-    const { error } = await sb.from('crescite_textes').upsert({ cle: CLE_GENERES, valeur: xs }, { onConflict: 'cle' });
-    if (error) { erreur(error, 'Document imprimé, mais pas gardé'); return; }
-    const t = E.textes.find(x => x.cle === CLE_GENERES); if (t) t.valeur = xs; else E.textes.push({ cle: CLE_GENERES, valeur: xs });
+  const generes = () => (Array.isArray(E.docsGeneres) ? E.docsGeneres : []).slice().sort((a, b) => b.id - a.id);
+  const absent = () => annoncer(`Les documents ne s’émettent plus tant que le dix-neuvième script manque : exécutez ${SCRIPT} dans Supabase (SQL Editor), puis rechargez la page.`, { erreur: true, delai: 15000 });
+  // la page telle qu'émise ; un document repris de l'ancienne liste n'en a pas : elle est recomposée (et le dit)
+  async function pageEmise(x, ctx) {
+    const { data, error } = await sb.from('crescite_documents_generes').select('html').eq('id', x.id).single();
+    if (error) { erreur(error, 'Document introuvable'); return null; }
+    if (data.html) return data.html;
+    annoncer('Ce document date d’avant le dix-neuvième script : sa page est recomposée d’après la base d’aujourd’hui.');
+    return page(x.type, await modele(x.type), champs({ ...ctx, valeurs: x.valeurs || { numero: x.numero } }));
   }
-  const numero = type => { const an = AUJ.slice(0, 4), n = generes().filter(d => d.type === type && String(d.numero || '').includes(`-${an}-`)).length + 1; return `${TYPES[type].prefixe}-${an}-${String(n).padStart(3, '0')}`; };
   const euros = n => `${(Number(n) || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
   const lignes = xs => (Array.isArray(xs) ? xs : String(xs || '').split('\n')).map(x => String(x || '').trim()).filter(Boolean);
   const jourLong = j => (j ? new Date(`${j}T12:00:00`).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '');
@@ -135,34 +153,43 @@ const MODELES = (() => {
       { k: 'objet', t: 'texte', l: 'Objet', valeur: remplir(m0.objet, x0.c), large: true },
       { k: 'montant_ht', t: 'nombre', l: 'Montant HT (€)', valeur: p?.montant_estime || '', pas: 0.01 }, { k: 'tva_taux', t: 'nombre', l: 'TVA (%)', valeur: TVA, pas: 0.1 },
       { k: 'conditions', t: 'long', l: 'Conditions', valeur: m0.conditions || '', lignes: 3, large: true },
+      { k: 'echeance', t: 'date', l: 'Échéance (facture)', valeur: AGENDA.iso(new Date(Date.now() + 30 * 864e5)) },
     ], ok: 'Générer et imprimer', note: 'Les modèles se relisent et se modifient dans Textes du site (« Modèle : devis »…). Le navigateur imprime ou enregistre en PDF.',
     enregistrer: async y => { if (!String(y.structure || '').trim()) return 'Un destinataire.'; if (TYPES[y.type]?.montant && !(Number(y.montant_ht) > 0)) return 'Un montant HT.'; return y; } });
     if (!v) return null;
-    const m = await modele(v.type), num = numero(v.type), valeurs = { ...v, numero: num };
-    const x = champs({ date: d, prospect: p, valeurs }), html = page(v.type, m, x);
-    const doc = { numero: num, type: v.type, le: new Date().toISOString(), date_id: d ? d.id : null, prospect_id: p ? p.id : null, structure: x.c.structure, montant_ttc: TYPES[v.type].montant ? x.ttc : null, valeurs };
-    imprimer(html);
-    await garder(doc);
-    annoncer(`${TYPES[v.type].nom} ${num} : imprimé (ou enregistré en PDF).`);
-    if (apres) apres(doc);
-    return doc;
+    if (!E.docsInstalles && !(await charger())) { absent(); return null; }
+    // la page porte {{numero}} : la base le remplace par le numéro qu'elle donne
+    const m = await modele(v.type), valeurs = { ...v, numero: '{{numero}}' };
+    const x = champs({ date: d, prospect: p, valeurs }), avecMontant = TYPES[v.type].montant;
+    const { data: doc, error } = await sb.rpc('crescite_emettre_document', { type_: v.type, html_: page(v.type, m, x), valeurs_: { ...v, numero: undefined },
+      date_: d ? d.id : null, dates_: d ? [d.id] : [], prospect_: p ? p.id : null, demande_: null, structure_: x.c.structure,
+      ht: avecMontant ? x.ht : null, ttc: avecMontant ? x.ttc : null, echeance_: v.type === 'facture' && v.echeance ? v.echeance : null });
+    if (error) { erreur(error, 'Document non émis'); return null; }
+    imprimer(doc.html);
+    const { html, ...sansPage } = doc;
+    remplacerDoc(sansPage);
+    annoncer(`${TYPES[v.type].nom} ${doc.numero} : émis, imprimé (ou enregistré en PDF).`);
+    if (apres) apres(sansPage);
+    return sansPage;
   }
+  const remplacerDoc = x => { if (!Array.isArray(E.docsGeneres)) E.docsGeneres = []; const i = E.docsGeneres.findIndex(y => y.id === x.id); if (i >= 0) E.docsGeneres[i] = x; else E.docsGeneres.push(x); };
   // le bloc « Documents » d'une fiche : ceux déjà générés pour cette date ou cette piste, et les générer
   function bloc(el, { date: d = null, prospect: p = null } = {}) {
     if (!el) return;
     const miens = generes().filter(x => (d && x.date_id === d.id) || (p && x.prospect_id === p.id));
     const quand = t => new Date(t).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
     el.innerHTML = `<h3>Documents <span class="aide" style="font-weight:400">— devis, contrat, facture, fiche technique</span></h3>
-      ${miens.length ? `<ul class="liste-simple doc-liste">${miens.map(x => `<li><b>${esc(x.numero)}</b> ${esc(TYPES[x.type]?.nom || x.type)}${x.montant_ttc != null ? ` · ${esc(euros(x.montant_ttc))} TTC` : ''} <span class="compte">· ${esc(quand(x.le))}</span>
-        <span class="doc-outils"><button type="button" class="btn petit" data-doc-imprimer="${esc(x.numero)}">Imprimer</button><button type="button" class="btn petit" data-doc-ouvrir="${esc(x.numero)}">Ouvrir</button></span></li>`).join('')}</ul>` : '<p class="aide">Aucun document généré pour l’instant.</p>'}
+      ${miens.length ? `<ul class="liste-simple doc-liste">${miens.map(x => `<li><b>${esc(x.numero)}</b> ${esc(TYPES[x.type]?.nom || x.type)}${x.montant_ttc != null ? ` · ${esc(euros(x.montant_ttc))} TTC` : ''} <span class="compte">· ${esc(quand(x.emis_le))}</span>
+        <span class="doc-outils"><button type="button" class="btn petit" data-doc-imprimer="${x.id}">Imprimer</button><button type="button" class="btn petit" data-doc-ouvrir="${x.id}">Ouvrir</button></span></li>`).join('')}</ul>`
+        : E.docsInstalles === false ? `<p class="aide">Les documents ne s’émettent pas encore : exécutez <code>${SCRIPT}</code> dans Supabase.</p>` : '<p class="aide">Aucun document généré pour l’instant.</p>'}
       <div class="doc-boutons">${Object.entries(TYPES).map(([k, t]) => `<button type="button" class="btn petit" data-doc-generer="${k}">${esc(t.nom)}…</button>`).join('')}</div>`;
     if (el.dataset.docRelie) return;
     el.dataset.docRelie = '1';
     el.addEventListener('click', async e => {
       const b = e.target.closest('[data-doc-generer], [data-doc-imprimer], [data-doc-ouvrir]'); if (!b) return;
       if (b.dataset.docGenerer) { await generer({ date: d, prospect: p, type: b.dataset.docGenerer, apres: () => bloc(el, { date: d, prospect: p }) }); return; }
-      const x = generes().find(y => y.numero === (b.dataset.docImprimer || b.dataset.docOuvrir)); if (!x) return;
-      const m = await modele(x.type), html = page(x.type, m, champs({ date: d, prospect: p, valeurs: x.valeurs || { numero: x.numero } }));
+      const x = generes().find(y => String(y.id) === (b.dataset.docImprimer || b.dataset.docOuvrir)); if (!x) return;
+      const html = await pageEmise(x, { date: d, prospect: p }); if (!html) return;
       if (b.dataset.docImprimer) imprimer(html); else ouvrir(html);
     });
   }
@@ -170,5 +197,5 @@ const MODELES = (() => {
   const style = document.createElement('style');
   style.textContent = `.doc-boutons { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; } .doc-liste li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; } .doc-outils { display: inline-flex; gap: 4px; margin-left: auto; }`;
   document.head.append(style);
-  return { generer, bloc, TYPES, champs, modele, generes, page };
+  return { charger, generer, bloc, TYPES, champs, modele, generes, page };
 })();
