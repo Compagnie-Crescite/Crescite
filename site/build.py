@@ -488,6 +488,8 @@ LIBELLES = {
     "tous": "Tous",
     # une adresse qui ne mène à aucune vue : sa page, et d'où repartir
     "introuvable": "Page introuvable", "introuvableTexte": "Cette adresse ne mène à aucune page du site.",
+    # (la page introuvable, quand l'adresse nomme presque un spectacle : ceux qu'elle rappelle)
+    "peutEtre": "Peut-être cherchiez-vous",
     # la ligne de navigation du pied de page (son nom pour les lecteurs d'écran)
     "planDuSite": "Plan du site",
     # la page lue sans JavaScript (le <noscript> de la page assemblée) : ce qu'il lui faut
