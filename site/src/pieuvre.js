@@ -410,13 +410,14 @@ const PIEUVRE = (() => {
     avancer(dt, o = {}) {
       this.tourne = o.tourne || 0; this.tps = o.temps || 0;
       const bob = this.bob = o.bob || { x: 0, y: 0 };
-      // (une enfant : sa racine est sur l'épine de son parent, là où elle y est au repos, et pivote avec elle ; le parent a avancé avant)
+      // (une enfant : sa racine est attachée à l'épine de son parent, là où elle l'est au repos (au même écart), et pivote avec
+      // elle ; le parent a avancé avant)
       if (this.parent) {
-        const p = this.parent.t, k = this.parent.k, P = p.pose;
+        const { t: p, k, du, dv } = this.parent, P = p.pose;
         if (P) {
-          let d = P.sg[Math.min(k, p.M - 1)] - p.RS[Math.min(k, p.M - 1)]; d = Math.atan2(Math.sin(d), Math.cos(d));
-          this.tourne += d; this.s = p.s;
-          this.ox = p.X[k] - this.RX[0] * this.s - bob.x; this.oy = p.Y[k] - this.RY[0] * this.s - bob.y; this.pose_ = true;
+          const a = P.th[k], d = norm(a - p.RT[k]), s = this.s = p.s, ca = Math.cos(a), sa = Math.sin(a);
+          this.tourne += d;
+          this.ox = p.X[k] + (du * ca - dv * sa) * s - this.RX[0] * s - bob.x; this.oy = p.Y[k] + (du * sa + dv * ca) * s - this.RY[0] * s - bob.y; this.pose_ = true;
         }
       }
       // (le repos d'une tentacule glissée sur la tête : sa forme du logo, tournée dans le sens de son attache)
@@ -787,8 +788,110 @@ const PIEUVRE = (() => {
     return out;
   }
 
+  /* le logo vivant : le tracé même du logo (ses quatre chemins, en pair-impair), chaque point emporté par ce qui le porte :
+     un point du bord d'une tentacule par elle (noté une fois dans le repère de son épine au repos : le point de l'épine le plus
+     proche, puis son décalage le long de la tangente et de la normale, et reposé à chaque image sur son épine du moment), un
+     point de la tête par la tête (tete). Au repos, c'est exactement le logo ; quand les tentacules ondulent, il ondule avec
+     elles d'un seul tenant : les croisements, les bouts coupés, les jours restent ceux du dessin (la peau d'une tentacule, un
+     ruban, n'en est qu'une approximation : dessinée telle quelle près du repos, elle laissait des crochets et des encoches).
+     Pour une pieuvre dont les tentacules sont à leur place (ondulation comprise) : dès qu'elles en partent, chacune se dessine
+     elle-même (dessiner). Calculé une fois (la géométrie est celle du dessin) */
+  let CARTE = null;
+  function carte(ts) {
+    if (CARTE) return CARTE;
+    const C = contours(), d2 = (x, y, ax, ay, bx, by) => { const vx = bx - ax, vy = by - ay, l = vx * vx + vy * vy, u = l ? Math.min(1, Math.max(0, ((x - ax) * vx + (y - ay) * vy) / l)) : 0; const dx = x - ax - u * vx, dy = y - ay - u * vy; return dx * dx + dy * dy; };
+    // (la peau de repos de chaque tentacule, et sa boîte)
+    const peaux = ts.map(t => {
+      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      for (let i = 0; i < t.m; i++) { x0 = Math.min(x0, t.VX[i]); x1 = Math.max(x1, t.VX[i]); y0 = Math.min(y0, t.VY[i]); y1 = Math.max(y1, t.VY[i]); }
+      return { t, x0, y0, x1, y1 };
+    });
+    const dedans = (t, x, y) => { let c = false; for (let i = 0, j = t.m - 1; i < t.m; j = i++) { const yi = t.VY[i], yj = t.VY[j]; if ((yi > y) !== (yj > y) && x < (t.VX[j] - t.VX[i]) * (y - yi) / (yj - yi) + t.VX[i]) c = !c; } return c; };
+    // (ses porteurs, pondérés : la tentacule sur le bord de laquelle il est (à 1,5 unité), sinon celle où il est, sinon la plus
+    // proche (à 6 unités) ; près d'une jonction ou d'un croisement, il suit aussi les voisines à moins de 7 unités de leur
+    // bord, d'autant moins qu'il en est loin : un bord partagé par deux tentacules se courbe de l'une à l'autre, sans zigzag,
+    // et les deux bords du jour d'un croisement bougent presque ensemble (le jour reste ouvert ; refermé, le remplissage
+    // pair-impair y ferait des encoches))
+    const qui = (x, y) => {
+      const ds = [];
+      peaux.forEach((h, n) => {
+        if (x < h.x0 - 7 || x > h.x1 + 7 || y < h.y0 - 7 || y > h.y1 + 7) return;
+        const t = h.t;
+        let d = Infinity;
+        for (let i = 0; i < t.m; i++) { const j = (i + 1) % t.m; d = Math.min(d, d2(x, y, t.VX[i], t.VY[i], t.VX[j], t.VY[j])); }
+        ds.push({ n, d: Math.sqrt(d), dans: dedans(t, x, y) });
+      });
+      if (!ds.length) return [];
+      ds.sort((a, b) => a.d - b.d);
+      const bord = ds[0].d < 1.5 ? ds[0] : ds.filter(e => e.dans)[0] || (ds[0].d < 6 ? ds[0] : null);
+      if (!bord) return [];
+      const L = [{ n: bord.n, w: 1 }];
+      for (const e of ds) if (e.n !== bord.n && e.d < 7 && L.length < 3) L.push({ n: e.n, w: (1 - e.d / 7) * .8 });
+      const tot = L.reduce((a, e) => a + e.w, 0);
+      L.forEach(e => { e.w /= tot; });
+      return L;
+    };
+    // (le repère de l'épine au repos le plus proche du point : l'indice, la fraction, et le point dans ce repère)
+    const repere = (t, x, y) => {
+      let best = Infinity, kb = 0, fb = 0;
+      for (let k = 0; k < t.M; k++) {
+        const ax = t.RX[k], ay = t.RY[k], vx = t.RX[k + 1] - ax, vy = t.RY[k + 1] - ay, l = vx * vx + vy * vy, u = l ? Math.min(1, Math.max(0, ((x - ax) * vx + (y - ay) * vy) / l)) : 0;
+        const dx = x - ax - u * vx, dy = y - ay - u * vy, d = dx * dx + dy * dy;
+        if (d < best) { best = d; kb = k; fb = u; }
+      }
+      const cx = lerp(t.RX[kb], t.RX[kb + 1], fb), cy = lerp(t.RY[kb], t.RY[kb + 1], fb), a = lerp(t.RT[kb], t.RT[kb + 1], fb), ca = Math.cos(a), sa = Math.sin(a);
+      return [kb, fb, (x - cx) * ca + (y - cy) * sa, -(x - cx) * sa + (y - cy) * ca];
+    };
+    // (pour chaque point : jusqu'à trois porteurs, leur poids, et le point dans le repère de chacun ; aucun : la tête)
+    CARTE = C.map(({ P, segs }) => {
+      const n = P.length / 2, Q = [];
+      for (let j = 0; j < n; j++) Q.push(qui(P[2 * j], P[2 * j + 1]));
+      // (les points de contrôle d'une courbe dont les deux bouts ont les mêmes porteurs les suivent : la courbe reste entière)
+      const meme = (a, b) => a.length === b.length && a.every((e, i) => e.n === b[i].n && Math.abs(e.w - b[i].w) < 1e-9);
+      let prec = -1;
+      for (const sg of segs) {
+        if (sg[0] === 'C') { if (prec >= 0 && meme(Q[prec], Q[sg[3]])) Q[sg[1]] = Q[sg[2]] = Q[sg[3]]; prec = sg[3]; } else prec = sg[1];
+      }
+      const pts = Q.map((L, j) => L.map(e => ({ n: e.n, w: e.w, r: repere(peaux[e.n].t, P[2 * j], P[2 * j + 1]) })));
+      return { pts, cles: peaux.map(h => h.t.cle) };
+    });
+    return CARTE;
+  }
+  // le logo vivant, peint dans g (en px de la page), de l'encre : o = { ox, oy, s } l'origine du dessin à l'écran et son échelle,
+  // theta, dx, dy la tête vivante (comme corpsVivant), bob le flottement ; les tentacules ts ont avancé pour cette image
+  function logo(g, ts, o, encre = '#fff') {
+    const C = contours(), K = carte(ts), s = o.s, theta = o.theta || 0, dx = o.dx || 0, dy = o.dy || 0, bx = o.ox + (o.bob ? o.bob.x : 0), by = o.oy + (o.bob ? o.bob.y : 0), pt = [0, 0];
+    const parCle = new Map(ts.map(t => [t.cle, t]));
+    g.beginPath();
+    C.forEach(({ P, W, segs }, n) => {
+      const { pts, cles } = K[n], T = cles.map(c => parCle.get(c));
+      const place = (j, out) => {
+        const L = pts[j];
+        if (L.length && L.every(e => T[e.n] && T[e.n].pose)) {
+          let x = 0, y = 0;
+          for (const { n: i, w, r } of L) {
+            const t = T[i], [k, f] = r, u = r[2] * t.s, v = r[3] * t.s, P_ = t.pose;
+            const cx = lerp(t.X[k], t.X[k + 1], f), cy = lerp(t.Y[k], t.Y[k + 1], f), a = lerp(P_.th[k], P_.th[k + 1], f), ca = Math.cos(a), sa = Math.sin(a);
+            x += w * (cx + u * ca - v * sa); y += w * (cy + u * sa + v * ca);
+          }
+          out[0] = x; out[1] = y;
+        } else { tete(P[2 * j], P[2 * j + 1], W[j], theta, dx, dy, out); out[0] = bx + out[0] * s; out[1] = by + out[1] * s; }
+        return out;
+      };
+      const p1 = [0, 0], p2 = [0, 0];
+      for (const sg of segs) {
+        if (sg[0] === 'M') { place(sg[1], pt); g.moveTo(pt[0], pt[1]); }
+        else if (sg[0] === 'L') { place(sg[1], pt); g.lineTo(pt[0], pt[1]); }
+        else { place(sg[1], p1); place(sg[2], p2); place(sg[3], pt); g.bezierCurveTo(p1[0], p1[1], p2[0], p2[1], pt[0], pt[1]); }
+      }
+      g.closePath();
+    });
+    g.fillStyle = encre; g.fill('evenodd');
+  }
+
   return {
     pret: !!(G && G.bras && G.bras.length),
+    logo,
     lisere: (G && G.lisere) || 2.5,
     COU, SOMMET, poids, contours, tete,
     // le corps vivant, peint dans g (en unités du dessin, le repère déjà posé), de l'encre : le logo déformé par la tête (theta
@@ -870,7 +973,10 @@ const PIEUVRE = (() => {
         const p = ts.find(x => x.cle === t.parentCle); if (!p) continue;
         let k = 0, best = Infinity;
         for (let j = 0; j <= p.M; j++) { const d = (p.RX[j] - t.RX[0]) ** 2 + (p.RY[j] - t.RY[0]) ** 2; if (d < best) { best = d; k = j; } }
-        t.parent = { t: p, k };
+        // (et l'écart de sa racine à ce point, dans le repère de l'épine du parent : posée sur l'épine même, la frange était
+        // décalée, au repos, de toute la distance qui l'en sépare dans le dessin)
+        const a = p.RT[k], ex = t.RX[0] - p.RX[k], ey = t.RY[0] - p.RY[k];
+        t.parent = { t: p, k, du: ex * Math.cos(a) + ey * Math.sin(a), dv: -ex * Math.sin(a) + ey * Math.cos(a) };
       }
       return ts.sort((a, b) => (a.parent ? 1 : 0) - (b.parent ? 1 : 0) || a.i - b.i);
     },
