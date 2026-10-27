@@ -1372,6 +1372,21 @@ html .ed-annonce { background: var(--encre); border-left: 3px solid var(--magent
    (docs/spectacles-mobile.html). */
 .tdm-g .pil-tete { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 14px 0 10px; }
 .pil-tete h1 { font-size: 1.55rem; }
+/* trier les spectacles : les puces des filtres des saisons (tous, en tournée, en création, leur nombre), le nombre gardé au bout ;
+   au téléphone, sur une ligne */
+.tdm-tri { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin: 8px 0 14px; }
+.tdm-tri-p { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.tdm-tri .s7-chip small { font: 700 .74rem/1 var(--texte); font-variant-numeric: tabular-nums; color: var(--gris); }
+.tdm-n { margin: 0; font: 500 1rem/1.2 var(--titre); font-variant-numeric: tabular-nums; white-space: nowrap; }
+@media (max-width: 899px) {
+  /* (au téléphone, la pile garde sa place : les trois puces sur une ligne, le nombre gardé est celui de la puce choisie ; il
+     reste dit aux lecteurs d'écran) */
+  .tdm-tri { margin: 0 0 12px; }
+  .tdm-tri-p { gap: 6px; }
+  .tdm-tri .s7-chip { padding: .38rem .7rem; }
+  .tdm-n { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+.tdm-i[hidden], .pil-aff[hidden] { display: none; }
 .pil-sai { font: 700 .66rem/1.3 var(--etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--saison-texte); text-decoration: none; white-space: nowrap; }
 a.pil-sai:hover { text-decoration: underline; text-underline-offset: .3em; }
 .pil { list-style: none; display: flex; flex-direction: column; gap: 4px; margin: 0 -6px; padding: 0 0 22px; }
@@ -6275,7 +6290,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   // (la fenêtre passe d'un côté à l'autre de 900 px sur la page : la vue se refait en place, le sommaire et son aperçu sur la
   // ligne montrée, ou la pile sur l'affiche dépliée)
   ETROIT_TDM.addEventListener('change', () => { if (vue === 'spectacles') refaire(); });
-  const ligneTdm = (s, i, actif) => `<li class="tdm-i" data-motif="${esc(mo(s))}" style="${styleTdm(s)}">
+  const ligneTdm = (s, i, actif) => `<li class="tdm-i" data-motif="${esc(mo(s))}" data-slug="${esc(s.slug)}" style="${styleTdm(s)}">
       <a class="tdm-a${actif ? ' est-actif' : ''}" href="${lienSp(s.slug)}" data-i="${i}" data-slug="${esc(s.slug)}">
         <span class="tdm-v"${edP(s, 'photo')}><img src="${D.photos[s.slug]}" alt="" width="112" height="75" loading="lazy" decoding="async"></span>
         <span class="tdm-ligne"><span class="tdm-t"><span class="tt"${edS(s, 'titre')}>${esc(s.titre)}</span></span><span class="tdm-fil" aria-hidden="true"></span>${s.annee ? `<span class="tdm-an">${esc(s.annee)}</span>` : ''}</span>
@@ -6356,28 +6371,78 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const deja = pileOuverte ? affs.find(x => x.dataset.slug === pileOuverte) : null;
     if (deja) deplier(deja, true);
   }
-  function spectacles() {
+  function spectacles(q, surPlace) {
     vue = 'spectacles';
-    const sh = D.shows, i0 = Math.max(0, sh.findIndex(s => s.slug === tdmChoisi)), S0 = (S.saisons || [])[0] || {}, ms = menuDe('saisons');
+    // (le tri de l'adresse, relu à l'arrivée et au retour arrière : ?garder=en-tournee, ?garder=en-creation)
+    if (!surPlace) garderTdm = q && TRI_TDM[q.get('garder')] ? q.get('garder') : null;
+    const sh = D.shows, gardeTdm = s => !garderTdm || TRI_TDM[garderTdm](s);
+    const i0 = Math.max(0, sh.findIndex(s => s.slug === tdmChoisi && gardeTdm(s)), sh.findIndex(gardeTdm)), S0 = (S.saisons || [])[0] || {}, ms = menuDe('saisons');
     tdmChoisi = sh[i0] ? sh[i0].slug : null;
     if (!largeTdm()) {
       main.innerHTML = `<section class="tdm"><div class="tdm-g">
         <div class="page-titre pil-tete"><h1 id="tdm-h" tabindex="-1">${esc(MENU.spectacles.texte)}</h1>${S0.titre ? (ms ? `<a class="pil-sai" href="${esc(ms.href)}">${esc(S0.titre)}</a>` : `<span class="pil-sai">${esc(S0.titre)}</span>`) : ''}</div>
+        ${filtresTdm(sh)}
         <ol class="pil" aria-labelledby="tdm-h">${sh.map(afficheTdm).join('')}</ol>
       </div></section>`;
       lierPile();
+      lierFiltresTdm(null);
       return { titre: MENU.spectacles.texte, menu: 'spectacles' };
     }
     main.innerHTML = `<section class="tdm">
       <div class="tdm-g">
         <div class="page-titre"><h1 id="tdm-h" tabindex="-1"><span class="fleur">${esc(MENU.spectacles.texte)}</span></h1></div>
         <p class="tdm-mast"><span class="tdm-filets" data-mv="trace" aria-hidden="true"></span>${S.nom ? `<span>${esc(S.nom)}</span>` : ''}${S0.titre ? (ms ? `<a href="${esc(ms.href)}">${esc(S0.titre)}</a>` : `<span>${esc(S0.titre)}</span>`) : ''}</p>
+        ${filtresTdm(sh)}
         <ol class="tdm-l" data-mv="cascade" aria-labelledby="tdm-h">${sh.map((s, i) => ligneTdm(s, i, i === i0)).join('')}</ol>
       </div>
       <div class="tdm-pv"><div class="tdm-pv-in">${largeTdm() ? sh.map((s, i) => apercuTdm(s, i, i === i0)).join('') : ''}</div></div>
     </section>`;
-    lierSommaire(i0);
+    lierFiltresTdm(lierSommaire(i0));
     return { titre: MENU.spectacles.texte, menu: 'spectacles' };
+  }
+  /* trier les spectacles : au-dessus du sommaire (au bureau) comme de la pile (au téléphone), des puces pour ne garder que
+     les spectacles en tournée (enTournee), en création (statut), ou tous, chacune avec leur nombre, tirées de D ; le nombre
+     gardé est écrit au bout et dit aux lecteurs d'écran quand il change. Le tri va dans l'adresse (?garder=), relu à l'arrivée
+     et au retour arrière ; il tient quand la vue se refait sur place. Un spectacle écarté se replie (hidden) : l'aperçu passe
+     au premier gardé, l'affiche dépliée écartée se referme, les flèches du sommaire ne vont plus qu'aux gardés */
+  const TRI_TDM = { 'en-tournee': s => !!s.enTournee, 'en-creation': s => !!s.statut };
+  let garderTdm = null;
+  function filtresTdm(sh) {
+    const tour = sh.filter(TRI_TDM['en-tournee']), crea = sh.filter(TRI_TDM['en-creation']);
+    // (sans l'une des deux familles, ou sans leurs libellés, rien à trier : pas de puces ; « en création » : le statut de D)
+    const tCrea = (crea.find(x => x.statut) || {}).statut;
+    const tous = L.tous || L.tousSpectacles;
+    if (!tour.length || !crea.length || !L.enTournee || !tCrea || !tous) return '';
+    const puce = (v, t, n) => `<button type="button" class="s7-chip" id="tdm-tri-${v || 'tous'}" data-tri="${v}" aria-pressed="${(garderTdm || '') === v}"><span class="s7-ct">${esc(t)}</span><small>${n}</small></button>`;
+    const n = garderTdm ? sh.filter(TRI_TDM[garderTdm]).length : sh.length;
+    return `<div class="tdm-tri"><div class="tdm-tri-p" role="group" aria-label="${esc(L.lesSpectacles || MENU.spectacles.texte)}">${puce('', tous, sh.length)}${puce('en-tournee', L.enTournee, tour.length)}${puce('en-creation', tCrea, crea.length)}</div>
+      <p class="tdm-n" id="tdm-n" role="status">${nSpectacles(n)}</p></div>`;
+  }
+  function lierFiltresTdm(choisir) {
+    const zone = $('.tdm-tri', main); if (!zone) return;
+    const items = $$('.tdm-i[data-slug], .pil-aff[data-slug]', main), p = $('#tdm-n', zone);
+    p.__h = p.innerHTML;
+    const appliquer = () => {
+      const g = garderTdm && TRI_TDM[garderTdm];
+      let n = 0;
+      items.forEach(li => { const ok = !g || g(bySlug[li.dataset.slug] || {}); li.hidden = !ok; if (ok) n++;
+        // (l'affiche dépliée qu'on écarte se referme)
+        if (!ok && li.classList.contains('ouvert')) { li.classList.remove('ouvert'); const b = $('.pil-dos', li); if (b) b.setAttribute('aria-expanded', 'false'); const c = $('.pil-corps', li); if (c) c.setAttribute('inert', ''); if (pileOuverte === li.dataset.slug) pileOuverte = null; } });
+      // (l'aperçu montrait un spectacle écarté : il passe au premier gardé)
+      const act = $('.tdm-a.est-actif', main);
+      if (choisir && act && act.closest('li').hidden) { const a = $$('.tdm-a', main).find(x => !x.closest('li').hidden); if (a) choisir(+a.dataset.i); }
+      $$('[data-tri]', zone).forEach(b => b.setAttribute('aria-pressed', String((garderTdm || '') === b.dataset.tri)));
+      const h = nSpectacles(n); if (p.__h !== h) { p.__h = h; p.innerHTML = h; }
+      if (vue === 'spectacles' && zone.isConnected) adresseVue({ garder: garderTdm });
+    };
+    zone.addEventListener('click', e => {
+      const b = e.target.closest('[data-tri]'); if (!b) return;
+      const v = b.dataset.tri || null; if (v === garderTdm) return;
+      garderTdm = v;
+      const l = $('.tdm-l, .pil', main);
+      if (MV && l) MV.flip(l, appliquer, { cle: '[data-slug]' }); else appliquer();
+    });
+    appliquer();
   }
   // l'aperçu d'une ligne : son calque passe devant, celui qu'on quitte s'efface puis s'endort (content-visibility) ; sa carte
   // se dessine, et ses bras poussent (premier : la vue vient de se faire, ils poussent quand la carte entre dans l'écran)
@@ -6409,13 +6474,16 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     liste.addEventListener('focusin', suivre);
     // (au clavier, une liste de liens : les flèches haut et bas vont d'un spectacle à l'autre, Début et Fin au premier et au
     // dernier, l'aperçu suit le focus ; Entrée ouvre la page, Tab sort de la liste comme d'habitude)
+    // (les spectacles écartés par le tri, repliés, sont sautés)
     liste.addEventListener('keydown', e => {
       const a = e.target.closest && e.target.closest('.tdm-a'); if (!a || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
-      const i = +a.dataset.i, n = liens.length, j = e.key === 'ArrowDown' ? Math.min(n - 1, i + 1) : e.key === 'ArrowUp' ? Math.max(0, i - 1) : e.key === 'Home' ? 0 : e.key === 'End' ? n - 1 : null;
-      if (j == null) return;
+      const vis = liens.filter(x => !x.closest('li').hidden), i = vis.indexOf(a), n = vis.length;
+      const j = e.key === 'ArrowDown' ? Math.min(n - 1, i + 1) : e.key === 'ArrowUp' ? Math.max(0, i - 1) : e.key === 'Home' ? 0 : e.key === 'End' ? n - 1 : null;
+      if (j == null || i < 0) return;
       e.preventDefault();
-      if (j !== i) liens[j].focus();
+      if (j !== i) vis[j].focus();
     });
+    return choisir;
   }
   // l'aperçu qui prend le relais : ses lignes arrivent l'une après l'autre ; la première fois, les bras de sa carte poussent
   function relayerTdm(c) {
