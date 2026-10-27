@@ -1262,6 +1262,17 @@ footer :focus-visible { outline-color: var(--saison-vive); }
 .pied-nav a { display: inline-flex; align-items: center; min-height: 44px; font: 600 .8rem/1.3 var(--etiq); letter-spacing: .14em; text-transform: uppercase; text-decoration: none; }
 @media (hover: hover) { .pied-nav a:hover { text-decoration: underline; text-underline-offset: 4px; } }
 @media (max-width: 640px) { .pied-nav ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; } }
+/* au téléphone, avec la barre d'onglets du bas : le plan du site ne répète pas ses quatre rubriques (elles sont à portée du
+   pouce, juste dessous) ; il garde ce qu'elle n'a pas, le contact. Le pied se resserre : moins de marges, ses blocs plus
+   proches ; le corps de la page s'arrête au-dessus de la barre (padding-bottom : --tab), rien n'est caché dessous */
+body:has(#entrees.en-bas) .pied-nav .pied-menu { display: none; }
+@media (max-width: 759px) {
+  footer { padding: 30px 0 22px; }
+  body:has(#entrees.en-bas) .pied-nav { padding-bottom: 6px; }
+  body:has(#entrees.en-bas) .pied-nav ul { display: flex; }
+  .pied { gap: 18px; }
+  footer .liens { gap: 0 20px; }
+}
 /* la page introuvable : sa phrase, puis d'où repartir (l'accueil, le menu, le contact), une large cible chacun */
 .nf { min-height: 32vh; }
 .nf-x { max-width: 40rem; margin: 0 0 24px; font-size: 1.12rem; }
@@ -7979,7 +7990,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       second: '',
       // (en tête du pied, le plan du site : les éléments du menu et le contact, pour repartir sans remonter ; « Espace pro » y
       // est, il n'est plus parmi les liens légaux)
-      pied: `${M.length ? `<nav class="pied-nav" aria-label="${esc(L.planDuSite || L.menu)}"><ul>${[...M, { href: S.ecrire.href, texte: L.contact }].map(x => `<li><a href="${x.href}">${esc(x.texte)}</a></li>`).join('')}</ul></nav>` : ''}<div><p><strong${ed('site.coordonnees.nom')}>${esc(co.nom)}</strong></p><p>${co.adresse.map((x, i) => `<span${ed(`site.coordonnees.adresse.${i}`)}>${esc(x)}</span>`).join('<br>')}</p>
+      pied: `${M.length ? `<nav class="pied-nav" aria-label="${esc(L.planDuSite || L.menu)}"><ul>${[...M.map(x => ({ ...x, menu: true })), { href: S.ecrire.href, texte: L.contact }].map(x => `<li${x.menu ? ' class="pied-menu"' : ''}><a href="${x.href}">${esc(x.texte)}</a></li>`).join('')}</ul></nav>` : ''}<div><p><strong${ed('site.coordonnees.nom')}>${esc(co.nom)}</strong></p><p>${co.adresse.map((x, i) => `<span${ed(`site.coordonnees.adresse.${i}`)}>${esc(x)}</span>`).join('<br>')}</p>
         <p class="liens"><a href="${S.ecrire.href}">${esc(S.ecrire.texte)}</a>${S.facebook ? (S.facebook.href ? `<a href="${esc(S.facebook.href)}" rel="noopener">${esc(S.facebook.texte)}</a>` : `<span>${esc(S.facebook.texte)}</span>`) : ''}</p></div>
         <div><p${ed('site.partenaires')}>${S.partenaires}</p></div>
         <div><p class="petit">${co.legal.map((x, i) => `<span${ed(`site.coordonnees.legal.${i}`)}>${esc(x)}</span>`).join('<br>')}</p><p class="liens">${S.espacePro && !M.some(x => x.href === '#/espace-pro') ? `<a href="#/espace-pro">${esc(S.espacePro.titre)}</a>` : ''}${S.liensLegaux.map(x => `<a href="${x.href}">${esc(x.texte)}</a>`).join('')}${typeof EDITION !== 'undefined' && L.modifierSite ? `<button type="button" class="modifier" data-modifier>${CRAYON}${esc(L.modifierSite)}</button>` : ''}</p></div>`,
