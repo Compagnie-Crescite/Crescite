@@ -15,7 +15,12 @@
    - data-date-id="<id>" sur chaque ligne d'agenda (D.dates[].id, et l'id des dates de D.saisons) : on la modifie,
      même passée ; data-agenda sur chaque liste de dates (data-agenda="<slug>" pour celle d'un spectacle) : on en ajoute ;
    - les variables CSS --ed-fond, --ed-encre, --ed-accent, --ed-sur-accent, --ed-police, --ed-rayon, --ed-trait : la
-     barre et les panneaux prennent le style de la maquette (et des règles .ed-… pour aller plus loin).
+     barre et les panneaux prennent le style de la maquette (et des règles .ed-… pour aller plus loin) ; --ed-bas : ce que
+     la maquette occupe déjà en bas de l'écran (sa barre d'onglets au téléphone, la safe-area) : la barre d'édition se pose
+     juste au-dessus (défaut : la safe-area seule). En retour, tant que la barre est là, l'édition écrit sur <html>
+     --ed-barre-h : la place qu'elle prend en bas de l'écran, son écart compris (0px sinon), pour que la maquette pose ce
+     qu'elle a en bas (un bouton du haut de page, une barre de filtres) au-dessus d'elle. Au téléphone (jusqu'à 759 px, le
+     seuil des maquettes), la barre prend toute la largeur.
    L'édition demande la base (DONNEES.etat === 'base') et un compte inscrit dans crescite_admins ; la session est celle
    de l'administration (admin/index.html), sur la même origine.
 
@@ -37,21 +42,21 @@ const EDITION = (() => {
   const STYLE = `
   :root { --ed-fond-d: var(--ed-fond, #fff); --ed-encre-d: var(--ed-encre, #1d1720); --ed-accent-d: var(--ed-accent, #1d1720);
     --ed-sur-d: var(--ed-sur-accent, #fff); --ed-police-d: var(--ed-police, system-ui, sans-serif); --ed-rayon-d: var(--ed-rayon, 12px);
-    --ed-trait-d: var(--ed-trait, rgba(0, 0, 0, .16)); }
+    --ed-trait-d: var(--ed-trait, rgba(0, 0, 0, .16)); --ed-bas-d: var(--ed-bas, env(safe-area-inset-bottom, 0px)); }
   .ed-actif [data-edit] { outline: 1.5px dashed color-mix(in srgb, var(--ed-accent-d) 55%, transparent); outline-offset: 3px; cursor: text; border-radius: 2px; }
-  .ed-actif [data-edit]:hover { outline-style: solid; }
+  @media (hover: hover) { .ed-actif [data-edit]:hover { outline-style: solid; } }
   .ed-actif [data-edit]:focus { outline: 2px solid var(--ed-accent-d); background: color-mix(in srgb, var(--ed-accent-d) 7%, transparent); }
   .ed-actif [data-edit].ed-modifie { outline-color: var(--ed-accent-d); outline-style: solid; }
   .ed-actif [data-edit]:empty::before { content: '…'; opacity: .5; }
   .ed-actif [data-date-id] { outline: 1.5px dashed color-mix(in srgb, var(--ed-accent-d) 55%, transparent); outline-offset: 2px; cursor: pointer; }
-  .ed-actif [data-date-id]:hover { outline-style: solid; }
+  @media (hover: hover) { .ed-actif [data-date-id]:hover { outline-style: solid; } }
   .ed-actif [data-edit-photo] { outline: 2px dashed var(--ed-accent-d); outline-offset: -4px; cursor: pointer; }
   .ed-boite, .ed-boite * { box-sizing: border-box; }
   .ed-boite { font: 15px/1.45 var(--ed-police-d); color: var(--ed-encre-d); }
   .ed-boite button, .ed-boite input, .ed-boite select, .ed-boite textarea { font: inherit; color: inherit; }
-  .ed-barre { position: fixed; z-index: 2147483000; right: 16px; bottom: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; max-width: calc(100vw - 32px);
+  .ed-barre { position: fixed; z-index: 2147483000; right: 16px; bottom: calc(16px + var(--ed-bas-d)); display: flex; flex-wrap: wrap; align-items: center; gap: 8px; max-width: calc(100vw - 32px);
     padding: 9px 10px 9px 14px; background: var(--ed-fond-d); border: 1px solid var(--ed-trait-d); border-radius: 999px; box-shadow: 0 10px 34px rgba(0, 0, 0, .28); }
-  @media (max-width: 760px) { .ed-barre { left: 8px; right: 8px; bottom: calc(76px + env(safe-area-inset-bottom)); border-radius: var(--ed-rayon-d); } }
+  @media (max-width: 759px) { .ed-barre { left: 8px; right: 8px; bottom: calc(8px + var(--ed-bas-d)); max-width: none; border-radius: var(--ed-rayon-d); } }
   .ed-barre .ed-etat { font-weight: 700; margin-right: 4px; }
   .ed-barre .ed-etat::before { content: ''; display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--ed-accent-d); margin-right: 7px; vertical-align: 1px; }
   .ed-barre .ed-nb { opacity: .72; font-size: 13px; }
@@ -65,13 +70,13 @@ const EDITION = (() => {
     @keyframes ed-ok { from { transform: scale(.4); } }
   }
   .ed-bt { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--ed-trait-d); background: var(--ed-fond-d); color: var(--ed-encre-d); border-radius: 999px; padding: 6px 13px; cursor: pointer; font-weight: 650; text-decoration: none; white-space: nowrap; }
-  .ed-bt:hover { border-color: var(--ed-encre-d); }
+  @media (hover: hover) { .ed-bt:hover { border-color: var(--ed-encre-d); } }
   .ed-bt.ed-plein { background: var(--ed-accent-d); border-color: var(--ed-accent-d); color: var(--ed-sur-d); }
   .ed-bt.ed-danger { color: #b3261e; }
   .ed-bt[disabled] { opacity: .45; cursor: default; }
   .ed-outils { position: fixed; z-index: 2147483001; display: flex; gap: 3px; padding: 4px; background: var(--ed-encre-d); border-radius: 9px; box-shadow: 0 6px 22px rgba(0, 0, 0, .3); }
   .ed-outils button { border: 0; background: none; color: var(--ed-fond-d); padding: 4px 9px; border-radius: 6px; cursor: pointer; font: 600 13px/1.2 var(--ed-police-d); }
-  .ed-outils button:hover { background: rgba(255, 255, 255, .16); }
+  @media (hover: hover) { .ed-outils button:hover { background: rgba(255, 255, 255, .16); } }
   .ed-voile { position: fixed; inset: 0; z-index: 2147483002; background: rgba(10, 6, 12, .48); display: grid; place-items: center; padding: 16px; }
   .ed-panneau { width: min(760px, 100%); max-height: calc(100vh - 32px); overflow: auto; background: var(--ed-fond-d); color: var(--ed-encre-d); border-radius: var(--ed-rayon-d); border: 1px solid var(--ed-trait-d); box-shadow: 0 24px 70px rgba(0, 0, 0, .4); }
   .ed-panneau.ed-petit { width: min(420px, 100%); }
@@ -100,7 +105,8 @@ const EDITION = (() => {
   .ed-combo { position: relative; }
   .ed-sugg { position: absolute; z-index: 5; left: 0; right: 0; top: calc(100% + 3px); background: var(--ed-fond-d); border: 1px solid var(--ed-trait-d); border-radius: 9px; box-shadow: 0 10px 26px rgba(0, 0, 0, .2); max-height: 260px; overflow: auto; }
   .ed-sugg button { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 7px 11px; cursor: pointer; }
-  .ed-sugg button:hover, .ed-sugg button:focus { background: color-mix(in srgb, var(--ed-accent-d) 12%, var(--ed-fond-d)); }
+  .ed-sugg button:focus { background: color-mix(in srgb, var(--ed-accent-d) 12%, var(--ed-fond-d)); }
+  @media (hover: hover) { .ed-sugg button:hover { background: color-mix(in srgb, var(--ed-accent-d) 12%, var(--ed-fond-d)); } }
   .ed-item { border: 1px solid var(--ed-trait-d); border-radius: 9px; padding: 8px 10px; margin-bottom: 8px; }
   .ed-annonces { position: fixed; z-index: 2147483003; left: 50%; top: 16px; transform: translateX(-50%); display: grid; gap: 8px; width: min(460px, calc(100% - 24px)); }
   .ed-annonce { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 11px; background: #1d1720; color: #fff; box-shadow: 0 8px 28px rgba(0, 0, 0, .3); font: 14px/1.4 var(--ed-police-d); }
@@ -249,6 +255,10 @@ const EDITION = (() => {
       <a class="ed-bt" href="${ADMIN}" target="_blank" rel="noopener" title="Ateliers, lieux, journal…">Administration ↗</a>
       <button type="button" class="ed-bt" data-ed="quitter">Quitter</button>`;
     document.body.append(barre);
+    // (la place qu'elle prend en bas de l'écran, son écart compris, pour la maquette : --ed-barre-h sur <html>)
+    const place = () => { if (!barre) return; const r = barre.getBoundingClientRect(); document.documentElement.style.setProperty('--ed-barre-h', `${Math.max(0, Math.ceil(innerHeight - r.top))}px`); };
+    if ('ResizeObserver' in window) { barre.__ro = new ResizeObserver(place); barre.__ro.observe(barre); }
+    addEventListener('resize', place); barre.__place = place; place();
     barre.addEventListener('click', e => {
       const b = e.target.closest('[data-ed]'); if (!b) return;
       if (b.dataset.ed === 'enregistrer') enregistrer();
@@ -268,6 +278,7 @@ const EDITION = (() => {
     if (modifies.size) { modifies.clear(); DONNEES.suspendre(false); DONNEES.recharger({ force: true }); }
     moi.actif = false;
     observateur?.disconnect();
+    if (barre) { barre.__ro?.disconnect(); removeEventListener('resize', barre.__place); document.documentElement.style.removeProperty('--ed-barre-h'); }
     barre?.remove(); barre = null; outils?.remove(); outils = null; outilPhoto?.remove(); outilPhoto = null;
     $$('.ed-ajout').forEach(b => b.remove());
     desarmerTout();
