@@ -447,7 +447,7 @@ LIBELLES = {
     "public": "Public", "ateliers": "Ateliers", "duree": "Durée", "jauge": "Jauge", "format": "Format",
     "distribution": "Distribution", "representations": "Représentations", "lieuxDiffusion": "Lieux de diffusion",
     "ficheTechnique": "Fiche technique", "conditionsAccueil": "Conditions d’accueil", "bandeAnnonce": "Bande-annonce",
-    "ecrire": "Écrire à la compagnie", "leSpectacle": "Le spectacle", "lesSpectacles": "Les spectacles", "ancienneDistribution": "Ancienne distribution",
+    "ecrire": "Écrire à la compagnie", "leSpectacle": "Le spectacle", "lesSpectacles": "Les spectacles", "ancienneDistribution": "Ancienne distribution", "distributionsPrecedentes": "Distributions précédentes",
     "ouverture": "Ouverture", "dates": "Dates", "photos": "Photos", "dossierScolaire": "Dossier scolaire",
     "modifierSite": "Modifier le site",
     # « Je souhaite programmer » : ce qu'il faut à un programmateur ou un directeur de salle

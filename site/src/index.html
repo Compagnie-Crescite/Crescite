@@ -1055,6 +1055,9 @@ section.bloc.troupe { padding-top: 0; content-visibility: auto; contain-intrinsi
 .nomme[aria-expanded="true"] { text-decoration-style: solid; text-decoration-color: currentColor; }
 .nomme:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 .ed-actif .nomme { pointer-events: none; text-decoration: none; }
+/* dans la distribution, un nom dont la photo est publiée la porte en vignette ronde devant lui (au moins 28 px) */
+.nomme-ph { display: inline-block; width: max(28px, 1.15em); height: max(28px, 1.15em); margin: 0 .3em 0 0; border-radius: 50%; object-fit: cover; vertical-align: middle;
+  background: var(--u-filet, rgb(127 127 127 / .2)); box-shadow: 0 0 0 1.5px color-mix(in srgb, currentColor 35%, transparent); }
 .u-pt { position: relative; }
 .u-pt-ouvrir { position: absolute; inset: 0; z-index: 1; width: 100%; margin: 0; padding: 0; border: 0; border-radius: 3px; background: none; cursor: pointer; }
 .u-pt-ouvrir:focus-visible { outline: 2px solid var(--u-vif, currentColor); outline-offset: 4px; }
@@ -1870,6 +1873,13 @@ html:has(.bf7.est-visible) { scroll-padding-bottom: calc(96px + var(--bas)); }
 .u-pt-alt { font-style: italic; }
 .u-pt-role { font: 600 .72rem/1.4 var(--u-etiq); letter-spacing: .12em; text-transform: uppercase; color: var(--u-vif); }
 .u-d-tete { margin: 0 0 18px; font-size: 1.15rem; }
+/* les distributions précédentes : sous la fiche, plus discrètes que la distribution d'aujourd'hui ; un nom, ses rôles dessous */
+.u-anciens { margin: 30px 0 0; padding: 22px 0 0; border-top: 1px solid var(--u-filet); }
+.u-anciens-k { margin: 0 0 12px; font: 600 .72rem/1.35 var(--u-etiq); letter-spacing: .12em; text-transform: uppercase; color: var(--u-texte2); }
+.u-anciens ul { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.u-anciens li { font-size: 1.08rem; line-height: 1.4; }
+.u-anciens li b { font-weight: 600; }
+.u-anciens li span { display: block; font-size: .92rem; color: var(--u-texte2); }
 .u-fiche { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 20px 32px; margin: 0 0 34px; padding: 26px 0 0; border-top: 1px solid var(--u-filet); }
 .u-fiche div { min-width: 0; }
 .u-fiche dt { font: 600 .72rem/1.35 var(--u-etiq); letter-spacing: .12em; text-transform: uppercase; color: var(--u-texte2); }
@@ -7578,12 +7588,13 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     if (!b || !main.contains(b) || (typeof EDITION !== 'undefined' && EDITION.actif)) return;
     e.preventDefault();
     if (fiche && fiche.declencheur === b) { fermerFiche(); return; }
-    const ancre = b.classList.contains('u-pt-ouvrir') ? b.parentNode.querySelector('.u-pt-cadre') || b : b;
+    const ancre = b.classList.contains('u-pt-ouvrir') ? b.parentNode.querySelector('.u-pt-cadre') || b : $('.nomme-ph', b) || b;
     ouvrirFiche(b.getAttribute('data-personne'), { ancre, declencheur: b });
   });
   /* les personnes nommées dans les pages : chaque nom complet d'une personne publiée de D (« Prénom Nom »), écrit dans le texte
      d'une page (la fiche d'un spectacle, sa distribution, « avec : … », l'équipe de création, la présentation de la compagnie…),
-     devient un bouton qui ouvre sa fiche ; le texte reste le même, mot pour mot. Ni dans les liens, les boutons, les titres de
+     devient un bouton qui ouvre sa fiche ; le texte reste le même, mot pour mot (dans la distribution, sa photo publiée le précède,
+     en vignette). Ni dans les liens, les boutons, les titres de
      page, la troupe (elle a ses places), les portraits (ils ont le leur), les pages légales ; ni en mode édition (armé, un texte
      reprend sa valeur de D). Après le rendu, au repos, puis pour ce qui s'ajoute à la page */
   const HORS_NOMS = 'a, button, input, select, textarea, label, script, style, svg, h1, nav, [aria-hidden="true"], [contenteditable], [data-troupe], .u-pt, .trf, .ed-boite';
@@ -7616,6 +7627,14 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         const b = document.createElement('button');
         b.type = 'button'; b.className = 'nomme'; b.textContent = m[0];
         b.setAttribute('data-personne', slug); b.setAttribute('aria-haspopup', 'dialog'); b.setAttribute('aria-expanded', 'false');
+        // (dans la distribution, sa photo, si elle est publiée, en vignette devant son nom : sa fiche s'ouvre sur elle)
+        const p = (D.personnes || {})[slug];
+        if (p && p.photo && t.parentElement.closest('.u-distrib')) {
+          const im = document.createElement('img');
+          im.className = 'nomme-ph'; im.src = p.photo; im.alt = ''; im.width = im.height = 56; im.loading = 'lazy'; im.decoding = 'async';
+          im.onerror = () => im.remove();
+          b.prepend(im);
+        }
         frag.append(b);
         i = m.index + m[0].length;
       }
@@ -7940,11 +7959,19 @@ html.still .sc-image { transition: opacity .35s ease !important; }
      partent plus (ancienDans) ; relus à chaque rendu */
   const nomDe = p => `${p.prenom} ${p.nom}`;
   const initiales = p => [p.prenom, p.nom].map(x => [...String(x || '').trim()][0] || '').join('');
-  // qui ne part plus avec le spectacle : aucune de ses lignes « en tournée », au moins une de jeu ou de technique (celles qui
-  // partent d'ordinaire), quand d'autres partent ; l'équipe de création qui ne part pas n'en est pas
+  // qui ne part plus avec le spectacle : aucune de ses lignes « en tournée », et une de jeu ou de technique (celles qui partent
+  // d'ordinaire) quand d'autres de la même catégorie partent ; un spectacle qui ne tourne plus (aucun comédien ne part) garde
+  // toute sa distribution ; l'équipe de création qui ne part pas n'en est pas
   const ancienDans = (s, slug) => { const eq = s.equipe || [], siennes = eq.filter(e => e.personne === slug);
-    return siennes.length > 0 && siennes.every(e => e.enTournee === false) && siennes.some(e => e.categorie === 'jeu' || e.categorie === 'technique') && eq.some(e => e.enTournee !== false); };
+    return siennes.length > 0 && siennes.every(e => e.enTournee === false)
+      && siennes.some(e => (e.categorie === 'jeu' || e.categorie === 'technique') && eq.some(o => o.categorie === e.categorie && o.enTournee !== false)); };
   const comediens = s => { const vus = new Map(); (s.equipe || []).forEach(e => { const p = (D.personnes || {})[e.personne]; if (e.categorie !== 'jeu' || !p || ancienDans(s, e.personne)) return; if (vus.has(e.personne)) vus.get(e.personne).lignes.push(e); else vus.set(e.personne, { e, p, lignes: [e] }); }); return [...vus.values()]; };   // un portrait par personne, même avec deux lignes de jeu
+  // les distributions précédentes : les comédiens qui ne partent plus (ancienDans), dans l'ordre de show.equipe, chacun avec
+  // ses rôles ; leur nom ouvre leur fiche (nommer)
+  const anciens = s => { const vus = new Map(); (s.equipe || []).forEach(e => { const p = (D.personnes || {})[e.personne]; if (e.categorie !== 'jeu' || !p || !ancienDans(s, e.personne)) return;
+    if (!vus.has(e.personne)) vus.set(e.personne, { p, roles: [] }); if (e.role && !vus.get(e.personne).roles.includes(e.role)) vus.get(e.personne).roles.push(e.role); }); return [...vus.values()]; };
+  const distributionsPrecedentes = s => { const A = anciens(s); return A.length ? `<div class="u-anciens"><h3 class="u-anciens-k">${esc(L.distributionsPrecedentes)}</h3>
+    <ul>${A.map(({ p, roles }) => `<li><b>${esc(nomDe(p))}</b>${roles.length ? `<span>${esc(roles.join(', '))}</span>` : ''}</li>`).join('')}</ul></div>` : ''; };
   const portrait = ({ e, p, lignes }, credits) => {
     const k = `personnes.${e.personne}`;   // (le portrait a alt="" : le nom est écrit dessous, altPh)
     return `<figure class="u-pt"><button type="button" class="u-pt-ouvrir" data-personne="${esc(e.personne)}" aria-haspopup="dialog" aria-expanded="false" aria-label="${esc(nomDe(p))}"></button><span class="u-pt-cadre" data-edit-photo="${esc(k)}.photo"><span class="u-pt-mono" aria-hidden="true"><b>${esc(initiales(p))}</b></span>${p.photo ? `<img src="${esc(p.photo)}" alt="" width="320" height="400" loading="lazy" decoding="async" onerror="this.remove()">` : ''}</span>
@@ -7961,7 +7988,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     });
     return `<ul class="u-cast" style="--n:${L.length}">${blocs.join('')}</ul>`;
   }
-  // la distribution (la 07) : les portraits, puis la fiche d'un côté, la durée, la production, les mentions et la compagnie qui
+  // la distribution (la 07) : les portraits, puis la fiche et les distributions précédentes d'un côté, la durée, la production, les mentions et la compagnie qui
   // signe de l'autre (sansDuree : l'onglet programmer la dit déjà)
   function distribution(s, chap, entree, sansDuree = false) {
     const P = s.programmer || {}, eq = P.equipeCreation || [], fiche = eq.length ? [] : (s.fiche || []).map((f, i) => ({ f, i }));
@@ -7975,6 +8002,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         ${cast || !s.avec ? '' : `<p class="u-avec"><span class="k"${edS(s, 'avec', 'libelle')}>${esc(s.avec.libelle)}</span><span${edS(s, 'avec', 'valeur')}>${s.avec.valeur}</span></p>`}
         ${eq.map((l, i) => `<p class="u-avec"${edS(s, 'programmer', 'equipeCreation', i)}>${esc(l)}</p>`).join('')}
         ${roles.length ? `<dl class="u-fiche">${roles.map(({ f, i }) => `<div><dt${edS(s, 'fiche', i, 'libelle')}>${esc(f.libelle)}</dt><dd${edS(s, 'fiche', i, 'valeur')}>${f.valeur}</dd></div>`).join('')}</dl>` : ''}
+        ${distributionsPrecedentes(s)}
       </div><div>
         ${s.duree && !sansDuree ? `<p class="u-duree-d"${edS(s, 'duree')}>${esc(s.duree)}</p>` : ''}
         ${(s.production || []).length ? `<div class="u-prod">${s.production.map((p, i) => bloc(p, `shows.${s.slug}.production.${i}`)).join('')}</div>` : ''}
