@@ -4326,7 +4326,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     + '<svg class="b" viewBox="0 0 46 26" focusable="false"><path d="M0 14C9 14 16 9 24 6.5C33 4 42 8 40.5 16C39.3 22 31 23 29 18.5C27.6 15.3 30.5 12.5 33.5 14"/></svg></span>';
   const tetePro = (e, rac, apres = '') => `<section class="ep-tete" style="--e:${esc(e.couleur)}" aria-labelledby="h-ep">
       <div class="ep-tete-ph" aria-hidden="true">${photoEntree(e.cle) ? `<img src="${photoEntree(e.cle)}" alt="">` : ''}</div>
-      <div class="wrap ep-c">${S.espacePro ? `<a class="ep-retour" href="#/espace-pro">${FLECHE}${esc(S.espacePro.titre)}</a>` : ''}<h1 class="ep-h1" id="h-ep" tabindex="-1"><span class="fleur">${esc(e.texte)}</span></h1>
+      <div class="wrap ep-c">${S.espacePro ? `<a class="ep-retour" href="#/espace-pro" data-retour>${FLECHE}${esc(S.espacePro.titre)}</a>` : ''}<h1 class="ep-h1" id="h-ep" tabindex="-1"><span class="fleur">${esc(e.texte)}</span></h1>
         ${apres}</div></section>${sommairePage(rac, e.court, 'psom--ep', `--e:${esc(e.couleur)}`)}`;
   // le sommaire d'une page longue (les deux pages de l'espace pro, la compagnie) : une pièce par section ([id, titre]), arrimée
   // sous le menu quand on descend, la section lue marquée (aria-current, lierSommairePage et defile) ; titre : le nom de la
@@ -5574,6 +5574,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
      l'écran (le h1 ne change pas ; le titre du document prend celui de la saison). */
   function voir(q, surPlace, ouvrir = null) {
     vue = 'saisons';
+    const relu = relecture;
     const M0 = menuDe('saisons') || { texte: L.saisons, href: '#/saisons' }, S0 = S.saisons[0];
     // (demande de la compagnie) une date dont le jour n'est pas encore fixé (« novembre 2026 ») ne paraît pas dans les saisons
     // tant qu'elle n'est pas passée : ni dans les listes, ni sur la frise, ni sur la carte ; elle attend son jour. Une date
@@ -5690,7 +5691,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // portait cette image au-delà de 50 ms au bureau (règle 15 C). Rien ne bouge à l'écran : ils sont dessous, et la carte,
     // sur trois rangées, ne change pas la hauteur de la frise. Une adresse qui vise une saison, une date, un filtre, la vue refaite
     // sur place ou le retour arrière (la position de lecture se rend d'un coup) les posent tout de suite)
-    const tot = !surPlace && !ouvrir && !actif() && !F.date && !F.mois && !relecture, tard7 = tot ? ' data-tard' : '';
+    const tot = !surPlace && !ouvrir && !actif() && !F.date && !F.mois && !relu, tard7 = tot ? ' data-tard' : '';
     main.innerHTML = `<header class="s7-entete"><div class="wrap s7-e">
         <h1 class="s7-titre" tabindex="-1"><span class="fleur">${esc(M0.texte)}</span></h1>
         <ul class="s7-rac">${[['v-saison', S0.titre], ['v-agenda', L.saisonsPassees], ['v-alerte', nAlerte]].map(([id, t]) => `<li><button type="button" data-va="${id}"><span class="s7-lampe" aria-hidden="true"></span>${esc(t)}</button></li>`).join('')}</ul>
@@ -6250,7 +6251,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         const b = $(`[data-reserver="${CSS.escape(rsVoir.cle())}"]`, liste), li = b && b.closest('li');
         if (li && li.contains(ev.target)) { ev.preventDefault(); rsVoir.choisir(null); b.focus(); }
       });
-      if (F.date && rsVoir.cle() && !surPlace) bientot(() => { const b = $(`[data-reserver="${CSS.escape(F.date)}"]`, liste); if (b) { b.scrollIntoView({ block: 'center' }); b.focus({ preventScroll: true }); } });
+      if (F.date && rsVoir.cle() && !surPlace && !relu) bientot(() => { const b = $(`[data-reserver="${CSS.escape(F.date)}"]`, liste); if (b) { b.scrollIntoView({ block: 'center' }); b.focus({ preventScroll: true }); } });
     }
     /* la frise des mois (la saison d'un regard) : survoler une date l'écrit sous la loupe, qui s'approche de sa ville, et allume
        sa ligne ; la choisir (un clic) ne garde qu'elle dans les listes, juste dessous (rien ne défile ; sa carte de réservation
@@ -7274,7 +7275,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         : `${s.dossier ? `<button type="button" class="bu plein" data-va="c-dossier">${esc(L.dossierScolaire)}${BAS}</button>` : ''}<a class="bu${s.dossier ? '' : ' plein'}" href="${esc(ecrireDepuis(entree, s))}">${esc(L.ecrire)}${FLECHE}</a>`) + partage();
       const etat = s.statut ? `<p class="une-statut"${edS(s, 'statut')}>${esc(s.statut)}</p>` : s.enTournee ? `<p class="une-statut">${esc(L.enTournee)}</p>` : '';
       // (en tête, le retour discret à la liste des spectacles, comme celui des pages de l'espace pro)
-      texte = `<a class="une-retour" href="${esc(sp.href)}">${FLECHE}<span>${esc(sp.texte)}</span></a><p class="une-sur"><span${edS(s, 'creation')}>${esc(s.creation)}</span>${s.lieuTemps ? `<span${edS(s, 'lieuTemps')}>${esc(s.lieuTemps)}</span>` : ''}</p>${titre}${etat}${st}${acc}
+      texte = `<a class="une-retour" href="${esc(sp.href)}" data-retour>${FLECHE}<span>${esc(sp.texte)}</span></a><p class="une-sur"><span${edS(s, 'creation')}>${esc(s.creation)}</span>${s.lieuTemps ? `<span${edS(s, 'lieuTemps')}>${esc(s.lieuTemps)}</span>` : ''}</p>${titre}${etat}${st}${acc}
         ${prochaine ? `<p class="une-date">${esc(prochaine.ligne)}</p>` : ''}<p class="u-cta">${cta}</p>`;
     }
     return `<section class="sp-une sp-une${entree ? 7 : 10}${ouvDeja ? ' deja' : ''}" id="c-une" data-scrolly data-fx="une">
@@ -7919,7 +7920,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       if (ouverte() ? !k : (!L || !L.chercherSite || html.classList.contains('fe7-ouvert') || (typeof INTRO !== 'undefined' && INTRO.ouverte()))) return;
       e.preventDefault(); ouvrir();
     });
-    return { ouvrir, fermer, ouverte };
+    // (d'où l'on avait ouvert la boîte : ce qui avait le focus, sinon la loupe ; le retour arrière y rend le focus)
+    const depart = () => (retour && retour.isConnected && retour !== document.body ? retour : bouton);
+    return { ouvrir, fermer, ouverte, depart };
   })();
 
   // les phrases s'écrivent et les photos apparaissent quand elles arrivent à l'écran
@@ -8125,18 +8128,27 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';   // (le routeur pose la page lui-même)
   const lectures = new Map();
   let cleCourante = null, relecture = false;   // (relecture : la vue qui se rend est celle d'une lecture retenue)
-  const cleEntree = () => { const st = history.state; if (st && st.k) return st.k;
+  // (une entrée neuve retient aussi l'adresse d'où l'on est venu, p : le retour du site s'en sert, plus bas)
+  const cleEntree = d => { const st = history.state; if (st && st.k) return st.k;
     const k = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
-    try { history.replaceState(Object.assign({}, st, { k }), ''); } catch (e) { return null; }
+    try { history.replaceState(Object.assign({}, st, { k }, d ? { p: d } : {}), ''); } catch (e) { return null; }
     return k; };
   // (le lien retrouvé : par son adresse et son rang parmi les liens de même adresse de la page)
   const repereLien = el => { const a = el && el.closest && el.closest('a[href]'); if (!a || !main.contains(a)) return null;
     const h = a.getAttribute('href'); return { h, i: $$('a[href]', main).filter(x => x.getAttribute('href') === h).indexOf(a) }; };
   const lienDe = r => r ? $$('a[href]', main).filter(x => x.getAttribute('href') === r.h)[r.i] || null : null;
+  // (le focus rendu va à un lien que le clavier atteint : la photo d'une fiche, lien de souris hors du clavier, tabindex -1 et
+  // aria-hidden, le cède au lien de même adresse qui la suit, son titre ; la position, elle, se rend sur la photo)
+  const atteint = x => x.tabIndex >= 0 && !x.closest('[aria-hidden="true"], [inert]');
+  const lienFocus = l => { if (!l || atteint(l)) return l; const h = l.getAttribute('href'), memes = $$('a[href]', main).filter(x => x.getAttribute('href') === h && atteint(x));
+    return memes.find(x => l.compareDocumentPosition(x) & Node.DOCUMENT_POSITION_FOLLOWING) || memes[memes.length - 1] || null; };
+  // (parti par la recherche du site, Ctrl K : le lien d'où l'on était parti est ce qui avait le focus à son ouverture ; hors de
+  // la page, la loupe du menu, l'élément lui-même est retenu)
   function retenirLecture(clic) {
     if (!cleCourante) return;
-    const el = (clic && clic.lien && main.contains(clic.lien)) ? clic.lien : document.activeElement, lien = repereLien(el);
-    lectures.set(cleCourante, { y: scrollY, lien, haut: lien ? el.closest('a[href]').getBoundingClientRect().top : null });
+    const cs = clic && clic.lien && clic.lien.closest('#cs') && CHERCHE.depart();
+    const el = cs || ((clic && clic.lien && main.contains(clic.lien)) ? clic.lien : document.activeElement), lien = repereLien(el);
+    lectures.set(cleCourante, { y: scrollY, lien, haut: lien ? el.closest('a[href]').getBoundingClientRect().top : null, dehors: !lien && cs && !main.contains(cs) ? cs : null });
     if (lectures.size > 60) lectures.delete(lectures.keys().next().value);
   }
   // la position rendue : la page s'allonge encore dans les images qui suivent (ce qui se dessine après le premier rendu, sous
@@ -8156,7 +8168,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       const l = lienDe(m.lien);
       if (!bouge) { const y = Math.max(0, Math.round(l && m.haut != null ? l.getBoundingClientRect().top + scrollY - m.haut : m.y));
         if (Math.abs(scrollY - y) > 1) scrollTo({ top: y, left: 0, behavior: 'instant' }); }
-      if (l && !pris) { pris = true; l.focus({ preventScroll: true }); }
+      const f = !pris && (l ? lienFocus(l) : !m.lien && m.dehors && m.dehors.isConnected ? m.dehors : null);
+      if (f) { pris = true; f.focus({ preventScroll: true }); }
       if (!bouge && performance.now() - t0 < 1000) requestAnimationFrame(viser); else fin();
     };
     viser();
@@ -8215,8 +8228,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const type = genre(a), clic = dernierClic && performance.now() - dernierClic.t < 1200 ? dernierClic : null;
     dernierClic = null;
     // (la page qu'on quitte est encore là : on retient sa lecture ; celle où l'on arrive, si on l'a déjà lue, rend la sienne)
+    const venu = courant ? `#/${courant.chemin}` : null;
     retenirLecture(clic);
-    cleCourante = cleEntree();
+    cleCourante = cleEntree(venu);
     const relue = cleCourante && lectures.get(cleCourante);
     const avant = courant, premiere = !avant, spAvant = avant && (avant.chemin.match(/^spectacle\/([\w-]+)/) || [])[1];
     // (lu avant le rendu, la mise en page encore propre : la route suit une image)
@@ -8292,6 +8306,17 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     e.preventDefault();
     scrollTo({ top: 0, left: 0, behavior: 'instant' });
     ($('h1[tabindex="-1"]', main) || main).focus({ preventScroll: true });
+  });
+  // le retour du site (« ← Les spectacles » en tête d'un spectacle, « ← Espace pro » en tête de ses pages) : quand il mène à la
+  // page d'où l'on vient (l'entrée d'avant dans l'historique, history.state.p), il en est le « précédent » : la liste revient
+  // où on l'avait laissée, ses filtres et le lien d'où l'on était parti compris ; sinon, c'est un lien, la page s'ouvre en haut
+  document.addEventListener('click', e => {
+    const a = e.target.closest && e.target.closest('a[data-retour]');
+    if (!a || e.defaultPrevented || e.button > 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+    const st = history.state, p = st && st.p, h = a.getAttribute('href');
+    if (!p || p.split('?')[0] !== h.split('?')[0]) return;
+    e.preventDefault();
+    history.back();
   });
   // la créature de l'en-tête, à chaque page : elle se contracte, ses tentacules s'agitent ; en entrant dans un spectacle, une fois
   // l'encre ouverte et le titre posé, sa tentacule va souligner le titre, à la couleur vive du spectacle, puis revient
