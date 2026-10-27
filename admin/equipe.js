@@ -657,17 +657,20 @@ function reglerPeriode(s, pid, { declencheur = null, apres = () => {} } = {}) {
   const voulu = () => new Map(P.ds.map(d => [d.id, (!du.value || finDe(d) >= du.value) && (!au.value || d.debut <= au.value)]));
   const changements = () => { const v = voulu(); return P.ds.filter((d, i) => v.get(d.id) !== P.qui[i].has(pid)); };
   const montrer = () => {
-    if (du.value && au.value && au.value < du.value) { apercu.textContent = 'La fin vient avant le début.'; ok.disabled = true; return; }
+    if (du.value && au.value && au.value < du.value) { apercu.textContent = 'La fin vient avant le début.'; return; }
     const v = voulu(), n = [...v.values()].filter(Boolean).length, ch = changements(), futurs = ch.filter(d => finDe(d) >= AUJ).length;
     const prochaines = dansDist && !(quitter && quitter.checked) && au.value && au.value < finDe(derniere);
-    ok.disabled = !ch.length && !(quitter && quitter.checked);
     apercu.textContent = `Elle comptera sur ${n} des ${P.ds.length} date${P.ds.length > 1 ? 's' : ''} du spectacle. ${ch.length ? `${ch.length} date${ch.length > 1 ? 's changent' : ' change'}${futurs ? `, dont ${futurs} à venir : elle en sera prévenue si elle a un compte` : ''}.` : 'Rien ne change.'}${prochaines ? ' Encore dans la distribution, elle comptera sur les dates créées plus tard : cochez la case pour la retirer.' : ''}`;
   };
+  // (un champ de date rempli au sélecteur, sur l'iPhone, ne dit que « change » ; « Appliquer » reste toujours actif)
   dlg.addEventListener('input', montrer);
+  dlg.addEventListener('change', montrer);
   dlg.addEventListener('click', e => { if (e.target === dlg || e.target.closest('[data-pp-fermer]')) dlg.close(); });
   dlg.addEventListener('close', () => { dlg.remove(); if (declencheur?.isConnected) declencheur.focus(); });
   $('form', dlg).addEventListener('submit', async e => {
     e.preventDefault();
+    if (du.value && au.value && au.value < du.value) { montrer(); au.focus(); return; }
+    if (!changements().length && !(quitter && quitter.checked)) { dlg.close(); annoncer(`Rien ne change : ${nomDe(p)} comptait déjà sur ces dates.`); return; }
     ok.disabled = true; ok.textContent = 'Un instant…';
     const sort = quitter && quitter.checked, fonction = ($('#pp-fonction', dlg)?.value || fonction0).trim();
     const v = voulu(), retires = sort ? clone(dist) : [];
