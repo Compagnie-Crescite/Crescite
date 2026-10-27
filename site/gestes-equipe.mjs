@@ -1,7 +1,7 @@
 // Les gestes de l'espace de l'équipe (equipe/equipe.js avec ../admin/gestes.js), vérifiés dans Chromium, hors ligne :
 // l'appui long sur un billet (une feuille d'actions depuis le bas), la date d'avant et d'après (les boutons, le balayage
-// au doigt, ← → au clavier), le clic droit sur une notification ; ne rien perdre en partant ; repasser une feuille en
-// brouillon dans la boîte de la charte (jamais confirm()).
+// au doigt, ← → au clavier), le clic droit sur une notification ; ne rien perdre en partant ; supprimer dans la boîte de
+// la charte (jamais confirm()), un retard signalé et un mot pour l'administration commencés protégés du départ.
 //   python3 site/build.py && node site/gestes-equipe.mjs
 // Même saison fictive que mouvement-equipe.mjs (aucune donnée réelle, la base coupée). Demande Playwright et Chromium.
 import http from 'node:http';
@@ -493,6 +493,83 @@ fs.mkdirSync(CAPT, { recursive: true });
   await page.close({ runBeforeUnload: true });
   const avantQuitter = await vu;
   ok('partir · fermer l’onglet sur la fiche changée : la question du navigateur (beforeunload)', avantQuitter === 'beforeunload', String(avantQuitter));
+  await ctx.close();
+}
+
+// ================================================================================ supprimer sans trembler, les dernières saisies protégées
+// supprimer une date : la boîte de la charte (jamais confirm()), « Supprimer la date » à la couleur d'alerte, « Annuler »
+// a le focus et ne supprime rien ; le retard signalé, un mot pour l'administration commencés : la question en partant
+{
+  const base = baseSimulee();
+  base.DB.crescite_propositions = [{ id: 1, titre: 'Option : Théâtre de Flers', message: null, statut: 'ouverte', spectacle_id: 1, cree_le: new Date(d0 - 864e5).toISOString(), spectacle: { id: 1, titre: 'Bérénice', slug: 'berenice' },
+    jours: [{ id: 11, debut: `${plus(40)}T00:00:00+00:00`, fin: `${plus(41)}T00:00:00+00:00`, journee: true, reponses: [{ personne_id: 1, reponse: null, commentaire: null, repondu_le: null }] }] }];
+  base.DB.crescite_indisponibilites = [];   // (le planning installé : sans la table, la proposition se dirait « bientôt »)
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { hash: '#/date/102', base });
+  let natifs = 0;
+  page.on('dialog', d => { natifs++; d.dismiss().catch(() => {}); });
+  const question = () => page.waitForFunction(() => !!document.querySelector('dialog.gq[open]'), null, { timeout: 4000 }).then(() => page.waitForTimeout(400)).then(() => true).catch(() => false);
+  const boite = () => page.evaluate(() => ({ titre: document.querySelector('dialog.gq[open] h2')?.textContent, ok: document.querySelector('dialog.gq[open] [data-gq="oui"]')?.textContent, annuler: document.querySelector('dialog.gq[open] [data-gq="non"]')?.textContent, focus: document.activeElement?.dataset?.gq, danger: !!document.querySelector('dialog.gq.gq-danger[open]') }));
+  await page.waitForSelector('.heros[data-date="102"]', { timeout: 10000 }).catch(() => {}); await page.waitForTimeout(500);
+  await menuSur(page, '.heros[data-date="102"]', 'Supprimer la date…', { dy: -30 });
+  await page.tap('.gm-feuille [data-gm]:has-text("Supprimer la date…")');
+  const b1 = await question() && await boite();
+  ok('supprimer · une date : la boîte de la charte, pas confirm() ; « Supprimer la date » à la couleur d’alerte, « Annuler » a le focus', !!b1 && natifs === 0 && /^Supprimer « La Folle Idée · /.test(b1.titre) && b1.ok === 'Supprimer la date' && b1.annuler === 'Annuler' && b1.focus === 'non' && b1.danger, JSON.stringify(b1));
+  await page.screenshot({ path: path.join(CAPT, 'supprimer-date-telephone.png') });
+  await page.tap('dialog.gq [data-gq="non"]');
+  await page.waitForTimeout(300);
+  ok('supprimer · « Annuler » : rien n’est supprimé, la date reste', !(await page.$('dialog.gq[open]')) && !MODIFS.some(m => m.table === 'crescite_dates' && m.delete) && (await compte(page, '.heros[data-date="102"]')) === 1);
+  await menuSur(page, '.heros[data-date="102"]', 'Supprimer la date…', { dy: -30 });
+  await page.tap('.gm-feuille [data-gm]:has-text("Supprimer la date…")');
+  await question();
+  await page.tap('dialog.gq [data-gq="oui"]');
+  await page.waitForFunction(() => location.hash === '#/saison', null, { timeout: 8000 }).catch(() => {});
+  ok('supprimer · « Supprimer la date » : la date part de la base, retour à la saison', MODIFS.some(m => m.table === 'crescite_dates' && m.delete && m.delete.includes(102)) && (await page.evaluate(() => location.hash)) === '#/saison');
+  // le retard signalé : une précision écrite ne se perd pas d'un Échap
+  await page.goto(`${URL0}#/date/101`);
+  await page.waitForSelector('[data-retard]', { timeout: 10000 }).catch(() => {});
+  await page.tap('[data-retard]');
+  await page.waitForSelector('#retard-texte', { timeout: 4000 });
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(300);
+  ok('retard · rien d’écrit : Échap ferme sans question', !(await page.$('#modale-retard')) && !(await page.$('dialog.gq[open]')));
+  await page.tap('[data-retard]');
+  await page.waitForSelector('#retard-texte', { timeout: 4000 });
+  await page.fill('#retard-texte', 'Accident A13, arrivée vers 14h20');
+  await page.keyboard.press('Escape');
+  const b2 = await question() && await boite();
+  ok('retard · une précision écrite : Échap pose la question (« Fermer sans envoyer », « Rester »)', !!b2 && b2.ok === 'Fermer sans envoyer' && b2.focus === 'non' && (await compte(page, '#modale-retard')) === 1, JSON.stringify(b2));
+  await page.screenshot({ path: path.join(CAPT, 'retard-question-telephone.png') });
+  await page.tap('dialog.gq [data-gq="non"]');
+  ok('retard · « Rester » : la boîte et la précision restent', !(await page.$('dialog.gq[open]')) && (await page.$eval('#retard-texte', e => e.value).catch(() => '')) === 'Accident A13, arrivée vers 14h20');
+  await page.evaluate(() => { location.hash = '#/saison'; });
+  ok('retard · changer de vue pose la question, la boîte reste', await question() && (await compte(page, '#modale-retard')) === 1 && (await page.evaluate(() => location.hash)) === '#/date/101');
+  await page.tap('dialog.gq [data-gq="oui"]').catch(() => {});
+  await page.waitForFunction(() => !document.querySelector('#modale-retard') && location.hash === '#/saison', null, { timeout: 6000 }).catch(() => {});
+  ok('retard · « Fermer sans envoyer » ferme la boîte et change de vue, rien n’est parti', !(await page.$('#modale-retard')) && (await page.evaluate(() => location.hash)) === '#/saison' && !MODIFS.some(m => m.rpc === 'crescite_signaler'));
+  // un mot pour l'administration, sans réponse choisie : il ne part pas ; changer de vue pose la question
+  await page.evaluate(() => { location.hash = '#/proposition/1'; });
+  await page.waitForSelector('[data-commentaire="11"]', { timeout: 10000 }).catch(() => {});
+  await page.waitForTimeout(400);
+  await page.evaluate(() => { location.hash = '#/saison'; });
+  await page.waitForTimeout(500);
+  ok('proposition · rien d’écrit : on change de vue sans question', !(await page.$('dialog.gq[open]')) && (await page.evaluate(() => location.hash)) === '#/saison');
+  await page.goBack();
+  await page.waitForSelector('[data-commentaire="11"]', { timeout: 10000 }).catch(() => {});
+  await page.waitForTimeout(400);
+  await page.fill('[data-commentaire="11"]', 'Libre le premier jour seulement, après 14 h.');
+  await page.evaluate(() => { location.hash = '#/saison'; });
+  ok('proposition · un mot commencé : changer de vue pose la question', await question() && (await page.evaluate(() => location.hash)) === '#/proposition/1');
+  await page.tap('dialog.gq [data-gq="non"]');
+  ok('proposition · « Rester » : le mot reste', (await page.$eval('[data-commentaire="11"]', e => e.value).catch(() => '')) === 'Libre le premier jour seulement, après 14 h.');
+  await page.tap('[data-commentaire="11"]');
+  const avantRep = MODIFS.length;
+  await page.tap('[data-jour-prop="11"] [data-reponse="oui"]');
+  await page.waitForFunction(() => document.querySelector('[data-jour-prop="11"] [data-reponse="oui"][aria-pressed="true"]'), null, { timeout: 6000 }).catch(() => {});
+  ok('proposition · une réponse choisie emporte le mot', MODIFS.slice(avantRep).some(m => m.rpc === 'crescite_repondre' && m.corps.commentaire_ === 'Libre le premier jour seulement, après 14 h.'), JSON.stringify(MODIFS.slice(avantRep)));
+  await page.evaluate(() => { location.hash = '#/saison'; });
+  await page.waitForTimeout(500);
+  ok('proposition · le mot parti avec la réponse : on change de vue sans question', !(await page.$('dialog.gq[open]')) && (await page.evaluate(() => location.hash)) === '#/saison' && natifs === 0);
+  ok('supprimer, retard, proposition · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();
 }
 

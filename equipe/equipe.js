@@ -2756,7 +2756,7 @@
     const id = Number(c.dataset.commentaire);
     const p = (E.dispo.propositions || []).find(x => x.jours.some(j => j.id === id)), j = p && p.jours.find(x => x.id === id);
     if (!j) return;
-    if (j.moi && j.moi.reponse) { if ((j.moi.commentaire || '') !== c.value.trim()) repondre(id, j.moi.reponse, c.value.trim()); return; }
+    if (j.moi && j.moi.reponse) { if ((j.moi.commentaire || '') !== c.value.trim()) { garderForm(c.closest('[data-jour-prop]')); repondre(id, j.moi.reponse, c.value.trim()); } return; }
     const etat = c.closest('[data-jour-prop]') && c.closest('[data-jour-prop]').querySelector('.etat-reponse');
     if (etat && c.value.trim()) etat.textContent = 'Choisissez une réponse : votre mot partira avec elle.';
   });
@@ -2795,7 +2795,10 @@
       ${close ? '<p class="message conseil" role="status">Cette proposition est close : merci pour vos réponses.</p>' : `<p class="intro-prop">Pour ${p.jours.length > 1 ? 'chaque jour' : 'ce jour'}, dites si vous êtes libre. Vous pouvez changer d’avis tant que la proposition est ouverte.</p>`}
       <div id="jours-prop">${p.jours.filter(j => j.moi).map(j => jourProposition(p, j)).join('')}</div>`;
     afficher(r, TITRES.proposition, html, { focus });
-    if (E.dispo.mesIndispos == null) chargerMesIndispos().then(() => { if (E.route && E.route.hash === r.hash) $$('[data-jour-prop]').forEach(s => { const j = p.jours.find(x => x.id === Number(s.dataset.jourProp)); if (j) s.outerHTML = jourProposition(p, j); }); }).catch(() => {});
+    // un mot commencé pour l'administration ne se perd pas en partant (ne rien perdre) : sans réponse choisie, il ne part
+    // pas ; chaque jour est gardé, et de nouveau quand sa réponse s'enregistre
+    $$('[data-jour-prop]').forEach(garderForm);
+    if (E.dispo.mesIndispos == null) chargerMesIndispos().then(() => { if (E.route && E.route.hash === r.hash) $$('[data-jour-prop]').forEach(s => { const j = p.jours.find(x => x.id === Number(s.dataset.jourProp)); if (!j) return; const c = $('[data-commentaire]', s), mot = c ? c.value : null, sale = GG() && GG().saisie && GG().saisie(s); s.outerHTML = jourProposition(p, j); const s2 = $(`[data-jour-prop="${j.id}"]`); garderForm(s2); if (sale && mot != null && s2) { const c2 = $('[data-commentaire]', s2); if (c2) c2.value = mot; } }); }).catch(() => {});
   }
   function jourProposition(p, j) {
     const close = p.statut === 'close' || Date.parse(j.fin) <= Date.now(), rep = j.moi && j.moi.reponse;
@@ -2826,6 +2829,7 @@
     if (s) {
       const actif = document.activeElement && s.contains(document.activeElement) ? document.activeElement : null;
       s.outerHTML = jourProposition(p, j);
+      garderForm($(`[data-jour-prop="${jourId}"]`));
       const b = $(`[data-jour-prop="${jourId}"] [data-reponse="${reponse}"]`);
       if (b && !reduit()) b.classList.add('pop');
       if (b && (depuisBouton || actif)) { if (depuisBouton) b.focus({ preventScroll: true }); requestAnimationFrame(() => tt('confirmer', b)); }
@@ -3205,16 +3209,28 @@
         motif = b.dataset.motif;
       });
     });
-    // une boîte modale : le clavier y reste (Tab tourne), Échap la ferme, le focus revient au geste
-    const fermer = () => { fond.remove(); document.removeEventListener('keydown', clavier, true); if (declencheur && declencheur.isConnected) declencheur.focus(); };
+    // une boîte modale : le clavier y reste (Tab tourne), Échap la ferme, le focus revient au geste. Une précision écrite
+    // ne se perd pas : ✕, Annuler, Échap, le voile, changer de vue, fermer l'onglet posent la question (ne rien perdre)
+    garderForm(fond);
+    const changee = () => !!(GG() && GG().saisie && GG().saisie(fond));
+    const fermer = (force = false) => {
+      if (!fond.isConnected) return;
+      if (force !== true && changee()) { partirSansPerdre({ titre: 'Fermer sans envoyer ?', texte: 'L’alerte n’est pas partie : la précision écrite sera perdue.', ok: 'Fermer sans envoyer' }).then(oui => { if (oui) fermer(true); }); return; }
+      fond.remove(); document.removeEventListener('keydown', clavier, true); window.removeEventListener('hashchange', partir);
+      if (declencheur && declencheur.isConnected) declencheur.focus();
+    };
+    const partir = () => { if (!changee()) fermer(true); };
+    fond.modaleChangee = changee; fond.fermerModale = fermer;
+    window.addEventListener('hashchange', partir);
     function clavier(e) {
+      if (GG() && GG().question && GG().question()) return;   // la question est posée : sa boîte a le clavier
       if (e.key === 'Escape') { e.preventDefault(); fermer(); return; }
       if (e.key !== 'Tab') return;
       const xs = $$('button:not([disabled]), input', fond), i = xs.indexOf(document.activeElement);
       if (e.shiftKey && i <= 0) { e.preventDefault(); xs[xs.length - 1].focus(); } else if (!e.shiftKey && i === xs.length - 1) { e.preventDefault(); xs[0].focus(); }
     }
     document.addEventListener('keydown', clavier, true);
-    $$('[data-fermer-modale]', fond).forEach(b => b.addEventListener('click', fermer));
+    $$('[data-fermer-modale]', fond).forEach(b => b.addEventListener('click', () => fermer()));
     fond.addEventListener('click', e => { if (e.target === fond) fermer(); });
     $('.btn-choix.actif', fond).focus();
     const zone = $('#msg-retard', fond);
@@ -3227,14 +3243,14 @@
         // la base n'a pas (ou plus) la fonction : le geste disparaît, et on le dit
         if (fonctionAbsente(error)) {
           SONDES.signaler = 'absent';
-          fermer();
+          fermer(true);
           if (location.hash === `#/date/${d.id}`) router({ rafraichir: true });
           return annoncer('L’alerte de retard n’est pas encore installée dans la base de la compagnie : rien n’est parti. Prévenez l’équipe par téléphone.', { erreur: true });
         }
         return dire(zone, `L’alerte n’est pas partie : ${esc(raisonRetard(error))}.`);
       }
       const n = Number(data) || 0;
-      fermer();
+      fermer(true);
       if (!n) return annoncer('L’alerte n’a prévenu personne : personne d’autre sur cette date, ni à l’administration, n’a de compte dans l’espace de l’équipe. Appelez l’équipe.', { erreur: true });
       annoncer(`Alerte envoyée : ${pluriel(n, 'personne prévenue', 'personnes prévenues')}.`);
       vibrer(25);

@@ -233,11 +233,17 @@ h1 { font: 500 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
     });
   }
 
+  // ne rien perdre en partant : une réponse en route (le bouton touché, la réponse pas encore revenue) ; fermer ou quitter
+  // la page pendant ce temps pose la question du navigateur (beforeunload), la réponse n'a peut-être pas été enregistrée
+  let enRoute = 0;
+  window.addEventListener('beforeunload', e => { if (enRoute) { e.preventDefault(); e.returnValue = ''; } });
+
   async function repondre(j, c, bouton) {
     const li = bouton.closest('li');
     (li ? li.querySelectorAll('button') : [bouton]).forEach(b => { b.disabled = true; });
     bouton.classList.add('en-cours');
     let texte;
+    enRoute++;
     try {
       const w = await appeler({ r, j: Number(j), c });
       if (!w) return introuvable();
@@ -248,7 +254,7 @@ h1 { font: 500 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
         : (v.proposition.statut === 'close' ? 'Cette proposition est close : la réponse n’a pas été enregistrée.' : 'Cette réponse n’a pas pu être enregistrée.');
     } catch (e) {
       texte = 'La réponse n’a pas pu partir. Vérifiez la connexion, puis réessayez.';
-    }
+    } finally { enRoute--; }
     // le choix venu du courriel, ou une proposition close entre-temps : la page se recompose, la réponse en tête
     if (!li || v.proposition.statut === 'close') {
       oublierVise();
@@ -344,6 +350,7 @@ h1 { font: 500 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
     main.querySelectorAll('button[data-alerte]').forEach(b => { b.disabled = true; });
     bouton.classList.add('en-cours');
     let texte = '';
+    enRoute++;
     try {
       const w = await appeler({ alerte: jetonAlerte, action, tout });
       if (!w) return alerteIntrouvable();
@@ -357,7 +364,7 @@ h1 { font: 500 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
       }
     } catch (e) {
       texte = 'Cela n’a pas pu se faire. Vérifiez la connexion, puis réessayez.';
-    }
+    } finally { enRoute--; }
     rendreAlerte(texte);
     (texte ? main.querySelector('.etat') : main.querySelector('h1'))?.focus();
   }

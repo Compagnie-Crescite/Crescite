@@ -1,8 +1,8 @@
 // L'espace des salles (pro/) et la page de réponse (reponse/), vérifiés dans Chromium, hors ligne : leurs parcours (le code
 // d'accès, l'espace d'une salle, ses documents et sa vidéo, un lien refusé ou une panne ; une proposition de dates, la
-// réponse d'un bouton ou venue du courriel, une proposition close, l'alerte de tournée confirmée ou arrêtée, un lien
-// manquant ou expiré), la charte (la nuit par défaut, les polices, la marque, le pied), les cibles de 44 px et rien qui
-// déborde à 360 px.
+// réponse d'un bouton (en route, quitter la page pose la question) ou venue du courriel, une proposition close, l'alerte
+// de tournée confirmée ou arrêtée, un lien manquant ou expiré), la charte (la nuit par défaut, les polices, la marque, le
+// pied), les cibles de 44 px et rien qui déborde à 360 px.
 //   python3 site/build.py && node site/salles-reponse.mjs
 // Les fonctions crescite-pro et crescite-courriel sont simulées (aucune donnée réelle, aucun appel à la base) ; les
 // polices de Google sont coupées (la charte se lit dans les familles demandées). Captures dans site/dist/shots-salles/.
@@ -58,6 +58,7 @@ const alertes = () => ({
 });
 let ALERTES = alertes();
 let pannes = 0;                                       // la fonction échoue tant que pannes > 0
+let lenteur = 0;                                      // la fonction répond après tant de millisecondes
 const APPELS = [];
 
 const resultats = [];
@@ -82,6 +83,7 @@ async function contexte(navigateur, { largeur = 1440, hauteur = 900, mobile = fa
     if (url.pathname.startsWith('/rest/v1/crescite_textes')) return json(200, [{ valeur: { contact: { nom: 'Adrien Vada', role: 'Directeur artistique', email: 'diffusion@crescite.fr', telephone: '06 00 00 00 00' } } }]);
     const corps = JSON.parse(req.postData() || '{}');
     APPELS.push({ fonction: url.pathname.split('/').pop(), corps });
+    if (lenteur) await new Promise(r => setTimeout(r, lenteur));
     if (pannes > 0) { pannes--; return json(500, { erreur: 'panne' }); }
     if (url.pathname.endsWith('/crescite-pro')) {
       if (corps.jeton === PANNE) return json(500, { erreur: 'panne' });
@@ -257,6 +259,15 @@ try {
     await page.click('li[data-jour="11"] button[data-c="peut_etre"]');
     await page.waitForFunction(() => /C’est noté/.test(document.querySelector('li[data-jour="11"] .note')?.textContent || ''));
     ok('réponse · un bouton répond : « C’est noté », le bouton allumé', await page.getAttribute('li[data-jour="11"] button[data-c="peut_etre"]', 'aria-pressed') === 'true' && APPELS.some(a => a.corps.j === 11 && a.corps.c === 'peut_etre'));
+    // une réponse en route : quitter la page pose la question du navigateur (beforeunload) ; revenue, plus de question
+    const avantDepart = () => page.evaluate(() => { const e = new Event('beforeunload', { cancelable: true }); window.dispatchEvent(e); return e.defaultPrevented; });
+    lenteur = 1200;
+    await page.click('li[data-jour="11"] button[data-c="oui"]');
+    await page.waitForTimeout(200);
+    const enRoute = await avantDepart();
+    await page.waitForFunction(() => document.querySelector('li[data-jour="11"] button[data-c="oui"]')?.getAttribute('aria-pressed') === 'true');
+    lenteur = 0;
+    ok('réponse · en route, quitter la page pose la question du navigateur ; revenue, plus de question', enRoute && !(await avantDepart()));
     // le choix venu du courriel : rien ne s'enregistre avant « Confirmer »
     const avant = APPELS.length;
     await page.goto(`${REP}?r=${J('r')}&j=11&c=non`);
