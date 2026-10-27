@@ -90,7 +90,7 @@ html[data-theme="nuit"] .champ input, html[data-theme="nuit"] .champ textarea, h
 html[data-theme="nuit"] footer { border-top: 1px solid var(--filet); }
 /* ce qui s'écrit dans la couleur d'une entrée prend sa couleur vive (la sombre ne se lirait pas sur la nuit) */
 html[data-theme="nuit"] .ct-k { color: var(--ev, var(--magenta-texte)); }
-html[data-theme="nuit"] .et-rac button:hover { border-color: var(--ev); color: var(--ev); }
+@media (hover: hover) { html[data-theme="nuit"] .et-rac button:hover { border-color: var(--ev); color: var(--ev); } }
 /* les fiches des spectacles se détachent de la nuit par un filet de leur univers */
 html[data-theme="nuit"] .fu, html[data-theme="nuit"] .fp, html[data-theme="nuit"] .ac, html[data-theme="nuit"] .dos-appel { box-shadow: 0 0 0 1px color-mix(in srgb, var(--u-texte) 16%, transparent), 0 24px 44px -28px #000; }
 /* les univers clairs dans leur nuit (leurs couleurs de D, retournées) ; ce qui reste sur papier blanc garde l'encre du jour */
@@ -158,7 +158,7 @@ body { display: flow-root; }   /* (la cale et la marge de l'en-tête restent dan
   transition: max-width .3s var(--k-doux), padding .3s var(--k-doux), opacity var(--k-survol) var(--k-doux), visibility 0s; }
 .marque .l { display: block; flex: none; width: 32px; transition: scale var(--k-survol) var(--k-souple); }
 .marque svg { width: 100%; height: auto; display: block; }
-.marque:hover .l { scale: 1.08; }
+@media (hover: hover) { .marque:hover .l { scale: 1.08; } }
 /* sur l'accueil, en bas, la marque est repliée (la grande pieuvre est au-dessus) ; arrimée, elle se déplie */
 .top.sous-pieuvre { bottom: calc(8px + env(safe-area-inset-bottom)); }
 /* (repliée, elle n'est plus une escale de la touche Tab : le focus s'y posait sans rien montrer ; la pieuvre de la scène, au-dessus,
@@ -171,8 +171,9 @@ body { display: flow-root; }   /* (la cale et la marge de l'en-tête restent dan
 /* (le point de chaque pièce est une ventouse : un anneau et son cœur ; au survol elle se gonfle, la pièce de la vue la remplit) */
 .entrees .pt { flex: none; width: 9px; height: 9px; border-radius: 50%; background: radial-gradient(circle, currentColor 0 1.6px, transparent 2.1px); box-shadow: inset 0 0 0 1.5px currentColor;
   opacity: .7; transition: opacity var(--k-survol) var(--k-doux), scale var(--k-survol) var(--k-souple), background-color var(--k-survol) var(--k-doux); }
-.entrees a:hover { background-color: rgba(255, 255, 255, .13); }
-.entrees a:is(:hover, :focus-visible) .pt { opacity: 1; scale: 1.3; }
+@media (hover: hover) { .entrees a:hover { background-color: rgba(255, 255, 255, .13); } }
+.entrees a:is(:focus-visible) .pt { opacity: 1; scale: 1.3; }
+@media (hover: hover) { .entrees a:is(:hover) .pt { opacity: 1; scale: 1.3; } }
 .entrees a[aria-current] .pt { opacity: 1; background-color: currentColor; }
 .entrees a[aria-current="page"] { background-color: #fff; color: var(--saison); }
 .entrees a[aria-current="true"] { border-color: #fff; }
@@ -198,8 +199,9 @@ body { display: flow-root; }   /* (la cale et la marge de l'en-tête restent dan
 /* la loupe du menu (CHERCHE) : un rond à la suite des pièces, la boîte de recherche ouverte, il se remplit */
 .loupe-b { flex: none; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: none; color: #fff; cursor: pointer; }
 .loupe-b svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; transition: scale var(--k-survol) var(--k-souple); }
-.loupe-b:hover { background-color: rgba(255, 255, 255, .13); }
-.loupe-b:is(:hover, :focus-visible) svg { scale: 1.12; }
+@media (hover: hover) { .loupe-b:hover { background-color: rgba(255, 255, 255, .13); } }
+.loupe-b:is(:focus-visible) svg { scale: 1.12; }
+@media (hover: hover) { .loupe-b:is(:hover) svg { scale: 1.12; } }
 .loupe-b[aria-expanded="true"] { background: #fff; color: var(--saison); }
 /* le menu au téléphone, sous le pouce : la barre d'onglets du bas, comme une application (la pilule du haut, à 360 px, ne tenait
    plus la pieuvre, quatre pièces et la loupe). Les pièces du menu (#entrees, déplacé hors de l'en-tête par placerEntrees) s'y
@@ -207,24 +209,32 @@ body { display: flow-root; }   /* (la cale et la marge de l'en-tête restent dan
    celle dont la vue dépend (un spectacle, une page de l'espace pro) un anneau. La barre reste quand le haut se range
    (Range) ; elle prend la place de la barre d'accueil de l'iPhone (safe-area). --tab : la place qu'elle prend en bas de
    l'écran (0 au bureau) ; --bas : ce que ce qui se pose en bas de l'écran laisse sous lui (les filtres des saisons,
-   l'indicateur de section, le haut de page) : la barre et la safe-area au téléphone, la safe-area seule au bureau */
-:root { --tab-h: 58px; --tab: 0px; --bas: env(safe-area-inset-bottom, 0px); }
+   l'indicateur de section, le haut de page) : la barre et la safe-area au téléphone, la safe-area seule au bureau.
+   L'édition sur place (EDITION) pose sa barre juste au-dessus de la barre d'onglets (--ed-bas) ; tant qu'elle est là, elle dit
+   la place qu'elle prend (--ed-barre-h) et ce qui se pose en bas de l'écran monte au-dessus d'elle : rien ne se recouvre
+   (--bas0 : ce qui est tout en bas, la barre d'onglets ou celle de l'édition ; --bas : ce qui s'y ajoute, la barre « Réserver »
+   d'un spectacle au téléphone) */
+:root { --tab-h: 58px; --tab: 0px; --bas0: env(safe-area-inset-bottom, 0px); --bas: var(--bas0); --ed-bas: var(--tab); }
+html.ed-actif { --bas0: var(--ed-barre-h, var(--tab)); }
+html.ed-actif body { padding-bottom: var(--bas0); }
 .entrees .ic { display: none; }
 @media (max-width: 759px) {
-  :root { --tab: calc(var(--tab-h) + env(safe-area-inset-bottom, 0px)); --bas: var(--tab); }
-  html { scroll-padding-bottom: calc(var(--tab) + 12px); }
+  :root { --tab: calc(var(--tab-h) + env(safe-area-inset-bottom, 0px)); --bas0: var(--tab); }
+  html { scroll-padding-bottom: calc(var(--bas) + 12px); }
   body { padding-bottom: var(--tab); }
   .entrees.en-bas { position: fixed; z-index: 61; left: 0; right: 0; bottom: 0; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); align-items: stretch; gap: 0;
     height: var(--tab); padding: 0 max(4px, env(safe-area-inset-right)) env(safe-area-inset-bottom, 0px) max(4px, env(safe-area-inset-left)); background: var(--saison); color: #fff;
     box-shadow: 0 -1px 0 rgba(255, 255, 255, .16), 0 -14px 30px -18px rgba(0, 0, 0, .95); }
   .entrees.en-bas a { flex-direction: column; justify-content: center; gap: 4px; min-width: 0; height: var(--tab-h); padding: 0 2px; border: 0; border-radius: 0; background: none; color: #fff;
     font: 700 .66rem/1.1 var(--etiq); letter-spacing: .05em; text-align: center; -webkit-tap-highlight-color: transparent; }
-  .entrees.en-bas a:hover, .entrees.en-bas a[aria-current="page"] { background: none; color: #fff; }
+  .entrees.en-bas a[aria-current="page"] { background: none; color: #fff; }
+  @media (hover: hover) { .entrees.en-bas a:hover { background: none; color: #fff; } }
   .entrees.en-bas .pt, .entrees.en-bas .long { display: none; }
   .entrees.en-bas .court { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
   .entrees.en-bas .ic { display: grid; place-items: center; width: 54px; height: 28px; border-radius: 999px; transition: background-color var(--k-survol) var(--k-doux), color var(--k-survol) var(--k-doux), box-shadow var(--k-survol) var(--k-doux); }
   .entrees.en-bas .ic svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: scale var(--k-survol) var(--k-souple); }
-  .entrees.en-bas a:is(:hover, :focus-visible) .ic svg { scale: 1.1; }
+  .entrees.en-bas a:is(:focus-visible) .ic svg { scale: 1.1; }
+  @media (hover: hover) { .entrees.en-bas a:is(:hover) .ic svg { scale: 1.1; } }
   .entrees.en-bas a[aria-current="page"] .ic { background: #fff; color: var(--saison); }
   .entrees.en-bas a[aria-current="true"] .ic { box-shadow: inset 0 0 0 2px #fff; }
   .entrees.en-bas a:focus-visible { outline: 2px solid #fff; outline-offset: -3px; border-radius: 12px; }
@@ -257,7 +267,7 @@ html:not(.still) .cs-boite { animation: cs-monte .26s var(--k-doux) backwards; }
 .cs-champ input::placeholder { color: var(--gris); }
 .cs-champ input::-webkit-search-cancel-button { display: none; }
 .cs-x { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: none; color: var(--encre); cursor: pointer; }
-.cs-x:hover { background: color-mix(in srgb, var(--encre) 10%, transparent); }
+@media (hover: hover) { .cs-x:hover { background: color-mix(in srgb, var(--encre) 10%, transparent); } }
 .cs-x .croix { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
 .cs-l { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 4px 8px 14px; }
 .cs-g { margin: 14px 12px 6px; color: var(--gris); font: 700 .72rem/1.3 var(--etiq); letter-spacing: .14em; text-transform: uppercase; }
@@ -290,7 +300,7 @@ section.bloc.sans-filet { border-top: 0; padding-top: clamp(28px, 4vw, 48px); }
 .ep-h1 .fleur { --trait: #fff; }
 .surtitre { margin: 0 0 14px; font-size: .8rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--gris); }
 .surtitre a { text-decoration: none; }
-.surtitre a:hover { color: var(--magenta-texte); }
+@media (hover: hover) { .surtitre a:hover { color: var(--magenta-texte); } }
 .titre-bloc { margin: 0 0 30px; font: 500 clamp(2rem, 1.4rem + 1.8vw, 2.8rem)/1.05 var(--titre); text-wrap: balance; }
 .rubrique { margin: 28px 0 10px; font: 600 .78rem/1.3 var(--etiq); letter-spacing: .09em; text-transform: uppercase; color: var(--magenta-texte); }
 /* ———— les boutons : une seule échelle, partout ————
@@ -349,7 +359,8 @@ section.bloc.sans-filet { border-top: 0; padding-top: clamp(28px, 4vw, 48px); }
 .carte .bout { fill: none; stroke: var(--kc, var(--saison-texte)); stroke-width: 1.7; stroke-linecap: round; }
 /* (chaque commune, une ventouse : survolée, choisie ou allumée depuis sa ligne, elle se gonfle) */
 .carte .point { fill: var(--kc, var(--saison-texte)); stroke: var(--papier); stroke-width: 1.2; transform-box: fill-box; transform-origin: center; transition: scale var(--k-survol) var(--k-souple); }
-.carte .carte-lieu:is(:hover, :focus-visible, .on, .est-allume, .est-choisi) .point { scale: 1.5; }
+.carte .carte-lieu:is(:focus-visible, .on, .est-allume, .est-choisi) .point { scale: 1.5; }
+@media (hover: hover) { .carte .carte-lieu:is(:hover) .point { scale: 1.5; } }
 .carte .cible { fill: transparent; }
 .carte .carte-lieu { cursor: pointer; outline: none; transition: opacity var(--k-survol) var(--k-doux); }
 .carte .carte-lieu:focus-visible .point { stroke: var(--encre); stroke-width: 2.6; }
@@ -402,7 +413,7 @@ section.bloc.sans-filet { border-top: 0; padding-top: clamp(28px, 4vw, 48px); }
 .sc-h { position: relative; z-index: 2; margin: 0; padding: 26px var(--gout) 0; text-align: center; font: 600 .8rem/1.3 var(--etiq); letter-spacing: .32em; text-transform: uppercase; color: var(--sc-terne); }
 .sc-pause { position: absolute; z-index: 4; right: var(--gout); top: 14px; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 1.5px solid color-mix(in srgb, #fff 60%, transparent); border-radius: 50%;
   background: color-mix(in srgb, var(--sc-c) 50%, transparent); color: #fff; cursor: pointer; }
-.sc-pause:hover { border-color: #fff; }
+@media (hover: hover) { .sc-pause:hover { border-color: #fff; } }
 .sc-pause:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 .sc-pause svg { width: 15px; height: 15px; fill: currentColor; }
 .sc-pause .i-l, .sc-pause[aria-pressed="true"] .i-p { display: none; }
@@ -475,7 +486,7 @@ html[data-theme="nuit"] .u-arene .df-titre { color: var(--u-vif); }
 .df-liste { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--u-filet); }
 .df-liste li { border-bottom: 1px solid var(--u-filet); }
 .df-date { display: grid; grid-template-columns: 8.2rem minmax(0, 1fr); align-items: baseline; gap: 0 16px; padding: 8px 6px; color: inherit; text-decoration: none; transition: background-color var(--k-survol) var(--k-doux); }
-a.df-date:hover { background: color-mix(in srgb, var(--u-vif) 13%, transparent); }
+@media (hover: hover) { a.df-date:hover { background: color-mix(in srgb, var(--u-vif) 13%, transparent); } }
 a.df-date:focus-visible { outline: 2px solid var(--u-vif); outline-offset: -2px; }
 .df-q b { display: block; font: 600 1.12rem/1.2 var(--sans); font-variant-numeric: tabular-nums; }
 .df-q small { display: block; font-size: .82rem; color: var(--u-texte2); }
@@ -581,7 +592,7 @@ html[data-theme="nuit"] .df[data-motif="paperboard"] .df-in { --u-texte: var(--u
 .acc-saison .titre-bloc { margin-bottom: 8px; }
 .acc-lien { margin: 18px 0 26px; }
 .acc-lien a { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: var(--saison-texte); text-decoration: none; }
-.acc-lien a:hover { text-decoration: underline; }
+@media (hover: hover) { .acc-lien a:hover { text-decoration: underline; } }
 .une-grille { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); grid-template-areas: "tete carte" "liste carte"; grid-template-rows: auto 1fr; column-gap: clamp(24px, 4vw, 64px); }
 .une-tete { grid-area: tete; padding-top: clamp(16px, 4vh, 44px); }
 .une-liste { grid-area: liste; }
@@ -593,7 +604,8 @@ html[data-theme="nuit"] .df[data-motif="paperboard"] .df-in { --u-texte: var(--u
 .prochaines .t { font: 500 1.15rem/1.2 var(--titre); }
 .prochaines .t::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--c); margin-right: 8px; vertical-align: .15em; }
 .prochaines .ou { font-size: .9rem; color: var(--gris); }
-.prochaines li.on a, .prochaines a:hover { background: color-mix(in srgb, var(--magenta) 8%, transparent); }
+.prochaines li.on a { background: color-mix(in srgb, var(--magenta) 8%, transparent); }
+@media (hover: hover) { .prochaines a:hover { background: color-mix(in srgb, var(--magenta) 8%, transparent); } }
 .une-carte { grid-area: carte; align-self: center; position: relative; margin: 0; }
 .une-carte .carte { max-height: calc(100svh - 110px); }
 .merci { padding: 34px 0 56px; border-top: 1px solid var(--filet); }
@@ -606,7 +618,7 @@ html[data-theme="nuit"] .df[data-motif="paperboard"] .df-in { --u-texte: var(--u
 .et .trait { width: 130px; height: 22px; margin-top: 14px; }
 .et-rac { position: relative; list-style: none; margin: 26px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
 .et-rac button { padding: 8px 15px; border: 1.5px solid color-mix(in srgb, var(--ec) 40%, var(--filet)); border-radius: 999px; background: var(--blanc); color: var(--encre); font: 500 .92rem var(--sans); cursor: pointer; }
-.et-rac button:hover { border-color: var(--ec); color: var(--ec); }
+@media (hover: hover) { .et-rac button:hover { border-color: var(--ec); color: var(--ec); } }
 
 /* ———— l'agenda : la recherche, les spectacles, la liste par mois, la carte qui suit ———— */
 .ag-outils { display: flex; flex-wrap: wrap; gap: 14px 18px; align-items: center; margin-bottom: 26px; }
@@ -616,7 +628,7 @@ html[data-theme="nuit"] .df[data-motif="paperboard"] .df-in { --u-texte: var(--u
 .recherche svg { position: absolute; left: 14px; top: 50%; width: 16px; height: 16px; transform: translateY(-50%); fill: none; stroke: var(--gris); stroke-width: 2; }
 .filtres { display: flex; flex-wrap: wrap; gap: 8px; }
 .puce { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 999px; border: 1.5px solid var(--filet); background: transparent; font: 500 .93rem var(--sans); color: var(--encre); cursor: pointer; text-align: left; }
-.puce:hover { border-color: var(--encre); }
+@media (hover: hover) { .puce:hover { border-color: var(--encre); } }
 .puce[aria-pressed="true"] { background: var(--encre); border-color: var(--encre); color: var(--papier); }
 .puce i { flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
 .puce .croix { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
@@ -634,7 +646,7 @@ html[data-theme="nuit"] .df[data-motif="paperboard"] .df-in { --u-texte: var(--u
 .dates time small { display: block; font-size: .85rem; color: var(--gris); }
 .dates .t { font: 500 1.25rem/1.2 var(--titre); text-decoration: none; }
 .dates .t::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--c); margin-right: 10px; vertical-align: .15em; }
-.dates .t:hover { color: var(--magenta-texte); }
+@media (hover: hover) { .dates .t:hover { color: var(--magenta-texte); } }
 .dates .ou { display: block; font-weight: 500; }
 .dates > li.on, .sa-dates > li.on { background: color-mix(in srgb, var(--magenta) 8%, transparent); }
 .det { list-style: none; margin: 4px 0 0; padding: 0; font-size: .9rem; color: var(--gris); overflow-wrap: anywhere; }
@@ -666,10 +678,10 @@ html[data-theme="nuit"] .df[data-motif="paperboard"] .df-in { --u-texte: var(--u
 .idx, .idx-tout { display: inline-flex; align-items: center; gap: 7px; border: 1.5px solid color-mix(in srgb, var(--encre) 30%, transparent); background: transparent; color: var(--encre); font: 500 .9rem/1.2 var(--sans); font-variant-numeric: tabular-nums; cursor: pointer; white-space: nowrap; }
 .idx { padding: 7px 13px 6px; border-radius: 999px 999px 8px 8px; letter-spacing: .03em; }
 .idx small { color: var(--gris); font-size: .78rem; letter-spacing: 0; }
-.idx:hover, .idx-tout:hover { border-color: var(--encre); }
+@media (hover: hover) { .idx:hover, .idx-tout:hover { border-color: var(--encre); } }
 .idx[aria-expanded="true"] { border-color: var(--saison-vive); background: color-mix(in srgb, var(--saison-vive) 12%, transparent); }
 .idx-actif { background: var(--magenta); border-color: var(--magenta); color: #fff; }
-.idx-actif:hover { background: var(--magenta-texte); border-color: var(--magenta-texte); color: var(--papier); }
+@media (hover: hover) { .idx-actif:hover { background: var(--magenta-texte); border-color: var(--magenta-texte); color: var(--papier); } }
 .idx .croix { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
 .idx-tout { flex: none; justify-content: center; width: 40px; height: 40px; padding: 0; border-radius: 50%; }
 .idx-tout .fleche { width: 18px; height: 18px; }
@@ -677,14 +689,16 @@ html[data-theme="nuit"] .df[data-motif="paperboard"] .df-in { --u-texte: var(--u
 .sai { border-bottom: 1px solid var(--filet); scroll-margin-top: 64px; }   /* (juste sous la bande des saisons) */
 .sai > summary { display: grid; grid-template-columns: clamp(72px, 8vw, 104px) minmax(0, 1fr) auto; align-items: center; gap: 4px clamp(16px, 2.6vw, 34px); padding: 18px 8px; list-style: none; cursor: pointer; transition: background-color var(--k-survol) var(--k-doux); }
 .sai > summary::-webkit-details-marker { display: none; }
-.sai > summary:hover, .sai[open] > summary { background: color-mix(in srgb, var(--saison-vive) 6%, transparent); }
+.sai[open] > summary { background: color-mix(in srgb, var(--saison-vive) 6%, transparent); }
+@media (hover: hover) { .sai > summary:hover { background: color-mix(in srgb, var(--saison-vive) 6%, transparent); } }
 /* l'arche : la petite carte de la saison (la France, un bras d'encre de Rouen à chaque commune, une ventouse au bout) ; au
    survol, les bras prennent toute leur encre et les ventouses se gonflent ; ouverte, l'arche s'encre de la saison (un lavis
    qui monte du seuil, posé d'un fondu : opacité seule) */
 .p4-arche { position: relative; display: flex; align-items: flex-end; aspect-ratio: 4 / 5; padding: 16% 8% 5%; overflow: hidden; border: 1px solid color-mix(in srgb, var(--saison-vive) 24%, var(--filet)); border-radius: 999px 999px 0 0;
   background: radial-gradient(90% 70% at 50% 60%, color-mix(in srgb, var(--saison) 30%, var(--papier-2)), var(--nuit) 78%); transition: border-color var(--k-survol) var(--k-doux); }
 .p4-arche::after { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg, color-mix(in srgb, var(--saison-vive) 42%, transparent), transparent 70%); opacity: 0; transition: opacity var(--k-page) var(--k-doux); pointer-events: none; }
-.sai > summary:hover .p4-arche, .sai[open] .p4-arche { border-color: var(--saison-vive); }
+.sai[open] .p4-arche { border-color: var(--saison-vive); }
+@media (hover: hover) { .sai > summary:hover .p4-arche { border-color: var(--saison-vive); } }
 .sai[open] .p4-arche::after { opacity: 1; }
 .sai > summary.mv-presse .p4-arche { scale: .96; transition: scale var(--k-presse); }
 .p4-mini { display: block; width: 100%; height: auto; overflow: hidden; }
@@ -692,8 +706,10 @@ html[data-theme="nuit"] .df[data-motif="paperboard"] .df-in { --u-texte: var(--u
 .p4-mini path { fill: var(--saison-vive); opacity: .7; transition: opacity var(--k-survol) var(--k-doux); }
 .p4-mini .p4-v { fill: var(--saison-vive); stroke: var(--nuit); stroke-width: 3; transform-box: fill-box; transform-origin: center; transition: scale var(--k-survol) var(--k-souple); }
 .p4-mini .p4-rouen { fill: var(--encre); }
-.sai > summary:hover .p4-mini path, .sai[open] .p4-mini path { opacity: 1; }
-.sai > summary:hover .p4-mini .p4-v, .sai[open] .p4-mini .p4-v { scale: 1.35; }
+.sai[open] .p4-mini path { opacity: 1; }
+@media (hover: hover) { .sai > summary:hover .p4-mini path { opacity: 1; } }
+.sai[open] .p4-mini .p4-v { scale: 1.35; }
+@media (hover: hover) { .sai > summary:hover .p4-mini .p4-v { scale: 1.35; } }
 .sai-c { min-width: 0; }
 .sai-t { margin: 0; font: 400 clamp(1.5rem, 1.2rem + 1vw, 2.1rem)/1.1 var(--titre); }
 .sai-sp { display: block; margin-top: 6px; color: var(--gris); font-size: .9375rem; line-height: 1.45; }
@@ -715,9 +731,11 @@ html[data-theme="nuit"] .df[data-motif="paperboard"] .df-in { --u-texte: var(--u
 .sai-vk { font: 700 .7rem/1.2 var(--etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--gris); }
 .sai-vt { font: 500 1.08rem/1.2 var(--titre); }
 .sai-v svg { flex: none; width: 20px; height: 20px; fill: none; stroke: var(--saison-vive); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: translate var(--k-survol) var(--k-souple); }
-.sai-v:hover { border-color: var(--saison-vive); background: color-mix(in srgb, var(--saison-vive) 8%, transparent); }
-.sai-av:is(:hover, :focus-visible) svg { translate: -3px 0; }
-.sai-ap:is(:hover, :focus-visible) svg { translate: 3px 0; }
+@media (hover: hover) { .sai-v:hover { border-color: var(--saison-vive); background: color-mix(in srgb, var(--saison-vive) 8%, transparent); } }
+.sai-av:is(:focus-visible) svg { translate: -3px 0; }
+@media (hover: hover) { .sai-av:is(:hover) svg { translate: -3px 0; } }
+.sai-ap:is(:focus-visible) svg { translate: 3px 0; }
+@media (hover: hover) { .sai-ap:is(:hover) svg { translate: 3px 0; } }
 @media (max-width: 559px) { .sai-v { flex: 1 1 100%; } }
 .sai-carte { position: sticky; top: calc(var(--haut) + 76px); margin: 0; }
 .p4-carte { padding: clamp(34px, 4vw, 56px) clamp(14px, 2vw, 28px) clamp(16px, 2vw, 26px); border-radius: min(220px, 40%) min(220px, 40%) 24px 24px; overflow-x: clip;
@@ -737,12 +755,12 @@ html[data-theme="nuit"] .df[data-motif="paperboard"] .df-in { --u-texte: var(--u
 .dl-c { min-width: 0; }
 .dl-ou { font-weight: 600; line-height: 1.4; }
 .dl-ou a { text-decoration: none; }
-.dl-ou a:hover { text-decoration: underline; text-underline-offset: 3px; }
+@media (hover: hover) { .dl-ou a:hover { text-decoration: underline; text-underline-offset: 3px; } }
 /* (la flèche d'un lien qui s'ouvre dans un nouvel onglet : petite, de la couleur du lien, collée à son dernier mot) */
 .ext { display: inline-block; flex: none; width: .72em; height: .72em; margin-left: .3em; vertical-align: .02em; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .dl .dl-quoi { margin-top: 2px; }
 .dl-quoi a, .dl-sp { font: 400 1.3rem/1.25 var(--titre); text-decoration: none; }
-.dl-quoi a:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .2em; }
+@media (hover: hover) { .dl-quoi a:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .2em; } }
 .dl-porte { display: inline-block; width: 9px; height: 13px; margin-right: 9px; border-radius: 999px 999px 1px 1px; background: var(--c); vertical-align: -.05em; }
 .dl.est-res .dl-porte { width: 10px; height: 10px; border-radius: 2px; background: transparent; box-shadow: inset 0 0 0 2px var(--c); vertical-align: 0; }
 .p4-etiq { display: inline-block; margin-left: 10px; padding: 0 9px; border: 1px solid currentColor; border-radius: 999px; color: var(--gris); font: 600 .68rem/1.6 var(--etiq); letter-spacing: .08em; text-transform: uppercase; vertical-align: .15em; }
@@ -763,7 +781,7 @@ html[data-theme="nuit"] .df[data-motif="paperboard"] .df-in { --u-texte: var(--u
 }
 /* (les lignes de l'agenda d'un spectacle et d'un établissement : leur lieu en lien, leur état, une ligne qui suit la sienne) */
 .dates a.ou { text-decoration-color: color-mix(in srgb, var(--encre) 30%, transparent); text-underline-offset: 3px; }
-.dates a.ou:hover { color: var(--saison-texte); }
+@media (hover: hover) { .dates a.ou:hover { color: var(--saison-texte); } }
 .dates .qui .etat { margin: 0 0 0 4px; }
 .dates > li.suite { display: block; color: var(--gris); }
 
@@ -784,10 +802,10 @@ html[data-theme="nuit"] .df[data-motif="paperboard"] .df-in { --u-texte: var(--u
 .rec-t td:nth-child(3) { white-space: nowrap; }   /* (la durée d'un tenant : « 55 minutes ») */
 .rec-t td b, .rec-c dd b { color: var(--encre); font: 700 1.05em var(--titre); }
 .rec-t tbody tr { transition: background-color var(--k-survol) var(--k-doux); }
-.rec-t tbody tr:hover { background: color-mix(in srgb, var(--c) 8%, transparent); }
+@media (hover: hover) { .rec-t tbody tr:hover { background: color-mix(in srgb, var(--c) 8%, transparent); } }
 .rec-a { display: inline-flex; align-items: center; min-height: 44px; padding: 0; border: 0; background: none; color: var(--c); font: var(--rec-g, 600) 1.22rem/1.15 var(--rec-f, var(--titre));
   text-align: left; text-decoration: underline transparent; text-decoration-thickness: 1px; text-underline-offset: .2em; cursor: pointer; transition: text-decoration-color var(--k-survol) var(--k-doux); }
-.rec-a:hover { text-decoration-color: currentColor; }
+@media (hover: hover) { .rec-a:hover { text-decoration-color: currentColor; } }
 .rec-tag { display: inline-block; margin-left: 4px; padding: 0 9px; border: 1px solid currentColor; border-radius: 999px; color: var(--gris); font: 600 .68rem/1.6 var(--etiq); letter-spacing: .08em; text-transform: uppercase; vertical-align: .15em; }
 .rec-c { display: none; }
 @media (max-width: 759px) {
@@ -927,10 +945,11 @@ figcaption { margin-top: 6px; font-size: .8rem; color: var(--gris); }
 .frise-l > li { position: relative; display: grid; gap: 10px; align-content: center; min-height: 38svh; padding: 6vh 0 6vh 34px; }
 .frise-l > li::before { content: ""; position: absolute; left: -8px; top: 50%; width: 16px; height: 16px; margin-top: -9px; border-radius: 50%;
   background: radial-gradient(circle, var(--papier) 0 3.6px, var(--c, var(--saison-texte)) 4.3px); box-shadow: 0 0 0 3px var(--papier); transition: scale var(--k-survol) var(--k-souple); }
-.frise-l > li:is(.lu, :has(a:hover))::before { background: radial-gradient(circle, var(--c, var(--saison-texte)) 0 2.8px, var(--papier) 3.4px 4.4px, var(--c, var(--saison-texte)) 5px); scale: 1.3; }
+.frise-l > li:is(.lu)::before { background: radial-gradient(circle, var(--c, var(--saison-texte)) 0 2.8px, var(--papier) 3.4px 4.4px, var(--c, var(--saison-texte)) 5px); scale: 1.3; }
+@media (hover: hover) { .frise-l > li:is(:has(a:hover))::before { background: radial-gradient(circle, var(--c, var(--saison-texte)) 0 2.8px, var(--papier) 3.4px 4.4px, var(--c, var(--saison-texte)) 5px); scale: 1.3; } }
 .frise-l .an { display: block; font: 500 clamp(2.4rem, 2rem + 2vw, 3.8rem)/1 var(--titre); color: var(--c, var(--saison-texte)); font-variant-numeric: tabular-nums; }
 .frise-l .ti, .frise-l a { display: block; font: 500 clamp(1.4rem, 1.1rem + 1.2vw, 2.3rem)/1.18 var(--titre); color: var(--encre); text-decoration: none; text-wrap: balance; }
-.frise-l a:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 5px; }
+@media (hover: hover) { .frise-l a:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 5px; } }
 html.ed-actif .c-frise { display: none; }
 @media (max-width: 899px) {
   .recit { grid-template-columns: minmax(0, 1fr); gap: 0; }
@@ -965,7 +984,8 @@ section.bloc.troupe { padding-top: 0; content-visibility: auto; contain-intrinsi
 .tr6-p { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 4px 16px 4px 4px; border: 1.5px solid var(--filet); border-radius: 999px; background: var(--blanc); color: var(--encre);
   font: inherit; text-align: left; cursor: pointer; transition: border-color var(--k-survol) var(--k-doux), background-color var(--k-survol) var(--k-doux), color var(--k-survol) var(--k-doux), scale .12s var(--k-doux); }
 .tr6-p:not(.a-photo) { padding-left: 14px; }
-.tr6-p:hover, .tr6-p.est-allume { border-color: var(--saison-texte); background: color-mix(in srgb, var(--saison-texte) 10%, var(--blanc)); }
+.tr6-p.est-allume { border-color: var(--saison-texte); background: color-mix(in srgb, var(--saison-texte) 10%, var(--blanc)); }
+@media (hover: hover) { .tr6-p:hover { border-color: var(--saison-texte); background: color-mix(in srgb, var(--saison-texte) 10%, var(--blanc)); } }
 .tr6-p[aria-pressed="true"] { border-color: var(--saison-texte); background: var(--saison-texte); color: var(--papier); }
 .tr6-p:focus-visible { outline: 2px solid var(--saison-texte); outline-offset: 2px; }
 .tr6-v { flex: none; width: 36px; height: 36px; overflow: hidden; border-radius: 50%; background: var(--carte); }
@@ -976,7 +996,8 @@ section.bloc.troupe { padding-top: 0; content-visibility: auto; contain-intrinsi
 .tr6-nom { font: 600 .95rem/1.2 var(--texte); }
 .tr6-m { font-size: .8rem; color: var(--gris); }
 .tr6-m span + span::before { content: " · "; }
-.tr6-p:is(:hover, .est-allume) .tr6-m { color: var(--encre); }
+.tr6-p:is(.est-allume) .tr6-m { color: var(--encre); }
+@media (hover: hover) { .tr6-p:is(:hover) .tr6-m { color: var(--encre); } }
 .tr6-p[aria-pressed="true"] .tr6-m { color: inherit; }
 @media (max-width: 700px) {
   section.bloc.troupe { contain-intrinsic-size: auto 3600px; }
@@ -1038,7 +1059,7 @@ section.bloc.troupe { padding-top: 0; content-visibility: auto; contain-intrinsi
 .ep-c { position: relative; container-type: inline-size; }
 .ep-retour { display: inline-flex; align-items: center; gap: 10px; margin: 0 0 clamp(16px, 2vw, 26px); color: #fff; font: 700 .8rem/1.3 var(--etiq); letter-spacing: .14em; text-transform: uppercase; text-decoration: none; }
 .ep-retour .fleche { scale: -1 1; }
-.ep-retour:hover { text-decoration: underline; text-underline-offset: 4px; }
+@media (hover: hover) { .ep-retour:hover { text-decoration: underline; text-underline-offset: 4px; } }
 .ep-h1 { max-width: min(100%, 1100px); margin: 0; font: 700 min(clamp(38px, 6.6vw, 104px), 11.6cqi)/.94 var(--titre); letter-spacing: -.01em; text-transform: uppercase; text-wrap: balance; }
 .ep-lead { max-width: 40ch; margin: 18px 0 0; font: 400 clamp(1.15rem, 1rem + .6vw, 1.45rem)/1.45 var(--texte); }
 /* le sommaire d'une page longue (les deux pages de l'espace pro, la compagnie), comme le sous-menu d'un spectacle : une ligne
@@ -1058,7 +1079,7 @@ section.bloc.troupe { padding-top: 0; content-visibility: auto; contain-intrinsi
 .psom--ep .psom-t { text-transform: uppercase; letter-spacing: .02em; }
 .psom-cadre { flex: 1; }
 .psom .sm7-f { border-color: color-mix(in srgb, var(--ps-encre) 40%, transparent); background: var(--ps-fond); color: var(--ps-encre); }
-.psom .sm7-f:hover { border-color: var(--ps-encre); background: var(--ps-fond); }
+@media (hover: hover) { .psom .sm7-f:hover { border-color: var(--ps-encre); background: var(--ps-fond); } }
 .psom-l { --sm7-fondu: 32px; display: flex; gap: 8px; margin: 0 -2px; padding: 6px 2px; list-style: none; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 var(--sm7-fg), #000 calc(100% - var(--sm7-fd)), transparent); mask-image: linear-gradient(90deg, transparent, #000 var(--sm7-fg), #000 calc(100% - var(--sm7-fd)), transparent);
   transition: --sm7-fg var(--k-survol) var(--k-doux), --sm7-fd var(--k-survol) var(--k-doux); }
@@ -1069,7 +1090,7 @@ section.bloc.troupe { padding-top: 0; content-visibility: auto; contain-intrinsi
 .psom-l button { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border: 1.5px solid var(--ps-trait); border-radius: 999px; background: transparent; color: var(--ps-encre);
   font: 700 .72rem/1.2 var(--etiq); letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; cursor: pointer;
   transition: background-color var(--k-survol) var(--k-doux), color var(--k-survol) var(--k-doux), border-color var(--k-survol) var(--k-doux); }
-.psom-l button:hover { border-color: var(--ps-plein); }
+@media (hover: hover) { .psom-l button:hover { border-color: var(--ps-plein); } }
 .psom-l button[aria-current] { border-color: var(--ps-plein); background: var(--ps-plein); color: var(--ps-sur); }
 .psom-l button:focus-visible { outline: 2px solid var(--ps-plein); outline-offset: 2px; }
 .psom--ep :focus-visible { outline-color: #fff; }
@@ -1091,8 +1112,9 @@ html:has(main > .psom) { --onglets: 57px; scroll-padding-top: calc(var(--haut) +
 .ep-porte-t { flex: 1 1 auto; min-width: 0; font: 700 clamp(26px, 2.8vw, 44px)/1.02 var(--titre); letter-spacing: -.01em; text-transform: uppercase; text-wrap: balance; text-shadow: 0 1px 18px rgba(0, 0, 0, .35); }
 .ep-porte-t small { display: block; margin-top: 10px; font: 700 clamp(.8rem, .72rem + .25vw, .95rem)/1.3 var(--etiq); letter-spacing: .08em; }
 .ep-porte .fleche, .ep > .fleche { width: clamp(28px, 2.4vw, 40px); height: clamp(28px, 2.4vw, 40px); stroke-width: 1.6; transition: translate var(--k-survol) var(--k-souple); }
-.ep-porte:hover .ep-porte-ph img { scale: 1.05; }
-.ep-porte:is(:hover, :focus-visible) .fleche { translate: 6px 0; }
+@media (hover: hover) { .ep-porte:hover .ep-porte-ph img { scale: 1.05; } }
+.ep-porte:is(:focus-visible) .fleche { translate: 6px 0; }
+@media (hover: hover) { .ep-porte:is(:hover) .fleche { translate: 6px 0; } }
 .ep-porte:focus-visible { outline: 3px solid #fff; outline-offset: -8px; }
 .ep:has(.ep-a.mv-presse) { scale: .985; transition: scale var(--k-presse); }
 /* les espaces réservés : un étage plus bas et plus calme ; le titre de l'étage, son texte, puis trois fiches sur le papier
@@ -1103,7 +1125,8 @@ html:has(main > .psom) { --onglets: 57px; scroll-padding-top: calc(var(--haut) +
 .ep-acces { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: clamp(12px, 1.6vw, 20px); margin: clamp(24px, 3vw, 36px) 0 0; padding: 0; list-style: none; }
 .ep { position: relative; display: flex; flex-direction: column; gap: 10px; min-height: 200px; padding: clamp(20px, 2vw, 28px);
   border-top: 3px solid var(--saison-texte); border-radius: 0 0 8px 8px; background: var(--papier-2); color: var(--encre); transition: background var(--k-survol) var(--k-doux); }
-.ep:is(:hover, :focus-within) { background: var(--carte); }
+.ep:is(:focus-within) { background: var(--carte); }
+@media (hover: hover) { .ep:is(:hover) { background: var(--carte); } }
 .ep-cle { display: inline-flex; align-items: center; gap: 7px; margin: 0; color: var(--gris); font: 700 .72rem/1.2 var(--etiq); letter-spacing: .12em; text-transform: uppercase; }
 .ep-cadenas { width: 15px; height: 15px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .ep-t { margin: 0; font: 700 clamp(1.2rem, 1rem + .7vw, 1.55rem)/1.1 var(--titre); letter-spacing: -.005em; text-wrap: balance; }
@@ -1115,7 +1138,8 @@ html:has(main > .psom) { --onglets: 57px; scroll-padding-top: calc(var(--haut) +
 html.ed-actif .ep-a::after { content: none; }
 .ep-x { flex: 1 1 auto; max-width: 40ch; margin: 0; color: var(--gris); font: 400 .98rem/1.5 var(--texte); }
 .ep > .fleche { width: 26px; height: 26px; margin-top: 4px; color: var(--saison-texte); }
-.ep:is(:hover, :focus-within) > .fleche { translate: 6px 0; }
+.ep:is(:focus-within) > .fleche { translate: 6px 0; }
+@media (hover: hover) { .ep:is(:hover) > .fleche { translate: 6px 0; } }
 /* les sections des deux pages : la ligne-tentacule, puis la grande capitale à la couleur de la saison */
 .ep-sec { padding: clamp(60px, 7.6vw, 112px) 0; }
 .ep-sec:not(.fond) + .ep-sec:not(.fond) { padding-top: 0; }
@@ -1140,7 +1164,7 @@ html.ed-actif .ep-a::after { content: none; }
 /* le bouton blanc sur l'aplat */
 .ep-bt { --bt-a: #fff; --bt-sur: var(--e, var(--saison)); --bt-t: #fff; --bt-vif: #fff; }   /* (l'appel de l'espace pro : le principal, blanc sur l'aplat) */
 .ep-bt .fleche { transition: translate var(--k-survol) var(--k-souple); }
-.ep-bt:hover .fleche { translate: 4px 0; }
+@media (hover: hover) { .ep-bt:hover .fleche { translate: 4px 0; } }
 /* l'appel final : la pieuvre et son nom, « Écrire à la compagnie » */
 .ep-cta { padding: clamp(56px, 7vw, 100px) 0; background: var(--saison); color: #fff; }
 .ep-cta-in { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 28px 40px; }
@@ -1153,7 +1177,7 @@ html.ed-actif .ep-a::after { content: none; }
   .ep-act { grid-template-columns: minmax(0, 1fr); }
   .ep-act-ph { position: static; max-width: 560px; }
 }
-@media (max-width: 760px) {
+@media (max-width: 759px) {
   .ep-groupes { grid-template-columns: minmax(0, 1fr); }
   .ep-g + .ep-g > .ep-porte { box-shadow: inset 0 2px 0 rgba(255, 255, 255, .55); }
   .ep-porte { min-height: 200px; }
@@ -1230,7 +1254,7 @@ footer { background: var(--nuit); color: #d8cdd1; padding: 48px 0 44px; font-siz
 footer strong { color: #fff; }
 footer p { margin: 0 0 10px; }
 footer a { color: #fff; text-decoration-color: rgba(255, 255, 255, .4); }
-footer a:hover { color: var(--saison-vive); }
+@media (hover: hover) { footer a:hover { color: var(--saison-vive); } }
 footer :focus-visible { outline-color: var(--saison-vive); }
 .liens { display: flex; flex-wrap: wrap; gap: 4px 18px; }
 /* le plan du site, en tête du pied : une ligne de rubriques (les éléments du menu, le contact), séparée du reste par un filet ;
@@ -1238,20 +1262,20 @@ footer :focus-visible { outline-color: var(--saison-vive); }
 .pied-nav { grid-column: 1 / -1; padding-bottom: 22px; border-bottom: 1px solid rgba(255, 255, 255, .14); }
 .pied-nav ul { display: flex; flex-wrap: wrap; gap: 4px clamp(18px, 3vw, 40px); margin: 0; padding: 0; list-style: none; }
 .pied-nav a { display: inline-flex; align-items: center; min-height: 44px; font: 600 .8rem/1.3 var(--etiq); letter-spacing: .14em; text-transform: uppercase; text-decoration: none; }
-.pied-nav a:hover { text-decoration: underline; text-underline-offset: 4px; }
+@media (hover: hover) { .pied-nav a:hover { text-decoration: underline; text-underline-offset: 4px; } }
 @media (max-width: 640px) { .pied-nav ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; } }
 /* la page introuvable : sa phrase, puis d'où repartir (l'accueil, le menu, le contact), une large cible chacun */
 .nf { min-height: 32vh; }
 .nf-x { max-width: 40rem; margin: 0 0 24px; font-size: 1.12rem; }
 .nf-liens { display: flex; flex-wrap: wrap; gap: 10px; margin: 0; padding: 0; list-style: none; }
 .nf-liens a { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 10px 18px; border: 1.5px solid color-mix(in srgb, var(--encre) 30%, transparent); border-radius: 999px; color: var(--encre); font: 600 .95rem/1.2 var(--sans); text-decoration: none; }
-.nf-liens a:hover { border-color: var(--saison-vive); }
+@media (hover: hover) { .nf-liens a:hover { border-color: var(--saison-vive); } }
 .nf-liens .fleche { width: 16px; height: 16px; color: var(--saison-vive); }
 .petit { font-size: .82rem; color: #b9adb2; }
 /* « Modifier le site » : discret, au pied de chaque vue */
 .modifier { display: inline-flex; align-items: center; gap: 7px; margin: 0; padding: 0; border: 0; background: none; color: #fff; font: inherit; text-decoration: underline; text-decoration-color: rgba(255, 255, 255, .4); text-underline-offset: 3px; cursor: pointer; }
 .modifier svg { width: 15px; height: 15px; fill: none; stroke: var(--saison-vive); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-.modifier:hover { color: var(--saison-vive); }
+@media (hover: hover) { .modifier:hover { color: var(--saison-vive); } }
 /* les textes de bloc de D qui portent leur balise (titre, liste) : une enveloppe pour l'édition, sans effet sur la page */
 .legal .bl > h2:first-child { margin-top: 1.6em; }
 .legal > .bl:first-child > h2 { margin-top: 0; }
@@ -1264,10 +1288,10 @@ html .ed-barre .ed-etat { font: 500 1.2rem/1 var(--titre); }
 .ed-panneau .ed-tete h2::after { content: ""; display: block; width: 66px; height: 12px; margin-top: 6px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 20'%3E%3Cpath d='M2 12 C 22 4, 38 4, 54 11 S 86 19, 100 10 C 108 5, 116 7, 115 13 C 114 17, 108 17, 107 13' fill='none' stroke='%23bc3e80' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat left center / contain; }
 .ed-panneau .ed-champ > span:first-child { font: 600 .74rem/1.3 var(--etiq); letter-spacing: .09em; text-transform: uppercase; color: var(--magenta-texte); }
 html .ed-bt.ed-plein { background: var(--encre); border-color: var(--encre); color: var(--papier); }
-html .ed-bt.ed-plein:hover { background: var(--magenta); border-color: var(--magenta); color: #fff; }
+@media (hover: hover) { html .ed-bt.ed-plein:hover { background: var(--magenta); border-color: var(--magenta); color: #fff; } }
 html .ed-annonce { background: var(--encre); border-left: 3px solid var(--magenta); }
 .ed-bt.ed-plein.ed-ajout { display: flex; width: fit-content; margin: 10px 0 12px; background: transparent; border: 1.5px dashed var(--magenta); color: var(--magenta-texte); }
-.ed-bt.ed-plein.ed-ajout:hover { background: color-mix(in srgb, var(--magenta) 10%, transparent); color: var(--encre); }
+@media (hover: hover) { .ed-bt.ed-plein.ed-ajout:hover { background: color-mix(in srgb, var(--magenta) 10%, transparent); color: var(--encre); } }
 
 /* ———————————— les univers des spectacles ————————————
    Chaque univers pose ses couleurs (fond, texte, accent, lueur), sa police de titre et son motif ; --u-vif est la
@@ -1288,17 +1312,17 @@ html .ed-annonce { background: var(--encre); border-left: 3px solid var(--magent
 .fus.compact { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .fus.large { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .fu { position: relative; overflow: hidden; border-radius: 8px; font-family: var(--u-corps); box-shadow: 0 1px 0 rgba(0, 0, 0, .04), 0 16px 32px -24px rgba(0, 0, 0, .55); transition: box-shadow var(--k-survol) var(--k-doux), scale .12s var(--k-doux); }
-.fu:hover { box-shadow: 0 26px 46px -24px rgba(0, 0, 0, .62); }
+@media (hover: hover) { .fu:hover { box-shadow: 0 26px 46px -24px rgba(0, 0, 0, .62); } }
 .fu-a { display: flex; flex-direction: column; height: 100%; color: inherit; text-decoration: none; }
 .fu-a:focus-visible { outline: 3px solid var(--u-vif); outline-offset: -3px; }
 .fu-ph { position: relative; display: block; aspect-ratio: 4 / 3; overflow: hidden; }
 .fu-ph img { width: 100%; height: 100%; object-fit: cover; transition: scale var(--k-page) var(--k-doux); }
 .fu-ph::after { content: ""; position: absolute; inset: auto 0 0; height: 46%; background: linear-gradient(transparent, var(--u-fond)); }
-.fu:hover .fu-ph img { scale: 1.03; }
+@media (hover: hover) { .fu:hover .fu-ph img { scale: 1.03; } }
 .fu-badge { position: absolute; left: 12px; top: 12px; z-index: 1; padding: 3px 10px; border-radius: 999px; background: var(--u-accent); color: var(--u-sur-accent); font: 600 .68rem/1.4 var(--u-etiq); letter-spacing: .1em; text-transform: uppercase; }
 .fu-c { position: relative; display: block; flex: 1; padding: 4px 18px 20px; }
 .fu-c::before { content: ""; position: absolute; inset: -60% -20% auto; height: 140%; background: radial-gradient(closest-side, var(--u-lueur), transparent); opacity: 0; transition: opacity var(--k-survol) var(--k-doux); pointer-events: none; }
-.fu:hover .fu-c::before { opacity: 1; }
+@media (hover: hover) { .fu:hover .fu-c::before { opacity: 1; } }
 .fu .mo { position: absolute; right: 16px; top: -6px; width: 32px; height: 32px; color: var(--u-vif); }
 .fu-t { position: relative; margin: 0 40px 0 0; font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: 1.62rem; line-height: 1.05; color: var(--u-texte); }
 .fu-st, .fu-cr, .fu-lt, .fu-acc, .fu-date { position: relative; display: block; }
@@ -1332,7 +1356,7 @@ html .ed-annonce { background: var(--encre); border-left: 3px solid var(--magent
 .tdm-filets { position: absolute; left: 0; right: 0; top: 0; height: 7px; border-top: 3px solid var(--encre); border-bottom: 1px solid var(--encre); transform-origin: 0 50%; pointer-events: none; }
 .tdm-filets[data-mv="trace"].mv-attente { transition: transform var(--k-lent) var(--k-doux); }
 .tdm-mast a { display: inline-flex; align-items: center; min-height: 40px; margin: -6px 0; color: var(--saison-texte); text-decoration: none; }
-.tdm-mast a:hover { text-decoration: underline; text-underline-offset: .3em; }
+@media (hover: hover) { .tdm-mast a:hover { text-decoration: underline; text-underline-offset: .3em; } }
 .tdm-l { list-style: none; margin: 0; padding: 0; }
 .tdm-a { position: relative; display: grid; grid-template-columns: 54px minmax(0, 1fr); grid-template-areas: "v ligne" ". dek"; align-items: center; column-gap: 16px; row-gap: 3px;
   margin: 0 -12px; padding: 12px 12px 13px; border-bottom: 1px solid var(--filet); color: var(--encre); text-decoration: none; transition: background-color var(--k-survol) var(--k-doux), box-shadow var(--k-survol) var(--k-doux); }
@@ -1349,10 +1373,14 @@ html .ed-annonce { background: var(--encre); border-left: 3px solid var(--magent
 .tdm-tag.vit::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 8px; border-radius: 50%; background: currentColor; vertical-align: .12em; animation: respire 2.2s ease-in-out infinite; }
 /* (Bérénice, l'arène : ses titres en capitales, comme sur sa page) */
 .tdm-i[data-motif="arene"] .tdm-t, .u-arene .tdm-pt { text-transform: uppercase; }
-.tdm-a:is(:hover, :focus-visible, .est-actif) { background: linear-gradient(90deg, color-mix(in srgb, var(--c) 11%, transparent), transparent 88%); box-shadow: inset 3px 0 0 var(--c); }
-.tdm-a:is(:hover, :focus-visible, .est-actif) .tdm-t { color: var(--c); }
-.tdm-a:is(:hover, :focus-visible, .est-actif) .tt { background-size: 100% 2px; }
-.tdm-a:is(:hover, .est-actif) .tdm-v img { scale: 1.06; }
+.tdm-a:is(:focus-visible, .est-actif) { background: linear-gradient(90deg, color-mix(in srgb, var(--c) 11%, transparent), transparent 88%); box-shadow: inset 3px 0 0 var(--c); }
+@media (hover: hover) { .tdm-a:is(:hover) { background: linear-gradient(90deg, color-mix(in srgb, var(--c) 11%, transparent), transparent 88%); box-shadow: inset 3px 0 0 var(--c); } }
+.tdm-a:is(:focus-visible, .est-actif) .tdm-t { color: var(--c); }
+@media (hover: hover) { .tdm-a:is(:hover) .tdm-t { color: var(--c); } }
+.tdm-a:is(:focus-visible, .est-actif) .tt { background-size: 100% 2px; }
+@media (hover: hover) { .tdm-a:is(:hover) .tt { background-size: 100% 2px; } }
+.tdm-a:is(.est-actif) .tdm-v img { scale: 1.06; }
+@media (hover: hover) { .tdm-a:is(:hover) .tdm-v img { scale: 1.06; } }
 .tdm-a.est-actif .tdm-fil { background: var(--c); }
 .tdm-a:focus-visible { outline: 2px solid var(--c); outline-offset: -2px; }
 .tdm-a.mv-presse .tt { background-size: 100% 4px; transition-duration: .06s; }
@@ -1424,7 +1452,7 @@ html .ed-annonce { background: var(--encre); border-left: 3px solid var(--magent
 }
 .tdm-i[hidden], .pil-aff[hidden] { display: none; }
 .pil-sai { font: 700 .66rem/1.3 var(--etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--saison-texte); text-decoration: none; white-space: nowrap; }
-a.pil-sai:hover { text-decoration: underline; text-underline-offset: .3em; }
+@media (hover: hover) { a.pil-sai:hover { text-decoration: underline; text-underline-offset: .3em; } }
 .pil { list-style: none; display: flex; flex-direction: column; gap: 4px; margin: 0 -6px; padding: 0 0 22px; }
 .pil-aff { position: relative; border-radius: 10px; overflow: hidden; background: var(--u-fond); color: var(--u-texte); font-family: var(--u-corps); box-shadow: 0 12px 26px -20px #000; }
 /* l'affiche dépliée mène à sa page : « découvrir » posé sur la photo (le lien, pour le clavier et les lecteurs d'écran), et
@@ -1438,7 +1466,7 @@ a.pil-sai:hover { text-decoration: underline; text-underline-offset: .3em; }
 .pil-aff.ouvert .pil-dos { height: 214px; }
 .pil-ph { position: absolute; inset: 0; display: block; }
 .pil-ph img { width: 100%; height: 100%; object-fit: cover; transition: scale .7s var(--mv-courbe); }
-.pil-dos:hover .pil-ph img { scale: 1.03; }
+@media (hover: hover) { .pil-dos:hover .pil-ph img { scale: 1.03; } }
 .pil-voile, .pil-voile2 { position: absolute; inset: 0; transition: opacity .45s; }
 .pil-voile { background: linear-gradient(90deg, color-mix(in srgb, var(--u-fond) 94%, transparent) 36%, color-mix(in srgb, var(--u-fond) 55%, transparent) 72%, color-mix(in srgb, var(--u-fond) 30%, transparent)); }
 .pil-voile2 { background: linear-gradient(180deg, transparent 28%, color-mix(in srgb, var(--u-fond) 80%, transparent) 72%, var(--u-fond)); opacity: 0; }
@@ -1475,7 +1503,7 @@ a.pil-sai:hover { text-decoration: underline; text-underline-offset: .3em; }
 .fp { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); overflow: hidden; border-radius: 4px; font-family: var(--u-corps); }
 .fp-ph { position: relative; display: block; min-height: 360px; overflow: hidden; background: var(--u-scene); }
 .fp-ph img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: scale var(--k-page) var(--k-doux); }
-.fp:hover .fp-ph img { scale: 1.03; }
+@media (hover: hover) { .fp:hover .fp-ph img { scale: 1.03; } }
 .fp-c { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; min-width: 0; padding: clamp(22px, 3vw, 44px); }
 .fp-c > :is(.fp-fiche, .prog-frise, .fp-lieux, .fp-docs) { align-self: stretch; }
 .fp-sur { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 0; font: 700 .76rem/1.4 var(--u-etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--u-vif); }
@@ -1483,7 +1511,7 @@ a.pil-sai:hover { text-decoration: underline; text-underline-offset: .3em; }
 .fp-sur .pt, .u-sur .pt { width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
 .fp-t { margin: 0; font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: clamp(1.9rem, 1.2rem + 1.8vw, 3.2rem); line-height: 1; text-wrap: balance; }
 .fp-t a { color: var(--u-vif); text-decoration: none; }
-.fp-t a:hover { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; }
+@media (hover: hover) { .fp-t a:hover { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; } }
 .fp-sous { margin: 0; font-size: 1.08rem; color: var(--u-texte2); }
 .fp-rep { margin: 0; font-size: 1rem; font-weight: 600; line-height: 1.3; }
 .gros { font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: 1.9em; line-height: 1; color: var(--u-vif); }
@@ -1514,10 +1542,10 @@ a.pil-sai:hover { text-decoration: underline; text-underline-offset: .3em; }
 .ac-tete .mo { flex: none; width: 40px; height: 40px; color: var(--u-vif); }
 .ac-t { margin: 0; font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: clamp(1.6rem, 1.2rem + 1vw, 2.1rem); line-height: 1.04; text-wrap: balance; }
 .ac-t a { color: var(--u-vif); text-decoration: none; }
-.ac-t a:hover { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+@media (hover: hover) { .ac-t a:hover { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; } }
 .ac-ph { position: relative; display: block; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 4px; background: var(--u-scene); }
 .ac-ph img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: scale var(--k-page) var(--k-doux); }
-.ac:hover .ac-ph img { scale: 1.03; }
+@media (hover: hover) { .ac:hover .ac-ph img { scale: 1.03; } }
 .ac-type { width: 100%; margin: 0; padding: 12px 0 10px; border-top: 3px solid var(--u-vif); border-bottom: 1px solid var(--u-filet); color: var(--u-texte); font: 700 clamp(1.25rem, 1rem + .8vw, 1.6rem)/1.08 var(--titre); text-transform: uppercase; text-wrap: balance; }
 .ac-type.x { border-top-style: dashed; color: var(--u-texte2); }
 .ac-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0; font-size: .95rem; font-weight: 700; }
@@ -1578,8 +1606,10 @@ html:not(.still):not(.sur-place) :is(.ecrit, .apparait).vu { transition: opacity
 .u-onglets a .pt { flex: none; width: 10px; height: 10px; border-radius: 50%; background: radial-gradient(circle, var(--e) 0 1.8px, transparent 2.3px); box-shadow: inset 0 0 0 1.5px var(--e);
   transition: scale var(--k-survol) var(--k-souple); }
 .u-onglets a::after { content: ""; position: absolute; left: 20px; right: 0; bottom: 4px; height: 2px; border-radius: 1px; background: var(--e); transform: scaleX(0); transform-origin: 0 50%; transition: transform var(--k-survol) var(--k-souple); }
-.u-onglets a:hover, .u-onglets a[aria-current="page"] { color: var(--u-texte); }
-.u-onglets a:is(:hover, :focus-visible) .pt { scale: 1.3; }
+.u-onglets a[aria-current="page"] { color: var(--u-texte); }
+@media (hover: hover) { .u-onglets a:hover { color: var(--u-texte); } }
+.u-onglets a:is(:focus-visible) .pt { scale: 1.3; }
+@media (hover: hover) { .u-onglets a:is(:hover) .pt { scale: 1.3; } }
 .u-onglets a[aria-current="page"] .pt { background: radial-gradient(circle, var(--e) 0 2.4px, var(--u-fond) 2.9px 3.3px, var(--e) 3.8px); box-shadow: none; }
 .u-onglets a[aria-current="page"]::after { transform: none; }
 .u-onglets .court { display: none; }
@@ -1592,7 +1622,7 @@ html:not(.still):not(.sur-place) :is(.ecrit, .apparait).vu { transition: opacity
 .som-b[aria-expanded="true"] .fleche { transform: rotate(180deg); }
 .som-l { position: absolute; right: 0; bottom: calc(100% + 8px); min-width: 250px; margin: 0; padding: 8px; list-style: none; border: 1px solid var(--u-filet); border-radius: 12px; background: var(--u-fond2); box-shadow: 0 20px 40px -18px rgba(0, 0, 0, .55); }
 .som-l button { display: flex; align-items: baseline; gap: 12px; width: 100%; padding: 9px 12px; border: 0; border-radius: 8px; background: none; color: var(--u-texte2); font: 500 .92rem/1.3 var(--sans); text-align: left; cursor: pointer; }
-.som-l button:hover { background: color-mix(in srgb, var(--u-texte) 8%, transparent); color: var(--u-texte); }
+@media (hover: hover) { .som-l button:hover { background: color-mix(in srgb, var(--u-texte) 8%, transparent); color: var(--u-texte); } }
 .som-l button[aria-current="location"] { color: var(--u-texte); font-weight: 600; }
 .som-l .n { min-width: 1.2em; font-variant-numeric: tabular-nums; color: var(--u-vif); }
 /* le retour en haut d'une page longue : un bouton rond, discret, en bas à droite, qui paraît après deux écrans lus ; il se
@@ -1603,7 +1633,8 @@ html:not(.still):not(.sur-place) :is(.ecrit, .apparait).vu { transition: opacity
   box-shadow: 0 12px 26px -14px rgba(0, 0, 0, .9); opacity: 0; visibility: hidden; translate: 0 10px;
   transition: opacity var(--k-survol) var(--k-doux), translate var(--k-survol) var(--k-doux), bottom var(--k-survol) var(--k-doux), border-color var(--k-survol) var(--k-doux), visibility 0s var(--k-survol); }
 .haut-page.est-visible { opacity: .88; visibility: visible; translate: none; transition: opacity var(--k-survol) var(--k-doux), translate var(--k-survol) var(--k-doux), bottom var(--k-survol) var(--k-doux), border-color var(--k-survol) var(--k-doux); }
-.haut-page:is(:hover, :focus-visible) { opacity: 1; border-color: var(--saison-vive); }
+.haut-page:is(:focus-visible) { opacity: 1; border-color: var(--saison-vive); }
+@media (hover: hover) { .haut-page:is(:hover) { opacity: 1; border-color: var(--saison-vive); } }
 .haut-page:focus-visible { outline: 2px solid var(--saison-vive); outline-offset: 2px; }
 .haut-page .fleche { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .haut-page.sur-som { --hp-bas: 68px; }
@@ -1611,8 +1642,8 @@ body:has(.bf7.est-visible.a-filtres) .haut-page { --hp-bas: 86px; }
 body:has(#som-l:not([hidden])) .haut-page, html.intro-active .haut-page { opacity: 0; visibility: hidden; }
 /* (ce qui prend le focus au clavier s'arrête au-dessus de ce qui occupe le bas de l'écran : le bouton du haut de page, la barre
    des filtres des saisons au téléphone, l'indicateur de section d'un spectacle) */
-html:has(.haut-page.est-visible), html:has(main .som) { scroll-padding-bottom: calc(72px + var(--tab)); }
-html:has(.bf7.est-visible) { scroll-padding-bottom: calc(96px + var(--tab)); }
+html:has(.haut-page.est-visible), html:has(main .som) { scroll-padding-bottom: calc(72px + var(--bas)); }
+html:has(.bf7.est-visible) { scroll-padding-bottom: calc(96px + var(--bas)); }
 @media (max-width: 759px) {
   .haut-page { --hp-bas: 14px; right: 12px; }
   .haut-page.sur-som { --hp-bas: 64px; }
@@ -1639,10 +1670,10 @@ html:has(.bf7.est-visible) { scroll-padding-bottom: calc(96px + var(--tab)); }
 .lc-cadre { border-radius: 6px; box-shadow: 0 34px 70px -34px rgba(0, 0, 0, .7), 0 0 0 1px var(--u-filet); transition: box-shadow var(--k-page) var(--k-doux); }
 .lc-affiche { --cadre-y: .3; filter: brightness(.55) saturate(.9); transition: scale var(--k-page) var(--k-doux), filter var(--k-survol) var(--k-doux), opacity var(--k-survol) var(--k-doux); }   /* (le sujet au tiers haut, au-dessus du bouton de lecture : CADRAGE) */
 .lc-lire::after { content: ""; position: absolute; inset: 40% 0 0; background: linear-gradient(transparent, rgba(0, 0, 0, .78)); pointer-events: none; }
-.lc-lire:hover .lc-affiche { scale: 1.02; filter: brightness(.45) saturate(.9); }
+@media (hover: hover) { .lc-lire:hover .lc-affiche { scale: 1.02; filter: brightness(.45) saturate(.9); } }
 .lc-lire:focus-visible { outline: 3px solid var(--u-vif); outline-offset: -3px; }
 .lc-icone { z-index: 1; width: clamp(64px, 8vw, 96px); height: auto; aspect-ratio: 1; background: var(--u-accent); color: var(--u-sur-accent); box-shadow: 0 0 0 10px color-mix(in srgb, var(--u-accent) 30%, transparent); transition: scale var(--k-survol) var(--k-souple); }
-.lc-lire:hover .lc-icone { scale: 1.06; }
+@media (hover: hover) { .lc-lire:hover .lc-icone { scale: 1.06; } }
 .lc-titre { z-index: 1; left: clamp(16px, 3vw, 32px); bottom: clamp(14px, 2.4vw, 26px); font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: clamp(1.15rem, 1rem + 1vw, 1.9rem); line-height: 1.15; text-shadow: 0 2px 18px rgba(0, 0, 0, .7); }
 .lc-outils { gap: 10px; margin-top: 14px; }
 .lc.lc-eteint .lc-cadre { box-shadow: 0 0 0 1.5px var(--u-vif), 0 0 110px var(--u-lueur); }
@@ -1685,7 +1716,7 @@ html:has(.bf7.est-visible) { scroll-padding-bottom: calc(96px + var(--tab)); }
 .u-bilan-s .mois { margin-top: 30px; }
 .u-bilan-s:first-child .mois { margin-top: 0; }
 .u-bilan-s .mois a { color: inherit; text-decoration: none; }
-.u-bilan-s .mois a:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+@media (hover: hover) { .u-bilan-s .mois a:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; } }
 /* l'historique d'un spectacle en tournée (règle 23) : ses dates passées et ses résidences, repliées sous leur titre */
 .sp-historique { margin-top: clamp(22px, 3vw, 34px); border-top: 1px solid var(--u-filet); }
 .sp-historique > summary { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 6px 0; cursor: pointer; list-style: none;
@@ -1701,7 +1732,7 @@ html:has(.bf7.est-visible) { scroll-padding-bottom: calc(96px + var(--tab)); }
 .hist-idx ul { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 22px; padding: 0; list-style: none; }
 .hist-idx button { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 6px 14px; border: 1px solid var(--u-filet); border-radius: 999px; background: none; color: var(--u-texte);
   font: 500 .9rem/1.2 var(--u-corps); cursor: pointer; transition: background-color var(--k-survol) var(--k-doux), border-color var(--k-survol) var(--k-doux); }
-.hist-idx button:hover { border-color: var(--u-vif); background: color-mix(in srgb, var(--u-vif) 12%, transparent); }
+@media (hover: hover) { .hist-idx button:hover { border-color: var(--u-vif); background: color-mix(in srgb, var(--u-vif) 12%, transparent); } }
 .hist-idx small { font: 700 .74rem/1 var(--u-etiq); font-variant-numeric: tabular-nums; color: var(--u-vif); }
 .sp .u-bilan-s .mois { position: sticky; top: calc(var(--haut) - 8px); z-index: 2; background: var(--u-fond); box-shadow: 0 1px 0 var(--u-filet); }
 .sp-tournee .u-bilan-s .mois { top: calc(var(--haut) - 8px + var(--onglets) - var(--range)); }
@@ -1782,7 +1813,7 @@ html:has(.bf7.est-visible) { scroll-padding-bottom: calc(96px + var(--tab)); }
 .voisin--av .fleche { order: -1; scale: -1 1; }
 .suivant::before { content: ""; position: absolute; inset: 0; background: radial-gradient(60% 130% at 20% 50%, var(--u-lueur), transparent 72%); opacity: .55; transition: opacity var(--k-survol) var(--k-doux); }
 .voisin--ap::before { background: radial-gradient(60% 130% at 80% 50%, var(--u-lueur), transparent 72%); }
-.suivant:hover::before { opacity: 1; }
+@media (hover: hover) { .suivant:hover::before { opacity: 1; } }
 .suivant-c { position: relative; display: grid; gap: 6px; min-width: 0; }
 .voisin-k { font: 600 .74rem/1.3 var(--u-etiq); letter-spacing: .16em; text-transform: uppercase; color: var(--u-vif); }
 .suivant-c .u-sur { margin: 0; color: var(--u-texte2); }
@@ -1790,10 +1821,10 @@ html:has(.bf7.est-visible) { scroll-padding-bottom: calc(96px + var(--tab)); }
 .suivant b { font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: clamp(1.55rem, 1rem + 1.7vw, 2.6rem); line-height: 1.04; color: var(--u-texte); overflow-wrap: anywhere; text-wrap: balance; }
 .voisin-v { position: relative; flex: none; width: clamp(64px, 6.6vw, 96px); aspect-ratio: 1; border-radius: 50%; overflow: clip; background: var(--u-fond2); box-shadow: 0 0 0 2px var(--u-vif), 0 0 26px var(--u-lueur); }
 .voisin-v img { display: block; width: 100%; height: 100%; object-fit: cover; transition: scale var(--k-survol) var(--k-doux); }
-.suivant:hover .voisin-v img { scale: 1.06; }
+@media (hover: hover) { .suivant:hover .voisin-v img { scale: 1.06; } }
 .suivant .fleche { position: relative; flex: none; width: 40px; height: 40px; color: var(--u-vif); transition: translate var(--k-survol) var(--k-souple); }
-.voisin--ap:hover .fleche { translate: 8px 0; }
-.voisin--av:hover .fleche { translate: -8px 0; }
+@media (hover: hover) { .voisin--ap:hover .fleche { translate: 8px 0; } }
+@media (hover: hover) { .voisin--av:hover .fleche { translate: -8px 0; } }
 @media (max-width: 640px) {
   .suivant, .voisin--ap { padding-top: 22px; padding-bottom: 22px; }
   .voisin-v { width: 58px; }
@@ -1851,8 +1882,8 @@ html:not(.still) .une-ph img { transform: translateY(calc(var(--p, 0) * 8%)) sca
 /* le retour discret à la liste des spectacles, en tête de l'ouverture (comme « ← Espace pro » des pages de l'espace pro) */
 .une-retour { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; margin: 0 0 6px; color: var(--u-texte); font: 700 .78rem/1.3 var(--u-etiq); letter-spacing: .14em; text-transform: uppercase; text-decoration: none; }
 .une-retour .fleche { width: 18px; height: 18px; scale: -1 1; color: var(--u-vif); transition: translate var(--k-survol) var(--k-souple); }
-.une-retour:hover span { text-decoration: underline; text-underline-offset: 4px; }
-.une-retour:hover .fleche { translate: -4px 0; }
+@media (hover: hover) { .une-retour:hover span { text-decoration: underline; text-underline-offset: 4px; } }
+@media (hover: hover) { .une-retour:hover .fleche { translate: -4px 0; } }
 /* partager : un bouton comme les autres appels ; « Lien copié » se dit dans une bulle sous lui, puis s'efface */
 .partage { position: relative; display: inline-flex; }
 .partage-msg { position: absolute; z-index: 3; left: 50%; top: calc(100% + 8px); translate: -50% -4px; padding: 6px 12px; border-radius: 6px; background: var(--u-texte); color: var(--u-fond); font: 600 .84rem/1.3 var(--sans); white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity var(--k-survol) var(--k-doux), translate var(--k-survol) var(--k-doux); }
@@ -1865,7 +1896,7 @@ html:not(.still) .une-ph img { transform: translateY(calc(var(--p, 0) * 8%)) sca
 @media (min-width: 760px) and (max-height: 760px) { .sp-une10 .une-motif { display: none; } }
 .une-ariane { margin: 0 0 14px; font-size: .88rem; color: var(--u-texte2); }
 .une-ariane a { text-decoration: none; }
-.une-ariane a:hover { text-decoration: underline; }
+@media (hover: hover) { .une-ariane a:hover { text-decoration: underline; } }
 .une-nom { margin: 0 0 12px; font: 700 .74rem/1.3 var(--u-etiq); letter-spacing: .24em; text-transform: uppercase; color: var(--u-vif); }
 .sp-une10 .u-titre { margin-top: 0; max-width: 13ch; }
 .sp-une10 .u-titre::after { content: ""; display: block; width: calc(90px + var(--p, 0) * min(320px, 34vw)); height: 4px; margin-top: 20px; border-radius: 2px; background: var(--u-vif); }
@@ -1881,7 +1912,8 @@ html:not(.still) .une-ph img { transform: translateY(calc(var(--p, 0) * 8%)) sca
 .sp-som ol { list-style: none; margin: 0; padding: 0; }
 .sp-som button { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 40px; padding: 6px 0; border: 0; background: none; color: var(--u-texte2); font: 600 .74rem/1.3 var(--u-etiq); letter-spacing: .12em; text-transform: uppercase; text-align: left; cursor: pointer; transition: color var(--k-survol) var(--k-doux); }
 .sp-som button::before { content: ""; flex: none; width: 1.25rem; height: 1px; background: currentColor; transition: width var(--k-page) var(--k-doux), height var(--k-page) var(--k-doux), background-color var(--k-survol) var(--k-doux); }
-.sp-som button:hover, .sp-som li.on button { color: var(--u-texte); }
+.sp-som li.on button { color: var(--u-texte); }
+@media (hover: hover) { .sp-som button:hover { color: var(--u-texte); } }
 .sp-som li.on button::before { width: 2.5rem; height: 2px; background: var(--u-vif); box-shadow: 0 0 10px var(--u-lueur); }
 .sp-som-signe { display: block; width: 4.5rem; margin-top: 28px; color: var(--u-vif); opacity: .6; }
 /* (plus étroit, le sommaire flottant attend qu'on ait quitté l'ouverture : il en couvrirait l'appel) */
@@ -2000,7 +2032,7 @@ html:not(.still) .une-ph img { transform: translateY(calc(var(--p, 0) * 8%)) sca
 .sp .rs-defile button { width: 44px; height: 44px; }
 .sp .rs-date { min-width: 8.4rem; max-width: 12.5rem; padding: 14px 34px 13px 16px; border-radius: 16px; }
 .sp .rs-date::before { content: ""; position: absolute; right: 13px; top: 15px; width: 11px; height: 11px; border: 2px solid var(--u-vif); border-radius: 50%; transition: transform var(--k-survol) var(--k-souple), background-color var(--k-survol) var(--k-doux); }
-.sp .rs-date:hover::before { transform: scale(1.3); }
+@media (hover: hover) { .sp .rs-date:hover::before { transform: scale(1.3); } }
 .sp .rs-date[aria-pressed="true"]::before { background: var(--u-sur-accent); border-color: var(--u-sur-accent); }
 .sp .rs-date[aria-pressed="true"]::after { content: none; }
 .sp .rs-n { font-size: 2rem; }
@@ -2016,7 +2048,7 @@ html:not(.still) .une-ph img { transform: translateY(calc(var(--p, 0) * 8%)) sca
 @media (min-width: 1000px) { .sp .rs-corps { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); } }
 .sp-tout { margin: 20px 0 0; }
 .sp-tout a { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; color: var(--u-texte); text-decoration: none; }
-.sp-tout a:hover { color: var(--u-vif); }
+@media (hover: hover) { .sp-tout a:hover { color: var(--u-vif); } }
 .sp-tout .fleche { width: 18px; height: 18px; }
 /* le bilan (la 10) : sa phrase, ses chiffres en grand, ses dates saison par saison (un filet de l'univers sur chaque saison) */
 .u-bilan-rep { margin: 0 0 18px; font-family: var(--u-titre-f); font-size: clamp(1.2rem, 1rem + .6vw, 1.5rem); line-height: 1.35; color: var(--u-texte); }
@@ -2204,8 +2236,10 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 .frise[data-frise] .frise-point.est-passe:not(.est-scolaire, .est-annule, .est-duree, .est-residence) > .frise-repere::before {
   background: radial-gradient(circle, var(--fr-fond) 0 3.6px, var(--fr-c, currentColor) 4.2px); }
 .frise[data-frise] .frise-point > .frise-repere::before { transition: scale var(--k-survol) var(--k-souple), opacity .16s; }
-.frise[data-frise] .frise-point > .frise-repere:is(:hover, :focus-visible)::before { scale: 1.4; }
-.frise[data-frise] .frise-point.est-duree > .frise-repere:is(:hover, :focus-visible)::before { scale: 1 1.6; }
+.frise[data-frise] .frise-point > .frise-repere:is(:focus-visible)::before { scale: 1.4; }
+@media (hover: hover) { .frise[data-frise] .frise-point > .frise-repere:is(:hover)::before { scale: 1.4; } }
+.frise[data-frise] .frise-point.est-duree > .frise-repere:is(:focus-visible)::before { scale: 1 1.6; }
+@media (hover: hover) { .frise[data-frise] .frise-point.est-duree > .frise-repere:is(:hover)::before { scale: 1 1.6; } }
 .frise[data-frise] .frise-aujourdhui::before { opacity: .45; }
 .frise[data-frise] .frise-aujourdhui::after { left: -7px; bottom: -6px; width: 14px; height: 14px; border-radius: 50% 0 50% 50%; rotate: -45deg; background: var(--saison-vive); box-shadow: 0 0 0 2px var(--fr-fond); }
 .frise[data-frise] .frise-souffle { left: -7px; bottom: -6px; width: 14px; height: 14px; background: var(--saison-vive); }
@@ -2213,7 +2247,8 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 .frise[data-frise].frise--v .frise-aujourdhui::after, .frise[data-frise].frise--v .frise-souffle { left: calc(var(--fr-axe) - 7px); top: -7px; bottom: auto; }
 @keyframes k-coeur { 0% { opacity: 0; scale: 1; } 8% { opacity: .55; scale: 1.9; } 18% { opacity: 0; scale: 2.3; } 26% { opacity: .45; scale: 2; } 40%, 100% { opacity: 0; scale: 2.8; } }
 .frise[data-frise] .frise-bande-barre { border-radius: 999px 999px 2px 2px / 14px 14px 2px 2px; }
-.frise[data-frise] .frise-bande > .frise-repere:is(:hover, :focus-visible) .frise-bande-barre, .frise[data-frise] .frise-bande.est-allume .frise-bande-barre { scale: 1.08 1.05; }
+.frise[data-frise] .frise-bande > .frise-repere:is(:focus-visible) .frise-bande-barre, .frise[data-frise] .frise-bande.est-allume .frise-bande-barre { scale: 1.08 1.05; }
+@media (hover: hover) { .frise[data-frise] .frise-bande > .frise-repere:is(:hover) .frise-bande-barre { scale: 1.08 1.05; } }
 .frise[data-frise] .frise-bande-barre { transition: transform .3s var(--k-souple), scale var(--k-survol) var(--k-souple), opacity .16s; }
 .frise .frise-mois-nom { font: 500 .92rem/1.1 var(--titre); }
 .frise .frise-an { font: 500 .72rem/1.3 var(--sans); letter-spacing: .06em; }
@@ -2259,10 +2294,11 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 }
 .s7-rac button { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 0; border: 0; background: none; color: color-mix(in srgb, var(--encre) 86%, transparent);
   font: 600 .95rem/1.2 var(--texte); text-align: left; cursor: pointer; }
-.s7-rac button:hover { color: var(--encre); }
+@media (hover: hover) { .s7-rac button:hover { color: var(--encre); } }
 .s7-lampe { flex: none; width: 11px; height: 11px; border-radius: 50%; background: radial-gradient(circle, var(--saison-vive) 0 2px, var(--papier) 2.5px 3.3px, var(--saison-vive) 3.8px);
   transition: scale var(--k-survol) var(--k-souple); }
-.s7-rac button:is(:hover, :focus-visible) .s7-lampe { scale: 1.4; }
+.s7-rac button:is(:focus-visible) .s7-lampe { scale: 1.4; }
+@media (hover: hover) { .s7-rac button:is(:hover) .s7-lampe { scale: 1.4; } }
 .s7-cherche { position: relative; display: block; max-width: 24rem; }
 .s7-cherche svg { position: absolute; left: 2px; top: 50%; width: 16px; height: 16px; transform: translateY(-50%); fill: none; stroke: var(--gris); stroke-width: 1.6; stroke-linecap: round; }
 .s7-cherche input { width: 100%; padding: .6rem .5rem .6rem 1.9rem; border: 0; border-bottom: 1px solid color-mix(in srgb, var(--encre) 34%, transparent); border-radius: 0; background: transparent;
@@ -2285,9 +2321,14 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 .s7-chip { display: inline-flex; align-items: center; gap: .55rem; min-height: 44px; padding: .38rem .85rem; border: 1px solid color-mix(in srgb, var(--encre) 30%, transparent); border-radius: 0; background: transparent;
   font: 600 .875rem/1.2 var(--texte); color: color-mix(in srgb, var(--encre) 86%, transparent); text-align: left; cursor: pointer; }
 .s7-chip i { flex: none; width: .45rem; height: .45rem; border-radius: 50%; background: var(--c, var(--gris)); }
-.s7-chip:hover { color: var(--encre); border-color: var(--c, var(--saison-vive)); }
+@media (hover: hover) { .s7-chip:hover { color: var(--encre); border-color: var(--c, var(--saison-vive)); } }
 .s7-chip[aria-pressed="true"] { color: var(--encre); border-color: var(--c, var(--saison-vive)); background: color-mix(in srgb, var(--c, var(--saison-vive)) 12%, transparent); box-shadow: inset 0 0 0 1px var(--c, var(--saison-vive)); }
 .s7-chip .croix { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+/* (une puce qui ne garderait rien, ajoutée aux filtres en cours, est éteinte : estompée, son nombre à 0, ni survol ni pression) */
+:is(.s7-chip, .sm7-b)[aria-disabled="true"] { opacity: .42; cursor: not-allowed; }
+:is(.s7-chip, .sm7-b)[aria-disabled="true"]:is(.mv-presse) { scale: none; color: color-mix(in srgb, var(--encre) 86%, transparent); border-color: color-mix(in srgb, var(--encre) 30%, transparent); background: transparent; }
+@media (hover: hover) { :is(.s7-chip, .sm7-b)[aria-disabled="true"]:is(:hover) { scale: none; color: color-mix(in srgb, var(--encre) 86%, transparent); border-color: color-mix(in srgb, var(--encre) 30%, transparent); background: transparent; } }
+.sm7 .sm7-b[aria-disabled="true"] .sm7-v { scale: none; filter: grayscale(1); }
 .s7-chip--lieu { --c: var(--saison-vive); }
 /* (une puce ne dépasse jamais sa rangée : un titre trop long, « Mon Royaume pour un cheval – Romeo & Juliet » au téléphone,
    s'abrège d'une ellipse ; le texte entier reste dans la page, pour les lecteurs d'écran) */
@@ -2337,7 +2378,7 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 .sm7-f[data-sens="-1"] { left: -6px; }
 .sm7-f[data-sens="1"] { right: -6px; }
 .sm7-f.est-visible { opacity: 1; visibility: visible; transition: opacity var(--k-survol) var(--k-doux), border-color var(--k-survol) var(--k-doux), background-color var(--k-survol) var(--k-doux); }
-.sm7-f:hover { border-color: var(--encre); background: color-mix(in srgb, var(--encre) 10%, var(--sm-fond)); }
+@media (hover: hover) { .sm7-f:hover { border-color: var(--encre); background: color-mix(in srgb, var(--encre) 10%, var(--sm-fond)); } }
 .sm7-f svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 @media (pointer: coarse), (max-width: 759px) { .sm7-f { display: none; } }
 @media (prefers-reduced-motion: reduce) { .sm7-l { transition: none; } }
@@ -2349,10 +2390,12 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
   transition: scale var(--k-survol) var(--k-souple); }
 .sm7-v img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .sm7-t { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
-.sm7-b:hover { background: color-mix(in srgb, var(--c) 11%, transparent); color: var(--encre); }
-.sm7-b:is(:hover, :focus-visible) .sm7-v { scale: 1.06; }
+@media (hover: hover) { .sm7-b:hover { background: color-mix(in srgb, var(--c) 11%, transparent); color: var(--encre); } }
+.sm7-b:is(:focus-visible) .sm7-v { scale: 1.06; }
+@media (hover: hover) { .sm7-b:is(:hover) .sm7-v { scale: 1.06; } }
 .sm7-b[aria-pressed="true"] { background: color-mix(in srgb, var(--c) 24%, transparent); color: var(--encre); }
 .sm7-b[aria-pressed="true"] .sm7-v { box-shadow: 0 0 0 2px var(--sm-fond), 0 0 0 5px var(--c); }
+.sm7-b small:empty, .s7-chip small:empty { display: none; }
 .sm7-b small, .s7-chip small { flex: none; min-width: 1.45em; padding: 0 .35em; border-radius: 999px; background: color-mix(in srgb, var(--c, var(--gris)) 24%, transparent); color: var(--encre);
   font: 700 .7rem/1.5 var(--texte); text-align: center; font-variant-numeric: tabular-nums; }
 .sm7--passe { position: static; margin: 0 0 1.4rem; background: none; }
@@ -2424,8 +2467,10 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath fill-rule='evenodd' d='M6 0a6 6 0 1 0 0 12A6 6 0 1 0 6 0zM2.9 6.1l1.2-1.2 1.4 1.4 2.9-2.9 1.2 1.2-4.1 4.1z'/%3E%3C/svg%3E") center / contain no-repeat; }
 .fm7 .frise-point.est-residence .fm7-d { background: transparent; color: var(--fr-c); box-shadow: none; outline: 1.5px dashed var(--fr-c); outline-offset: -1.5px; }
 .fm7 .frise-point.est-annule .fm7-d { text-decoration: line-through; opacity: .7; }
-.fm7 .frise-point:is(:hover, .est-allume, .est-focus, .lu) .fm7-d { scale: 1.12; }
-.fm7 .frise-point:is(:hover, .est-allume, .est-focus, .lu, .est-choisi) .fm7-d::after { opacity: 1; }
+.fm7 .frise-point:is(.est-allume, .est-focus, .lu) .fm7-d { scale: 1.12; }
+@media (hover: hover) { .fm7 .frise-point:is(:hover) .fm7-d { scale: 1.12; } }
+.fm7 .frise-point:is(.est-allume, .est-focus, .lu, .est-choisi) .fm7-d::after { opacity: 1; }
+@media (hover: hover) { .fm7 .frise-point:is(:hover) .fm7-d::after { opacity: 1; } }
 .fm7 .frise-point.est-choisi .fm7-d { scale: 1.14; }
 .fm7 .frise-point.est-choisi .fm7-d::after { inset: -5px; border: 2px solid var(--encre); }
 /* un filtre de la frise (un mois, une date) éteint les autres dates ; une puce de spectacle survolée isole les siennes */
@@ -2486,7 +2531,7 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
   .bf7-puces .bf7-m.est-passe { color: var(--gris); }
   .fe7:not([hidden]) { position: fixed; inset: 0; z-index: 60; display: block; }
   .fe7-voile { position: absolute; inset: 0; background: rgba(6, 3, 5, .64); animation: fm7-parait .24s var(--k-doux) backwards; }
-  .fe7-panneau { position: absolute; left: 0; right: 0; bottom: var(--tab); display: flex; flex-direction: column; max-height: min(calc(88svh - var(--tab)), 760px);
+  .fe7-panneau { position: absolute; left: 0; right: 0; bottom: var(--bas); display: flex; flex-direction: column; max-height: min(calc(88svh - var(--bas)), 760px);
     border-radius: 24px 24px 0 0; background: var(--papier-2); box-shadow: 0 -18px 44px -12px rgba(0, 0, 0, .85); animation: fe7-monte .32s var(--k-doux) backwards; }
   .fe7-panneau.est-tire { animation: none; transition: none; }
   .fe7-panneau.est-lache { transition: transform .26s var(--k-doux); }
@@ -2521,7 +2566,8 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 .bf7-puces .s7-chip.est-actif i { background: var(--c); }
 .bf7-puces .s7-chip.est-actif .croix { box-sizing: content-box; flex: none; width: 10px; height: 10px; padding: 7px; border-radius: 50%; background: var(--encre); stroke: var(--papier-2); stroke-width: 2.4;
   transition: background-color var(--k-survol) var(--k-doux); }
-.bf7-puces .s7-chip.est-actif:is(:hover, :focus-visible) .croix { background: var(--c); }
+.bf7-puces .s7-chip.est-actif:is(:focus-visible) .croix { background: var(--c); }
+@media (hover: hover) { .bf7-puces .s7-chip.est-actif:is(:hover) .croix { background: var(--c); } }
 .bf7-tout { flex: none; white-space: nowrap; }
 .bf7-etiq { display: none; }
 @media (prefers-reduced-motion: no-preference) {
@@ -2558,7 +2604,8 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 .d7 { position: relative; display: grid; grid-template-columns: minmax(0, 12.5rem) minmax(0, 1fr); gap: .3rem 2rem; padding: 1.25rem 0 1.3rem 1.6rem; border-bottom: 1px solid var(--filet); transition: background-color var(--k-survol) var(--k-doux); }
 .d7::before { content: ""; position: absolute; left: 0; top: 1.62rem; width: 12px; height: 12px; border-radius: 50%; background: radial-gradient(circle, var(--c) 0 2.4px, var(--papier) 2.9px 3.9px, var(--c) 4.4px);
   transition: scale var(--k-survol) var(--k-souple); }
-.d7:hover::before, .d7:is(.on, .est-allume, .lu)::before { scale: 1.4; }
+.d7:is(.on, .est-allume, .lu)::before { scale: 1.4; }
+@media (hover: hover) { .d7:hover::before { scale: 1.4; } }
 .d7:is(.on, .est-allume) { background: linear-gradient(90deg, color-mix(in srgb, var(--c) 11%, transparent), transparent 75%); }
 .d7.est-vise { animation: vise 1.4s var(--k-doux); }
 .d7 p { margin: 0; }
@@ -2570,10 +2617,10 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 .d7 .d7-etat { margin-top: .4rem; font: 600 .72rem/1.3 var(--etiq); letter-spacing: .1em; text-transform: uppercase; color: var(--saison-texte); }
 .d7-t { font-family: var(--u-titre-f, var(--titre)); font-weight: var(--u-titre-g, 500); font-size: 1.375rem; line-height: 1.2; }
 .d7-t a { text-decoration: none; background: linear-gradient(var(--c), var(--c)) 0 100% / 0 1px no-repeat; transition: background-size .3s var(--k-doux); }
-.d7-t a:hover { background-size: 100% 1px; }
+@media (hover: hover) { .d7-t a:hover { background-size: 100% 1px; } }
 .d7 .d7-lieu { margin-top: .25rem; font-weight: 600; }
 .d7-lieu a { text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--encre) 30%, transparent); text-underline-offset: 3px; }
-.d7-lieu a:hover { text-decoration-color: var(--c); }
+@media (hover: hover) { .d7-lieu a:hover { text-decoration-color: var(--c); } }
 .d7 .det { margin-top: .3rem; }
 .d7--suite { display: block; padding-top: .6rem; }
 .d7.est-passe :is(.d7-quand, .d7-t, .d7-lieu, .d7-heure) { color: var(--gris); }
@@ -2592,7 +2639,7 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
   font: 600 .8125rem/1 var(--texte); cursor: pointer; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
 .ag7-large[hidden] { display: none; }
 .ag7-large svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
-.ag7-large:hover { border-color: var(--saison-vive); }
+@media (hover: hover) { .ag7-large:hover { border-color: var(--saison-vive); } }
 .ag7-large:focus-visible { outline: 2px solid var(--saison-vive); outline-offset: 2px; }
 .ag7-carte .carte.est-loupe { cursor: zoom-out; }
 .ag7-carte.est-large .carte { cursor: zoom-in; }
@@ -2672,7 +2719,8 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 .frise-saisons { --fr-fond: var(--nuit); --fr-bande-h: 46px; --fr-haut: 22px; --fr-pied: 32px; --fr-bras: color-mix(in srgb, var(--saison-vive) 60%, transparent); }
 .frise-saisons .frise-bande-barre { margin: 0 3px; border-radius: 999px 999px 2px 2px / 22px 22px 2px 2px; background: linear-gradient(180deg, var(--saison-vive), color-mix(in srgb, var(--saison-vive) 45%, var(--saison)) 80%); opacity: .9; }
 .frise-saisons .frise-bande.est-passe .frise-bande-barre { opacity: .62; }
-.frise-saisons .frise-bande:is(:hover, .est-allume) .frise-bande-barre { opacity: 1; }
+.frise-saisons .frise-bande:is(.est-allume) .frise-bande-barre { opacity: 1; }
+@media (hover: hover) { .frise-saisons .frise-bande:is(:hover) .frise-bande-barre { opacity: 1; } }
 .frise-saisons .frise-bande-n { font: 600 .74rem var(--sans); color: var(--encre); }
 .frise-saisons .frise-bande-nom { font: 500 .7rem var(--sans); color: var(--gris); }
 .sai.est-allume > summary { background: color-mix(in srgb, var(--saison-vive) 9%, transparent); }
@@ -2686,9 +2734,10 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 .prog-frise .frise-diffusion { --fr-taille: 10px; }
 /* dans une fiche étroite : le nom de la première et de la dernière saison ; celui des autres au survol et au focus */
 .prog-frise .frise-bande:not(:first-child):not(:last-child) .frise-bande-nom { opacity: 0; transition: opacity var(--k-survol) var(--k-doux); }
-.prog-frise .frise-bande:is(:hover, .est-allume, :focus-within) .frise-bande-nom { opacity: 1; }
-.prog-frise .frise-bande:is(:hover, .est-allume, :focus-within) ~ .frise-bande:last-child .frise-bande-nom,
-.prog-frise .frise-bandes:has(.frise-bande:is(:hover, :focus-within):not(:first-child)) .frise-bande:first-child .frise-bande-nom { opacity: .25; }
+.prog-frise .frise-bande:is(.est-allume, :focus-within) .frise-bande-nom { opacity: 1; }
+@media (hover: hover) { .prog-frise .frise-bande:is(:hover) .frise-bande-nom { opacity: 1; } }
+.prog-frise .frise-bande:is(.est-allume, :focus-within) ~ .frise-bande:last-child .frise-bande-nom, .prog-frise .frise-bandes:has(.frise-bande:is(:focus-within):not(:first-child)) .frise-bande:first-child .frise-bande-nom { opacity: .25; }
+@media (hover: hover) { .prog-frise .frise-bande:is(:hover) ~ .frise-bande:last-child .frise-bande-nom, .prog-frise .frise-bandes:has(.frise-bande:is(:hover):not(:first-child)) .frise-bande:first-child .frise-bande-nom { opacity: .25; } }
 .frise-diffusion .frise-aujourdhui-nom { display: none; }
 .u-diff { margin-top: clamp(26px, 4vw, 48px); }
 .p-diff { margin: 4px 0 26px; max-width: 560px; }
@@ -2707,7 +2756,8 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 .c-frise .frise[data-frise] { --fr-trait: var(--saison-texte); --fr-accent: var(--saison-texte); --fr-point: 12px; --fr-couloir: 22px; --fr-haut: 28px; --fr-passe: .6; --fr-bras: var(--saison-texte); }
 .c-frise .frise-point { z-index: calc(10 - var(--fr-y, 0)); }
 .c-frise .frise-etiquette { max-width: 13.6em; padding: 0 .3em; margin: 0 -.3em; background: var(--fr-fond); font: italic 500 .95rem/1.2 var(--titre); }
-.c-frise .frise-repere:hover .frise-etiquette, .c-frise .frise-repere:focus-visible .frise-etiquette { color: var(--saison-texte); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.c-frise .frise-repere:focus-visible .frise-etiquette { color: var(--saison-texte); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+@media (hover: hover) { .c-frise .frise-repere:hover .frise-etiquette { color: var(--saison-texte); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; } }
 .c-frise .frise-mois-nom { font: italic 500 .9rem/1.1 var(--titre); }
 
 /* ———— réserver une date, d'un geste (règle 17, RESERVER) ————
@@ -2722,14 +2772,14 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 .rs-defile { display: flex; gap: 8px; margin: 0; visibility: hidden; }
 .rs-zone.rs-deborde .rs-defile { visibility: visible; }
 .rs-defile button { display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border: 1.5px solid var(--u-filet); border-radius: 50%; background: transparent; color: var(--u-texte); cursor: pointer; transition: border-color var(--k-survol) var(--k-doux), background-color var(--k-survol) var(--k-doux), opacity var(--k-survol) var(--k-doux); }
-.rs-defile button:hover { border-color: var(--u-texte); background: color-mix(in srgb, var(--u-texte) 8%, transparent); }
+@media (hover: hover) { .rs-defile button:hover { border-color: var(--u-texte); background: color-mix(in srgb, var(--u-texte) 8%, transparent); } }
 .rs-defile button[disabled] { opacity: .3; cursor: default; }
 .rs-defile svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .rs-bande { gap: 10px; margin: 0 calc(-1 * var(--gout)); padding: 4px var(--gout) 20px; scroll-padding-inline: var(--gout); scrollbar-width: none; scroll-behavior: smooth;
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 var(--gout), #000 calc(100% - var(--gout)), transparent); mask-image: linear-gradient(90deg, transparent, #000 var(--gout), #000 calc(100% - var(--gout)), transparent); }
 .rs-bande::-webkit-scrollbar { display: none; }
 .rs-date { position: relative; min-width: 8.8rem; max-width: 13rem; padding: 12px 16px 14px; border: 1.5px solid var(--u-filet); border-radius: 12px; background: color-mix(in srgb, var(--u-texte) 5%, transparent); color: var(--u-texte); }
-.rs-date:hover { border-color: color-mix(in srgb, var(--u-texte) 55%, transparent); }
+@media (hover: hover) { .rs-date:hover { border-color: color-mix(in srgb, var(--u-texte) 55%, transparent); } }
 .rs-date:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 3px; }
 .rs-q { display: block; white-space: nowrap; }
 .rs-s { display: block; font: 600 .68rem/1.35 var(--u-etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--u-texte2); }
@@ -2756,7 +2806,7 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 .u-arene .rs-sp, .rs-carte.u-arene .rs-sp { text-transform: uppercase; color: var(--u-accent); }
 html[data-theme="nuit"] :is(.u-arene .rs-sp, .rs-carte.u-arene .rs-sp) { color: var(--u-vif); }   /* le rouge du titre, dans la nuit de Bérénice : sa couleur vive */
 .rs-sp a { color: inherit; text-decoration: none; }
-.rs-sp a:hover { color: var(--u-vif); }
+@media (hover: hover) { .rs-sp a:hover { color: var(--u-vif); } }
 .rs-sp::after { content: ""; display: block; width: 72px; height: 2px; margin: 14px 0 12px; border-radius: 2px; background: var(--u-vif); transform-origin: 0 50%; }
 .rs-quand { margin: 0; font: 600 clamp(1.1rem, 1rem + .4vw, 1.3rem)/1.3 var(--sans); }
 .rs-etat { margin-left: 8px; font: normal 600 .72rem var(--etiq); letter-spacing: .06em; text-transform: uppercase; color: var(--u-vif); }
@@ -2770,7 +2820,7 @@ html[data-theme="nuit"] :is(.u-arene .rs-sp, .rs-carte.u-arene .rs-sp) { color: 
 .rs-seances--sans .rs-k { margin: 0; }
 .rs-sans { font: 600 1rem var(--sans); }
 .rs-seance { padding: 8px 16px 9px; border: 1.5px solid var(--u-filet); border-radius: 999px; background: color-mix(in srgb, var(--u-texte) 5%, transparent); color: var(--u-texte); font-family: var(--sans); text-decoration: none; }
-a.rs-seance:hover { border-color: var(--u-vif); background: color-mix(in srgb, var(--u-vif) 12%, transparent); }
+@media (hover: hover) { a.rs-seance:hover { border-color: var(--u-vif); background: color-mix(in srgb, var(--u-vif) 12%, transparent); } }
 a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px; }
 .rs-sh { font: 700 1.5rem/1 var(--sans); font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
 .rs-sh--sans { font: 600 .9rem/1.2 var(--sans); }
@@ -2782,8 +2832,8 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
 .rs-r1 { font: 700 clamp(1.2rem, 1.05rem + .5vw, 1.45rem)/1.05 var(--sans); letter-spacing: .01em; }
 .rs-r2 { margin-top: 4px; font: 500 .82rem/1.3 var(--sans); opacity: .9; }
 .rs-reserver .rs-fleche { width: 38px; height: 38px; padding: 9px; border-radius: 50%; background: color-mix(in srgb, var(--u-sur-accent) 16%, transparent); transition: translate var(--k-survol) var(--k-souple); }
-.rs-reserver:hover { box-shadow: 0 0 0 6px color-mix(in srgb, var(--u-accent) 24%, transparent), 0 18px 38px -18px color-mix(in srgb, var(--u-accent) 80%, transparent); }
-.rs-reserver:hover .rs-fleche { translate: 2px -2px; }
+@media (hover: hover) { .rs-reserver:hover { box-shadow: 0 0 0 6px color-mix(in srgb, var(--u-accent) 24%, transparent), 0 18px 38px -18px color-mix(in srgb, var(--u-accent) 80%, transparent); } }
+@media (hover: hover) { .rs-reserver:hover .rs-fleche { translate: 2px -2px; } }
 .rs-reserver:focus-visible { outline: 3px solid var(--u-vif); outline-offset: 3px; }
 .rs-aupres { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; padding-top: 14px; border-top: 1px solid var(--u-filet); font: 400 1.02rem/1.4 var(--sans); color: var(--u-texte2); }
 .rs-aupres b { color: var(--u-texte); font-weight: 600; }
@@ -2795,7 +2845,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
 /* les saisons (#/saisons, la 07) : la date d'une ligne de l'agenda est un bouton, un cadre droit qui prend l'encre de son
    spectacle ; choisi, il prend l'aplat de son univers, cerné d'un anneau, et sa carte s'ouvre sous la ligne */
 .rs-date--ligne { width: 100%; min-width: 0; max-width: 12.5rem; margin: -.35rem 0 .2rem -.55rem; padding: .4rem 1.6rem .5rem .55rem; border: 1px solid var(--filet); border-radius: 0; background: transparent; color: var(--encre); }
-.rs-date--ligne:hover { border-color: var(--c, var(--saison-vive)); box-shadow: inset 0 0 0 1px var(--c, var(--saison-vive)); }
+@media (hover: hover) { .rs-date--ligne:hover { border-color: var(--c, var(--saison-vive)); box-shadow: inset 0 0 0 1px var(--c, var(--saison-vive)); } }
 .rs-date--ligne:focus-visible { outline-color: var(--saison-vive); }
 .rs-date--ligne .rs-q { white-space: normal; }
 .rs-date--ligne :is(.rs-s, .rs-h--sans) { color: var(--gris); }
@@ -2824,6 +2874,27 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
 @media (max-width: 759px) {
   .som { transition: opacity var(--k-survol) var(--k-doux), visibility 0s; }
   article.rs-vu .som:not(:focus-within) { opacity: 0; visibility: hidden; transition: opacity var(--k-survol) var(--k-doux), visibility 0s var(--k-survol); }
+}
+/* réserver à portée de pouce : au téléphone, sur la page d'un spectacle qui a des dates à venir, une petite barre « Réserver »
+   (la date choisie dans la bande, sa forme courte et sa commune) se pose au-dessus de la barre d'onglets tant que ni l'ouverture
+   (qui a son propre « Réserver ») ni la carte de réservation ne sont à l'écran ; elle y mène. Dans l'univers du spectacle,
+   comme le bouton « Réserver » de la carte ; ce qui se pose en bas (le sommaire flottant, le haut de page) monte au-dessus
+   d'elle (--bas). Au bureau, rien */
+.rsb { display: none; }
+@media (max-width: 759px) {
+  .rsb { position: fixed; z-index: 36; left: 8px; right: 8px; bottom: calc(8px + var(--bas0)); display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 6px 6px 6px 20px;
+    border: 0; border-radius: 999px; background: var(--u-accent); color: var(--u-sur-accent); text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent;
+    box-shadow: 0 16px 34px -14px rgba(0, 0, 0, .85), 0 0 0 1px color-mix(in srgb, var(--u-sur-accent) 18%, transparent);
+    opacity: 0; visibility: hidden; translate: 0 calc(100% + 16px); transition: opacity var(--k-survol) var(--k-doux), translate .3s var(--k-doux), visibility 0s .3s; }
+  .sp-tournee:not(.une-vu, .rs-vu) .rsb { opacity: 1; visibility: visible; translate: none; transition: opacity var(--k-survol) var(--k-doux), translate .3s var(--k-doux), visibility 0s; }
+  html:has(.sp-tournee:not(.une-vu, .rs-vu) .rsb) { --bas: calc(var(--bas0) + 64px); }
+  .rsb-c { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .rsb-k { font: 700 1.05rem/1.1 var(--sans); letter-spacing: .01em; }
+  .rsb-d { overflow: hidden; font: 500 .8rem/1.25 var(--sans); white-space: nowrap; text-overflow: ellipsis; opacity: .92; }
+  .rsb .fleche { flex: none; box-sizing: content-box; width: 20px; height: 20px; padding: 12px; border-radius: 50%; background: color-mix(in srgb, var(--u-sur-accent) 16%, transparent);
+    fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .rsb:focus-visible { outline: 3px solid var(--u-vif); outline-offset: 3px; }
+  .rsb.mv-presse { scale: .97; transition-duration: var(--k-presse); }
 }
 @media (max-width: 640px) {
   .rs-carte { min-height: 0; border-radius: 12px; }
@@ -4044,7 +4115,12 @@ const INTRO = (() => {
    - data-date-id="<id>" sur chaque ligne d'agenda (D.dates[].id, et l'id des dates de D.saisons) : on la modifie,
      même passée ; data-agenda sur chaque liste de dates (data-agenda="<slug>" pour celle d'un spectacle) : on en ajoute ;
    - les variables CSS --ed-fond, --ed-encre, --ed-accent, --ed-sur-accent, --ed-police, --ed-rayon, --ed-trait : la
-     barre et les panneaux prennent le style de la maquette (et des règles .ed-… pour aller plus loin).
+     barre et les panneaux prennent le style de la maquette (et des règles .ed-… pour aller plus loin) ; --ed-bas : ce que
+     la maquette occupe déjà en bas de l'écran (sa barre d'onglets au téléphone, la safe-area) : la barre d'édition se pose
+     juste au-dessus (défaut : la safe-area seule). En retour, tant que la barre est là, l'édition écrit sur <html>
+     --ed-barre-h : la place qu'elle prend en bas de l'écran, son écart compris (0px sinon), pour que la maquette pose ce
+     qu'elle a en bas (un bouton du haut de page, une barre de filtres) au-dessus d'elle. Au téléphone (jusqu'à 759 px, le
+     seuil des maquettes), la barre prend toute la largeur.
    L'édition demande la base (DONNEES.etat === 'base') et un compte inscrit dans crescite_admins ; la session est celle
    de l'administration (admin/index.html), sur la même origine.
 
@@ -4066,21 +4142,21 @@ const EDITION = (() => {
   const STYLE = `
   :root { --ed-fond-d: var(--ed-fond, #fff); --ed-encre-d: var(--ed-encre, #1d1720); --ed-accent-d: var(--ed-accent, #1d1720);
     --ed-sur-d: var(--ed-sur-accent, #fff); --ed-police-d: var(--ed-police, system-ui, sans-serif); --ed-rayon-d: var(--ed-rayon, 12px);
-    --ed-trait-d: var(--ed-trait, rgba(0, 0, 0, .16)); }
+    --ed-trait-d: var(--ed-trait, rgba(0, 0, 0, .16)); --ed-bas-d: var(--ed-bas, env(safe-area-inset-bottom, 0px)); }
   .ed-actif [data-edit] { outline: 1.5px dashed color-mix(in srgb, var(--ed-accent-d) 55%, transparent); outline-offset: 3px; cursor: text; border-radius: 2px; }
-  .ed-actif [data-edit]:hover { outline-style: solid; }
+  @media (hover: hover) { .ed-actif [data-edit]:hover { outline-style: solid; } }
   .ed-actif [data-edit]:focus { outline: 2px solid var(--ed-accent-d); background: color-mix(in srgb, var(--ed-accent-d) 7%, transparent); }
   .ed-actif [data-edit].ed-modifie { outline-color: var(--ed-accent-d); outline-style: solid; }
   .ed-actif [data-edit]:empty::before { content: '…'; opacity: .5; }
   .ed-actif [data-date-id] { outline: 1.5px dashed color-mix(in srgb, var(--ed-accent-d) 55%, transparent); outline-offset: 2px; cursor: pointer; }
-  .ed-actif [data-date-id]:hover { outline-style: solid; }
+  @media (hover: hover) { .ed-actif [data-date-id]:hover { outline-style: solid; } }
   .ed-actif [data-edit-photo] { outline: 2px dashed var(--ed-accent-d); outline-offset: -4px; cursor: pointer; }
   .ed-boite, .ed-boite * { box-sizing: border-box; }
   .ed-boite { font: 15px/1.45 var(--ed-police-d); color: var(--ed-encre-d); }
   .ed-boite button, .ed-boite input, .ed-boite select, .ed-boite textarea { font: inherit; color: inherit; }
-  .ed-barre { position: fixed; z-index: 2147483000; right: 16px; bottom: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; max-width: calc(100vw - 32px);
+  .ed-barre { position: fixed; z-index: 2147483000; right: 16px; bottom: calc(16px + var(--ed-bas-d)); display: flex; flex-wrap: wrap; align-items: center; gap: 8px; max-width: calc(100vw - 32px);
     padding: 9px 10px 9px 14px; background: var(--ed-fond-d); border: 1px solid var(--ed-trait-d); border-radius: 999px; box-shadow: 0 10px 34px rgba(0, 0, 0, .28); }
-  @media (max-width: 760px) { .ed-barre { left: 8px; right: 8px; bottom: calc(76px + env(safe-area-inset-bottom)); border-radius: var(--ed-rayon-d); } }
+  @media (max-width: 759px) { .ed-barre { left: 8px; right: 8px; bottom: calc(8px + var(--ed-bas-d)); max-width: none; border-radius: var(--ed-rayon-d); } }
   .ed-barre .ed-etat { font-weight: 700; margin-right: 4px; }
   .ed-barre .ed-etat::before { content: ''; display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--ed-accent-d); margin-right: 7px; vertical-align: 1px; }
   .ed-barre .ed-nb { opacity: .72; font-size: 13px; }
@@ -4094,13 +4170,13 @@ const EDITION = (() => {
     @keyframes ed-ok { from { transform: scale(.4); } }
   }
   .ed-bt { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--ed-trait-d); background: var(--ed-fond-d); color: var(--ed-encre-d); border-radius: 999px; padding: 6px 13px; cursor: pointer; font-weight: 650; text-decoration: none; white-space: nowrap; }
-  .ed-bt:hover { border-color: var(--ed-encre-d); }
+  @media (hover: hover) { .ed-bt:hover { border-color: var(--ed-encre-d); } }
   .ed-bt.ed-plein { background: var(--ed-accent-d); border-color: var(--ed-accent-d); color: var(--ed-sur-d); }
   .ed-bt.ed-danger { color: #b3261e; }
   .ed-bt[disabled] { opacity: .45; cursor: default; }
   .ed-outils { position: fixed; z-index: 2147483001; display: flex; gap: 3px; padding: 4px; background: var(--ed-encre-d); border-radius: 9px; box-shadow: 0 6px 22px rgba(0, 0, 0, .3); }
   .ed-outils button { border: 0; background: none; color: var(--ed-fond-d); padding: 4px 9px; border-radius: 6px; cursor: pointer; font: 600 13px/1.2 var(--ed-police-d); }
-  .ed-outils button:hover { background: rgba(255, 255, 255, .16); }
+  @media (hover: hover) { .ed-outils button:hover { background: rgba(255, 255, 255, .16); } }
   .ed-voile { position: fixed; inset: 0; z-index: 2147483002; background: rgba(10, 6, 12, .48); display: grid; place-items: center; padding: 16px; }
   .ed-panneau { width: min(760px, 100%); max-height: calc(100vh - 32px); overflow: auto; background: var(--ed-fond-d); color: var(--ed-encre-d); border-radius: var(--ed-rayon-d); border: 1px solid var(--ed-trait-d); box-shadow: 0 24px 70px rgba(0, 0, 0, .4); }
   .ed-panneau.ed-petit { width: min(420px, 100%); }
@@ -4129,7 +4205,8 @@ const EDITION = (() => {
   .ed-combo { position: relative; }
   .ed-sugg { position: absolute; z-index: 5; left: 0; right: 0; top: calc(100% + 3px); background: var(--ed-fond-d); border: 1px solid var(--ed-trait-d); border-radius: 9px; box-shadow: 0 10px 26px rgba(0, 0, 0, .2); max-height: 260px; overflow: auto; }
   .ed-sugg button { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 7px 11px; cursor: pointer; }
-  .ed-sugg button:hover, .ed-sugg button:focus { background: color-mix(in srgb, var(--ed-accent-d) 12%, var(--ed-fond-d)); }
+  .ed-sugg button:focus { background: color-mix(in srgb, var(--ed-accent-d) 12%, var(--ed-fond-d)); }
+  @media (hover: hover) { .ed-sugg button:hover { background: color-mix(in srgb, var(--ed-accent-d) 12%, var(--ed-fond-d)); } }
   .ed-item { border: 1px solid var(--ed-trait-d); border-radius: 9px; padding: 8px 10px; margin-bottom: 8px; }
   .ed-annonces { position: fixed; z-index: 2147483003; left: 50%; top: 16px; transform: translateX(-50%); display: grid; gap: 8px; width: min(460px, calc(100% - 24px)); }
   .ed-annonce { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 11px; background: #1d1720; color: #fff; box-shadow: 0 8px 28px rgba(0, 0, 0, .3); font: 14px/1.4 var(--ed-police-d); }
@@ -4278,6 +4355,10 @@ const EDITION = (() => {
       <a class="ed-bt" href="${ADMIN}" target="_blank" rel="noopener" title="Ateliers, lieux, journal…">Administration ↗</a>
       <button type="button" class="ed-bt" data-ed="quitter">Quitter</button>`;
     document.body.append(barre);
+    // (la place qu'elle prend en bas de l'écran, son écart compris, pour la maquette : --ed-barre-h sur <html>)
+    const place = () => { if (!barre) return; const r = barre.getBoundingClientRect(); document.documentElement.style.setProperty('--ed-barre-h', `${Math.max(0, Math.ceil(innerHeight - r.top))}px`); };
+    if ('ResizeObserver' in window) { barre.__ro = new ResizeObserver(place); barre.__ro.observe(barre); }
+    addEventListener('resize', place); barre.__place = place; place();
     barre.addEventListener('click', e => {
       const b = e.target.closest('[data-ed]'); if (!b) return;
       if (b.dataset.ed === 'enregistrer') enregistrer();
@@ -4297,6 +4378,7 @@ const EDITION = (() => {
     if (modifies.size) { modifies.clear(); DONNEES.suspendre(false); DONNEES.recharger({ force: true }); }
     moi.actif = false;
     observateur?.disconnect();
+    if (barre) { barre.__ro?.disconnect(); removeEventListener('resize', barre.__place); document.documentElement.style.removeProperty('--ed-barre-h'); }
     barre?.remove(); barre = null; outils?.remove(); outils = null; outilPhoto?.remove(); outilPhoto = null;
     $$('.ed-ajout').forEach(b => b.remove());
     desarmerTout();
@@ -5071,8 +5153,8 @@ const FRISE = (() => {
 :where(.frise[data-frise]) :where(.frise-repere):focus-visible { outline: 2px solid var(--fr-accent); outline-offset: 1px; }
 :where(.frise[data-frise]) :where(.frise-point) > :where(.frise-repere)::before { content: ""; display: block; width: var(--fr-point); height: var(--fr-point);
   border-radius: 50%; background: var(--fr-c, currentColor); box-shadow: 0 0 0 2px var(--fr-fond); transition: scale .16s var(--fr-courbe), opacity .16s; }
-:where(.frise[data-frise]) :where(.frise-point) > :where(.frise-repere:hover, .frise-repere:focus-visible)::before,
-:where(.frise[data-frise]) :where(.frise-point.est-allume, .frise-point.est-focus) > :where(.frise-repere)::before { scale: 1.45; }
+:where(.frise[data-frise]) :where(.frise-point) > :where(.frise-repere:focus-visible)::before, :where(.frise[data-frise]) :where(.frise-point.est-allume, .frise-point.est-focus) > :where(.frise-repere)::before { scale: 1.45; }
+@media (hover: hover) { :where(.frise[data-frise]) :where(.frise-point) > :where(.frise-repere:hover)::before { scale: 1.45; } }
 :where(.frise[data-frise]) :where(.frise-point.est-passe) > :where(.frise-repere)::before { opacity: var(--fr-passe); }
 :where(.frise[data-frise]) :where(.frise-point.est-passe.est-allume, .frise-point.est-passe.est-focus) > :where(.frise-repere)::before { opacity: 1; }
 :where(.frise[data-frise]) :where(.frise-point.est-scolaire:not(.est-duree)) > :where(.frise-repere)::before { border-radius: 2px; rotate: 45deg; width: calc(var(--fr-point) * .86); height: calc(var(--fr-point) * .86); }
@@ -5085,8 +5167,8 @@ const FRISE = (() => {
 /* une semaine de résidence (règle 23) : un repère carré évidé ; une période, un trait en pointillé */
 :where(.frise[data-frise]) :where(.frise-point.est-residence:not(.est-duree)) > :where(.frise-repere)::before { border-radius: 2px; background: var(--fr-fond); box-shadow: inset 0 0 0 2px var(--fr-c, currentColor), 0 0 0 2px var(--fr-fond); }
 :where(.frise[data-frise]) :where(.frise-point.est-duree.est-residence) > :where(.frise-repere)::before { background: repeating-linear-gradient(90deg, var(--fr-c, currentColor) 0 5px, transparent 5px 9px); }
-:where(.frise[data-frise]) :where(.frise-point.est-duree) > :where(.frise-repere:hover, .frise-repere:focus-visible)::before,
-:where(.frise[data-frise]) :where(.frise-point.est-duree.est-allume) > :where(.frise-repere)::before { scale: 1 1.6; }
+:where(.frise[data-frise]) :where(.frise-point.est-duree) > :where(.frise-repere:focus-visible)::before, :where(.frise[data-frise]) :where(.frise-point.est-duree.est-allume) > :where(.frise-repere)::before { scale: 1 1.6; }
+@media (hover: hover) { :where(.frise[data-frise]) :where(.frise-point.est-duree) > :where(.frise-repere:hover)::before { scale: 1 1.6; } }
 :where(.frise[data-frise]) :where(.frise-point.est-groupe) > :where(.frise-repere) { pointer-events: none; }
 :where(.frise[data-frise]) :where(.frise-point.est-groupe) > :where(.frise-repere)::before { opacity: 0; }
 :where(.frise[data-frise]) :where(.frise-grappe) > span { position: absolute; left: 0; top: 0; width: 22px; height: 22px; margin: -11px 0 0 -11px;
@@ -5094,7 +5176,8 @@ const FRISE = (() => {
   background: radial-gradient(closest-side, var(--fr-fond) 66%, transparent 69%), conic-gradient(var(--fr-g, currentColor));
   transition: scale .16s var(--fr-courbe); }
 :where(.frise[data-frise]) :where(.frise-grappe.est-passe) > span { opacity: .6; }
-:where(.frise[data-frise]) :where(.frise-grappe:hover, .frise-grappe.est-allume, .frise-grappe.est-focus) > span { scale: 1.25; opacity: 1; }
+:where(.frise[data-frise]) :where(.frise-grappe.est-allume, .frise-grappe.est-focus) > span { scale: 1.25; opacity: 1; }
+@media (hover: hover) { :where(.frise[data-frise]) :where(.frise-grappe:hover) > span { scale: 1.25; opacity: 1; } }
 :where(.frise[data-frise]) :where(.frise-grappe-n) { font-size: 10.5px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
 :where(.frise[data-frise].frise--etiquettes) :where(.frise-point) { top: var(--fr-axe); }
 :where(.frise[data-frise]) :where(.frise-etiquette) { position: absolute; left: 20px; bottom: calc(20px + var(--fr-y, 0) * var(--fr-couloir)); width: max-content;
@@ -5111,7 +5194,8 @@ const FRISE = (() => {
   text-align: center; font-size: var(--fr-taille); font-variant-numeric: tabular-nums; transition: bottom .3s var(--fr-courbe); }
 :where(.frise[data-frise]) :where(.frise-bande-nom) { position: absolute; left: 0; right: 0; top: calc(var(--fr-bande-h) + 8px); text-align: center;
   font-size: calc(var(--fr-taille) - 1px); white-space: nowrap; font-variant-numeric: tabular-nums; }
-:where(.frise[data-frise]) :where(.frise-bande.est-allume, .frise-bande:hover) :where(.frise-bande-barre) { opacity: 1; }
+:where(.frise[data-frise]) :where(.frise-bande.est-allume) :where(.frise-bande-barre) { opacity: 1; }
+@media (hover: hover) { :where(.frise[data-frise]) :where(.frise-bande:hover) :where(.frise-bande-barre) { opacity: 1; } }
 :where(.frise[data-frise]) :where(.frise-bande.est-passe) :where(.frise-bande-barre) { opacity: .5; }
 :where(.frise[data-frise]) :where(.frise-aujourdhui) { position: absolute; left: calc(var(--fr-x) * 1%); top: 0; width: 0; height: var(--fr-axe); pointer-events: none; }
 :where(.frise[data-frise]) :where(.frise-aujourdhui)::before { content: ""; position: absolute; left: -.5px; top: 16px; bottom: 0; width: 1px;
@@ -5969,10 +6053,12 @@ const MOUVEMENT = (() => {
    RESERVER.lien(d)            où l'on réserve : le lien de la date, sinon celui de sa première séance tout public qui en a un ;
                                null s'il n'y en a pas (la carte dit alors « Réservation auprès du lieu », sans faux bouton)
    RESERVER.lieu(d)            le nom du lieu, ou null
+   RESERVER.commune(d)         sa commune (« Pont-Audemer » : sans son département)
    RESERVER.jours(d)           { semaine: ['ven.'], jour: '18', mois: ['déc.'] } : la date écrite court (AGENDA.court, avec les
                                noms courts de D.site.libelles) ; deux jours qui se suivent : ['jeu.', 'ven.'], '19 – 20' ;
-                               plusieurs : '8 – 11' ; une période : '12 – 20' ; un mois : 'mars', ['2027']
-   RESERVER.bouton(d, o)       le HTML du bouton d'une date, qui se lit « ven. 18 déc. · 14h, 20h · Pont-Audemer » :
+                               plusieurs : '8 – 11' ; une période : '12 – 20' ; un mois : 'mars', ['2027'] (l'intervalle :
+                               un tiret demi-cadratin entre deux espaces fines insécables, qui ne se coupe jamais)
+   RESERVER.bouton(d, o)       le HTML du bouton d'une date, qui se lit « ven. 18 déc. · 14h, 20h — Pont-Audemer » :
                                <button class="rs-date" data-reserver="<clé>" aria-pressed> ; o.choisi, o.classe, o.style
                                (les variables de l'univers), o.attributs (une chaîne : data-date-id…, aria-controls…)
    RESERVER.bande(dates, o)    le HTML de la bande : <div class="rs-bande" role="group" aria-label="<o.libelle, ou
@@ -6074,7 +6160,7 @@ const RESERVER = (() => {
     const a = court(js[0]), b = court(js[js.length - 1]);
     if (js.length === 1) return { semaine: [a.semaine], jour: a.jour, mois: [a.mois] };
     const suivis = js.length === 2 && Date.parse(js[1]) - Date.parse(js[0]) === 864e5;
-    return { semaine: suivis ? [a.semaine, b.semaine] : [], jour: `${a.jour} – ${b.jour}`, mois: js[0].slice(0, 7) === js[js.length - 1].slice(0, 7) ? [a.mois] : [a.mois, b.mois] };
+    return { semaine: suivis ? [a.semaine, b.semaine] : [], jour: `${a.jour}${ENTRE}${b.jour}`, mois: js[0].slice(0, 7) === js[js.length - 1].slice(0, 7) ? [a.mois] : [a.mois, b.mois] };
   }
   // les précisions de la date, quand elles disent plus que la carte (celles que l'agenda compose des séances, non)
   function precisions(d) {
@@ -6105,13 +6191,15 @@ const RESERVER = (() => {
   const photo = s => (s && typeof D !== 'undefined' && D.photos ? D.photos[s.slug] || null : null);
 
   /* ---------------------------------------------------------------------------------------------- le HTML */
-  const mots = xs => xs.map(x => `<span>${esc(x)}</span>`).join(' – ');
+  // (l'intervalle de la forme courte : un tiret demi-cadratin entre deux espaces fines insécables, qui ne se coupe jamais)
+  const ENTRE = '\u202f–\u202f';
+  const mots = xs => xs.map(x => `<span>${esc(x)}</span>`).join(ENTRE);
   function bouton(d, o = {}) {
     const Lb = L(), j = jours(d), h = heures(d), k = cle(d);
     return `<button type="button" class="rs-date${o.classe ? ' ' + o.classe : ''}" data-reserver="${esc(k)}" aria-pressed="${o.choisi ? 'true' : 'false'}"${o.attributs || ''}${o.style ? ` style="${esc(o.style)}"` : ''}>`
       + `<span class="rs-q">${j.semaine.length ? `<span class="rs-s">${mots(j.semaine)}</span> ` : ''}<b class="rs-n">${esc(j.jour)}</b>${j.mois.length ? ` <span class="rs-m">${mots(j.mois)}</span>` : ''}</span>`
       + `<span class="rs-sep"> · </span><span class="rs-h${h.length ? '' : ' rs-h--sans'}">${h.length ? h.map(x => `<span>${esc(x)}</span>`).join(', ') : `<span>${esc(Lb.horaireAPreciser)}</span>`}</span>`
-      + `<span class="rs-sep"> · </span><span class="rs-o">${esc(commune(d))}</span></button>`;
+      + `<span class="rs-sep"> — </span><span class="rs-o">${esc(commune(d))}</span></button>`;
   }
   function bande(ds, o = {}) {
     const Lb = L(), k = o.choisie == null ? null : String(o.choisie);
@@ -6338,7 +6426,7 @@ const RESERVER = (() => {
     });
   })();
 
-  return { dates, cle, trouver, seances, heures, lien, lieu, jours, bouton, bande, carte, univers, photo, permis, monter, ics, telecharger };
+  return { dates, cle, trouver, seances, heures, lien, lieu, commune, jours, bouton, bande, carte, univers, photo, permis, monter, ics, telecharger };
 })();
 </script>
 <script>
@@ -6847,8 +6935,10 @@ const TROUPE = (() => {
 :where(.troupe-icone .tr-ic-etoile) { transform-box: fill-box; transform-origin: 50% 50%; }
 :where(.troupe-icone .tr-ic-coeur) { transform-origin: 16px 16px; }
 @media (prefers-reduced-motion: no-preference) {
-  :where([data-troupe-categorie]:hover, [data-troupe-categorie].est-allume, .troupe-icone.est-vivant) :where(.troupe-icone) :where(.tr-ic-avant, .tr-ic-arriere, .tr-ic-oeil, .tr-ic-iris, .tr-ic-onde, .tr-ic-plume, .tr-ic-cintre, .tr-ic-onde1, .tr-ic-onde2, .tr-ic-onde3, .tr-ic-billet, .tr-ic-etoile, .tr-ic-coeur) {
+  :where([data-troupe-categorie].est-allume, .troupe-icone.est-vivant) :where(.troupe-icone) :where(.tr-ic-avant, .tr-ic-arriere, .tr-ic-oeil, .tr-ic-iris, .tr-ic-onde, .tr-ic-plume, .tr-ic-cintre, .tr-ic-onde1, .tr-ic-onde2, .tr-ic-onde3, .tr-ic-billet, .tr-ic-etoile, .tr-ic-coeur) {
     animation: var(--tr-anim, none); }
+  @media (hover: hover) { :where([data-troupe-categorie]:hover) :where(.troupe-icone) :where(.tr-ic-avant, .tr-ic-arriere, .tr-ic-oeil, .tr-ic-iris, .tr-ic-onde, .tr-ic-plume, .tr-ic-cintre, .tr-ic-onde1, .tr-ic-onde2, .tr-ic-onde3, .tr-ic-billet, .tr-ic-etoile, .tr-ic-coeur) {
+    animation: var(--tr-anim, none); } }
 }
 :where(.troupe-icone .tr-ic-avant) { --tr-anim: troupe-balance 1.25s cubic-bezier(.4, 0, .2, 1); }
 :where(.troupe-icone .tr-ic-arriere) { --tr-anim: troupe-contre 1.25s cubic-bezier(.4, 0, .2, 1); }
@@ -9940,12 +10030,25 @@ const CREATURE = (() => {
   const retenu = (cle, f) => { const m = memoire.get(cle); if (m && m.v === versionD) return m.x; const x = f(); memoire.set(cle, { v: versionD, x }); return x; };
 
   /* ---------- les lignes de date : découpées, jamais réécrites ---------- */
+  /* les dates, dites de la même façon partout (FORME_DATES) :
+     - la forme longue, pour les titres et les phrases : celle de l'agenda (AGENDA.quand, D.dates[].ligneDate), « 18 décembre
+       2026 », « 29 et 30 janvier 2027 », « du 12 au 20 février 2027 », « mai 2027 », et les intertitres « novembre 2026 » ;
+     - la forme courte, pour les boutons et les puces : le jour de la semaine et le mois abrégés (AGENDA.court, D.site.libelles
+       joursCourts et moisCourts), « ven. 18 déc. », plusieurs jours « ven. – sam. 29 – 30 janv. », un mois seul « mars 2027 »,
+       les mois d'une saison « déc. » ; l'intervalle, un tiret demi-cadratin entre deux espaces fines insécables (ENTRE : il ne
+       se coupe jamais) ;
+     - une année seule, telle quelle, « 2019 » ; une saison, « 2019-2020 » ;
+     - entre la date et le lieu, partout, le tiret cadratin des lignes de l'agenda : « 18 décembre 2026 — Pont-Audemer (27) »,
+       « ven. 18 déc. — Pont-Audemer ». Les lignes venues de la base (D.dates[].ligne) sont du contenu : elles ne changent pas. */
+  const ENTRE = '\u202f–\u202f';
   const MOIS = 'janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre';
   const RE_MOIS = new RegExp(`^(.*?)\\s*((?:${MOIS})\\s+\\d{4})$`);
   // « 18 décembre 2026 » → ["18", "décembre 2026"] ; « mars 2027 » → ["mars", "2027"]
   const coupe = ligne => { const m = String(ligne || '').match(RE_MOIS); return !m ? [ligne || '', ''] : m[1] ? [m[1], m[2]] : m[2].split(/\s+/); };
   const moisDe = ligne => (String(ligne || '').match(RE_MOIS) || [])[2] || '';
-  const quand = (ligneDate, iso) => { const [j, m] = coupe(ligneDate); return `<time${iso ? ` datetime="${iso}"` : ''}><b>${esc(j)}</b>${m ? `<small>${esc(m)}</small>` : ''}</time>`; };
+  // (le jour en gras, le mois et l'année dessous ; entre eux une espace, que l'œil ne voit pas : « 12 novembre 2026 » se lit
+  // d'un tenant, et non « 12novembre »)
+  const quand = (ligneDate, iso) => { const [j, m] = coupe(ligneDate); return `<time${iso ? ` datetime="${iso}"` : ''}><b>${esc(j)}</b>${m ? ` <small>${esc(m)}</small>` : ''}</time>`; };
   const details = Ls => Ls && Ls.length ? `<ul class="det">${Ls.map(x => { const t = typeof x === 'string' ? x : x.texte, h = typeof x === 'string' ? null : x.lien;
     return `<li>${h ? `<a href="${esc(h)}" target="_blank" rel="noopener">${esc(t)}${DEHORS()}</a>` : esc(t)}</li>`; }).join('')}</ul>` : '';
 
@@ -10244,8 +10347,13 @@ const CREATURE = (() => {
   const ecrit = (t, i0 = 0) => mots(t).map((w, i) => `<span class="w" style="--w:${i0 + i}">${esc(w)}</span>`).join(' ');
   const creditDe = (s, p) => p && p.source === 'dossier' ? s.creditDossier : s.creditPhotos;
   const cleCredit = p => p && p.source === 'dossier' ? 'creditDossier' : 'creditPhotos';
+  /* le texte de remplacement d'une photo de contenu (un spectacle) : sa légende de D quand elle n'est pas écrite à côté d'elle ;
+     écrite à côté (une figcaption), rien (alt="" : le lecteur d'écran ne l'entend pas deux fois) ; sans légende, le titre du
+     spectacle qu'elle montre. Une photo décorative (un fond, une vignette dans un bouton ou un lien qui dit déjà son nom, la photo
+     de l'ouverture sous son titre) a alt="" ; un portrait, le nom de la personne, sauf quand il est écrit dessous */
+  const altPh = (s, p, aCote = true) => (p && p.legende ? (aCote ? '' : p.legende) : s.titre);
   const fig = (s, p, cls = '') => { if (!p) return ''; const i = rangPh(s, p);
-    return `<figure class="u-fig apparait${cls ? ' ' + cls : ''}"${i >= 0 ? edP(s, 'photos', i) : ''}><img src="${D.photos[p.cle]}" alt="${esc(p.legende || s.titre)}" loading="lazy">${p.legende ? `<figcaption${i >= 0 ? edS(s, 'photos', i, 'legende') : ''}>${esc(p.legende)}</figcaption>` : ''}</figure>`; };
+    return `<figure class="u-fig apparait${cls ? ' ' + cls : ''}"${i >= 0 ? edP(s, 'photos', i) : ''}><img src="${D.photos[p.cle]}" alt="${esc(altPh(s, p))}" loading="lazy">${p.legende ? `<figcaption${i >= 0 ? edS(s, 'photos', i, 'legende') : ''}>${esc(p.legende)}</figcaption>` : ''}</figure>`; };
   const nombre = t => { const m = String(t || '').match(/^(\d[\d   ]*?)(\s+\D[\s\S]*)$/); return m ? `<b class="gros">${esc(m[1])}</b>${esc(m[2])}` : esc(t); };
   // les vidéos se lisent dans la page (règle 18, LECTEUR) : un bouton « Bande-annonce » y mène et la lance (vers : 'boite',
   // dans un catalogue loin de toute vidéo, elle s'ouvre dans une boîte) ; une adresse qui n'est ni YouTube ni Vimeo reste un lien
@@ -10438,10 +10546,10 @@ const CREATURE = (() => {
     const ms = Array.from({ length: 12 }, (_, i) => { const m = (8 + i) % 12, a = a0 + (8 + i >= 12 ? 1 : 0); return { k: `${a}-${String(m + 1).padStart(2, '0')}`, m, a, i }; });
     const jourDu = iso => +String(iso).slice(8, 10);
     const nbJours = (a, m) => new Date(Date.UTC(a, m + 1, 0)).getUTCDate();
-    // le jour écrit : « 12 », « 19–20 » (plusieurs jours : le premier et le dernier) ; une date qui n'a gardé que son mois, le
-    // nom court de son mois
+    // le jour écrit : « 12 », « 19 – 20 » (plusieurs jours : le premier et le dernier, la forme courte des boutons de date,
+    // FORME_DATES) ; une date qui n'a gardé que son mois, le nom court de son mois
     const ecrit = p => { if (p.precision === 'month' || !/^\d{4}-\d{2}-\d{2}/.test(p.jour || '')) return MC[+String(p.jour).slice(5, 7) - 1] || '•';
-      const a = jourDu(p.jour), b = p.fin && p.fin !== p.jour ? jourDu(p.fin) : a; return b !== a ? `${a}–${b}` : String(a); };
+      const a = jourDu(p.jour), b = p.fin && p.fin !== p.jour ? jourDu(p.fin) : a; return b !== a ? `${a}${ENTRE}${b}` : String(a); };
     // (ce que la pastille montre, le lecteur d'écran l'entend : « Scolaire », « Résidence », l'état, et une date jouée, vidée
     // et cochée, « jouée »)
     const nom = p => [p.quand, p.titre, p.l != null && CARTE.lieux[p.l] ? CARTE.nom(CARTE.lieux[p.l]) : '', p.scolaire && L.scolaire, p.residence && L.residence,
@@ -11321,7 +11429,9 @@ const CREATURE = (() => {
     const tl = s.titreLignes && s.titreLignes.length ? s.titreLignes : null, lignes = tl || [s.titre];
     const titre = lignes.map((l, k) => `<span class="df-l"${tl ? edS(s, 'titreLignes', k) : edS(s, 'titre')}>${esc(l)}</span>`).join(' ');
     const long = lignes.length > 2 || lignes.join(' ').length > 26, badge = badgeDe(s);
-    const img = (cls = '') => src ? `<img${cls ? ` class="${cls}"` : ''} src="${src}" alt="" loading="lazy" decoding="async">` : '';
+    // (la photo d'un écran de l'accueil : sa légende, si elle en a une, qui ne s'écrit pas ici ; sinon, sous le titre du spectacle,
+    // décorative ; son jumeau, toujours)
+    const img = (cls = '') => src ? `<img${cls ? ` class="${cls}"` : ''} src="${src}" alt="${cls ? '' : esc(ph && ph.legende ? altPh(s, ph, false) : '')}" loading="lazy" decoding="async">` : '';
     return `<article class="df ${uClasse(s)}" style="${uVars(s)}" data-motif="${esc(m)}" data-cote="${i % 2 ? 'droite' : 'gauche'}" aria-labelledby="df-t-${esc(s.slug)}">
       <div class="df-photo"${ph ? edP(s, 'photos', rangPh(s, ph)) : edP(s, 'photo')}>${img()}${m === 'jumeaux' ? img('df-jumeau') : ''}</div>
       ${effetEcran(m)}
@@ -11431,9 +11541,13 @@ const CREATURE = (() => {
     const ma = tete.match(RE_MOIS_AN);
     return ma ? `${ma[2]}-${p2(mois(ma[1]))}-31` : null;
   }
-  // « 24 janvier 2020 à 20h — Théâtre en Seine, Duclair (76) » → { jour: « 24 », heure: « à 20h », lieu: « Théâtre en Seine, Duclair (76) » }
-  function decoupe(ligne) {
-    const t = String(ligne || ''), m = t.match(RE_LIGNE);
+  // « 24 janvier 2020 à 20h — Théâtre en Seine, Duclair (76) » → { jour: « 24 », heure: « à 20h », lieu: « Théâtre en Seine, Duclair (76) » } ;
+  // une ligne qui ne dit que son année, « 2019 — Lycée Sembat, Rouen (76) » → { jour: « 2019 », lieu: « Lycée Sembat, Rouen (76) » } (son année
+  // dans la colonne des dates, comme les autres, et non collée à son lieu ; une ligne de suite, qui n'a pas de colonne des
+  // dates, la garde entière)
+  function decoupe(ligne, suite = false) {
+    const t = String(ligne || ''), m = t.match(RE_LIGNE), an = !m && !suite && t.match(/^\s*(\d{4})\s*—\s*(\S[\s\S]*)$/);
+    if (an) return { jour: an[1], heure: '', lieu: an[2].trim() };
     if (!m) return { jour: '', heure: '', lieu: t.trim() };
     const reste = m[3], k = reste.indexOf('—'), c = reste.search(/\s:\s/);
     const [h, l] = k >= 0 ? [reste.slice(0, k), reste.slice(k + 1)] : c >= 0 ? [reste.slice(0, c), reste.slice(c + 3)] : ['', reste];
@@ -11502,7 +11616,7 @@ const CREATURE = (() => {
   const DOUBLE_HAUT = '<svg class="fleche" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 11l6-5 6 5M6 18l6-5 6 5"/></svg>';
   // (pre : un préfixe de la clé de mouvement, quand la même ligne paraît deux fois dans la vue)
   const ligneAgenda = (r, pre = '', sansTitre = false) => {
-    const { d, g } = r, sp = g.slug && bySlug[g.slug], p = decoupe(d.ligne);
+    const { d, g } = r, sp = g.slug && bySlug[g.slug], p = decoupe(d.ligne, r.suite);
     const titre = r.suite || sansTitre ? '' : sp ? `<a class="t" href="${lienSp(g.slug, 'voir')}">${esc(r.titre)}</a>` : `<span class="t">${esc(r.titre)}</span>`;
     const lieu = p.lieu ? (d.lien ? `<a class="ou" href="${esc(d.lien)}" target="_blank" rel="noopener">${esc(p.lieu)}${DEHORS()}</a>` : `<span class="ou">${esc(p.lieu)}</span>`) : '';
     return `<li data-date-id="${esc(d.id ?? '')}" data-frise-id="${esc(r.fid)}" data-mv-cle="${esc(pre + r.fid)}"${d.l != null ? ` data-l="${d.l}"` : ''}${r.suite ? ' class="suite"' : ''} style="--c:${couleurDe(g.slug)}">${r.suite ? '' : `<time${d.iso ? ` datetime="${d.iso}"` : ''}><b>${esc(p.jour)}</b>${p.heure ? `<small>${esc(p.heure)}</small>` : ''}</time>`}<div class="qui">${titre}${d.scolaire ? `<em class="tag">${esc(L.scolaire)}</em>` : ''}${d.residence ? `<em class="tag">${esc(L.residence)}</em>` : ''}${d.etat ? `<em class="etat">${esc(d.etat)}</em>` : ''}${lieu}${details(d.details)}</div></li>`;
@@ -11856,7 +11970,7 @@ const CREATURE = (() => {
     // (les filtres de l'adresse, relus à l'arrivée : ?spectacle=, ?mois= (un mois de la saison en cours), ?l= (une commune de la
     // carte), ?recherche= ; ce qui ne se retrouve pas dans D est oublié, plus bas)
     if (!surPlace || !etat.voir) { const l0 = q.get('l'), m0 = q.get('mois') || '', moisOk = /^\d{4}-\d{2}$/.test(m0) && m0 >= `${D.saison.slice(0, 4)}-09` && m0 <= `${D.saison.slice(5)}-08`;
-      etat.voir = { q: (q.get('recherche') || '').slice(0, 120), slug: q.get('spectacle') || null, l: l0 !== null && [...lieux, ...passeC].some(x => x.l === +l0) ? +l0 : null, ouv: new Set(ouvrir ? [ouvrir] : []), avant: null, date: q.get('date'), mois: moisOk ? m0 : null, moisPar: moisOk ? 'clic' : null, jour: null }; }
+      etat.voir = { q: (q.get('recherche') || '').slice(0, 120), slug: q.get('spectacle') || null, l: l0 !== null && ([...lieux, ...passeC].some(x => x.l === +l0) || passe.some(sa => sa.rows.some(r => r.d.l === +l0))) ? +l0 : null, ouv: new Set(ouvrir ? [ouvrir] : []), avant: null, date: q.get('date'), mois: moisOk ? m0 : null, moisPar: moisOk ? 'clic' : null, jour: null }; }
     else if (ouvrir) etat.voir.ouv.add(ouvrir);
     const F = etat.voir;
     if (F.slug && !puces.some(s => s.cle === F.slug)) F.slug = null;
@@ -12008,7 +12122,7 @@ const CREATURE = (() => {
     // une ligne de toute la saison (la 07) : le jour, l'heure, « Scolaire », « Résidence », l'état ; le spectacle dans sa police,
     // le lieu, les précisions ; une date déjà jouée, éteinte
     const ligneToute = r => {
-      const { d, g } = r, sp = g.slug && bySlug[g.slug], p = decoupe(d.ligne), passee = !!(r.k && r.k < D.aujourdhui);
+      const { d, g } = r, sp = g.slug && bySlug[g.slug], p = decoupe(d.ligne, r.suite), passee = !!(r.k && r.k < D.aujourdhui);
       const lieu = p.lieu ? `<p class="d7-lieu">${d.lien ? `<a href="${esc(d.lien)}" target="_blank" rel="noopener">${esc(p.lieu)}${DEHORS()}</a>` : esc(p.lieu)}</p>` : '';
       const marques = `${d.scolaire ? `<p class="d7-tag">${esc(L.scolaire)}</p>` : ''}${d.residence && L.residence ? `<p class="d7-tag d7-tag--rs">${esc(L.residence)}</p>` : ''}${d.etat ? `<p class="d7-etat">${esc(d.etat)}</p>` : ''}`
         + (passee && !r.suite && !d.residence && !d.etat && L.jouee ? `<p class="sr">${esc(L.jouee)}</p>` : '');   // (éteinte à l'œil : jouée, à l'oreille)
@@ -12021,7 +12135,7 @@ const CREATURE = (() => {
     // une ligne d'une saison passée (la 04) : le jour et l'heure ; le lieu (lien s'il existe), le spectacle derrière sa petite
     // porte, « Scolaire », « Résidence » (son carré évidé), l'état, les précisions
     const ligneP4 = r => {
-      const { d, g } = r, sp = g.slug && bySlug[g.slug], p = decoupe(d.ligne);
+      const { d, g } = r, sp = g.slug && bySlug[g.slug], p = decoupe(d.ligne, r.suite);
       const etiq = `${d.scolaire ? `<span class="p4-etiq">${esc(L.scolaire)}</span>` : ''}${d.residence && L.residence ? `<span class="p4-etiq p4-res"><i aria-hidden="true"></i>${esc(L.residence)}</span>` : ''}`;
       const quoi = r.suite ? (etiq ? `<p class="dl-quoi">${etiq}</p>` : '')
         : `<p class="dl-quoi"><i class="dl-porte" aria-hidden="true"></i>${sp ? `<a href="${lienSp(g.slug, 'voir')}">${esc(r.titre)}</a>` : `<span class="dl-sp">${esc(r.titre)}</span>`}${etiq}</p>`;
@@ -12103,10 +12217,14 @@ const CREATURE = (() => {
       const av = vis[i + 1], ap = vis[i - 1];
       return av || ap ? `<nav class="sai-voisins" aria-label="${esc(L.saisonsPassees)}">${lien(av, L.saisonPrecedente, 'sai-av', 'prev', true)}${lien(ap, L.saisonSuivante, 'sai-ap', 'next', false)}</nav>` : '';
     }
+    // la carte d'une saison passée ouverte filtre aussi, comme la loupe de la saison en cours : choisir une commune (clic, Entrée)
+    // pose le filtre de la commune (dans l'adresse, ?l=), la met en évidence, la choisir encore la rend ; « Tout effacer » et
+    // son étiquette la retirent. La saison se refait sur ses lignes gardées : sa carte reste sous le doigt (ancreSaison)
+    let ancreSaison = null;
     function lierSaison(dt, s) {
       const sv = $('.sai-carte svg', dt), ul = $('.sai-liste', dt);
       if (!sv) return;
-      relier(sv, ul, l => { const li = $(`li[data-l="${l}"]`, ul); if (li) li.scrollIntoView({ behavior: motionOK() ? 'smooth' : 'auto', block: 'center' }); });
+      relier(sv, ul, l => { ancreSaison = { k: s.k, haut: sv.getBoundingClientRect().top }; F.l = F.l === l ? null : l; dessine(true); });
       marquerCommune(dt);
       bientot(() => { pousser(sv); echelle(); });
       auFil(ul, sv);   // (scrollytelling) la saison passée se dessine au fil de ses dates
@@ -12147,9 +12265,29 @@ const CREATURE = (() => {
         <div class="sai-corps">${F.ouv.has(s.k) ? corpsSaison(s, rows) : ''}</div></details>`).join('');
       vis.forEach(({ s }) => { if (F.ouv.has(s.k)) lierSaison($(`#sai-${s.k}`, racine), s); });
       dessineIndex(vis);
+      // (la saison dont la carte vient de filtrer la page : sa carte revient où elle était à l'écran, la commune choisie et
+      // ses lignes à côté ; refermée par le filtre, la saison s'efface et la page reste où elle est)
+      const a = ancreSaison; ancreSaison = null;
+      const sv = a && $(`#sai-${a.k}[open] .sai-carte svg`, racine);
+      if (sv) { const d = sv.getBoundingClientRect().top - a.haut; if (Math.abs(d) > 1) scrollBy({ top: d, behavior: 'instant' }); }
+    }
+    // (une puce de spectacle ou de commune qui, ajoutée aux filtres en cours, ne garderait rien s'éteint, eteindre : dans la
+    // saison en cours, ce qu'elle garderait de la saison (les mêmes repères que la frise, le mois choisi compris ; une date
+    // choisie, elle, cède la place au spectacle qu'on choisit) ; dans les saisons passées, ce qu'elle garderait d'elles)
+    const gardeAvec = (slug, l) => r => (!slug || r.cle === slug) && (l === null || r.l === l || (r.d && r.d.l === l)) && (!terme() || r.txt.includes(terme()));
+    const nSaisonAvec = (slug, l) => ptsSaison(gardeAvec(slug, l)).filter(([, p]) => !F.mois || dansMois(borne(p.jour), borne(p.fin || p.jour), F.mois)).length;
+    // (le nombre des saisons passées compte ses dates jouées, comme leur rangée ; une ligne qu'il ne compte pas, une date qui ne
+    // dit que son année, n'éteint pas la puce)
+    const nPassesAvec = (slug, l) => { const g = gardeAvec(slug, l), rs = passe.flatMap(sa => sa.rows.filter(g)); return [rs.filter(r => !r.suite && jouee(r)).length, !rs.length]; };
+    function eteindreSaison(dans) {
+      if (!dans) return;
+      $$('[data-s]', dans).forEach(b => { const on = b.dataset.s === F.slug;
+        if (b.closest('.sm7--passe, [data-passe]')) { const [n, rien] = nPassesAvec(b.dataset.s, F.l); eteindre(b, n, on, rien); } else eteindre(b, nSaisonAvec(b.dataset.s, F.l), on); });
+      $$('[data-l]', dans).forEach(b => { if (b.tagName === 'BUTTON') eteindre(b, nSaisonAvec(F.slug, +b.dataset.l), +b.dataset.l === F.l); });
     }
     function majOutils() {
       $$('[data-s]', main).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.s === F.slug)));
+      eteindreSaison($('#sm7', main)); eteindreSaison($('.sm7--passe', main));
       if ($('#cherche').value !== F.q) $('#cherche').value = F.q;
       majFiltres();
       fond();
@@ -12300,7 +12438,7 @@ const CREATURE = (() => {
     // (une étiquette de spectacle : pressée à l'instant, dans l'image du geste ; les listes suivent à l'image d'après, la
     // dernière demandée l'emporte)
     let jFiltre = 0;
-    $$('[data-s]', main).forEach(b => b.addEventListener('click', () => { F.slug = F.slug === b.dataset.s ? null : b.dataset.s;
+    $$('[data-s]', main).forEach(b => b.addEventListener('click', () => { if (b.getAttribute('aria-disabled') === 'true') return; F.slug = F.slug === b.dataset.s ? null : b.dataset.s;
       $$('[data-s]', main).forEach(x => x.setAttribute('aria-pressed', String(x.dataset.s === F.slug)));
       const j = ++jFiltre; ensuite(() => { if (j === jFiltre && racine.isConnected) dessine(true); }); }));
     let tempo = 0;
@@ -12554,7 +12692,7 @@ const CREATURE = (() => {
             <div class="s7-cherche-c"><label class="s7-cherche"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5"/><path d="M11 11l4 4"/></svg><input type="search" id="fe7-q" placeholder="${esc(L.rechercher)}" aria-label="${esc(L.rechercher)}" autocomplete="off" value="${esc(F.q)}"></label></div>
             <section aria-labelledby="fe7-hm"><h3 class="fe7-h" id="fe7-hm">${esc(S0.titre)}</h3><div class="fe7-mois">${moisSaison.map(x => `<button type="button" class="fe7-m" data-mois="${x.k}" aria-pressed="false" aria-label="${esc(`${MOIS_NOMS[x.m]} ${x.a}`)}"><b>${esc(MC[x.m] || MOIS_NOMS[x.m])}</b><small></small></button>`).join('')}</div></section>
             ${spSaison.length ? `<section aria-labelledby="fe7-hs"><h3 class="fe7-h" id="fe7-hs">${esc(L.spectacles)}</h3><div class="fe7-puces fe7-lg">${spSaison.map(x => puceSp(x, nSaison.get(x.cle))).join('')}</div></section>` : ''}
-            ${spPasses.some(x => !nSaison.has(x.cle)) ? `<section aria-labelledby="fe7-hp"><h3 class="fe7-h" id="fe7-hp">${esc(L.saisonsPassees)}</h3><div class="fe7-puces">${spPasses.filter(x => !nSaison.has(x.cle)).map(x => puceSp(x)).join('')}</div></section>` : ''}
+            ${spPasses.some(x => !nSaison.has(x.cle)) ? `<section aria-labelledby="fe7-hp"><h3 class="fe7-h" id="fe7-hp">${esc(L.saisonsPassees)}</h3><div class="fe7-puces" data-passe>${spPasses.filter(x => !nSaison.has(x.cle)).map(x => puceSp(x)).join('')}</div></section>` : ''}
             ${L.communes ? `<section aria-labelledby="fe7-hl"><h3 class="fe7-h" id="fe7-hl">${esc(L.communes)}</h3><div class="fe7-puces">${communes().map(([l, t]) => `<button class="s7-chip" type="button" data-l="${l}" aria-pressed="false">${esc(t)}</button>`).join('')}</div></section>` : ''}
           </div>
           <div class="fe7-pied">${L.effacerFiltres ? `<button type="button" class="ft7-tout" data-eff="tout">${esc(L.effacerFiltres)}</button>` : ''}<button type="button" class="bouton e fe7-voir" style="--ec:var(--saison)"><span>${esc(L.voirLesDates)}</span><b>${n}</b></button></div>`;
@@ -12567,6 +12705,7 @@ const CREATURE = (() => {
         $$('.fe7-m', pan).forEach(b => { const c = nb(b.dataset.mois); b.setAttribute('aria-pressed', String(b.dataset.mois === F.mois)); $('small', b).textContent = c ? String(c) : ''; if (c) b.removeAttribute('aria-disabled'); else b.setAttribute('aria-disabled', 'true'); });
         $$('[data-s]', pan).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.s === F.slug)));
         $$('[data-l]', pan).forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.l === F.l)));
+        eteindreSaison(pan);
         const q = $('#fe7-q', pan); if (q && q.value !== F.q && document.activeElement !== q) q.value = F.q;
         const t = $('.ft7-tout', pan); if (t) t.hidden = !fs.length;
         const v = $('.fe7-voir b', pan); if (v) v.textContent = String(nVoir().n);
@@ -12597,6 +12736,7 @@ const CREATURE = (() => {
         if (b.classList.contains('fe7-voir')) { fermer(true); return; }
         if (b.dataset.eff) { effacer(b.dataset.eff); return; }
         if (b.dataset.mois) { if (b.getAttribute('aria-disabled') === 'true') return; choisirMois(F.mois === b.dataset.mois ? null : b.dataset.mois, 'clic'); if (!dansPanneau) setTimeout(allerAuxDates, 120); return; }
+        if ((b.dataset.s || b.dataset.l) && b.getAttribute('aria-disabled') === 'true') return;
         if (b.dataset.s) { F.slug = F.slug === b.dataset.s ? null : b.dataset.s; dessine(true); return; }
         if (b.dataset.l) { const l = +b.dataset.l; F.l = F.l === l ? null : l; dessine(true); }
       };
@@ -12776,6 +12916,12 @@ const CREATURE = (() => {
       if (t !== avant) history.replaceState(history.state, '', `${location.pathname}${location.search}${chemin}${t ? '?' + t : ''}`);
     } catch (e) { /* l'adresse reste telle quelle */ }
   }
+  // une puce de filtre qui ne garderait rien (n = 0), ajoutée aux filtres en cours, s'éteint : aria-disabled (elle reste au clavier,
+  // et le lecteur d'écran la dit indisponible), son nombre à 0 ; elle se rallume quand elle aurait de quoi. La puce choisie
+  // (on) ne s'éteint jamais : on doit pouvoir la rendre. (Son nombre, s'il est écrit : <small> ; rien, quand elle garderait
+  // autre chose que ce qu'elle compte : une résidence, qui n'est pas une représentation)
+  const eteindre = (b, n, on = false, rien = !n) => { const x = $('small', b), t = rien ? '0' : n ? String(n) : ''; if (x && x.textContent !== t) x.textContent = t;
+    if (rien && !on) b.setAttribute('aria-disabled', 'true'); else b.removeAttribute('aria-disabled'); };
   // (le nombre en chiffres gras, à part de ses mots : « <b>4</b> spectacles »)
   const nSpectacles = n => esc(n === 1 ? L.unSpectacle || '1' : String(L.nSpectacles || '{n}').replace('{n}', n)).replace(/\d+/, x => `<b>${x}</b>`);
   function filtresEtab(xs) {
@@ -12804,7 +12950,11 @@ const CREATURE = (() => {
       // les sections montrées)
       $$('section[id^="e-g"], #e-reste', main).forEach(sec => { sec.hidden = !$$('li.ac', sec).some(li => !li.hidden); });
       psomB.forEach((b, i) => { const c = document.getElementById(b.dataset.som); const cache = !!(c && c.hidden); b.closest('li').hidden = cache; psomC[i] = cache ? null : c; });
-      $$('[data-ef]', zone).forEach(b => b.setAttribute('aria-pressed', String((b.dataset.ef === 'lieu' ? F.lieu : F.pub) === b.dataset.v)));
+      // (chaque puce dit ce qu'elle garderait, ajoutée aux filtres en cours : celle qui ne garderait rien s'éteint, aria-disabled
+      // et son nombre à 0, et se rallume quand elle aurait de quoi ; la puce choisie reste active, pour la rendre)
+      $$('[data-ef]', zone).forEach(b => { const k = b.dataset.ef === 'lieu' ? 'lieu' : 'pub', on = F[k] === b.dataset.v, G = { ...F, [k]: b.dataset.v };
+        const c = fiches.filter(li => (!G.lieu || li.dataset.efLieu === G.lieu) && (!G.pub || li.dataset.efPublic === G.pub)).length;
+        b.setAttribute('aria-pressed', String(on)); eteindre(b, c, on); });
       const t = $('[data-ef-tout]', zone); if (t) t.hidden = !(F.lieu || F.pub);
       const p = $('#ef-n', zone), h = nSpectacles(n); if (p.__h !== h) { p.__h = h; p.innerHTML = h; }
       if (vue === 'etablissement' && zone.isConnected) adresseVue({ lieu: F.lieu, public: F.pub });
@@ -12812,7 +12962,7 @@ const CREATURE = (() => {
     zone.addEventListener('click', e => {
       const b = e.target.closest('button'); if (!b) return;
       if (b.matches('[data-ef-tout]')) { F.lieu = null; F.pub = null; appliquer(); const x = $('[data-ef]', zone); if (x) x.focus(); return; }
-      if (!b.dataset.ef) return;
+      if (!b.dataset.ef || b.getAttribute('aria-disabled') === 'true') return;
       const k = b.dataset.ef === 'lieu' ? 'lieu' : 'pub';
       F[k] = F[k] === b.dataset.v ? null : b.dataset.v;
       appliquer();
@@ -13482,8 +13632,8 @@ const CREATURE = (() => {
   const initiales = p => [p.prenom, p.nom].map(x => [...String(x || '').trim()][0] || '').join('');
   const comediens = s => { const vus = new Map(); (s.equipe || []).forEach(e => { const p = (D.personnes || {})[e.personne]; if (e.categorie !== 'jeu' || !p) return; if (vus.has(e.personne)) vus.get(e.personne).lignes.push(e); else vus.set(e.personne, { e, p, lignes: [e] }); }); return [...vus.values()]; };   // un portrait par personne, même avec deux lignes de jeu
   const portrait = ({ e, p, lignes }, credits) => {
-    const nom = nomDe(p), k = `personnes.${e.personne}`;
-    return `<figure class="u-pt"><span class="u-pt-cadre" data-edit-photo="${esc(k)}.photo"><span class="u-pt-mono" aria-hidden="true"><b>${esc(initiales(p))}</b></span>${p.photo ? `<img src="${esc(p.photo)}" alt="${esc(nom)}" width="320" height="400" loading="lazy" decoding="async" onerror="this.remove()">` : ''}</span>
+    const k = `personnes.${e.personne}`;   // (le portrait a alt="" : le nom est écrit dessous, altPh)
+    return `<figure class="u-pt"><span class="u-pt-cadre" data-edit-photo="${esc(k)}.photo"><span class="u-pt-mono" aria-hidden="true"><b>${esc(initiales(p))}</b></span>${p.photo ? `<img src="${esc(p.photo)}" alt="" width="320" height="400" loading="lazy" decoding="async" onerror="this.remove()">` : ''}</span>
       <figcaption>${credits ? `<small class="u-pt-cr">${p.photo && p.credit ? esc(p.credit) : ''}</small>` : ''}<b class="u-pt-nom"><span data-edit="${esc(k)}.prenom">${esc(p.prenom)}</span> <span data-edit="${esc(k)}.nom">${esc(p.nom)}</span></b>${lignes.map(l => `${l.alternance ? `<span class="u-pt-alt">${esc(l.alternance)}</span>` : ''}${l.role ? `<span class="u-pt-role">${esc(l.role)}</span>` : ''}`).join('')}</figcaption></figure>`;
   };
   function portraits(s) {
@@ -13555,7 +13705,7 @@ const CREATURE = (() => {
     return chapitre(chap, 'spectacle', L.leSpectacle, `${titreChap(esc(L.leSpectacle))}
       <div class="rc${phs.length ? '' : ' rc--seul'}" data-scrolly data-fx="recit">
         <div class="rc-pas">${pas.map((h, i) => `<div class="rc-p${i ? '' : ' on'}"><div class="rc-in apparait">${h}</div></div>`).join('')}</div>
-        ${phs.length ? `<div class="rc-vis"><div class="rc-photos">${phs.map((x, j) => `<figure class="rc-ph${j ? '' : ' on'}"${x.attr}><img src="${x.src}" alt=""${j ? ' loading="lazy"' : ''} decoding="async">${legende(x)}</figure>`).join('')}</div>
+        ${phs.length ? `<div class="rc-vis"><div class="rc-photos">${phs.map((x, j) => `<figure class="rc-ph${j ? '' : ' on'}"${x.attr}><img src="${x.src}" alt="${esc(altPh(s, x.p))}"${j ? ' loading="lazy"' : ''} decoding="async">${legende(x)}</figure>`).join('')}</div>
           ${phs.length > 1 ? `<div class="rc-fil" aria-hidden="true">${phs.map(() => '<i></i>').join('')}</div>` : ''}</div>` : ''}
       </div>`, 'rc-chap');
   }
@@ -13565,7 +13715,7 @@ const CREATURE = (() => {
     if (!phs.length) return '';
     const credits = [];
     phs.forEach(({ p }) => { const k = cleCredit(p); if (s[k] && !credits.some(c => s[c] === s[k])) credits.push(k); });
-    return chapitre(chap, 'photos', L.photos, `<div class="wrap">${titreChap(esc(L.photos))}<div class="cartons7" data-mv="cascade">${phs.map(({ p, i }) => `<figure class="carton7"${edP(s, 'photos', i)}><img src="${D.photos[p.cle]}" alt="${esc(p.legende || s.titre)}" loading="lazy" decoding="async">${p.legende ? `<figcaption${edS(s, 'photos', i, 'legende')}>${esc(p.legende)}</figcaption>` : ''}</figure>`).join('')}</div>
+    return chapitre(chap, 'photos', L.photos, `<div class="wrap">${titreChap(esc(L.photos))}<div class="cartons7" data-mv="cascade">${phs.map(({ p, i }) => `<figure class="carton7"${edP(s, 'photos', i)}><img src="${D.photos[p.cle]}" alt="${esc(altPh(s, p))}" loading="lazy" decoding="async">${p.legende ? `<figcaption${edS(s, 'photos', i, 'legende')}>${esc(p.legende)}</figcaption>` : ''}</figure>`).join('')}</div>
       ${credits.map(k => `<p class="u-credit"${edS(s, k)}>${esc(s[k])}</p>`).join('')}</div>`);
   }
   // la présentation d'un spectacle qui n'est plus en tournée (la 10) : l'ouverture (le cadre, les affirmations), le spectacle
@@ -13833,13 +13983,23 @@ const CREATURE = (() => {
     // ?date=…, ou celle d'avant quand la vue se refait en place) ; l'adresse garde le choix ; la carte de France suit
     rsSp = null;
     if (ioRs) { ioRs.disconnect(); ioRs = null; }
+    $$('.rsb', main).forEach(x => x.remove());   // (d'un onglet à l'autre, l'article reste : sa barre « Réserver » part avec l'onglet)
     const zone = $('#rs-zone', main);
     if (zone && RS) {
       const svg = $('.carte-sp svg', zone), bande = $('.rs-bande', zone), res = RS.dates(slug), voulue = q && q.get('date');
       const k0 = surPlace && etatRs.slug === slug && etatRs.cle ? etatRs.cle : voulue && res.some(d => RS.cle(d) === voulue) ? voulue : 'premiere';
       // (l'univers : celui de l'article, hérité, de jour comme de nuit ; rien à poser sur la carte)
+      // (au téléphone, la barre « Réserver » : la date choisie, sa forme courte et sa commune, FORME_DATES ; elle mène à la carte)
+      const artR = $('article.u', main);
+      if (artR && res.length) artR.insertAdjacentHTML('beforeend', `<button type="button" class="rsb" aria-controls="rs-zone"><span class="rsb-c"><span class="rsb-k">${esc(L.reserver)}</span><span class="rsb-d"></span></span>${BAS}</button>`);
+      const rsb = artR && $(':scope > .rsb', artR);
+      const poserRsb = d => { if (!rsb || !d) return; const j = RS.jours(d), mots = xs => xs.map(x => `<span>${esc(x)}</span>`).join(ENTRE);
+        $('.rsb-d', rsb).innerHTML = `${j.semaine.length ? `${mots(j.semaine)} ` : ''}<span>${esc(j.jour)}</span>${j.mois.length ? ` ${mots(j.mois)}` : ''}<span> — </span><span>${esc(RS.commune(d))}</span>`; };
       rsSp = RS.monter(bande, { dates: res, carte: $('#rs-carte', zone), choisie: k0, adresse: true, univers: () => '',
-        effet: effetReserver(() => svg), surChoix: (d, k) => { etatRs = { slug, cle: k }; } });
+        effet: effetReserver(() => svg), surChoix: (d, k) => { etatRs = { slug, cle: k }; poserRsb(d); } });
+      poserRsb(rsSp.date() || res[0]);
+      if (rsb) rsb.addEventListener('click', () => { if (!rsSp) return; rsSp.montrer(); vers('rs-zone');
+        const b = $('.rs-date[aria-pressed="true"]', zone); if (b) b.focus({ preventScroll: true }); });
       if (svg) {
         // survoler une commune l'allume, la choisir choisit sa première date ; survoler un bouton de date allume sa commune
         lierCarte(svg, { survol: l => marquer(svg, l), choix: l => { const d = res.find(x => x.l === l); if (d) rsSp.choisir(RS.cle(d)); } });

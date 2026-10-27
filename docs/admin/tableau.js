@@ -260,7 +260,7 @@ const TABLEAU = (() => {
         const retard = ps.filter(p => p.date_prochaine_relance && p.date_prochaine_relance < AUJ && !['bilan', 'refus', 'converti_en_date'].includes(p.etape)).length;
         const devis = (E.devis || []), nouveaux = devis.filter(d => (d.statut || 'nouveau') === 'nouveau').length, enCours = devis.filter(d => ['en_cours', 'devis_envoye'].includes(d.statut)).length;
         const alertes = E.alertesInstallees ? E.alertes.filter(a => a.active && a.confirme_le).length : null, attente = E.alertesInstallees ? E.alertes.filter(a => a.active && !a.confirme_le).length : 0;
-        const etapes = ETAPES_CRM.map(([k, l], i) => [k, l.replace(/^\d\.\s*/, ''), ps.filter(p => p.etape === k).length, `color-mix(in srgb, var(--accent) ${35 + i * 16}%, var(--carte))`]);
+        const etapes = ETAPES_CRM.map(([k, l], i) => [k, l.replace(/^\d\.\s*/, ''), ps.filter(p => p.etape === k).length, `color-mix(in srgb, var(--accent) ${70 + i * 7}%, var(--carte))`]);
         const total = etapes.reduce((n, e) => n + e[2], 0);
         const kpi = (l, v, sous, href, classe = '') => `<a href="${esc(href)}"${classe ? ` class="${classe}"` : ''}><span>${l}</span><b>${v}</b>${sous ? `<small>${sous}</small>` : ''}</a>`;
         return { n: nouveaux + retard, html: `<div class="tb-kpi">
@@ -1310,7 +1310,7 @@ const TABLEAU = (() => {
 .tb-kpi > .ok b { color: var(--ok); }
 .tb-kpi > .alerte b { color: var(--alerte); }
 .tb-kpi small { font-size: 12px; color: var(--gris); }
-.tb-pipe { display: flex; height: 10px; margin-top: 4px; border-radius: 999px; overflow: hidden; background: var(--doux); }
+.tb-pipe { display: flex; gap: 2px; height: 10px; margin-top: 4px; border-radius: 999px; overflow: hidden; background: var(--doux); }
 .tb-pipe span { display: block; min-width: 3px; }
 .tb-legende { display: flex; flex-wrap: wrap; gap: 3px 12px; margin: 0; font-size: 12.5px; color: var(--gris); }
 .tb-legende span { display: inline-flex; align-items: center; gap: 5px; }

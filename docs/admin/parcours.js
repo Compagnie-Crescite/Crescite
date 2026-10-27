@@ -92,18 +92,21 @@ span.pc-e { cursor: default; }
 .pc-corps { display: flex; flex-direction: column; }
 .pc-l { font-weight: 700; }
 .pc-d { color: var(--gris); font-size: 12px; }
-.pc-fait .pc-num { background: var(--ok); color: #fff; }
+/* le chiffre sur le vert ou l'ambre : le blanc le jour, la nuit l'encre sombre (ces couleurs y sont claires) */
+.pc-fait .pc-num { background: var(--ok); color: var(--sur-accent, #fff); }
 .pc-fait .pc-e { border-color: color-mix(in srgb, var(--ok) 45%, var(--trait)); }
-.pc-encours .pc-num { background: var(--option); color: #fff; }
+.pc-encours .pc-num { background: var(--option); color: var(--sur-accent, #fff); }
 .pc-encours .pc-d { color: var(--option); font-weight: 700; }
 .pc-afaire .pc-d { color: var(--alerte); font-weight: 700; }
-.pc-attente .pc-e, .pc-sans .pc-e { opacity: .7; }
+/* une étape qui attend : un cadre en tirets plutôt qu'un voile (le texte reste lisible) */
+.pc-attente .pc-e, .pc-sans .pc-e { border-style: dashed; color: var(--gris); }
 .pc-points { display: inline-flex; gap: 3px; align-items: center; }
 .pc-points i { width: 8px; height: 8px; border-radius: 50%; background: var(--trait); }
 .pc-points i.pc-fait { background: var(--ok); }
 .pc-points i.pc-encours { background: var(--option); }
-.pc-points i.pc-afaire { background: color-mix(in srgb, var(--alerte) 55%, var(--trait)); }
-.pc-points i.pc-attente { background: var(--trait); opacity: .6; }
+/* chaque point se voit sur la carte (3:1) : plein pour ce qui est fait, en cours ou à faire, un anneau pour ce qui attend */
+.pc-points i.pc-afaire { background: var(--alerte); }
+.pc-points i.pc-attente { background: none; box-shadow: inset 0 0 0 1.5px var(--gris); }
 .ligne .badges .pc-points { margin-top: 2px; }
 @media (max-width: 520px) { .pc-d { display: none; } .pc-e { padding: 4px 9px 4px 5px; } }`;
   document.head.append(style);
