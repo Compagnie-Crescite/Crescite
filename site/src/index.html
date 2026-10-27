@@ -4596,10 +4596,10 @@ html.still .sc-image { transition: opacity .35s ease !important; }
 
   /* ---------- l'accueil, 1 : le premier écran, la pieuvre vivante, rangée (la scène de la 10) ----------
      Le logo de l'ouverture devient cette pieuvre (INTRO, devient) : seule sa tête (l'arche, l'œil) est fixe ; tout le reste du
-     dessin, ce sont ses tentacules (PIEUVRE, D.pieuvre : douze, dont quatre franges qui suivent leur spirale), avec leur
+     dessin, ce sont ses tentacules (PIEUVRE, D.pieuvre : douze, dont quatre franges, petites et décoratives), avec leur
      épaisseur. Dès le geste, les huit grandes se déplient depuis la tête (leur boucle du logo disparaît : le logo n'est que
-     la forme de départ ; les deux rubans extérieurs, qui ne touchent pas la tête, y glissent leur racine en se déployant)
-     vers les spectacles (cibles),
+     la forme de départ ; les deux rubans extérieurs, qui ne touchent pas la tête, y allongent leur pied en se déployant)
+     vers les spectacles (cibles), et les quatre petites avec elles, jusque sous la tête (PIEUVRE.decor),
      leur bout se colorant en route, pendant que le logo glisse à sa place ; à la pose (un rebond : le corps se ramasse, se
      détend), chaque bras reprend le trajet de son double de l'ouverture où il en est (eveiller, INTRO.relais) et l'achève :
      un seul mouvement, du geste aux titres, qui paraissent en route. Sans ouverture (l'accueil rejoint autrement), les
@@ -4741,7 +4741,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       const c = [ox + COEUR[0] * s, oy + COEUR[1] * s];
       const angle = (x, y) => { let a = Math.atan2(y - c[1], x - c[0]) * 180 / Math.PI; if (a < -90) a += 360; return a; };
       // (chaque tentacule compte par là où elle sort de la tête, son attache : ni croisement ni détour sous la tête)
-      const bs = BRAS.filter(a => !a.t.parent).map(a => { const p = a.t.att ? { x: ox + a.t.att.x * s, y: oy + a.t.att.y * s } : a.t.pointe(); return { a, ang: angle(p.x, p.y) }; }).sort((x, y) => x.ang - y.ang);
+      const bs = BRAS.filter(a => !a.t.parent && !a.t.decor).map(a => { const p = a.t.att ? { x: ox + a.t.att.x * s, y: oy + a.t.att.y * s } : a.t.pointe(); return { a, ang: angle(p.x, p.y) }; }).sort((x, y) => x.ang - y.ang);
       const ts = TIT.map(T => ({ T, ang: angle(T.ancre.x, T.ancre.y) })).sort((x, y) => x.ang - y.ang);
       BRAS.forEach(a => { a.T = []; a.rang = 99; });
       const n = ts.length, m = bs.length;
@@ -4889,7 +4889,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       for (const a of BRAS) {
         const t0 = depart(a);
         if (a.T.length) { V.set(a, [{ t0, fin: Infinity, T: a.T[0] }]); a.tenu = a.T[0]; a.T.forEach(T => { T.tPres = t0; }); fin = Math.max(fin, t0 + PIEUVRE.DEPLOI); }
-        else if (!mobile && !a.t.parent) { V.set(a, [{ t0, fin: t0 + 1500, c: gesteDe(a, t0) }]); fin = Math.max(fin, t0 + 1500); }
+        else if (!mobile && !a.t.parent && !a.t.decor) { V.set(a, [{ t0, fin: t0 + 1500, c: gesteDe(a, t0) }]); fin = Math.max(fin, t0 + 1500); }
       }
       P.plan = V; P.fin = fin + 300;
     }
@@ -4959,19 +4959,23 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       theta = vT * (Math.sin(tVie * .7) * 2.2 + Math.sin(tVie * 1.9) * .8) * Math.PI / 180;
       dxT = vT * (Math.sin(tVie * .9) * 12 + Math.sin(tVie * 2.1) * 4);
       dyT = vT * (-8 * (.5 + .5 * Math.sin(tVie * 1.15)) + Math.sin(tVie * .5) * 3);
+      // (la pieuvre ouverte : un de ses bras tient un titre, ou fait un geste ; ses tentacules décoratives se déploient alors)
+      const ouverte = eveil !== null && BRAS.some(b => !b.t.decor && (b.but || b.geste));
       for (const a of BRAS) {
         let voulu = null, g = null;
         // (rien avant l'éveil : sous l'ouverture, les bras restent lovés ; pendant la présentation, chacun va à son titre ;
         // ensuite chaque bras garde le titre qu'il tient, sauf celui qu'on a remonté)
         if (pres) { const v = visite(a); if (v) { if (v.T) voulu = v.T; else g = v.c; } }
         else if (eveil !== null && a.tenu) voulu = a.tenu;
+        // (une décorative : déployée avec la pieuvre, suspendue sous la tête, sa cible emportée par la tête ; repliée avec elle)
+        if (a.t.decor) g = ouverte ? (a.deco = PIEUVRE.decor(a.t, ox + bob.x, oy + bob.y, s, theta, dxT, dyT, a.deco)) : null;
         // (on tire un peu sur le bras du titre regardé : sa pointe se déroule)
         a.tension += ((act && voulu && act === voulu ? .55 : 0) - a.tension) * .15;
         if (a.but !== voulu || a.geste !== g) {
           a.but = voulu; a.geste = g;
           // (le premier dépliement, celui de la présentation, est lent : PIEUVRE.DEPLOI ; les suivants, au geste, plus vifs)
           if (voulu) { a.col = voulu.col; a.t.viser({ ...cibleDe(voulu), tension: a.tension }, anime ? (pres ? PIEUVRE.DEPLOI : 1100) : 0); }
-          else if (g) a.t.viser(g, anime ? 900 : 0);
+          else if (g) a.t.viser(g, anime ? (a.t.decor && pres ? PIEUVRE.DEPLOI : 900) : 0);
           else a.t.viser(null, anime ? 760 : 0, true);   // (remontée : un ressort)
         } else if (voulu) a.t.viser({ ...cibleDe(voulu), tension: a.tension });      // (le titre a pu bouger : la forme visée le suit)
         const tv = a.but ? 1 : 0;
@@ -5118,8 +5122,10 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       if (relais && relais.TS && motionOK()) {
         for (const a of BRAS) {
           const d = relais.TS.find(x => x.cle === a.cle), T = d && d.cible && TIT.find(x => x.slug === d.cible.cle);
-          if (!T) continue;
           const t = a.t, cles = ['pose', 'depuis', 'but', 'q', 'duree', 'cible', 'derniere', 'etire', 'elastique', 'rac', 'wmin', 'tourne', 'colle', 'relie'];
+          // (une décorative en route : elle continue aussi, vers la même cible, que la scène tient ensuite à jour)
+          if (!T && t.decor && d && d.cible) { for (const k of cles) t[k] = d[k]; t.libreRac = -1; t.poly = null; a.deco = a.geste = d.cible; continue; }
+          if (!T) continue;
           for (const k of cles) t[k] = d[k];
           t.libreRac = -1; t.poly = null;
           a.but = T; a.tenu = T; a.col = T.col; a.teinte = relais.teinte; repris++;
@@ -5137,7 +5143,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       textes();
       // de retour sur l'accueil : chaque bras reprend sa souche ; les liens suivent la mémoire de l'entrée
       TIT.forEach(T => { T.focus = false; T.el.setAttribute('href', lienSp(T.slug)); });
-      BRAS.forEach(a => { a.but = null; a.tenu = null; a.tension = 0; a.teinte = 0; a.t.viser(null, 0); });
+      BRAS.forEach(a => { a.but = null; a.geste = null; a.tenu = null; a.tension = 0; a.teinte = 0; a.t.viser(null, 0); });
       TIT.forEach(T => { T.tPres = null; });
       survol = null; brasSurvol = null; remonte = null; el.classList.remove('a-actif', 'sur-bras');
       mise();

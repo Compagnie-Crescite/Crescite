@@ -5,7 +5,7 @@
 
 La pieuvre du logo est faite de quatre contours (tentacles-left, head-left, head-right, tentacles-right). Seule la tête
 (l'arche et l'œil) est fixe : tout le reste est tentacule, douze en tout, huit qui vont chercher les spectacles, quatre
-de chaque côté, et quatre franges qui suivent leur spirale.
+de chaque côté, et quatre franges, petites et décoratives.
   - spirale : la tige qui descend de la tête et la grande spirale du bas, jusqu'à son bout intérieur ; sa racine est
     sur la tête (à gauche sur la jambe de l'arche, RAC_G, qui se prolonge en tige ; à droite sur la queue de l'œil,
     PIED_D : la jambe droite de l'arche finit libre, en pointe) ; sa peau est un ruban (la largeur du dessin le long de
@@ -19,8 +19,10 @@ de chaque côté, et quatre franges qui suivent leur spirale.
   quatre de droite du bout de la queue de l'œil (PIED_D), dans le sens du trait : la spirale et la boucle y ont leur racine
   du dessin, la queue et la spirale extérieure y glissent ; elles continuent le trait, puis s'écartent (à un dixième
   d'unité près les unes des autres : la queue, la plus haute, va au titre le plus haut sur l'ordinateur) ;
-  - frange : les deux tentacules courtes sous la tête, de chaque côté (contour pris dans le dessin, comme avant) ; elles
-    sont enfants de leur spirale (parent) : leur racine suit l'épine de la spirale, où qu'elle aille.
+  - frange : les deux tentacules courtes sous la tête, de chaque côté (contour pris dans le dessin, comme avant), les rayures
+    des spirales du logo : quatre petites tentacules à part entière, décoratives (decor : elles ne vont à aucun titre). Elles
+    sortent aussi du bas de la tête (attache, prolonge), juste sous les autres, et se déploient avec elles, suspendues sous la
+    tête (pieuvre.js : PIEUVRE.decor).
 
 Pour chacune, on cherche l'axe médian de la forme (squelette d'une image du contour à 4 px par unité), le chemin de la
 pointe jusqu'à sa racine, qu'on lisse : c'est son épine, de la racine (fixe) à la pointe, un point toutes les 2 unités.
@@ -83,10 +85,10 @@ TENTACULES = [
     ("spiraleExtL", "tentacles-left", [(432, 699), (513, 818), (403, 856), (373, 792), JONC_G], 0, {"ruban": True, "bout": False, "attache": (652, 559.8, 72.38), "prolonge": True}),
     ("spiraleL", "tete", [(558, 713), (561, 821), (656, 881), (737, 800), (708, 702), PIED_G, RAC_G], 0, {"ruban": True, "bout": False, "attache": (652, 560, 72.38), "prolonge": True}),
     ("boucleL", "tete", [(525.5, 710.5), (552, 512), (558, 713), (656, 881), (708, 702), PIED_G, RAC_G], 0, {"ruban": True, "attache": (652, 559.9, 72.56), "prolonge": True}),
-    ("frangeHL", "head-left", [(589, 730), (690, 640), 85], 12, {"parent": "spiraleL"}),
-    ("frangeBL", "head-left", [(587, 792), (700, 650), 160], 12, {"parent": "spiraleL"}),
-    ("frangeBR", "head-right", [(955, 792), (842, 650), 160], 12, {"parent": "spiraleR"}),
-    ("frangeHR", "head-right", [(953, 730), (852, 640), 85], 12, {"parent": "spiraleR"}),
+    ("frangeHL", "head-left", [(589, 730), (690, 640), 85], 12, {"attache": (652, 560.1, 72.38), "prolonge": True, "decor": True}),
+    ("frangeBL", "head-left", [(587, 792), (700, 650), 160], 12, {"attache": (652, 560.2, 72.38), "prolonge": True, "decor": True}),
+    ("frangeBR", "head-right", [(955, 792), (842, 650), 160], 12, {"attache": (871.5, 604.35, 77.62), "prolonge": True, "decor": True}),
+    ("frangeHR", "head-right", [(953, 730), (852, 640), 85], 12, {"attache": (871.5, 604.3, 77.62), "prolonge": True, "decor": True}),
     ("spiraleR", "head-right", [(948, 604), (986, 767), (882, 881), (800, 746), (850, 686), PIED_D], 0, {"ruban": True, "bout": False, "attache": (871.5, 604.25, 77.62), "prolonge": True}),
     ("boucleR", "head-right", [(1011, 710), (1028, 548), (948, 604), (882, 881), (850, 686), PIED_D], 0, {"ruban": True, "attache": (871.5, 604.2, 77.62), "prolonge": True}),
     ("spiraleExtR", "tentacles-right", [(1100, 703), (1017, 818), (1130, 856), (1160, 792), JONC_D], 0, {"ruban": True, "bout": False, "attache": (871.5, 604.1, 77.62), "prolonge": True}),
@@ -322,6 +324,8 @@ def main():
             b["prolonge"] = True
         if "parent" in opts:
             b["parent"] = opts["parent"]
+        if opts.get("decor"):
+            b["decor"] = True
         bras.append(b)
         controle.append((V, E))
         print(f"{cle:12s} {h * (len(E) - 1):6.1f} unités, {len(peau):4d} points de peau, écart {ecart:.4f}, racine ({E[0][0]:.0f}, {E[0][1]:.0f})")

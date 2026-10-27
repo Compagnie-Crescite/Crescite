@@ -292,7 +292,10 @@ const INTRO = (() => {
     // à partir de 630 ms (PIEUVRE.ATTENTE), toutes les tentacules qui ont une cible se déplient vers elle ensemble, en
     // PIEUVRE.DEPLOI (PIEUVRE.VAGUE : nul, comme la scène, qui prend le relais) ; la cible est relue à chaque image, le trajet
     // continue vers sa place du moment)
-    const viseur = vie && opts.cibles ? now => { const cols = {}; for (const x of opts.cibles() || []) { const t = vie.TS.find(y => y.cle === x.cle); if (!t) continue; cols[x.cle] = x.col; if (now - T0 >= PIEUVRE.ATTENTE + PIEUVRE.rang(x.cle) * PIEUVRE.VAGUE) t.viser(x.cible, PIEUVRE.DEPLOI); } return cols; } : null;
+    const viseur = vie && opts.cibles ? now => { const cols = {}; for (const x of opts.cibles() || []) { const t = vie.TS.find(y => y.cle === x.cle); if (!t) continue; cols[x.cle] = x.col; if (now - T0 >= PIEUVRE.ATTENTE + PIEUVRE.rang(x.cle) * PIEUVRE.VAGUE) t.viser(x.cible, PIEUVRE.DEPLOI); }
+      // (les décoratives, au même instant : suspendues sous la tête, leur cible suit la pieuvre qui glisse)
+      if (now - T0 >= PIEUVRE.ATTENTE) for (const t of vie.TS) if (t.decor) { const { S, ox, oy } = geo.pose; t.deco = PIEUVRE.decor(t, ox, oy, S, 0, 0, 0, t.deco); if (t.cible !== t.deco) t.viser(t.deco, PIEUVRE.DEPLOI); }
+      return cols; } : null;
     if (vie) { vie.t0 = T0; vie.teinte = 0; }
     const pas = now => {
       const v = clamp((now - T0) / TD), u = ease.inOut(v), bat = Math.sin(Math.PI * clamp(v * 1.3));
