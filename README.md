@@ -365,7 +365,11 @@ compte du projet inscrit dans `crescite_admins`.
   - **Le téléphone** (`admin/mobile.js`, sous 640 px) : une barre d'onglets en bas (Tableau, Dates, Planning, Équipe,
     Plus : les autres rubriques, la carte, la corbeille, la recherche), un bouton « + » flottant (une date, une fiche, un
     lieu, une opportunité, une proposition, une séance), les rubriques de l'en-tête masquées, les fiches en plein écran,
-    leur pied et les annonces au-dessus de la barre.
+    leur pied et les annonces au-dessus de la barre. L'administration **s'installe sur le téléphone** comme l'espace de
+    l'équipe (`admin/manifest.webmanifest`, `admin/sw.js`, ses icônes) : « Installer », en tête de « Plus », donne
+    l'invite du navigateur, ou sur l'iPhone la marche à suivre dans Safari ; installée, elle s'ouvre en plein écran
+    (« Admin Crescite »). Son service passe toujours d'abord par le réseau (elle écrit dans la base) et ne garde la page
+    et ses scripts que pour s'ouvrir hors connexion ; il ne garde jamais rien de la base.
   - **Les notes internes** (`admin/notes.js`, le quinzième script `supabase/migrations/20261103_crescite_notes.sql`) :
     un fil sur chaque date, lieu, personne et piste ; `@Prénom Nom` mentionne quelqu'un de l'équipe (l'autocomplétion
     propose les fiches) et la base le prévient dans son espace ; épingler, modifier, supprimer avec « Annuler » ; une
