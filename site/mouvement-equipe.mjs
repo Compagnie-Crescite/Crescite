@@ -306,6 +306,30 @@ fs.mkdirSync(CAPT, { recursive: true });
   await ctx.close();
 }
 
+// ================================================================================ hors connexion : une lecture qui échoue le dit, à sa place
+// (les propositions, une proposition, les agendas, une feuille de route qui n'est pas gardée : plus de « Lecture… » sans fin)
+{
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { hash: '#/propositions' });
+  const vues = {};
+  for (const [h, mot] of [['#/propositions', 'Les propositions'], ['#/proposition/1', 'La proposition'], ['#/agendas', 'Vos agendas'], ['#/feuille/102', 'Cette feuille de route']]) {
+    if (h !== '#/propositions') await page.evaluate(x => { location.hash = x; }, h);
+    const t0 = Date.now();
+    vues[h] = await page.waitForFunction(m => [...document.querySelectorAll('#contenu .echec-lecture')].some(e => e.textContent.startsWith(m) && e.querySelector('[data-relire]')), mot, { timeout: 4000 }).then(() => Date.now() - t0, () => null);
+  }
+  ok('hors connexion · propositions, proposition, agendas, feuille : l’échec dit en moins de 4 s, avec « Réessayer »', Object.values(vues).every(v => v != null), JSON.stringify(vues));
+  ok('hors connexion · la phrase dit que la feuille se lit en ligne', /se lit en ligne : vérifiez votre connexion/.test(await page.$eval('#contenu .echec-lecture', e => e.textContent)));
+  await page.screenshot({ path: `${CAPT}/hors-connexion-feuille.png` });
+  await page.click('#contenu [data-relire]');
+  await page.waitForTimeout(150);
+  const apres = await page.evaluate(() => ({ focus: document.activeElement === document.querySelector('#contenu h1'), hash: location.hash }));
+  await page.waitForSelector('#contenu .echec-lecture [data-relire]', { timeout: 4000 }).catch(() => {});
+  ok('« Réessayer » relance la lecture sur place (le titre garde le focus, l’adresse ne bouge pas), qui échoue de nouveau', apres.focus && apres.hash === '#/feuille/102' && !!(await page.$('#contenu .echec-lecture')), JSON.stringify(apres));
+  const cible = await page.$eval('#contenu [data-relire]', e => Math.round(e.getBoundingClientRect().height));
+  ok('« Réessayer » : une cible de 44 px au moins', cible >= 44, String(cible));
+  ok('hors connexion · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' | ').slice(0, 300));
+  await ctx.close();
+}
+
 await navigateur.close();
 serveur.close();
 for (const [etat, nom, detail] of resultats) console.log(`${etat === 'ok' ? '✓' : '✗'} ${nom}${detail && etat !== 'ok' ? `\n    ${detail}` : ''}`);
