@@ -36,7 +36,7 @@
   --saison: #4f4850; --saison-vive: #b7b0ae; --saison-porteur: #5c545d; --saison-profond: #2b272c; --saison-texte: #4f4850;
   --saison-fonce: #3f3940; --saison-doux: #efebe6; --saison-texte-nuit: #b7b0ae; --saison-fonce-nuit: #d0cbc9; --saison-doux-nuit: #2e2629;
   --papier: #f6f2eb; --surface: #fffdf9; --surface-2: #ece5da; --surface-3: #e4dccf; --encre: #1d1418; --gris: #5f565a;
-  --filet: #dcd3c6; --bord-champ: #8c8085;
+  --filet: #dcd3c6; --bord-champ: #8c8085; --indice: #6f6669;
   --magenta: var(--saison-texte); --magenta-fonce: var(--saison-fonce); --magenta-doux: var(--saison-doux); --magenta-vif: var(--saison);
   --action: var(--saison-texte); --sur-action: #fff; --pieuvre: var(--saison);
   --option: #7a5a10; --option-doux: #f8efd9; --alerte: #a4231b; --alerte-doux: #fbe7e5; --ok: #1d6f47; --ok-doux: #e3f3ea;
@@ -57,7 +57,7 @@
 :root:not([data-theme="jour"]) {
   color-scheme: dark;
   --papier: #1b1117; --surface: #2e2128; --surface-2: #23171e; --surface-3: #3b3036; --encre: #f3eee9; --gris: #b7b0ae;
-  --filet: #3b3036; --bord-champ: #8a8085;
+  --filet: #3b3036; --bord-champ: #8a8085; --indice: #9a9093;
   --magenta: var(--saison-texte-nuit); --magenta-fonce: var(--saison-fonce-nuit); --magenta-doux: var(--saison-doux-nuit); --magenta-vif: var(--saison-texte-nuit);
   --action: var(--saison-texte-nuit); --sur-action: #1b1117; --pieuvre: var(--saison-texte-nuit);
   --option: #f0c66b; --option-doux: #3a2f17; --alerte: #ff8f86; --alerte-doux: #3d1f1d; --ok: #74d6a6; --ok-doux: #19352a;
@@ -66,6 +66,8 @@
   --ombre-haute: 0 2px 6px rgba(0, 0, 0, .35), 0 24px 48px -24px rgba(0, 0, 0, .85);
 }
 :root[data-theme="jour"] { color-scheme: light; }
+/* l'indication d'un champ vide (placeholder) : 4,5:1 sur la surface, plus discrète que ce qu'on y écrit */
+::placeholder { color: var(--indice); opacity: 1; }
 [data-u] { --u-fond: var(--ul-fond); --u-texte: var(--ul-texte); }
 :where(:root:not([data-theme="jour"])) [data-u] { --u-fond: var(--us-fond); --u-texte: var(--us-texte); }
 /* ?anim=0 (captures et essais) : rien ne bouge, ni ce que le script déclenche ni ce que la feuille de style anime */
@@ -93,10 +95,11 @@ h1, h2, h3, h4 { margin: 0; line-height: 1.2; }
 .pieuvre svg { display: block; width: 100%; height: 100%; overflow: visible; }
 
 /* le pied commun des espaces réservés (PIED, dans equipe.js) : sobre, en fin de contenu, jamais fixé */
-.pied-espace { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 20px; max-width: 760px; margin: 32px auto 0; padding: 18px max(var(--gout), var(--ds)) 8px max(var(--gout), var(--gs)); border-top: 1px solid var(--filet); color: var(--gris); font-size: .84rem; }
+.pied-espace { display: flex; flex-wrap: wrap; align-items: center; gap: 0 20px; max-width: 760px; margin: 32px auto 0; padding: 18px max(var(--gout), var(--ds)) 8px max(var(--gout), var(--gs)); border-top: 1px solid var(--filet); color: var(--gris); font-size: .84rem; }
 .pied-espace .pied-nom { margin: 0; font: 500 .95rem/1.3 var(--serif); color: var(--encre); }
-.pied-espace nav { display: flex; flex-wrap: wrap; gap: 2px 16px; }
-.pied-espace a { display: inline-block; padding: 6px 0; color: var(--gris); }
+.pied-espace nav { display: flex; flex-wrap: wrap; gap: 0 16px; }
+/* chaque lien du pied, une cible de 44 px (la ligne reste sobre : la hauteur ne se voit pas) */
+.pied-espace a { display: inline-flex; align-items: center; min-height: 44px; color: var(--gris); }
 .pied-espace a:hover { color: var(--magenta); }
 .seul + .pied-espace { margin-top: 0; padding-bottom: calc(18px + var(--bs)); justify-content: center; border-top: 0; text-align: center; }
 .seul + .pied-espace nav { justify-content: center; }
@@ -215,6 +218,8 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 .message.erreur { background: var(--alerte-doux); border-color: color-mix(in srgb, var(--alerte) 35%, transparent); color: var(--alerte); }
 .message.info { background: var(--ok-doux); border-color: color-mix(in srgb, var(--ok) 30%, transparent); color: var(--ok); }
 .message.conseil { background: var(--surface); border-color: var(--filet); color: var(--encre); }
+.echec-lecture p { margin: 0 0 10px; }
+.echec-lecture .btn { color: var(--encre); }
 .message.horsligne { background: var(--option-doux); border-color: color-mix(in srgb, var(--option) 30%, transparent); color: var(--option); }
 .chargement { margin: 0; padding: 60px 20px; color: var(--gris); text-align: center; }
 
@@ -231,6 +236,8 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 .col-principale, .col-cote { display: contents; }
 .o-heros { order: 1; } .o-jourj { order: 2; } .o-chiffres { order: 3; } .o-carte { order: 4; } .o-agenda { order: 5; } .o-install { order: 6; } .o-suite { order: 7; } .o-passees { order: 8; }
 .o-install:empty { display: none; }
+/* l'invitation aux notifications (cartePush, « accueil ») : à côté de l'installation, absente une fois réglée ou fermée */
+.o-push { order: 6; } .o-push:empty { display: none; } .o-push .push-proposition { margin: 0; }
 .accueil .titre-section { margin: 10px 0 12px; }
 @media (min-width: 1100px) {
   .accueil { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr); gap: 26px; align-items: start; }
@@ -298,11 +305,12 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 .frise .t { font-weight: 600; line-height: 1.35; }
 .frise .s { display: block; color: var(--gris); font-size: .9rem; font-weight: 400; }
 .frise .jusqu { color: var(--gris); font-weight: 500; font-size: .9rem; white-space: nowrap; }
-.frise li.accent::before { border-color: var(--u, var(--magenta)); }
+/* les points de la frise : à la couleur du spectacle qui se lit sur le fond (--u-texte : sa nuit, la nuit), 3:1 au moins */
+.frise li.accent::before { border-color: var(--u-texte, var(--magenta)); }
 .frise li.accent .t { color: var(--u-texte, var(--magenta)); }
 .frise li.passe { opacity: .55; }
 .frise li.passe::before { background: var(--filet); }
-.frise li.maintenant::before { background: var(--u, var(--magenta)); border-color: var(--u, var(--magenta)); box-shadow: 0 0 0 5px color-mix(in srgb, var(--u, var(--magenta)) 22%, transparent); }
+.frise li.maintenant::before { background: var(--u-texte, var(--magenta)); border-color: var(--u-texte, var(--magenta)); box-shadow: 0 0 0 5px color-mix(in srgb, var(--u-texte, var(--magenta)) 22%, transparent); }
 .frise li.maintenant .t::after { content: " · en ce moment"; color: var(--u-texte, var(--magenta)); font-weight: 700; }
 @media (prefers-reduced-motion: no-preference) { .frise li.maintenant::before { animation: battement 1.8s ease-in-out infinite; } @keyframes battement { 50% { box-shadow: 0 0 0 9px transparent; } } }
 .jour-frise { margin: 14px 0 6px 80px; font: 700 .78rem/1.2 var(--etiq); letter-spacing: .1em; text-transform: uppercase; color: var(--gris); }
@@ -336,6 +344,8 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 .carte-tournee figcaption { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 8px 4px 2px; color: var(--gris); font-size: .86rem; }
 .legende { display: inline-flex; align-items: center; gap: 6px; }
 .legende i { width: 10px; height: 10px; border-radius: 50%; background: var(--c, var(--gris)); }
+/* la nuit, la couleur d'un spectacle (sa scène, souvent sombre) se perd sur la carte : un liseré clair dessine la pastille */
+:where(:root:not([data-theme="jour"])) .legende i { box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--encre) 50%, transparent); }
 .legende.passe i { background: var(--gris); opacity: .45; }
 
 /* ———————————————— les cartes d'action : l'agenda, l'installation, les notifications sur l'appareil */
@@ -343,8 +353,8 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 .carte-action .ic-rond { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 14px; background: var(--magenta-doux); color: var(--magenta); }
 .ca-texte { flex: 1 1 200px; min-width: 0; }
 .ca-texte h2, .ca-texte > b { display: block; margin: 0 0 2px; font: 600 1.06rem/1.25 var(--serif); }
-.carte-action .fermer-install { position: absolute; top: 4px; right: 4px; width: 36px; height: 36px; color: var(--gris); }
-.carte-action.installation { padding-right: 40px; }
+.carte-action .fermer-install { position: absolute; top: 2px; right: 2px; width: 44px; height: 44px; color: var(--gris); }
+.carte-action.installation, .carte-action.push-accueil { padding-right: 48px; }
 .push-proposition { margin: 0 0 16px; }
 .etapes { margin: 10px 0 0; padding-left: 22px; }
 .etapes li { margin: 5px 0; }
@@ -427,10 +437,19 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 
 /* ———————————————— la page d'une date */
 .gestes { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px; margin: 12px 0 0; }
-/* la date d'avant, celle d'après (navDates, equipe.js ; les boutons de gestes.js) : sous les gestes, deux boutons nommés */
+/* la date d'avant, celle d'après (navDates, equipe.js ; les boutons de gestes.js) : sous les gestes et au pied de la page,
+   deux boutons nommés deux fois : « Date précédente » en étiquette, à la couleur de la saison, puis le jour et le lieu */
 .nav-dates { margin: 12px 0 0; }
-.nav-dates .gps-b { min-height: 44px; padding: 8px 12px; }
+.nav-dates-bas { margin: 18px 0 0; }
+.nav-dates .gps-b { min-height: 52px; padding: 8px 14px; border-radius: var(--rayon-s); }
 .nav-dates .gps-t { font-size: .92rem; }
+/* l'étiquette en entier (gestes.js la voile à .78 : la couleur de la saison y tombait sous 4,5:1) ; sans date d'avant
+   ou d'après, le bouton reste lisible (« aucune » est une information) : un cadre en tirets, le gris, pas de voile */
+.nav-dates .gps-deux .gps-quoi { font-family: var(--etiq); color: var(--magenta); opacity: 1; }
+.nav-dates .gps .gps-b[disabled] { opacity: 1; border-style: dashed; color: var(--gris); }
+.nav-dates .gps-b[disabled] .gps-quoi { color: var(--gris); }
+/* au téléphone, le jour et le lieu passent sur deux lignes plutôt que de se couper */
+@media (max-width: 520px) { .nav-dates .gps-deux .gps-l { white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; } }
 .geste { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 72px; padding: 10px 6px; border: 1px solid var(--filet); border-radius: 16px; background: var(--surface); color: var(--encre); font: 600 .86rem/1.2 var(--sans); text-align: center; text-decoration: none; cursor: pointer; transition: transform .12s, background-color .2s; }
 .geste:hover { background: color-mix(in srgb, var(--u-fond, var(--surface-2)) 60%, var(--surface)); color: var(--encre); }
 .geste:active { transform: scale(.96); }
@@ -614,6 +633,39 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 .tirer.pret, .tirer.charge { color: var(--accent); }
 .tirer .pieuvre { width: 30px; height: 18px; color: inherit; transform-origin: 50% 12%; transform: scaleY(calc(1 + var(--etire, 0) * .45)); }
 @media (min-width: 760px) { .tirer { left: calc(50% + var(--rail) / 2); } }
+/* le témoin de la connexion (majTemoin), le même que dans l'administration : la pastille (à jour, lu il y a…, mise à jour,
+   reconnexion, hors ligne), le mot, l'icône ; le tout est le bouton qui relit l'espace. Au téléphone, la pastille sur
+   l'icône (une cible de 44 px) ; hors ligne et à la reconnexion, dans l'application installée et en haut de la page, le
+   mot à la place de l'icône (dans le navigateur, « Installer » garde la place, et le bandeau dit « Hors ligne ») */
+.temoin { position: relative; display: inline-flex; align-items: center; gap: 7px; flex: none; height: 44px; padding: 0 10px 0 12px; border: 0; border-radius: 999px; background: none; color: var(--gris); font: 600 .84rem/1.15 var(--sans); white-space: nowrap; cursor: pointer; transition: background-color .15s; }
+.temoin:hover { background: var(--surface-2); color: var(--encre); }
+.temoin .ic { flex: none; width: 20px; height: 20px; color: var(--encre); }
+.temoin-point { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--gris); }
+.temoin:is([data-etat="direct"], [data-etat="ajour"]) .temoin-point { background: var(--ok); box-shadow: 0 0 0 3px var(--ok-doux); }
+.temoin:is([data-etat="lu"], [data-etat="lecture"], [data-etat="reconnexion"]) .temoin-point { background: var(--option); }
+.temoin[data-etat="horsligne"] { color: var(--option); }
+.temoin[data-etat="horsligne"] .temoin-point { background: transparent; box-shadow: inset 0 0 0 2px var(--option); }
+@media (prefers-reduced-motion: no-preference) {
+  .temoin:is([data-etat="lecture"], [data-etat="reconnexion"]) .temoin-point { animation: temoin-cherche 1.2s ease-in-out infinite; }
+  @keyframes temoin-cherche { 50% { opacity: .3; } }
+}
+@media (max-width: 759px) {
+  .temoin { justify-content: center; width: 44px; padding: 0; }
+  .temoin-point { position: absolute; top: 9px; right: 8px; box-shadow: 0 0 0 2px var(--papier) !important; }
+  .temoin-texte { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+  .temoin:is([data-etat="horsligne"], [data-etat="reconnexion"]) .temoin-point { box-shadow: inset 0 0 0 2px var(--option), 0 0 0 2px var(--papier) !important; }
+  .temoin[data-etat="horsligne"] .ic { color: var(--option); }
+  /* l'application installée (sans « Installer »), en haut de la page : la place y est, le mot s'y lit à la place de l'icône */
+  .barre-haut:not(.defile):not(.sous):not(:has(.installer-barre:not([hidden]))) .temoin:is([data-etat="horsligne"], [data-etat="reconnexion"]) { width: auto; padding: 0 10px; }
+  .barre-haut:not(.defile):not(.sous):not(:has(.installer-barre:not([hidden]))) .temoin:is([data-etat="horsligne"], [data-etat="reconnexion"]) .temoin-point { position: static; box-shadow: inset 0 0 0 2px var(--option) !important; }
+  .barre-haut:not(.defile):not(.sous):not(:has(.installer-barre:not([hidden]))) .temoin:is([data-etat="horsligne"], [data-etat="reconnexion"]) .temoin-texte { position: static; width: auto; height: auto; clip: auto; clip-path: none; }
+  .barre-haut:not(.defile):not(.sous):not(:has(.installer-barre:not([hidden]))) .temoin:is([data-etat="horsligne"], [data-etat="reconnexion"]) :is(.temoin-detail, .ic) { display: none; }
+}
+/* l'aide : « Raccourcis » au pied de la colonne (à l'ordinateur), « Gestes et raccourcis » au bas de « Moi » */
+.nav-aide { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; min-height: 32px; }
+.nav-aide kbd, .moi-aide kbd { padding: 1px 6px; border: 1px solid var(--filet); border-bottom-width: 2px; border-radius: 5px; font: 650 .74rem/1.3 var(--sans); color: var(--gris); }
+.moi-aide { margin: 18px 0 0; text-align: center; }
+.moi-aide .lien-btn { min-height: 44px; }
 @keyframes tourne { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: no-preference) { [data-actualiser].tourne .ic { animation: tourne .9s linear infinite; } }
 [data-actualiser].tourne { color: var(--magenta); }
@@ -768,6 +820,16 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
   .barre-haut:has(.installer-barre:not([hidden])) .installer-barre { padding: 0 10px 0 8px; margin-right: 0; }
 }
 @media (max-width: 374px) { .barre-haut:has(.installer-barre:not([hidden])) .marque-mini small { display: none; } }
+/* dès que la barre porte le titre de la vue (la page a défilé, ou une vue de second niveau), la barre se resserre comme
+   la marque : « Installer » devient un rond plein de 36 px dans une cible de 44 (son icône seule ; son nom, « Installer
+   l'application », reste aux lecteurs d'écran et dans la bulle), à côté de la cloche et de l'actualisation ; le titre
+   prend la place rendue et passe sur deux lignes plutôt que d'être rogné (« Propositions de dates » à 360 px) */
+@media (max-width: 759px) {
+  .barre-haut:is(.defile, .sous) .installer-barre { justify-content: center; width: 44px; height: 44px; min-height: 44px; margin: 0; padding: 0; border: 4px solid transparent; background-clip: padding-box; }
+  .barre-haut:is(.defile, .sous) .installer-barre .ic { width: 20px; height: 20px; }
+  .barre-haut:is(.defile, .sous) .installer-barre > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+  .barre-titre { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; white-space: normal; overflow-wrap: break-word; }
+}
 .cloche { position: relative; }
 .cloche .pastille-nb { top: -2px; left: auto; right: -4px; }
 .cloche[aria-current] { background: var(--magenta-doux); color: var(--magenta); }
@@ -942,7 +1004,7 @@ main.glisse-fin { transition: transform .18s ease-out, opacity .18s ease-out; }
 .decompte-grand .lampe { align-self: center; width: 12px; height: 12px; border-radius: 50%; background: var(--h-accent); }
 /* 3. le jour J en direct : le trait « maintenant » descend le long de l'étape en cours (--avance, posé par majFrises) ; la
    prochaine étape dit « dans 12 min » sous son heure */
-.frise li.maintenant::after { content: ""; position: absolute; left: 57px; top: calc(16px + (100% - 30px) * var(--avance, 0)); width: 20px; height: 3px; border-radius: 2px; background: var(--u, var(--magenta)); box-shadow: 0 0 0 2px var(--surface); }
+.frise li.maintenant::after { content: ""; position: absolute; left: 57px; top: calc(16px + (100% - 30px) * var(--avance, 0)); width: 20px; height: 3px; border-radius: 2px; background: var(--u-texte, var(--magenta)); box-shadow: 0 0 0 2px var(--surface); }
 .frise .dans { display: block; margin-top: 1px; font: 600 .72rem/1.2 var(--sans); letter-spacing: .02em; color: var(--u-texte, var(--magenta)); white-space: nowrap; }
 /* 6. la route qui se trace : sur la carte d'une date, le chemin pointillé avance de Rouen au lieu, le long du bras ; le
    billet survolé allume son bras et son point, les autres bras s'effacent ; le lieu survolé allume ses billets */

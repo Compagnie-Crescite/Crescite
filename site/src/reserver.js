@@ -21,10 +21,12 @@
    RESERVER.lien(d)            où l'on réserve : le lien de la date, sinon celui de sa première séance tout public qui en a un ;
                                null s'il n'y en a pas (la carte dit alors « Réservation auprès du lieu », sans faux bouton)
    RESERVER.lieu(d)            le nom du lieu, ou null
+   RESERVER.commune(d)         sa commune (« Pont-Audemer » : sans son département)
    RESERVER.jours(d)           { semaine: ['ven.'], jour: '18', mois: ['déc.'] } : la date écrite court (AGENDA.court, avec les
                                noms courts de D.site.libelles) ; deux jours qui se suivent : ['jeu.', 'ven.'], '19 – 20' ;
-                               plusieurs : '8 – 11' ; une période : '12 – 20' ; un mois : 'mars', ['2027']
-   RESERVER.bouton(d, o)       le HTML du bouton d'une date, qui se lit « ven. 18 déc. · 14h, 20h · Pont-Audemer » :
+                               plusieurs : '8 – 11' ; une période : '12 – 20' ; un mois : 'mars', ['2027'] (l'intervalle :
+                               un tiret demi-cadratin entre deux espaces fines insécables, qui ne se coupe jamais)
+   RESERVER.bouton(d, o)       le HTML du bouton d'une date, qui se lit « ven. 18 déc. · 14h, 20h — Pont-Audemer » :
                                <button class="rs-date" data-reserver="<clé>" aria-pressed> ; o.choisi, o.classe, o.style
                                (les variables de l'univers), o.attributs (une chaîne : data-date-id…, aria-controls…)
    RESERVER.bande(dates, o)    le HTML de la bande : <div class="rs-bande" role="group" aria-label="<o.libelle, ou
@@ -35,7 +37,12 @@
                                le jour (d.ligneDate), le lieu et sa commune, ses précisions quand elles disent plus que les
                                séances, les séances (chacune un lien avec son heure, ou un repère sans lien), puis UN bouton
                                principal .rs-reserver « Réserver » (nouvel onglet ; « sur le site du lieu » et le nom du lieu),
-                               ou .rs-aupres « Réservation auprès du lieu » et son nom
+                               ou .rs-aupres « Réservation auprès du lieu » et son nom ; puis, en retrait, .rs-agenda
+                               « Ajouter à mon agenda » (libelles.ajouterAgenda), qui télécharge RESERVER.ics(d)
+   RESERVER.ics(d)             le texte du fichier iCalendar de la date (ses séances tout public à leur heure, sinon une
+                               journée ; le lieu et sa commune ; ses précisions et le lien de réservation) ; null pour une
+                               date au mois près
+   RESERVER.telecharger(d)     télécharge ce fichier (« <slug>-<jour>.ics »)
    RESERVER.univers(show)      les variables CSS de l'univers du spectacle (une chaîne « --rs-fond:…; … »), lisibles (AA) :
                                --rs-fond --rs-fond2 --rs-texte --rs-texte2 --rs-accent --rs-sur-accent (le texte sur l'accent)
                                --rs-vif (l'accent qui se lit en petit sur le fond) --rs-lueur --rs-titre (la police de titre)
@@ -69,7 +76,7 @@
    L'habillage : des styles de base sobres (injectés une fois en tête de <head>, sans poids : :where()) ; la maquette écrit le
    reste. Classes : .rs-bande .rs-date (.rs-q .rs-s .rs-n .rs-m .rs-h .rs-o .rs-sep ; [aria-pressed="true"]) .rs-carte (posée
    par la maquette) .rs-photo .rs-c .rs-sp .rs-quand .rs-ou .rs-lieu .rs-commune .rs-det .rs-seances .rs-k .rs-liste
-   .rs-seance (.est-scolaire) .rs-sj .rs-sh .rs-scol .rs-sans .rs-action .rs-reserver (.rs-r : .rs-r1 .rs-r2) .rs-aupres .rs-etat. */
+   .rs-seance (.est-scolaire) .rs-sj .rs-sh .rs-scol .rs-sans .rs-action .rs-reserver (.rs-r : .rs-r1 .rs-r2) .rs-aupres .rs-etat .rs-plus .rs-agenda. */
 const RESERVER = (() => {
   'use strict';
   const COUPE = (() => { try { return new URLSearchParams(location.search).get('anim') === '0'; } catch (e) { return false; } })();
@@ -121,7 +128,7 @@ const RESERVER = (() => {
     const a = court(js[0]), b = court(js[js.length - 1]);
     if (js.length === 1) return { semaine: [a.semaine], jour: a.jour, mois: [a.mois] };
     const suivis = js.length === 2 && Date.parse(js[1]) - Date.parse(js[0]) === 864e5;
-    return { semaine: suivis ? [a.semaine, b.semaine] : [], jour: `${a.jour} – ${b.jour}`, mois: js[0].slice(0, 7) === js[js.length - 1].slice(0, 7) ? [a.mois] : [a.mois, b.mois] };
+    return { semaine: suivis ? [a.semaine, b.semaine] : [], jour: `${a.jour}${ENTRE}${b.jour}`, mois: js[0].slice(0, 7) === js[js.length - 1].slice(0, 7) ? [a.mois] : [a.mois, b.mois] };
   }
   // les précisions de la date, quand elles disent plus que la carte (celles que l'agenda compose des séances, non)
   function precisions(d) {
@@ -152,13 +159,15 @@ const RESERVER = (() => {
   const photo = s => (s && typeof D !== 'undefined' && D.photos ? D.photos[s.slug] || null : null);
 
   /* ---------------------------------------------------------------------------------------------- le HTML */
-  const mots = xs => xs.map(x => `<span>${esc(x)}</span>`).join(' – ');
+  // (l'intervalle de la forme courte : un tiret demi-cadratin entre deux espaces fines insécables, qui ne se coupe jamais)
+  const ENTRE = '\u202f–\u202f';
+  const mots = xs => xs.map(x => `<span>${esc(x)}</span>`).join(ENTRE);
   function bouton(d, o = {}) {
     const Lb = L(), j = jours(d), h = heures(d), k = cle(d);
     return `<button type="button" class="rs-date${o.classe ? ' ' + o.classe : ''}" data-reserver="${esc(k)}" aria-pressed="${o.choisi ? 'true' : 'false'}"${o.attributs || ''}${o.style ? ` style="${esc(o.style)}"` : ''}>`
       + `<span class="rs-q">${j.semaine.length ? `<span class="rs-s">${mots(j.semaine)}</span> ` : ''}<b class="rs-n">${esc(j.jour)}</b>${j.mois.length ? ` <span class="rs-m">${mots(j.mois)}</span>` : ''}</span>`
       + `<span class="rs-sep"> · </span><span class="rs-h${h.length ? '' : ' rs-h--sans'}">${h.length ? h.map(x => `<span>${esc(x)}</span>`).join(', ') : `<span>${esc(Lb.horaireAPreciser)}</span>`}</span>`
-      + `<span class="rs-sep"> · </span><span class="rs-o">${esc(commune(d))}</span></button>`;
+      + `<span class="rs-sep"> — </span><span class="rs-o">${esc(commune(d))}</span></button>`;
   }
   function bande(ds, o = {}) {
     const Lb = L(), k = o.choisie == null ? null : String(o.choisie);
@@ -172,10 +181,14 @@ const RESERVER = (() => {
     return `<div class="rs-seances"><p class="rs-k">${esc(Lb.representations)}</p><ul class="rs-liste">${ss.map(x => {
       const j = plusieurs && x.jour ? court(x.jour) : null;
       const q = `${j ? `<span class="rs-sj"><span>${esc(j.semaine)}</span> ${esc(j.jour)} <span>${esc(j.mois)}</span></span>` : ''}<b class="rs-sh${x.heure ? '' : ' rs-sh--sans'}">${esc(x.heure || (x.scolaire ? '' : Lb.horaireAPreciser))}</b>${x.scolaire ? `<em class="rs-scol">${esc(Lb.scolaire)}</em>` : ''}`;
-      return `<li>${x.lien ? `<a class="rs-seance" href="${esc(x.lien)}" target="_blank" rel="noopener">${q}</a>` : `<span class="rs-seance${x.scolaire ? ' est-scolaire' : ''}">${q}</span>`}</li>`;
+      return `<li>${x.lien ? `<a class="rs-seance" href="${esc(x.lien)}" target="_blank" rel="noopener">${q}${EXT}${DEHORS()}</a>` : `<span class="rs-seance${x.scolaire ? ' est-scolaire' : ''}">${q}</span>`}</li>`;
     }).join('')}</ul></div>`;
   }
   const FLECHE = '<svg class="rs-fleche" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 17L17 7M9 7h8v8"/></svg>';
+  // un lien vers la billetterie s'ouvre dans un nouvel onglet : la flèche qui sort (celle du site, .ext ; le bouton de
+  // réservation a la sienne, en grand) et, pour les lecteurs d'écran, « (nouvel onglet) »
+  const DEHORS = () => (L().nouvelOnglet ? `<span class="rs-masque"> ${esc(L().nouvelOnglet)}</span>` : '');
+  const EXT = '<svg class="ext" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M4.5 2.5h5v5M9.5 2.5l-7 7"/></svg>';
   function carte(d, o = {}) {
     const Lb = L(), s = show(d.slug), ou = lieu(d), href = lien(d), ph = o.photo === false ? null : photo(s), pr = precisions(d);
     const titre = s ? s.titre : d.titre;
@@ -186,8 +199,65 @@ const RESERVER = (() => {
       + (pr.length ? `<ul class="rs-det">${pr.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : '')
       + seancesHTML(d, Lb)
       + `<p class="rs-action">${href
-        ? `<a class="rs-reserver" href="${esc(href)}" target="_blank" rel="noopener"><span class="rs-r"><span class="rs-r1">${esc(Lb.reserver)}</span><span class="rs-r2"><span>${esc(Lb.surLeSiteDuLieu)}</span>${ou ? `<span class="rs-sep"> · </span><span>${esc(ou)}</span>` : ''}</span></span>${FLECHE}</a>`
-        : `<span class="rs-aupres"><span>${esc(Lb.reservationAupresDuLieu)}</span>${ou ? `<span class="rs-sep"> · </span><b>${esc(ou)}</b>` : ''}</span>`}</p></div>`;
+        ? `<a class="rs-reserver" href="${esc(href)}" target="_blank" rel="noopener"><span class="rs-r"><span class="rs-r1">${esc(Lb.reserver)}</span><span class="rs-r2"><span>${esc(Lb.surLeSiteDuLieu)}</span>${ou ? `<span class="rs-sep"> · </span><span>${esc(ou)}</span>` : ''}</span></span>${FLECHE}${DEHORS()}</a>`
+        : `<span class="rs-aupres"><span>${esc(Lb.reservationAupresDuLieu)}</span>${ou ? `<span class="rs-sep"> · </span><b>${esc(ou)}</b>` : ''}</span>`}</p>`
+      + (Lb.ajouterAgenda && agendaPermis(d) ? `<p class="rs-plus"><button type="button" class="rs-agenda" data-reserver-ics="${esc(cle(d))}">${AGENDA_ICONE}<span>${esc(Lb.ajouterAgenda)}</span></button></p>` : '')
+      + '</div>';
+  }
+
+  /* ---------------------------------------------------------------------------------------------- l'agenda (.ics) */
+  // la date dans son agenda à soi : un fichier iCalendar (RFC 5545) tiré de D seul. Chaque séance tout public dont l'heure est
+  // connue est un évènement à son heure (Europe/Paris), qui finit avec la durée du spectacle quand D la dit (« 1h25 »,
+  // « 55 minutes ») ; un jour de séances sans heure connue, ou une date sans séance, un évènement d'une journée (du premier
+  // au dernier jour). Le spectacle (le titre), le lieu et sa commune ; dans la description, ses précisions et le lien de
+  // réservation (celui de la séance, sinon celui de la date). Une date au mois près n'en a pas : son jour n'est pas fixé
+  const AGENDA_ICONE = '<svg class="rs-fleche" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4M12 13v5M9.5 15.5h5"/></svg>';
+  const agendaPermis = d => !!(d && /^\d{4}-\d{2}-\d{2}$/.test(d.iso || '') && (!d.precision || d.precision === 'day'));
+  const icsEchap = s => String(s ?? '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+  // une ligne de plus de 75 octets se plie (CRLF, puis une espace), sans couper un caractère
+  const plier = l => { const out = []; let cur = '', n = 0;
+    for (const ch of l) { const b = ch.codePointAt(0) < 0x80 ? 1 : ch.codePointAt(0) < 0x800 ? 2 : ch.codePointAt(0) < 0x10000 ? 3 : 4;
+      if (n + b > (out.length ? 74 : 75)) { out.push(cur); cur = ''; n = 0; } cur += ch; n += b; }
+    out.push(cur); return out.join('\r\n '); };
+  const jourIcs = iso => iso.replace(/-/g, '');
+  const lendemain = iso => { const t = new Date(`${iso}T12:00:00Z`); t.setUTCDate(t.getUTCDate() + 1); return t.toISOString().slice(0, 10); };
+  // la durée du spectacle, en minutes, lue dans D (« durée : 1h25 », « 1h », « 55 minutes ») ; null si D ne la dit pas
+  const minutes = s => { const t = String((s && s.duree) || ''); let m = /(\d+)\s*h\s*(\d{1,2})?/i.exec(t);
+    if (m) return +m[1] * 60 + (+m[2] || 0); m = /(\d+)\s*min/i.exec(t); return m ? +m[1] : null; };
+  const plus = (jour, hm, mn) => { const [h, m] = hm.split(':').map(Number), t = new Date(Date.UTC(+jour.slice(0, 4), +jour.slice(5, 7) - 1, +jour.slice(8, 10), h, m + mn));
+    return `${t.toISOString().slice(0, 10).replace(/-/g, '')}T${t.toISOString().slice(11, 16).replace(':', '')}00`; };
+  const PARIS = ['BEGIN:VTIMEZONE', 'TZID:Europe/Paris',
+    'BEGIN:DAYLIGHT', 'TZOFFSETFROM:+0100', 'TZOFFSETTO:+0200', 'TZNAME:CEST', 'DTSTART:19700329T020000', 'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU', 'END:DAYLIGHT',
+    'BEGIN:STANDARD', 'TZOFFSETFROM:+0200', 'TZOFFSETTO:+0100', 'TZNAME:CET', 'DTSTART:19701025T030000', 'RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU', 'END:STANDARD',
+    'END:VTIMEZONE'];
+  function ics(d) {
+    if (!agendaPermis(d)) return null;
+    const s = show(d.slug), titre = (s && s.titre) || d.titre || '', ou = [lieu(d), d.ligneLieu || commune(d)].filter(Boolean).join(', ');
+    const pr = (d.details || []).map(x => (typeof x === 'string' ? x : x && x.texte)).filter(Boolean), lienDate = lien(d), duree = minutes(s);
+    const k = cle(d), stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z');
+    const reps = (d.representations || []).filter(r => r && !r.annulee && r.public !== 'scolaire').map(r => ({ jour: /^\d{4}-\d{2}-\d{2}$/.test(r.jour || '') ? r.jour : d.iso, heure: r.heure ? String(r.heure).slice(0, 5) : '', lien: http(r.lien) || lienDate }));
+    const vus = new Set(), aHeure = reps.filter(r => /^\d{2}:\d{2}$/.test(r.heure) && !vus.has(`${r.jour} ${r.heure}`) && vus.add(`${r.jour} ${r.heure}`))
+      .sort((a, b) => `${a.jour} ${a.heure}`.localeCompare(`${b.jour} ${b.heure}`));
+    const joursTimes = new Set(aHeure.map(r => r.jour)), joursSans = [...new Set(reps.filter(r => !joursTimes.has(r.jour)).map(r => r.jour))].sort();
+    const ev = [];
+    const evenement = (id, quand, url) => ev.push('BEGIN:VEVENT', `UID:${icsEchap(`${k}-${id}`)}@crescite`, `DTSTAMP:${stamp}`, ...quand, `SUMMARY:${icsEchap(titre)}`,
+      ...(ou ? [`LOCATION:${icsEchap(ou)}`] : []), ...((pr.length || url) ? [`DESCRIPTION:${icsEchap([...pr, url].filter(Boolean).join('\n'))}`] : []), ...(url ? [`URL:${url}`] : []), 'END:VEVENT');
+    aHeure.forEach(r => evenement(`${r.jour}-${r.heure.replace(':', '')}`, [`DTSTART;TZID=Europe/Paris:${jourIcs(r.jour)}T${r.heure.replace(':', '')}00`,
+      ...(duree ? [`DTEND;TZID=Europe/Paris:${plus(r.jour, r.heure, duree)}`] : [])], r.lien));
+    joursSans.forEach(j => evenement(j, [`DTSTART;VALUE=DATE:${jourIcs(j)}`, `DTEND;VALUE=DATE:${jourIcs(lendemain(j))}`], lienDate));
+    if (!ev.length) { const fin = /^\d{4}-\d{2}-\d{2}$/.test(d.fin || '') && d.fin >= d.iso ? d.fin : d.iso;
+      evenement(d.iso, [`DTSTART;VALUE=DATE:${jourIcs(d.iso)}`, `DTEND;VALUE=DATE:${jourIcs(lendemain(fin))}`], lienDate); }
+    return [...['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Crescite//Site//FR', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH'], ...(aHeure.length ? PARIS : []), ...ev, 'END:VCALENDAR']
+      .map(plier).join('\r\n') + '\r\n';
+  }
+  // le fichier se télécharge (le nom : le spectacle et le premier jour) ; un téléphone le propose à son agenda
+  function telecharger(d) {
+    const t = ics(d); if (!t || typeof document === 'undefined') return false;
+    const url = URL.createObjectURL(new Blob([t], { type: 'text/calendar;charset=utf-8' }));
+    const a = document.createElement('a'); a.href = url; a.download = `${d.slug || 'date'}-${d.iso}.ics`; a.hidden = true;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    return true;
   }
 
   /* ---------------------------------------------------------------------------------------------- le geste */
@@ -301,20 +371,28 @@ const RESERVER = (() => {
 :where(.rs-bande) > :where(*) { flex: none; scroll-snap-align: start; }
 :where(.rs-date) { position: relative; display: inline-flex; flex-direction: column; align-items: flex-start; gap: 2px; font: inherit; color: inherit; text-align: left; cursor: pointer; }
 :where(.rs-date .rs-sep) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+:where(.rs-seance .ext) { display: inline-block; width: .72em; height: .72em; margin-left: .3em; fill: none; stroke: currentColor; stroke-width: 1.6; }
+:where(.rs-masque) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 :where(.rs-carte) { position: relative; isolation: isolate; overflow: hidden; background: var(--rs-fond2, #fff); color: var(--rs-texte, inherit); }
 :where(.rs-photo) { position: absolute; z-index: -1; inset: 0 0 0 auto; width: 55%; height: 100%; object-fit: cover; opacity: .3; pointer-events: none; }
 :where(.rs-liste) { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; }
 :where(.rs-seance) { display: inline-flex; align-items: baseline; gap: 8px; }
 :where(.rs-reserver) { display: inline-flex; align-items: center; gap: 12px; background: var(--rs-accent, #000); color: var(--rs-sur-accent, #fff); text-decoration: none; }
 :where(.rs-r) { display: flex; flex-direction: column; align-items: flex-start; }
-:where(.rs-fleche) { width: 1.2em; height: 1.2em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }`;
+:where(.rs-fleche) { width: 1.2em; height: 1.2em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+:where(.rs-agenda) { display: inline-flex; align-items: center; gap: 8px; font: inherit; color: inherit; cursor: pointer; }`;
   (function styles() {
     if (typeof document === 'undefined' || document.getElementById('reserver-style') || !document.head) return;
     const s = document.createElement('style');
     s.id = 'reserver-style';
     s.textContent = STYLE;
     document.head.insertBefore(s, document.head.firstChild);
+    // « Ajouter à mon agenda », où que soit la carte (sous la bande, sous une ligne) : un seul écouteur, délégué
+    document.addEventListener('click', e => {
+      const b = e.target.closest && e.target.closest('[data-reserver-ics]'); if (!b) return;
+      const d = trouver(b.getAttribute('data-reserver-ics')); if (d) telecharger(d);
+    });
   })();
 
-  return { dates, cle, trouver, seances, heures, lien, lieu, jours, bouton, bande, carte, univers, photo, permis, monter };
+  return { dates, cle, trouver, seances, heures, lien, lieu, commune, jours, bouton, bande, carte, univers, photo, permis, monter, ics, telecharger };
 })();

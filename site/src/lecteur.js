@@ -174,12 +174,13 @@ const LECTEUR = (() => {
       addEventListener('scroll', bientot, Object.assign({ passive: true }, o));
       addEventListener('resize', bientot, Object.assign({ passive: true }, o));
       document.addEventListener('keydown', e => { if (e.key === 'Escape' && nuitFig) { e.preventDefault(); const f = nuitFig; assombrir(f, false); const b = f.querySelector('[data-lecteur-nuit]'); if (b) b.focus(); } }, o);
-      // le focus reste dans la vidéo : ce qui en sort y revient, par le bout d'où l'on arrive
+      // le focus reste dans la vidéo : ce qui en sort y revient par l'autre bout (Tab après la dernière commande revient à la
+      // première, Maj+Tab avant la première va à la dernière), comme dans une boîte
       document.addEventListener('focusin', e => {
         if (!nuitFig || nuitFig.contains(e.target)) return;
         const fs = focusables(nuitFig); if (!fs.length) return;
         const avant = e.target.compareDocumentPosition && (e.target.compareDocumentPosition(nuitFig) & Node.DOCUMENT_POSITION_FOLLOWING);
-        (avant ? fs[0] : fs[fs.length - 1]).focus();
+        (avant ? fs[fs.length - 1] : fs[0]).focus();
       }, o);
       if (permis()) (reglages.effet.eteindre || (x => x.animate && x.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 360, easing: 'cubic-bezier(.2, .7, .2, 1)' })))(v, fig);
     } else {

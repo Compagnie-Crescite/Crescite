@@ -78,6 +78,9 @@
   if (CALME) document.documentElement.classList.add('still');    // la feuille de style arrête aussi tout ce qu'elle anime
   const installee = () => mq('(display-mode: standalone)').matches || mq('(display-mode: fullscreen)').matches || navigator.standalone === true;
   const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  // sur l'iPhone, l'installation passe par Safari : ouverte ailleurs (le lien du courriel s'ouvre souvent dans la
+  // messagerie, ou dans Chrome), la page le dit d'abord
+  const HORS_SAFARI = IOS && (!/Safari\//.test(navigator.userAgent) || /CriOS|FxiOS|EdgiOS|OPiOS|GSA\/|FBAN|FBAV|Instagram|Line\//.test(navigator.userAgent));
   // un léger retour au doigt, sur les téléphones qui le permettent, et seulement après un premier geste
   function vibrer(ms = 8) {
     try { if (navigator.vibrate && !CALME && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) navigator.vibrate(ms); } catch (e) { /* rien */ }
@@ -312,6 +315,28 @@
   function etatVide(objet, titre, texte, suite = '') {
     return `<div class="etat-vide">${pieuvre(objet)}<b>${esc(titre)}</b><p>${esc(texte)}</p>${suite}</div>`;
   }
+
+  // une lecture qui n'a pas abouti (une vue qui demande la base, hors connexion ou en panne) : à la place de « Lecture… »,
+  // ce qui s'est passé et « Réessayer » (data-relire), qui redessine la vue et relance la lecture ; comme le planning
+  function echecLecture(quoi, e) {
+    const texte = estReseau(e) ? `${quoi.enLigne} : vérifiez votre connexion, puis réessayez.` : `${quoi.erreur} : ${motsErreur(e) || 'réessayez dans un instant'}.`;
+    return `<div class="message erreur echec-lecture" role="alert"><p>${esc(texte)}</p><button type="button" class="btn" data-relire>${ICONES.actualiser}Réessayer</button></div>`;
+  }
+  // la lecture en attente d'une zone (son « Lecture… ») cède la place à l'échec, si la vue est toujours là
+  function poserEchec(zone, quoi, e, vue) {
+    if (vue && E.vue !== vue) return;
+    const z = typeof zone === 'string' ? $(zone) : zone, attente = z && (z.matches('p.chargement') ? z : $('p.chargement', z));
+    if (attente) attente.outerHTML = echecLecture(quoi, e);
+  }
+  const LECTURES = {
+    feuille: { enLigne: 'Cette feuille de route se lit en ligne', erreur: 'La feuille de route n’a pas pu être lue' },
+    propositions: { enLigne: 'Les propositions se lisent en ligne', erreur: 'Les propositions n’ont pas pu être lues' },
+    proposition: { enLigne: 'La proposition se lit en ligne', erreur: 'La proposition n’a pas pu être lue' },
+    agendas: { enLigne: 'Vos agendas se lisent en ligne', erreur: 'Vos agendas n’ont pas pu être lus' },
+    flux: { enLigne: 'Votre lien se lit en ligne', erreur: 'Votre lien n’a pas pu être lu' },
+  };
+  // hors connexion (déjà constaté), une lecture échoue tout de suite, sans les trois relances de supabase-js (7 s et plus)
+  const vite = q => (E.horsLigne && typeof q.retry === 'function' ? q.retry(false) : q);
 
   // ================================================================================================ les mots des erreurs
   const estReseau = e => !!e && (e.name === 'AuthRetryableFetchError' || e.status === 0
@@ -823,14 +848,14 @@
         ${onglet('spectacles', ICONES.spectacle, 'Spectacles')}
         ${onglet('notifications', ICONES.cloche, 'Notifs', 'Notifications')}
         ${onglet('moi', `<span class="nav-avatar">${ICONES.moi}</span>`, 'Moi')}
-        <p class="nav-pied"><span class="nav-nom"></span> <button type="button" class="lien-btn" data-sortir>Se déconnecter</button></p>
+        <p class="nav-pied"><span class="nav-nom"></span> <button type="button" class="lien-btn" data-sortir>Se déconnecter</button><button type="button" class="lien-btn nav-aide" data-aide aria-keyshortcuts="?">Raccourcis <kbd aria-hidden="true">?</kbd></button></p>
       </nav>
       <div class="colonne">
         <header class="barre-haut" id="barre-haut">
           <a class="bouton-rond retour" href="#/saison" data-retour data-tt="retour" hidden>${ICONES.retour}<span class="sr">Retour</span></a>
           <a class="marque-mini" href="#/saison"><span class="pieuvre" data-pieuvre aria-hidden="true"></span><span class="marque-texte"><span class="marque-nom">Compagnie Crescite</span><small>Équipe</small></span></a>
           <p class="barre-titre" aria-hidden="true"></p>
-          <div class="barre-actions"><button type="button" class="installer-barre" data-installer-barre hidden>${ICONES.installer}<span>Installer<span class="sr"> l’application</span></span></button><a class="bouton-rond cloche" href="#/notifications" data-cloche>${ICONES.cloche}<span class="pastille-nb" data-n="0" aria-hidden="true"></span><span class="sr">Notifications<span class="nb-sr"></span></span></a><button type="button" class="bouton-rond" data-actualiser title="Actualiser">${ICONES.actualiser}<span class="sr">Actualiser</span></button></div>
+          <div class="barre-actions"><button type="button" class="installer-barre" data-installer-barre title="Installer l’application" hidden>${ICONES.installer}<span>Installer<span class="sr"> l’application</span></span></button><a class="bouton-rond cloche" href="#/notifications" data-cloche>${ICONES.cloche}<span class="pastille-nb" data-n="0" aria-hidden="true"></span><span class="sr">Notifications<span class="nb-sr"></span></span></a><button type="button" class="temoin" data-actualiser data-temoin><span class="temoin-point" aria-hidden="true"></span><span class="temoin-texte"><span class="temoin-mot"></span><span class="temoin-detail"></span></span><span class="sr"> · Actualiser</span>${ICONES.actualiser}</button></div>
         </header>
         <div class="bandeau-etat" id="bandeau-etat"></div>
         <main id="contenu" tabindex="-1"></main>
@@ -852,6 +877,7 @@
     if (av && E.personne) av.innerHTML = avatar(E.personne, { taille: 'nav' });
     majBadge();
     majBadgePlanning();
+    majTemoin();
   }
   // le curseur des onglets : la pastille glisse d'un onglet à l'autre (sous l'icône au téléphone, sur la ligne à l'ordinateur)
   function placerCurseur(sansAnimation = false) {
@@ -900,9 +926,15 @@
   window.addEventListener('scroll', surDefilement, { passive: true });
   window.addEventListener('resize', () => placerCurseur(true));
 
+  // le titre de l'onglet dit ce qui est ouvert : une date, « Bérénice · sam. 31 oct. · Ma saison · Équipe · Compagnie
+  // Crescite » ; une vue plus loin qu'un onglet, le nom de l'onglet après le sien ; les notifications non lues devant
   function majTitre() {
-    const n = E.notifs.filter(x => !x.lue_le).length;
-    document.title = `${n ? `(${n}) ` : ''}${E.titre && E.titre !== 'Équipe' ? `${E.titre} · ` : ''}Équipe · Compagnie Crescite`;
+    const n = E.notifs.filter(x => !x.lue_le).length, r = E.route;
+    const d = r && (r.k === 'date' || r.k === 'feuille') ? E.dates.find(x => x.id === r.id) : null;
+    const quoi = d && d.spectacle ? [d.spectacle.titre, d.debut ? jourCourt(d.debut) : ''] : [E.titre && E.titre !== 'Équipe' ? E.titre : ''];
+    const onglet = r && r.profondeur > 0 && TITRES[r.onglet] && !quoi.includes(TITRES[r.onglet]) ? TITRES[r.onglet] : '';
+    const morceaux = [...quoi, onglet].filter(Boolean);
+    document.title = `${n ? `(${n}) ` : ''}${morceaux.length ? `${morceaux.join(' · ')} · ` : ''}Équipe · Compagnie Crescite`;
   }
   function afficher(r, titre, html, { focus = false, large = false } = {}) {
     if (E.planning) demonterPlanning();
@@ -942,10 +974,52 @@
   function bandeauEtat() {
     const el = $('#bandeau-etat');
     if (!el) return;
-    const html = E.provisoire && !E.horsLigne ? '<p class="attente" role="status">Mise à jour en cours…</p>' : E.horsLigne ? `<p class="message horsligne" role="status"><span>Hors connexion : voici votre espace tel qu’il était ${esc(momentTexte(E.horsLigne))}. La fiche et les documents demandent le réseau${E.sansSession ? ' ; la connexion se renouvellera dès son retour' : ''}.</span>
+    const html = E.provisoire && !E.horsLigne ? '<p class="attente" role="status">Mise à jour en cours…</p>' : E.horsLigne ? `<p class="message horsligne" role="status"><span>Hors ligne : voici votre espace tel qu’il était ${esc(momentTexte(E.horsLigne))}. La fiche et les documents demandent le réseau${E.sansSession ? ' ; la connexion se renouvellera dès son retour' : ''}.</span>
       <button type="button" class="lien-btn" data-reessayer>Réessayer</button></p>` : '';
+    majTemoin();
     if (el.dataset.h === html) return;                     // le bandeau ne se redessine (et n'entre) que s'il change
     el.dataset.h = html; el.innerHTML = html;
+  }
+  // ---- le témoin de la barre : la connexion et la fraîcheur, de la même façon que dans l'administration (une pastille, un
+  // mot, et le bouton lui-même relit la base). « À jour » : le temps réel des notifications est relié (ce qui change pour
+  // vous arrive aussitôt), ou la lecture a moins de deux minutes ; sinon « Lu il y a 12 min » ; « Mise à jour… » pendant
+  // une lecture ; « Hors ligne · lu il y a 3 h » quand le réseau manque (le bandeau dit le reste) ; « Reconnexion… » quand
+  // il revient et que l'espace se relit. Au téléphone, la pastille sur l'icône, le mot quand il y a lieu de s'inquiéter.
+  // Les lecteurs d'écran entendent le passage hors ligne et le retour (une région polie, hors de l'application).
+  function depuisTexte(t) {   // « à l'instant », « il y a 12 min », « il y a 3 h », « hier à 18 h 05 », « le 25 octobre »
+    const d = new Date(t), s = (Date.now() - d) / 1000, hier = new Date(); hier.setDate(hier.getDate() - 1);
+    if (Number.isNaN(d.getTime())) return '';
+    if (s < 60) return 'à l’instant';
+    if (s < 3600) return `il y a ${Math.floor(s / 60)}\u00a0min`;
+    if (d.toDateString() === new Date().toDateString()) return `il y a ${Math.floor(s / 3600)}\u00a0h`;
+    if (d.toDateString() === hier.toDateString()) return `hier à ${heureCourte(d)}`;
+    return momentTexte(d).replace(/ à .*$/, '');
+  }
+  function etatConnexion() {
+    const lu = E.horsLigne > 1 ? E.horsLigne : E.chargeLe;
+    if (E.reconnexion && (E.horsLigne || E.sansSession)) return { k: 'reconnexion', mot: 'Reconnexion…', detail: '', long: 'Le réseau revient : votre espace se relit.' };
+    if (E.horsLigne || E.sansSession || navigator.onLine === false) return { k: 'horsligne', mot: 'Hors ligne', detail: lu ? `lu ${depuisTexte(lu)}` : '', long: `Hors ligne : votre espace tel qu’il a été lu${lu ? ` ${depuisTexte(lu)}` : ''}.` };
+    if (E.rafraichit || E.provisoire || E.ouverture) return { k: 'lecture', mot: 'Mise à jour…', detail: '', long: 'Votre espace se relit.' };
+    if (E.tempsReel === 'SUBSCRIBED') return { k: 'direct', mot: 'À jour', detail: '', long: 'À jour : ce qui change pour vous arrive en direct.' };
+    if (lu && Date.now() - lu < 120000) return { k: 'ajour', mot: 'À jour', detail: '', long: `À jour : lu à ${heureCourte(lu)}.` };
+    return { k: 'lu', mot: lu ? `Lu ${depuisTexte(lu)}` : 'Actualiser', detail: '', long: lu ? `Lu à ${heureCourte(lu)}.` : '' };
+  }
+  let etatAnnonce = null;
+  function majTemoin() {
+    const x = etatConnexion();
+    $$('[data-temoin]').forEach(b => {
+      b.dataset.etat = x.k;
+      $('.temoin-mot', b).textContent = x.mot;
+      $('.temoin-detail', b).textContent = x.detail ? ` · ${x.detail}` : '';
+      b.title = `${x.long ? `${x.long} ` : ''}Actualiser.`;
+    });
+    const hors = x.k === 'horsligne';
+    if (etatAnnonce !== null && hors !== etatAnnonce && x.k !== 'reconnexion') {
+      let r = document.getElementById('sr-connexion');
+      if (!r) { r = document.createElement('p'); r.id = 'sr-connexion'; r.className = 'sr'; r.setAttribute('role', 'status'); document.body.append(r); }
+      r.textContent = hors ? `Connexion perdue. ${x.long}` : 'Connexion rétablie : votre espace est à jour.';
+    }
+    if (E.pret && x.k !== 'reconnexion' && x.k !== 'lecture') etatAnnonce = hors;
   }
 
   // ================================================================================================ les adresses et les transitions
@@ -964,18 +1038,51 @@
   const VUES = { saison: vueSaison, date: vueDate, feuilles: vueFeuilles, feuille: vueFeuille, spectacles: vueSpectacles, spectacle: vueSpectacle, notifications: vueNotifications, moi: vueMoi,
     planning: vuePlanning, indisponibilites: vueIndispos, agendas: vueAgendas, propositions: vuePropositions, proposition: vueProposition, frais: vueFrais };
 
+  // ---- ne rien perdre en partant : la fiche « Moi » pas enregistrée, une feuille de modification changée
+  // (../admin/gestes.js), un formulaire gardé (une indisponibilité, un agenda, une note de frais commencés), une boîte
+  // changée (une date, un fichier). Changer de vue, le bouton précédent, « Retour » : l'adresse revient d'abord à la
+  // sienne, sans rien redessiner, puis une boîte de la charte pose la question (GESTES.quitter, jamais confirm()) ;
+  // « Quitter sans enregistrer » mène où l'on allait. Rien de changé : aucune question. Fermer l'onglet : beforeunload.
+  const GG = () => (typeof GESTES !== 'undefined' ? GESTES : null);
+  const garderForm = f => { const g = GG(); if (f && g && g.garder) g.garder(f); };
+  const modaleChangee = () => $$('.modale-fond').some(f => typeof f.modaleChangee === 'function' && f.modaleChangee());
+  const saisieEnCours = () => !!((E.vue === 'moi' && E.ficheSale) || (GG() && GG().saisie && GG().saisie()) || modaleChangee());
+  function oublierSaisies() { E.ficheSale = false; if (GG() && GG().oublier) GG().oublier(); $$('.modale-fond').forEach(f => { if (typeof f.fermerModale === 'function') f.fermerModale(true); }); }
+  // une action qui détruit (supprimer une date, retirer une ligne, délier un agenda…) : la boîte de la charte
+  // (GESTES.confirmer), jamais confirm() : le bouton nommé par son action, à la couleur d'alerte ; « Annuler » a le focus
+  async function confirmerAction(o) { const g = GG(); return g && g.confirmer ? g.confirmer(o) : confirm([o.titre, o.texte].filter(Boolean).join('\n')); }
+  async function partirSansPerdre({ titre = 'Quitter sans enregistrer ?', texte = 'Vos modifications ne sont pas enregistrées : elles seront perdues.', ok = 'Quitter sans enregistrer' } = {}) {
+    if (!saisieEnCours()) return true;
+    const g = GG();
+    const oui = g && g.quitter ? await g.quitter({ titre, texte, ok }) : confirm(texte);
+    if (oui) oublierSaisies();
+    return oui;
+  }
+  // l'adresse acceptée, et son rang dans l'historique (history.state.n ; une entrée neuve, celle d'un lien suivi, prend le
+  // rang suivant) : revenirAdresse() y ramène sans redessiner, par le pas inverse (l'historique reste entier) ;
+  // refaireAdresse() rejoue le pas si l'on quitte quand même
+  function noterAdresse() {
+    let st = history.state;
+    if (!st || typeof st !== 'object' || typeof st.n !== 'number') { st = { ...(st && typeof st === 'object' ? st : {}), n: typeof E.n === 'number' ? E.n + 1 : 0 }; history.replaceState(st, '', location.href); }
+    E.n = st.n; E.adresse = location.search + location.hash;
+  }
+  function revenirAdresse() {
+    const st = history.state, n = st && typeof st.n === 'number' ? st.n : null, pas = n == null ? -1 : E.n - n;
+    if (pas) history.go(pas); else history.replaceState(history.state, '', `${location.pathname}${E.adresse}`);
+    return pas;
+  }
+  function refaireAdresse(pas, vers) { if (pas) history.go(-pas); else { history.pushState(null, '', `${location.pathname}${vers}`); window.dispatchEvent(new HashChangeEvent('hashchange')); } }
+
   function router(o = {}) {
     if (!E.pret) return;
     const r = lireRoute();
-    if (r.redirige) { history.replaceState(null, '', r.redirige); return router(o); }
+    if (r.redirige) { history.replaceState(history.state, '', r.redirige); return router(o); }
     // les notes de frais demandent le septième script : sans lui, #/frais mène à #/moi (à l'ouverture, la page attend la
     // réponse de la base avant d'en décider)
-    if (r.k === 'frais' && !avecIdeale() && !(SONDES.ideale === 'inconnu' && (E.provisoire || E.ouverture))) { history.replaceState(null, '', '#/moi'); return router(o); }
+    if (r.k === 'frais' && !avecIdeale() && !(SONDES.ideale === 'inconnu' && (E.provisoire || E.ouverture))) { history.replaceState(history.state, '', '#/moi'); return router(o); }
+    noterAdresse();
     const avant = E.route;
-    if (avant && avant.k === 'moi' && r.k !== 'moi' && E.ficheSale && !o.rafraichir) {
-      if (!confirm('Vos modifications de fiche ne sont pas enregistrées. Les abandonner ?')) { history.replaceState(null, '', '#/moi'); return; }
-      E.ficheSale = false;
-    }
+    if (avant && avant.k === 'moi' && r.k !== 'moi' && !o.rafraichir) E.ficheSale = false;   // la question est posée au changement d'adresse
     // la pile des vues ouvertes depuis un onglet : le retour y mène, et l'onglet reste celui d'où l'on vient
     let sens = 'aucun';
     if (avant && !o.rafraichir && !o.arrivee && avant.hash !== r.hash) {
@@ -996,8 +1103,13 @@
     };
     changerVue(rendre, sens, partage);
   }
-  window.addEventListener('hashchange', () => router());
-  window.addEventListener('beforeunload', e => { if (E.ficheSale) { e.preventDefault(); e.returnValue = ''; } });
+  window.addEventListener('hashchange', () => {
+    const vers = location.search + location.hash;
+    if (E.pret && vers === E.adresse) return;               // revenu à l'adresse acceptée (la question posée) : rien à refaire
+    if (E.pret && saisieEnCours()) { const pas = revenirAdresse(); partirSansPerdre().then(oui => { if (oui) refaireAdresse(pas, vers); }); return; }
+    router();
+  });
+  window.addEventListener('beforeunload', e => { if (saisieEnCours()) { e.preventDefault(); e.returnValue = ''; } });
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
   // la vue change : avec les View Transitions, l'ancienne glisse et la nouvelle arrive (vers la gauche en allant plus loin,
@@ -1100,9 +1212,11 @@
       <div class="ca-texte"><h2 id="t-agenda">Dans votre agenda</h2><p class="aide">${evs.length ? `${esc(majuscule(quoi))}, avec l’adresse : un fichier .ics pour votre téléphone ou votre messagerie.` : 'Aucune séance à venir à ajouter pour l’instant.'}</p></div>
       <button type="button" class="btn" id="b-agenda"${evs.length ? '' : ' disabled'}>Ajouter à mon agenda</button></section>`);
     cote.push(`<div class="o-install" data-zone-installation="accueil">${zoneInstallation('accueil')}</div>`);
+    if (!PREF.pushFermee && E.notifsEtat !== 'absent') cote.push(`<div class="o-push" data-zone-push="accueil"${E.push.etat !== 'inconnu' ? ` data-etat="${E.push.etat}"` : ''}>${E.push.etat !== 'inconnu' ? cartePush(E.push.etat, 'accueil') : ''}</div>`);
     const html = `<div class="titre-vue"><h1>${esc(salut())}${prenom ? ` ${esc(prenom)}` : ''}</h1><p class="sous">${esc(resume)}</p></div>
       <div class="accueil"><div class="col-principale">${principal.join('')}</div><div class="col-cote">${cote.join('')}</div></div>${piedVue()}`;
     afficher(r, TITRES.saison, html, { focus, large: true });
+    majCartePush();
   }
 
   function parMois(dates) {
@@ -1527,7 +1641,7 @@
       if (!lignes || lignes.length) html += `<section class="bloc" id="bloc-planning"${attrU(sp)} aria-labelledby="b-planning"><h2 id="b-planning">${ICONES.feuille}${joursDe(d).includes(auj) ? 'Le jour J' : 'Le planning'}</h2>
         ${lignes ? frise(lignes) : '<p class="attente-bloc" role="status">Lecture du planning…</p>'}</section>`;
     }
-    html += blocLieu(d) + (avecChiffres() ? blocChiffres(d) : '') + (avecIdeale() ? blocCamion(d) : '') + blocEquipe(d, passee) + blocDocuments(d);
+    html += blocLieu(d) + (avecChiffres() ? blocChiffres(d) : '') + (avecIdeale() ? blocCamion(d) : '') + blocEquipe(d, passee) + blocDocuments(d) + navDates(d, 'date', 'bas');
     afficher(r, sp.titre || 'Date', html, { focus });
     if (avecChiffres()) chargerChiffres(d.id);
     preparerPartages(documentsDe(d.spectacle?.id).filter(x => x.type === 'fiche_technique'));
@@ -1757,7 +1871,7 @@
     let html = `<div class="titre-vue"><h1>Feuilles de route</h1><p class="sous">Une par date : le planning, le trajet, l’hébergement, les contacts. Celles à venir se lisent aussi hors connexion.</p></div>`;
     if (!outilFeuille() && avec.length) html += '<p class="message erreur" role="alert">Les feuilles de route ne peuvent pas s’afficher pour le moment : l’outil qui les met en page n’a pas pu être chargé. Rechargez la page.</p>';
     if (avenir.length) html += `<ul class="liste-feuilles">${avenir.map(d => itemFeuille(d)).join('')}</ul>`;
-    else html += etatVide('feuille', 'Aucune feuille de route à venir', sans ? `${pluriel(sans, 'date à venir', 'dates à venir')} : l’administration publie chaque feuille quelques jours avant le départ. Elle apparaîtra ici.` : 'Dès qu’une feuille de route sera publiée pour l’une de vos dates, elle apparaîtra ici.');
+    else html += etatVide('feuille', 'Aucune feuille de route à venir', sans ? `${pluriel(sans, 'date à venir', 'dates à venir')} : l’administration publie chaque feuille quelques jours avant le départ. Elle apparaîtra ici.` : 'Dès qu’une feuille de route sera publiée pour l’une de vos dates, elle apparaîtra ici.', sans ? '<p><a class="btn" href="#/saison">Ma saison</a></p>' : '');
     if (sans && avenir.length) html += `<p class="aide note-feuilles">Et ${pluriel(sans, 'date à venir', 'dates à venir')} dont la feuille de route est en préparation.</p>`;
     if (passees.length) html += `<details class="saison feuilles-passees"><summary><span class="s-texte"><span class="s-nom">Feuilles passées</span> <span class="s-compte">${pluriel(passees.length, 'feuille')}</span></span></summary><div class="saison-corps"><ul class="liste-feuilles">${passees.map(d => itemFeuille(d, true)).join('')}</ul></div></details>`;
     html += piedVue();
@@ -1785,7 +1899,7 @@
   });
   async function chargerFeuille(id) {
     if (E.feuilles.has(id)) return E.feuilles.get(id);
-    const { data, error } = await sb.from('crescite_feuilles').select('id, date_id, titre, contenu, statut, version, publiee_le').eq('date_id', id).eq('statut', 'publiee').maybeSingle();
+    const { data, error } = await vite(sb.from('crescite_feuilles').select('id, date_id, titre, contenu, statut, version, publiee_le').eq('date_id', id).eq('statut', 'publiee').maybeSingle());
     if (error) throw error;
     if (data) E.feuilles.set(id, data);
     return data;
@@ -1808,7 +1922,7 @@
       if (!x) return afficher(r, 'Feuille de route', `${tete}<p class="message erreur" role="alert">Cette feuille de route n’est pas (ou plus) publiée. L’administration la publiera dès qu’elle sera prête.</p>`, { focus });
       montrerFeuille(r, d, x, { focus, tete });
       entree('fondu');
-    }).catch(e => { if (ici()) afficher(r, 'Feuille de route', `${tete}<p class="message erreur" role="alert">La feuille de route n’a pas pu être lue : ${esc(motsErreur(e))}.</p>`, { focus }); });
+    }).catch(e => { if (ici()) afficher(r, 'Feuille de route', `${tete}${echecLecture(LECTURES.feuille, e)}`, { focus }); });
   }
   function montrerFeuille(r, d, f, { focus, tete }) {
     const version = `Version ${f.version || 1}${f.publiee_le ? `, publiée ${momentTexte(f.publiee_le)}` : ''}`;
@@ -1830,7 +1944,7 @@
     if (!corps) return afficher(r, 'Feuille de route', `${tete}${barre}<p class="message erreur" role="alert">La feuille de route n’a pas pu être mise en page ici. Le PDF reste à votre disposition.</p>`, { focus });
     // la feuille porte d'ordinaire son titre (h1) ; sinon, la page en donne un, pour les lecteurs d'écran
     const titrePage = /<h1[\s>]/i.test(corps) ? '' : `<h1 class="sr">Feuille de route : ${esc(d.spectacle?.titre || '')}, ${esc(quandTexte(d))}</h1>`;
-    afficher(r, 'Feuille de route', `<div class="vue-feuille">${titrePage}${barre}${navDates(d, 'feuille')}<div class="feuille-cadre"${attrU(d.spectacle || {})}>${corps}</div></div>`, { focus });
+    afficher(r, 'Feuille de route', `<div class="vue-feuille">${titrePage}${barre}${navDates(d, 'feuille')}<div class="feuille-cadre"${attrU(d.spectacle || {})}>${corps}</div>${navDates(d, 'feuille', 'bas')}</div>`, { focus });
     // les fichiers que la feuille cite : leur lien signé se redemande au clic s'il a vieilli
     const parUrl = new Map([...E.liens.entries()].map(([chemin, x]) => [x.url, chemin]));
     $$('.feuille-cadre a[href]').forEach(a => { const c = parUrl.get(a.href); if (c) a.dataset.fichier = c; });
@@ -1921,12 +2035,13 @@
     try {
       E.canal = sb.channel(`equipe-notifs-${moi}`)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'crescite_notifications', filter: `personne_id=eq.${moi}` }, p => { if (E.moi === moi) recevoir(p); })
-        .subscribe(statut => { E.tempsReel = statut; });
+        .subscribe(statut => { E.tempsReel = statut; majTemoin(); });
     } catch (e) { console.warn('temps réel', e); E.canal = null; }
   }
   function arreterTempsReel() {
     const c = E.canal;
     E.canal = null; E.tempsReel = '';
+    majTemoin();
     if (c) { try { sb.removeChannel(c); } catch (e) { /* déjà fermé */ } }
   }
   function recevoir(p) {
@@ -2115,7 +2230,12 @@
     vibrer(10);
     try {
       const p = await permission;
-      if (p !== 'granted') { E.push.etat = p === 'denied' ? 'bloque' : 'inactif'; return majCartePush(); }
+      if (p !== 'granted') {
+        E.push.etat = p === 'denied' ? 'bloque' : 'inactif';
+        // refusées : l'invitation de l'accueil s'efface, la page dit où les autoriser plus tard
+        if (p === 'denied') annoncer('Les notifications sont refusées sur cet appareil. Elles restent lisibles dans l’application ; « Moi » dit comment les autoriser.');
+        return majCartePush();
+      }
       const cle = await clePublique();
       if (!cle) { E.push.etat = 'indisponible'; return majCartePush(); }
       const reg = await swPret();
@@ -2167,19 +2287,40 @@
       $$('[data-zone-push]').forEach(z => { z.dataset.etat = etat; z.innerHTML = cartePush(etat, z.dataset.zonePush); });
     });
   }
-  const ETAPES_IOS = `<ol class="etapes"><li>Dans Safari, touchez <b>Partager</b> <span class="ic-texte">${ICONES.partager}</span> en bas de l’écran.</li><li>Choisissez <b>Sur l’écran d’accueil</b>, puis <b>Ajouter</b>.</li><li>Ouvrez l’application <b>Les Crescite</b> depuis son icône.</li></ol>`;
+  const ETAPES_IOS = `<ol class="etapes">${HORS_SAFARI ? '<li>Ouvrez d’abord cette page dans <b>Safari</b> : depuis une autre application, l’iPhone ne l’installe pas. <button type="button" class="lien-btn" data-copier-adresse>Copier son adresse</button>, puis collez-la dans Safari.</li>' : ''}<li>Dans Safari, touchez <b>Partager</b> <span class="ic-texte">${ICONES.partager}</span> en bas de l’écran.</li><li>Choisissez <b>Sur l’écran d’accueil</b>, puis <b>Ajouter</b>.</li><li>Ouvrez l’application <b>Les Crescite</b> depuis son icône.</li></ol>`;
+  // ce qui suit « Activer » : la demande du navigateur, annoncée avant qu'elle paraisse
+  const ACCORD = 'Votre navigateur vous demandera votre accord.';
+  // où se lève un blocage, selon l'appareil
+  function debloquer() {
+    const ua = navigator.userAgent;
+    if (IOS) return 'Sur l’iPhone : <b>Réglages</b> → <b>Notifications</b> → <b>Les Crescite</b> → <b>Autoriser les notifications</b>.';
+    if (/Android/.test(ua)) return installee() ? 'Sur Android : un appui long sur l’icône des Crescite → <b>Infos sur l’appli</b> → <b>Notifications</b> → les autoriser.'
+      : 'Sur Android : le cadenas (ou l’icône des réglages) à gauche de l’adresse → <b>Autorisations</b> ou <b>Notifications</b> → <b>Autoriser</b>.';
+    return 'Sur l’ordinateur : l’icône à gauche de l’adresse (le cadenas, ou les réglages du site) → <b>Notifications</b> → <b>Autoriser</b> ; rechargez ensuite la page.';
+  }
   function cartePush(etat, ou) {
     const bascule = actif => `<div class="interrupteur"><span class="lib"><span id="lib-push">Recevoir les notifications sur cet appareil</span><small id="aide-push">${actif ? 'Activées : elles arrivent même application fermée.' : 'Feuilles de route, horaires changés, nouvelles dates : même application fermée.'}</small></span>
       <button type="button" role="switch" class="bascule" aria-checked="${actif}" aria-labelledby="lib-push" aria-describedby="aide-push" data-push></button></div>`;
+    // l'accueil : une invitation, tant que cet appareil peut les recevoir sans les avoir activées (et qu'on ne l'a pas fermée)
+    if (ou === 'accueil') {
+      if (etat !== 'inactif' || PREF.pushFermee) return '';
+      return `<section class="carte-action push-proposition push-accueil" aria-labelledby="t-push-accueil"><span class="ic-rond" aria-hidden="true">${ICONES.cloche}</span>
+        <div class="ca-texte"><h2 id="t-push-accueil">Les notifications sur cet appareil</h2><p class="aide">Une feuille de route publiée, des horaires changés, une nouvelle date : même application fermée. ${ACCORD}</p></div>
+        <button type="button" class="btn petit principal" data-push-activer>Activer</button><button type="button" class="bouton-rond fermer-install" data-fermer-push>${ICONES.croix}<span class="sr">Ne plus proposer les notifications</span></button></section>`;
+    }
     if (ou === 'notifs') {
+      if (etat === 'bloque') return `<section class="carte-action push-proposition" aria-label="Notifications sur cet appareil"><span class="ic-rond" aria-hidden="true">${ICONES.cloche}</span>
+        <div class="ca-texte"><b>Les notifications sont bloquées sur cet appareil</b><p class="aide">Elles restent lisibles ici. Pour les recevoir aussi sur l’appareil, autorisez-les dans ses réglages.</p></div>
+        <a class="btn petit" href="#/moi">Comment faire</a></section>`;
       if (etat !== 'inactif' && etat !== 'ios') return '';
       return `<section class="carte-action push-proposition" aria-label="Notifications sur cet appareil"><span class="ic-rond" aria-hidden="true">${ICONES.cloche}</span>
-        <div class="ca-texte"><b>Recevez-les aussi sur ${IOS ? 'votre iPhone' : 'cet appareil'}</b><p class="aide">${etat === 'ios' ? 'Installez d’abord l’application sur l’écran d’accueil : les notifications s’activent ensuite dans « Moi ».' : 'Même application fermée : une feuille de route publiée, des horaires changés.'}</p></div>
+        <div class="ca-texte"><b>Recevez-les aussi sur ${IOS ? 'votre iPhone' : 'cet appareil'}</b><p class="aide">${etat === 'ios' ? 'Installez d’abord l’application sur l’écran d’accueil : les notifications s’activent ensuite dans « Moi ».' : `Même application fermée : une feuille de route publiée, des horaires changés. ${ACCORD}`}</p></div>
         ${etat === 'ios' ? '<a class="btn petit" href="#/moi">Comment faire</a>' : '<button type="button" class="btn petit principal" data-push-activer>Activer</button>'}</section>`;
     }
     if (etat === 'actif' || etat === 'inactif') return bascule(etat === 'actif');
     if (etat === 'ios') return `<p>Sur iPhone et iPad, les notifications n’arrivent qu’à l’application installée sur l’écran d’accueil.</p>${ETAPES_IOS}<p class="aide">Puis revenez ici, dans « Moi », pour les activer.</p>`;
-    if (etat === 'bloque') return '<p class="message conseil">Les notifications sont bloquées pour cette application dans les réglages du navigateur (ou du téléphone). Autorisez-les, puis revenez ici.</p>';
+    if (etat === 'bloque') return `<p class="message conseil">Les notifications sont bloquées pour cette application dans les réglages du navigateur (ou du téléphone). Autorisez-les, puis revenez ici.</p>
+      <p class="aide">${debloquer()}</p><p><button type="button" class="btn petit" data-push-verifier>Vérifier à nouveau</button></p>`;
     if (etat === 'indisponible') return `<p class="aide">${E.notifsEtat === 'absent' ? 'Les notifications arrivent bientôt : dans l’application, onglet Notifications, et sur l’appareil.'
       : 'Les notifications sur l’appareil arrivent bientôt. En attendant, elles s’affichent ici, dans l’application.'}</p>`;
     if (etat === 'non') return '<p class="aide">Ce navigateur ne sait pas recevoir de notifications. Elles restent lisibles dans l’application, onglet Notifications.</p>';
@@ -2212,9 +2353,9 @@
   // ———— lire
   async function chargerPropositions() {
     if (E.moi == null) return;
-    const { data, error } = await sb.from('crescite_propositions')
+    const { data, error } = await vite(sb.from('crescite_propositions')
       .select('id, titre, message, statut, spectacle_id, cree_le, spectacle:crescite_spectacles(id, titre, slug), jours:crescite_propositions_jours(id, debut, fin, journee, reponses:crescite_propositions_reponses(personne_id, reponse, commentaire, repondu_le))')
-      .order('cree_le', { ascending: false }).limit(60);
+      .order('cree_le', { ascending: false }).limit(60));
     if (error) {
       if (dispoAbsente(error)) { E.dispo.etat = 'absent'; E.dispo.propositions = []; E.dispo.propositionsLues = true; majBadgePlanning(); return; }
       throw error;
@@ -2245,14 +2386,14 @@
   }
   async function chargerAgendas() {
     // jamais l'adresse (url) : elle s'écrit, elle ne se relit pas
-    const { data, error } = await sb.from('crescite_agendas_lies').select('id, nom, actif, derniere_synchro, erreur, nb_evenements, cree_le')
-      .eq('personne_id', E.moi).order('cree_le').order('id');
+    const { data, error } = await vite(sb.from('crescite_agendas_lies').select('id, nom, actif, derniere_synchro, erreur, nb_evenements, cree_le')
+      .eq('personne_id', E.moi).order('cree_le').order('id'));
     if (error) { if (dispoAbsente(error)) { E.dispo.etat = 'absent'; return null; } throw error; }
     E.dispo.agendas = data || [];
     return E.dispo.agendas;
   }
   async function chargerJeton() {
-    const { data, error } = await sb.from('crescite_personnes_privees').select('agenda_jeton').eq('personne_id', E.moi).maybeSingle();
+    const { data, error } = await vite(sb.from('crescite_personnes_privees').select('agenda_jeton').eq('personne_id', E.moi).maybeSingle());
     if (error) { if (dispoAbsente(error)) { E.dispo.etat = 'absent'; E.dispo.jeton = null; return null; } throw error; }
     E.dispo.jeton = (data && data.agenda_jeton) || null;
     return E.dispo.jeton;
@@ -2466,6 +2607,7 @@
   function brancherFormIndispo(edition) {
     const f = $('#f-indispo');
     if (!f) return;
+    garderForm(f);
     const du = $('#i-du', f), au = $('#i-au', f), de = $('#i-de', f), a = $('#i-a', f), motif = $('#i-motif', f);
     const typeDe = () => ($('input[name="type"]:checked', f) || {}).value || 'jour';
     f.addEventListener('change', e => {
@@ -2504,6 +2646,7 @@
       apresEcriture();
       if (id) { location.hash = '#/indisponibilites'; vueIndispos(E.route, { focus: false }); return; }
       f.reset(); f.dataset.type = 'jour'; $('#l-du', f).textContent = 'Le';
+      garderForm(f);
       majListeIndispos();
     });
   }
@@ -2531,11 +2674,10 @@
     afficher(r, TITRES.agendas, html, { focus });
     brancherFormAgenda();
     const lire = [];
-    if (E.dispo.agendas == null) lire.push(chargerAgendas().then(() => majZone('#zone-agendas', blocAgendas)));
-    if (E.dispo.jeton === undefined) lire.push(chargerJeton().then(() => { majZone('#zone-flux', blocFlux); verifierFlux(); }));
+    if (E.dispo.agendas == null) lire.push(chargerAgendas().then(() => majZone('#zone-agendas', blocAgendas), e => poserEchec('#zone-agendas', LECTURES.agendas, e, 'agendas')));
+    if (E.dispo.jeton === undefined) lire.push(chargerJeton().then(() => { majZone('#zone-flux', blocFlux); verifierFlux(); }, e => poserEchec('#zone-flux', LECTURES.flux, e, 'agendas')));
     else verifierFlux();
-    Promise.all(lire).catch(e => annoncer(`Vos agendas n’ont pas pu être lus : ${motsErreur(e) || 'réessayez'}.`, { erreur: true }))
-      .then(() => { if (E.dispo.etat === 'absent' && E.vue === 'agendas') vueAgendas(r, { focus: false }); });
+    Promise.all(lire).then(() => { if (E.dispo.etat === 'absent' && E.vue === 'agendas') vueAgendas(r, { focus: false }); });
   }
   const majZone = (s, f) => { const z = $(s); if (z && (E.vue === 'agendas')) z.innerHTML = f(); };
   function etatAgenda(a) {
@@ -2579,6 +2721,7 @@
   function brancherFormAgenda() {
     const f = $('#f-agenda');
     if (!f) return;
+    garderForm(f);
     const url = $('#a-url', f), nom = $('#a-nom', f);
     url.addEventListener('input', () => { effacerErreur(url); if (!nom.dataset.touche) nom.placeholder = nomAgenda(url.value); });
     nom.addEventListener('input', () => { nom.dataset.touche = '1'; });
@@ -2593,7 +2736,7 @@
         if (dispoAbsente(err)) { E.dispo.etat = 'absent'; return vueAgendas(E.route, { focus: false }); }
         return dire(zoneMessage(f), `L’agenda n’est pas relié : ${esc(err.code === '22023' ? 'cette adresse n’est pas une adresse d’agenda iCal (https://… ou webcal://…)' : motsErreur(err) || err.message || 'la base a refusé')}.`);
       }
-      url.value = ''; nom.value = ''; delete nom.dataset.touche;
+      url.value = ''; nom.value = ''; delete nom.dataset.touche; garderForm(f);
       zoneMessage(f).innerHTML = '';
       vibrer(10);
       await chargerAgendas().catch(() => {});
@@ -2628,7 +2771,7 @@
   }
   async function delierAgenda(id) {
     const a = (E.dispo.agendas || []).find(x => Number(x.id) === Number(id));
-    if (!confirm(`Délier « ${a ? a.nom : 'cet agenda'} » ? Les moments occupés lus dans cet agenda disparaîtront du planning.`)) return;
+    if (!(await confirmerAction({ titre: `Délier « ${a ? a.nom : 'cet agenda'} » ?`, texte: 'Les moments occupés lus dans cet agenda disparaîtront du planning.', ok: 'Délier l’agenda' }))) return;
     const { error } = await sb.from('crescite_agendas_lies').delete().eq('id', id).eq('personne_id', E.moi);
     if (error) return annoncer(`L’agenda n’est pas délié : ${motsErreur(error) || 'la base a refusé'}.`, { erreur: true });
     E.dispo.agendas = (E.dispo.agendas || []).filter(x => Number(x.id) !== Number(id));
@@ -2662,7 +2805,7 @@
     } catch (e) { /* hors connexion : rien à dire */ }
   }
   async function nouvelleCle() {
-    if (!confirm('Changer la clé ? L’ancien lien cessera de marcher : il faudra ajouter le nouveau dans votre agenda.')) return;
+    if (!(await confirmerAction({ titre: 'Changer la clé ?', texte: 'L’ancien lien cessera de marcher : il faudra ajouter le nouveau dans votre agenda.', ok: 'Changer la clé' }))) return;
     const { data, error } = await sb.rpc('crescite_nouveau_jeton_agenda');
     if (error) return annoncer(`La clé n’a pas changé : ${motsErreur(error) || 'la base a refusé'}.`, { erreur: true });
     E.dispo.jeton = data; E.dispo.fluxVerifie = null;
@@ -2688,7 +2831,7 @@
     const id = Number(c.dataset.commentaire);
     const p = (E.dispo.propositions || []).find(x => x.jours.some(j => j.id === id)), j = p && p.jours.find(x => x.id === id);
     if (!j) return;
-    if (j.moi && j.moi.reponse) { if ((j.moi.commentaire || '') !== c.value.trim()) repondre(id, j.moi.reponse, c.value.trim()); return; }
+    if (j.moi && j.moi.reponse) { if ((j.moi.commentaire || '') !== c.value.trim()) { garderForm(c.closest('[data-jour-prop]')); repondre(id, j.moi.reponse, c.value.trim()); } return; }
     const etat = c.closest('[data-jour-prop]') && c.closest('[data-jour-prop]').querySelector('.etat-reponse');
     if (etat && c.value.trim()) etat.textContent = 'Choisissez une réponse : votre mot partira avec elle.';
   });
@@ -2706,7 +2849,7 @@
       ${att.length ? `<section aria-labelledby="t-att"><h2 class="titre-section" id="t-att">À répondre</h2><ul class="liste-props">${att.map(carte).join('')}</ul></section>` : ''}
       ${autres.length ? `<section aria-labelledby="t-aut"><h2 class="titre-section" id="t-aut">${att.length ? 'Les autres' : 'Répondues ou closes'}</h2><ul class="liste-props">${autres.map(carte).join('')}</ul></section>` : ''}`;
     afficher(r, TITRES.propositions, html, { focus });
-    if (!E.dispo.propositionsLues) chargerPropositions().then(() => { if (E.vue === 'propositions') vuePropositions(r, { focus: false }); }).catch(() => {});
+    if (!E.dispo.propositionsLues) chargerPropositions().then(() => { if (E.vue === 'propositions') vuePropositions(r, { focus: false }); }).catch(e => poserEchec('#contenu', LECTURES.propositions, e, 'propositions'));
   }
   function vueProposition(r, { focus }) {
     if (E.dispo.etat === 'absent') return afficher(r, TITRES.proposition, `<div class="titre-vue"><h1>Proposition de dates</h1></div>${etatVide('calendrier', 'Bientôt dans l’application', 'Les propositions de dates arriveront ici, et par courriel.')}`, { focus });
@@ -2715,7 +2858,7 @@
       if (!E.dispo.propositionsLues || !E.dispo.relu) {
         afficher(r, TITRES.proposition, '<div class="titre-vue"><h1>Proposition de dates</h1></div><p class="chargement" role="status">Lecture de la proposition…</p>', { focus });
         E.dispo.relu = true;
-        chargerPropositions().then(() => { if (E.route && E.route.hash === r.hash) vueProposition(r, { focus: false }); }).catch(e => annoncer(`La proposition n’a pas pu être lue : ${motsErreur(e) || 'réessayez'}.`, { erreur: true }));
+        chargerPropositions().then(() => { if (E.route && E.route.hash === r.hash) vueProposition(r, { focus: false }); }).catch(e => { if (E.route && E.route.hash === r.hash) poserEchec('#contenu', LECTURES.proposition, e); });
         return;
       }
       return afficher(r, TITRES.proposition, `<div class="titre-vue"><h1>Proposition de dates</h1></div>${etatVide('calendrier', 'Cette proposition n’est pas (ou plus) pour vous', 'Elle a pu être retirée par l’administration. Vos propositions sont dans le planning.', '<p><a class="btn" href="#/propositions">Mes propositions</a></p>')}`, { focus });
@@ -2727,7 +2870,10 @@
       ${close ? '<p class="message conseil" role="status">Cette proposition est close : merci pour vos réponses.</p>' : `<p class="intro-prop">Pour ${p.jours.length > 1 ? 'chaque jour' : 'ce jour'}, dites si vous êtes libre. Vous pouvez changer d’avis tant que la proposition est ouverte.</p>`}
       <div id="jours-prop">${p.jours.filter(j => j.moi).map(j => jourProposition(p, j)).join('')}</div>`;
     afficher(r, TITRES.proposition, html, { focus });
-    if (E.dispo.mesIndispos == null) chargerMesIndispos().then(() => { if (E.route && E.route.hash === r.hash) $$('[data-jour-prop]').forEach(s => { const j = p.jours.find(x => x.id === Number(s.dataset.jourProp)); if (j) s.outerHTML = jourProposition(p, j); }); }).catch(() => {});
+    // un mot commencé pour l'administration ne se perd pas en partant (ne rien perdre) : sans réponse choisie, il ne part
+    // pas ; chaque jour est gardé, et de nouveau quand sa réponse s'enregistre
+    $$('[data-jour-prop]').forEach(garderForm);
+    if (E.dispo.mesIndispos == null) chargerMesIndispos().then(() => { if (E.route && E.route.hash === r.hash) $$('[data-jour-prop]').forEach(s => { const j = p.jours.find(x => x.id === Number(s.dataset.jourProp)); if (!j) return; const c = $('[data-commentaire]', s), mot = c ? c.value : null, sale = GG() && GG().saisie && GG().saisie(s); s.outerHTML = jourProposition(p, j); const s2 = $(`[data-jour-prop="${j.id}"]`); garderForm(s2); if (sale && mot != null && s2) { const c2 = $('[data-commentaire]', s2); if (c2) c2.value = mot; } }); }).catch(() => {});
   }
   function jourProposition(p, j) {
     const close = p.statut === 'close' || Date.parse(j.fin) <= Date.now(), rep = j.moi && j.moi.reponse;
@@ -2758,6 +2904,7 @@
     if (s) {
       const actif = document.activeElement && s.contains(document.activeElement) ? document.activeElement : null;
       s.outerHTML = jourProposition(p, j);
+      garderForm($(`[data-jour-prop="${jourId}"]`));
       const b = $(`[data-jour-prop="${jourId}"] [data-reponse="${reponse}"]`);
       if (b && !reduit()) b.classList.add('pop');
       if (b && (depuisBouton || actif)) { if (depuisBouton) b.focus({ preventScroll: true }); requestAnimationFrame(() => tt('confirmer', b)); }
@@ -3025,7 +3172,8 @@
         <div class="pied-form"><button type="submit" class="btn">Changer le mot de passe</button><p class="etat-form" id="etat-mdp" role="status"></p></div>
       </form>
       <section class="carte" aria-labelledby="t-sortir"><h2 id="t-sortir">Se déconnecter</h2><p class="intro">Ferme la session sur cet appareil, qui ne reçoit plus vos notifications. Vos autres appareils restent connectés.</p>
-        <p><button type="button" class="btn" data-sortir>${ICONES.sortir}Se déconnecter</button></p></section>`;
+        <p><button type="button" class="btn" data-sortir>${ICONES.sortir}Se déconnecter</button></p></section>
+      <p class="moi-aide"><button type="button" class="lien-btn" data-aide>Gestes et raccourcis</button></p>`;
     afficher(r, TITRES.moi, html, { focus });
     E.ficheSale = false;
     majCartePush();
@@ -3137,16 +3285,28 @@
         motif = b.dataset.motif;
       });
     });
-    // une boîte modale : le clavier y reste (Tab tourne), Échap la ferme, le focus revient au geste
-    const fermer = () => { fond.remove(); document.removeEventListener('keydown', clavier, true); if (declencheur && declencheur.isConnected) declencheur.focus(); };
+    // une boîte modale : le clavier y reste (Tab tourne), Échap la ferme, le focus revient au geste. Une précision écrite
+    // ne se perd pas : ✕, Annuler, Échap, le voile, changer de vue, fermer l'onglet posent la question (ne rien perdre)
+    garderForm(fond);
+    const changee = () => !!(GG() && GG().saisie && GG().saisie(fond));
+    const fermer = (force = false) => {
+      if (!fond.isConnected) return;
+      if (force !== true && changee()) { partirSansPerdre({ titre: 'Fermer sans envoyer ?', texte: 'L’alerte n’est pas partie : la précision écrite sera perdue.', ok: 'Fermer sans envoyer' }).then(oui => { if (oui) fermer(true); }); return; }
+      fond.remove(); document.removeEventListener('keydown', clavier, true); window.removeEventListener('hashchange', partir);
+      if (declencheur && declencheur.isConnected) declencheur.focus();
+    };
+    const partir = () => { if (!changee()) fermer(true); };
+    fond.modaleChangee = changee; fond.fermerModale = fermer;
+    window.addEventListener('hashchange', partir);
     function clavier(e) {
+      if (GG() && GG().question && GG().question()) return;   // la question est posée : sa boîte a le clavier
       if (e.key === 'Escape') { e.preventDefault(); fermer(); return; }
       if (e.key !== 'Tab') return;
       const xs = $$('button:not([disabled]), input', fond), i = xs.indexOf(document.activeElement);
       if (e.shiftKey && i <= 0) { e.preventDefault(); xs[xs.length - 1].focus(); } else if (!e.shiftKey && i === xs.length - 1) { e.preventDefault(); xs[0].focus(); }
     }
     document.addEventListener('keydown', clavier, true);
-    $$('[data-fermer-modale]', fond).forEach(b => b.addEventListener('click', fermer));
+    $$('[data-fermer-modale]', fond).forEach(b => b.addEventListener('click', () => fermer()));
     fond.addEventListener('click', e => { if (e.target === fond) fermer(); });
     $('.btn-choix.actif', fond).focus();
     const zone = $('#msg-retard', fond);
@@ -3159,14 +3319,14 @@
         // la base n'a pas (ou plus) la fonction : le geste disparaît, et on le dit
         if (fonctionAbsente(error)) {
           SONDES.signaler = 'absent';
-          fermer();
+          fermer(true);
           if (location.hash === `#/date/${d.id}`) router({ rafraichir: true });
           return annoncer('L’alerte de retard n’est pas encore installée dans la base de la compagnie : rien n’est parti. Prévenez l’équipe par téléphone.', { erreur: true });
         }
         return dire(zone, `L’alerte n’est pas partie : ${esc(raisonRetard(error))}.`);
       }
       const n = Number(data) || 0;
-      fermer();
+      fermer(true);
       if (!n) return annoncer('L’alerte n’a prévenu personne : personne d’autre sur cette date, ni à l’administration, n’a de compte dans l’espace de l’équipe. Appelez l’équipe.', { erreur: true });
       annoncer(`Alerte envoyée : ${pluriel(n, 'personne prévenue', 'personnes prévenues')}.`);
       vibrer(25);
@@ -3192,7 +3352,9 @@
   // une boîte modale : le clavier y reste (Tab tourne), Échap la ferme, le reste de la page est inerte ; le focus revient
   // au geste qui l'a ouverte. avantFermer() : faux, la boîte reste (une écriture en cours, des changements à garder) ;
   // fermer(true) passe outre. Changer de vue la ferme.
-  function ouvrirModale({ id, titre, icone = '', corps, declencheur = null, avantFermer = null }) {
+  // sale(fond) : la boîte a-t-elle changé (sans elle, ses champs depuis l'ouverture : GESTES.garder) ; changée, la fermer
+  // (✕, Annuler, Échap, le voile) pose la question, et changer de vue la laisse ouverte le temps de la question.
+  function ouvrirModale({ id, titre, icone = '', corps, declencheur = null, avantFermer = null, sale = null }) {
     $(`#${id}`)?.remove();
     const fond = document.createElement('div');
     fond.className = 'modale-fond';
@@ -3205,17 +3367,22 @@
     const app = $('#app');
     if (app) app.inert = true;
     document.documentElement.classList.add('modale-ouverte');
+    $$('form', fond).forEach(garderForm);
+    const changee = () => { try { return sale ? !!sale(fond) : !!(GG() && GG().saisie && GG().saisie(fond)); } catch (e) { return false; } };
     const fermer = (force = false) => {
       if (!fond.isConnected) return;
       if (!force && avantFermer && avantFermer() === false) return;
+      if (!force && changee()) { partirSansPerdre({ titre: 'Fermer sans enregistrer ?', ok: 'Fermer sans enregistrer' }).then(oui => { if (oui) fermer(true); }); return; }
       fond.remove();
       document.removeEventListener('keydown', clavier, true);
       window.removeEventListener('hashchange', partir);
       if (!$('.modale-fond')) { if (app) app.inert = false; document.documentElement.classList.remove('modale-ouverte'); }
       if (declencheur && declencheur.isConnected) declencheur.focus({ preventScroll: true });
     };
-    const partir = () => fermer(true);
+    const partir = () => { if (!changee()) fermer(true); };
+    fond.modaleChangee = changee; fond.fermerModale = fermer;
     function clavier(e) {
+      if (GG() && GG().question && GG().question()) return;   // la question est posée : la boîte du dessus a le clavier
       if (e.key === 'Escape') { e.preventDefault(); fermer(); return; }
       if (e.key !== 'Tab') return;
       const xs = $$('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href]', fond).filter(x => x.getClientRects().length);
@@ -3339,8 +3506,8 @@
     const { fond, fermer } = ouvrirModale({ id: 'modale-date', titre: 'Modifier cette date', icone: ICONES.crayon, corps, declencheur,
       avantFermer: () => {
         if (enCours) { annoncer('Un instant : l’enregistrement est en cours.'); return false; }
-        return !sale(fond) || confirm('Vos modifications de cette date ne sont pas enregistrées. Les abandonner ?');
-      } });
+        return true;
+      }, sale });
     const form = $('#f-modif-date', fond), zone = $('#msg-modif-date', fond);
     const redessinerPrecisions = (focus = null) => {
       $('#pm-liste', fond).innerHTML = precisions.map(lignePrecision).join('');
@@ -3518,10 +3685,11 @@
       relireApres(retour);
     });
     $('[data-supprimer-document]', form)?.addEventListener('click', async ev => {
-      if (!confirm(`Supprimer « ${x.titre} » des fichiers de travail ? L’équipe du spectacle en est prévenue ; l’administration garde le fichier et peut le rétablir.`)) return;
+      const bouton = ev.currentTarget;
+      if (!(await confirmerAction({ titre: `Supprimer « ${x.titre} » des fichiers de travail ?`, texte: 'L’équipe du spectacle en est prévenue ; l’administration garde le fichier et peut le rétablir.', ok: 'Supprimer le fichier' }))) return;
       enCours = true;
       let r;
-      try { r = await occupe(ev.currentTarget, 'Suppression…', () => sb.rpc('crescite_supprimer_document', { doc: x.id })); }
+      try { r = await occupe(bouton, 'Suppression…', () => sb.rpc('crescite_supprimer_document', { doc: x.id })); }
       catch (err) { r = { error: err }; }
       finally { enCours = false; }
       if (r.error) {
@@ -3794,6 +3962,7 @@
   async function initVueFrais() {
     const f = $('#f-nouvelle-frais');
     if (!f) return;
+    garderForm(f);
     const inpPhoto = $('#nf-photo', f);
     const zoneApercu = $('#nf-apercu-zone', f);
     const imgApercu = $('#nf-apercu-img', f);
@@ -3853,7 +4022,7 @@
         if (errNote) return sale(`La note de frais n’est pas enregistrée : ${motsErreur(errNote)}. Le justificatif est envoyé : réessayez, il ne repartira pas.`);
         envoye = null; fichierSelectionne = null;
         envolerJustificatif(imgApercu, zoneApercu.hidden);
-        f.reset();
+        f.reset(); garderForm(f);
         zoneApercu.hidden = true;
         etat.className = 'etat-form ok';
         etat.textContent = 'Note de frais enregistrée.';
@@ -3902,7 +4071,12 @@
       $('#tot-attente').textContent = euros(totAttente);
       if (neuve && !reduit()) { const t = $('#tot-attente'); t.classList.remove('pop'); void t.offsetWidth; t.classList.add('pop'); }
       $('#tot-rembourse').textContent = euros(totRembourse);
-      if (!data || !data.length) { zone.innerHTML = '<p class="aide">Aucune note de frais pour le moment.</p>'; return; }
+      // rien encore : la phrase, et le geste utile, le formulaire juste au-dessus (au téléphone, il est loin)
+      if (!data || !data.length) {
+        zone.innerHTML = '<p class="aide">Aucune note de frais pour le moment.</p><p><button type="button" class="btn petit" data-vers-frais>Ajouter un justificatif</button></p>';
+        $('[data-vers-frais]', zone).addEventListener('click', () => { const c = $('#nf-date'); if (!c) return; c.scrollIntoView({ block: 'center', behavior: reduit() ? 'auto' : 'smooth' }); c.focus({ preventScroll: true }); });
+        return;
+      }
 
       E.fraisLus = data;
       zone.innerHTML = data.map((item, i) => {
@@ -4014,8 +4188,7 @@
       const proposer = w => {
         if (!w || !navigator.serviceWorker.controller) return;     // la première installation : rien à proposer
         annoncer('Nouvelle version disponible.', { persistant: true, action: { libelle: 'Mettre à jour', f: () => {
-          if (E.ficheSale && !confirm('Vos modifications de fiche ne sont pas enregistrées. Mettre à jour quand même ?')) return;
-          E.ficheSale = false; E.majDemandee = true; w.postMessage({ type: 'skipWaiting' });
+          partirSansPerdre({ titre: 'Mettre à jour sans enregistrer ?', ok: 'Mettre à jour' }).then(oui => { if (!oui) return; E.ficheSale = false; E.majDemandee = true; w.postMessage({ type: 'skipWaiting' }); });
         } } });
       };
       if (reg.waiting) proposer(reg.waiting);
@@ -4072,14 +4245,18 @@
   // vue avec le pouce ; assez loin, ou assez vite, elle part et la vue d'avant revient (revenir). Un défilement vertical, un
   // élément qui défile de côté, la feuille de route et la carte ne le déclenchent pas.
   // la date d'avant, celle d'après (toute la tournée, dans l'ordre ; sur une feuille de route, les dates qui en ont une) :
-  // deux boutons nommés sous la page, ← → au clavier, un balayage au doigt (brancherGestes)
-  function navDates(d, genre = 'date') {
+  // deux boutons sous le haut de la page et de nouveau à son pied (une page de date est longue au téléphone), ← → au
+  // clavier, un balayage au doigt (brancherGestes). Chaque bouton dit ce qu'il ouvre (« Date suivante »), puis le jour et
+  // le lieu (« jeu. 19 nov. · Paris ») ; le spectacle s'y ajoute pour le lecteur d'écran et l'infobulle. L'adresse et le
+  // titre de l'onglet suivent la date ouverte (router, majTitre).
+  function navDates(d, genre = 'date', ou = 'haut') {
     if (typeof GESTES === 'undefined' || !GESTES) return '';
     const xs = E.dates.filter(x => genre === 'date' || x.feuille).sort((a, b) => (a.debut < b.debut ? -1 : a.debut > b.debut ? 1 : a.id - b.id));
     const i = xs.findIndex(x => x.id === d.id);
     if (i < 0 || xs.length < 2) return '';
-    const v = x => (x ? { href: `#/${genre}/${x.id}`, titre: `${jourCourt(x.debut)} · ${x.spectacle?.titre || 'Date'}` } : null);
-    return `<nav class="nav-dates">${GESTES.precSuiv({ prec: v(xs[i - 1]), suiv: v(xs[i + 1]), libelle: x => x.titre, classe: 'btn petit', axe: 'horizontal', texte: true, nom: genre === 'date' ? 'Date précédente, date suivante' : 'Feuille précédente, feuille suivante' })}</nav>`;
+    const v = x => (x ? { href: `#/${genre}/${x.id}`, titre: [jourCourt(x.debut), x.lieu ? x.lieu.commune || x.lieu.nom : ''].filter(Boolean).join(' · '), spectacle: x.spectacle?.titre || '' } : null);
+    const quoi = genre === 'date' ? { prec: 'Date précédente', suiv: 'Date suivante', aucun: 'aucune' } : { prec: 'Feuille précédente', suiv: 'Feuille suivante', aucun: 'aucune' };
+    return `<nav class="nav-dates${ou === 'bas' ? ' nav-dates-bas' : ''}" aria-label="${genre === 'date' ? 'D’une date à l’autre' : 'D’une feuille à l’autre'}">${GESTES.precSuiv({ prec: v(xs[i - 1]), suiv: v(xs[i + 1]), libelle: x => x.titre, long: x => [x.titre, x.spectacle].filter(Boolean).join(', '), quoi, classe: 'btn petit', axe: 'horizontal', texte: true, nom: genre === 'date' ? 'Date précédente, date suivante' : 'Feuille précédente, feuille suivante' })}</nav>`;
   }
   // les gestes (../admin/gestes.js) : un appui long ou un clic droit sur un billet, une notification, un document, une
   // proposition ouvre ce qu'on peut en faire ; ← → et le balayage passent à la date (ou la feuille) d'avant, d'après
@@ -4227,6 +4404,47 @@
     G.clavierPrecSuiv(document, { modif: 'aucun', portee: '#contenu' });
     G.glisser(document.body, { gauche: () => $('#contenu .nav-dates [data-gps="1"]:not([disabled])')?.click(), droite: () => $('#contenu .nav-dates [data-gps="-1"]:not([disabled])')?.click(),
       ignorer: t => !!(t.closest && t.closest('[data-pl-defile], .carte-tournee, .frise, .feuille-cadre, .liste-notifs, [data-defile]')) });
+    document.addEventListener('keydown', e => { if (G.toucheAide(e) && E.pret) { e.preventDefault(); ouvrirAide(); } });
+  }
+  // ---- l'aide (« ? ») : les raccourcis de l'espace, rangés par contexte, d'après ce qui existe (ici et dans gestes.js,
+  // planning.js) ; au doigt, les gestes à la place (le retour depuis le bord et la notification glissée seulement quand
+  // l'appareil ne demande pas moins d'animations : ils dorment sinon). La touche « ? » hors d'un champ, « Raccourcis » au
+  // pied de la colonne à l'ordinateur, « Gestes et raccourcis » au bas de « Moi ». Le contexte ouvert vient d'abord.
+  function ouvrirAide() {
+    if (typeof GESTES === 'undefined' || !GESTES || !GESTES.aide) return;
+    const r = E.route || {}, date = r.k === 'date' || r.k === 'feuille', planning = r.onglet === 'planning';
+    if (GESTES.tactile()) return GESTES.aide({ titre: 'Gestes et raccourcis', intro: 'Au doigt, dans votre espace :', groupes: [
+      { titre: 'Partout', lignes: [
+        { g: 'Appui long', d: `Sur un billet, un horaire, le lieu, une personne, un document, une notification : ce qu’on peut en faire${E.admin ? ', et le modifier' : ''}` },
+        { g: 'Tirer vers le bas', d: 'En haut de la page : relire votre espace' },
+        reduit() ? null : { g: 'Glisser depuis le bord gauche', d: 'Revenir à la page d’avant' },
+        { g: 'La pastille', d: 'En haut : votre espace est-il à jour ? La toucher le relit' }] },
+      { titre: 'Une date, une feuille de route', ici: date, lignes: [
+        { g: 'Balayer', d: 'Vers la gauche : la date suivante ; vers la droite : la précédente' }] },
+      { titre: 'Le planning', ici: planning, lignes: [
+        { g: 'Balayer', d: 'Vers la gauche : la période suivante ; vers la droite : la précédente' }] },
+      { titre: 'Les notifications', ici: r.k === 'notifications', lignes: [
+        reduit() ? null : { g: 'Glisser de côté', d: 'Marquer une notification comme lue' },
+        { g: 'Appui long', d: 'L’ouvrir, la marquer lue, tout marquer lu, l’effacer' }] },
+    ] });
+    GESTES.aide({ titre: 'Raccourcis clavier', groupes: [
+      { titre: 'Partout', lignes: [
+        { t: [['?']], d: 'Montrer ces raccourcis' },
+        { t: [['Échap']], d: 'Fermer une boîte, un menu, une feuille' },
+        { t: [['Maj', 'F10'], ['Menu']], d: 'Les actions de l’élément choisi, comme le clic droit' },
+        { t: [['Tab']], d: 'En tête de page : « Aller au contenu »' }] },
+      { titre: 'Une date, une feuille de route', ici: date, lignes: [
+        { t: [['←'], ['→']], d: 'La date précédente, la suivante' }] },
+      { titre: 'Le planning', ici: planning, lignes: [
+        { t: [['←'], ['→'], ['↑'], ['↓']], d: 'D’un jour à l’autre dans la grille' },
+        { t: [['Page ↑'], ['Page ↓']], d: 'La période précédente, la suivante' },
+        { t: [['Entrée']], d: 'Les actions du jour choisi' },
+        { t: [['Échap']], d: 'Refermer le détail' }] },
+      { titre: 'Un menu', lignes: [
+        { t: [['↑'], ['↓']], d: 'D’une action à l’autre (Début, Fin aux bouts)' },
+        { t: [['Entrée']], d: 'Faire l’action' },
+        { t: [['Échap']], d: 'Fermer ; le focus revient où il était' }] },
+    ] });
   }
   // ================================================================================================ modifier depuis le téléphone
   /* L'appui long (brancherGestes) modifie presque tout, quand le compte administre (E.admin) : la date (statut, nature,
@@ -4309,7 +4527,7 @@
     await apresModif(annulee ? 'Séance annulée : l’équipe est prévenue.' : 'Séance rétablie.');
   }
   async function retirerSeances(d, ids) {
-    if (!confirm(`Retirer ${ids.length > 1 ? 'ces séances' : 'cette séance'} de la date ?`)) return;
+    if (!(await confirmerAction({ titre: `Retirer ${ids.length > 1 ? 'ces séances' : 'cette séance'} de la date ?`, ok: ids.length > 1 ? 'Retirer les séances' : 'Retirer la séance' }))) return;
     const { error } = await sb.from('crescite_representations').delete().in('id', ids);
     if (error) return annoncer(`Séance non retirée : ${texteErreur(error)}.`, { erreur: true });
     await apresModif('Séance retirée.');
@@ -4420,7 +4638,7 @@
     } });
   }
   async function supprimerDate(d) {
-    if (!confirm(`Supprimer « ${titreDate(d)} », ses séances, son équipe et sa feuille de route ?`)) return;
+    if (!(await confirmerAction({ titre: `Supprimer « ${titreDate(d)} » ?`, texte: 'Ses séances, son équipe et sa feuille de route partent avec elle.', ok: 'Supprimer la date' }))) return;
     const { error } = await sb.from('crescite_dates').delete().eq('id', d.id);
     if (error) return annoncer(`Date non supprimée : ${texteErreur(error)}.`, { erreur: true });
     if (location.hash === `#/date/${d.id}` || location.hash === `#/feuille/${d.id}`) location.hash = '#/saison';
@@ -4457,7 +4675,7 @@
     } });
   }
   async function supprimerFrais(item) {
-    if (!confirm(`Supprimer cette note de frais (${euros(item.montant_ttc)}) ?`)) return;
+    if (!(await confirmerAction({ titre: `Supprimer cette note de frais (${euros(item.montant_ttc)}) ?`, ok: 'Supprimer la note de frais' }))) return;
     const { error } = await sb.from('crescite_notes_frais').delete().eq('id', item.id);
     if (error) return annoncer(`Note non supprimée : ${texteErreur(error)}.`, { erreur: true });
     annoncer('Note de frais supprimée.');
@@ -4556,7 +4774,7 @@
     } });
   }
   async function supprimerDocument(x) {
-    if (!confirm(`Supprimer « ${x.titre} »${x.fichier ? ' et son fichier' : ''} ?`)) return;
+    if (!(await confirmerAction({ titre: `Supprimer « ${x.titre} »${x.fichier ? ' et son fichier' : ''} ?`, ok: 'Supprimer le document' }))) return;
     const { error } = await sb.from('crescite_documents').delete().eq('id', x.id);
     if (error) return annoncer(`Document non supprimé : ${texteErreur(error)}.`, { erreur: true });
     if (x.fichier && !fichierPartage(x, x.fichier)) await retirerFichier(x.pour, x.fichier);
@@ -4702,7 +4920,7 @@
     const Fo = outilOuRien(); if (!Fo) return;
     const c = Fo.contenu(f, contexte(d)), b = c.blocs.find(x => String(x.id) === String(id));
     if (!b) return;
-    if (!confirm(`Retirer cette ligne de la feuille de route ?\n« ${texteDuBloc(Fo, b).slice(0, 80)} »`)) return;
+    if (!(await confirmerAction({ titre: 'Retirer cette ligne de la feuille de route ?', texte: `« ${texteDuBloc(Fo, b).slice(0, 80)} »`, ok: 'Retirer la ligne' }))) return;
     const r = await ecrireFeuille(d, f, { contenu: { ...c, blocs: c.blocs.filter(x => x !== b), pages: (c.pages || []).filter(p => String(p) !== String(id)) } }, 'Ligne retirée.');
     if (r !== true) annoncer(`Ligne non retirée : ${r}.`, { erreur: true });
   }
@@ -4721,7 +4939,7 @@
     if (res !== true) annoncer(`Mise à jour impossible : ${res}.`, { erreur: true });
   }
   async function depublierFeuille(d, f) {
-    if (!confirm('Repasser la feuille de route en brouillon ? L’équipe ne la verra plus, jusqu’à sa republication.')) return;
+    if (!(await confirmerAction({ titre: 'Repasser la feuille de route en brouillon ?', texte: 'L’équipe ne la verra plus, jusqu’à sa republication.', ok: 'Repasser en brouillon' }))) return;
     const r = await ecrireFeuille(d, f, { statut: 'brouillon' }, 'Feuille repassée en brouillon : l’équipe ne la voit plus.');
     if (r !== true) return annoncer(`Impossible : ${r}.`, { erreur: true });
     if (location.hash === `#/feuille/${d.id}`) location.hash = `#/date/${d.id}`;
@@ -4883,7 +5101,7 @@
 
   // ================================================================================================ actions
   async function sortir() {
-    if (E.ficheSale && !confirm('Vos modifications de fiche ne sont pas enregistrées. Se déconnecter quand même ?')) return;
+    if (!(await partirSansPerdre({ titre: 'Se déconnecter sans enregistrer ?', ok: 'Se déconnecter' }))) return;
     E.ficheSale = false; E.sortieVoulue = true;
     // cet appareil cesse de recevoir les notifications de cette personne (hors connexion : la fonction d'envoi retirera
     // l'abonnement à son premier échec)
@@ -4928,7 +5146,8 @@
       await redessiner();
       if (!discret) annoncer('Votre espace est à jour.');
     })();
-    try { await E.rafraichit; } finally { E.rafraichit = null; if (bouton) bouton.classList.remove('tourne'); }
+    majTemoin();
+    try { await E.rafraichit; } finally { E.rafraichit = null; if (bouton) bouton.classList.remove('tourne'); majTemoin(); }
   }
   // la vue ouverte, redessinée avec les données relues, sans perdre sa place : défilement, saisons ouvertes
   async function redessiner() {
@@ -4972,13 +5191,20 @@
       // Après un échec, supabase-js ne redemande pas avant une minute (lastRefreshFailure) : ce geste voulu passe outre.
       if (sb.auth && 'lastRefreshFailure' in sb.auth) sb.auth.lastRefreshFailure = null;
       const { error } = await sb.auth.getSession();
-      if (error && voulu) annoncer(`Toujours hors connexion : ${motsErreur(error)}.`, { erreur: true });
+      if (error && voulu) annoncer(`Toujours hors ligne : ${motsErreur(error)}.`, { erreur: true });
       return;
     }
     if (!E.pret) { E.uid = null; return demarrer(); }
     return rafraichir({ discret: !voulu });
   }
-  window.addEventListener('online', () => { if (E.horsLigne) reessayer(); });
+  // le réseau tombe : l'espace le dit tout de suite (le bandeau, le témoin), sans attendre qu'une lecture échoue ; il revient :
+  // « Reconnexion… », l'espace se relit, puis « À jour »
+  window.addEventListener('offline', () => { if (E.pret && !E.horsLigne) { E.horsLigne = E.chargeLe || Date.now(); bandeauEtat(); } else majTemoin(); });
+  window.addEventListener('online', async () => {
+    if (!E.horsLigne && !E.sansSession) return majTemoin();
+    E.reconnexion = true; majTemoin();
+    try { await reessayer(); } finally { E.reconnexion = false; majTemoin(); }
+  });
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible') return;
     majDecomptes(); majFrises();
@@ -4986,7 +5212,7 @@
     else if (E.pret && !E.sansSession && E.session && E.notifsEtat === 'ok') chargerNotifs({ signaler: true }).catch(() => {});
   });
   // le temps qui passe : décomptes et frises chaque demi-minute ; les notifications chaque minute si le temps réel manque
-  setInterval(() => { if (document.visibilityState === 'visible') { majDecomptes(); majFrises(); } }, 30000);
+  setInterval(() => { if (document.visibilityState === 'visible') { majDecomptes(); majFrises(); majTemoin(); } }, 30000);
   setInterval(() => {
     if (document.visibilityState !== 'visible' || !E.pret || E.sansSession || !E.session || E.notifsEtat !== 'ok' || E.tempsReel === 'SUBSCRIBED') return;
     chargerNotifs({ signaler: true }).catch(() => {});
@@ -5011,6 +5237,7 @@
     if (t.matches('[data-notif]')) { marquerLue(Number(t.dataset.notif)); if (t.classList.contains('bandeau-notif')) t.classList.remove('visible'); return; }
     if (t.matches('[data-sortir]')) return sortir();
     if (t.matches('[data-reessayer]')) return occupe(t, 'Un instant…', () => reessayer(true));
+    if (t.matches('[data-relire]') && E.route) { vibrer(6); VUES[E.route.k](E.route, { focus: true }); return; }
     if (t.matches('[data-actualiser]')) { vibrer(8); return reessayer(true); }
     if (t.matches('[data-retard]')) return ouvrirModaleRetard(Number(t.dataset.retard), t);
     if (t.matches('[data-modifier-date]')) return ouvrirModaleDate(Number(t.dataset.modifierDate), t);
@@ -5053,9 +5280,12 @@
       try { await repondre(id, t.dataset.reponse, c ? c.value.trim() : '', { depuisBouton: true }); } finally { if (t.isConnected) t.disabled = false; }
       return;
     }
+    if (t.matches('[data-aide]')) return ouvrirAide();
     if (t.matches('[data-installer-barre]')) { vibrer(6); return E.installer ? installer() : ouvrirModaleInstallation(t); }
     if (t.matches('[data-installer]')) return installer();
     if (t.matches('[data-fermer-install]')) { garderPref('installFermee', true); majInstallation(); return; }
+    if (t.matches('[data-fermer-push]')) { garderPref('pushFermee', true); $$('[data-zone-push="accueil"]').forEach(z => z.remove()); return; }
+    if (t.matches('[data-copier-adresse]')) return copier(`${location.origin}${location.pathname}`, '', 'Adresse copiée : collez-la dans Safari.');
     if (t.matches('[data-aide-ios]')) { const z = document.getElementById(t.getAttribute('aria-controls')), ouvrir = t.getAttribute('aria-expanded') !== 'true'; if (z) z.hidden = !ouvrir; t.setAttribute('aria-expanded', String(ouvrir)); return; }
     if (t.matches('[data-fichier]')) {
       const chemin = t.dataset.fichier;

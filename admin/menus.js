@@ -126,9 +126,15 @@
       a.actif ? { libelle: 'Désactiver', danger: true, icone: ICO.cache, faire: () => ecrire(sb.from('crescite_acces_pro').update({ actif: false }).eq('id', a.id).select().single(), 'Invitation désactivée.', 'Changement impossible', data => remplacerLigne(E.acces, data)) }
         : { libelle: 'Réactiver', icone: ICO.oeil, faire: () => prolonger(0) }, ...liens(href)];
   }
+  // clore une proposition : tout de suite, sans question ; l'annonce porte « Annuler », qui la rouvre
+  async function clore(p) {
+    const statut = v => sb.from('crescite_propositions').update({ statut: v }).eq('id', p.id);
+    if (!(await ecrire(statut('close'), null, 'Clôture impossible', () => { p.statut = 'close'; }))) return;
+    annoncer('Proposition close : les réponses sont arrêtées.', { libelle: 'Annuler', delai: 8000, action: () => ecrire(statut('ouverte'), 'Proposition rouverte : chacun peut de nouveau répondre.', 'Réouverture impossible', () => { p.statut = 'ouverte'; }) });
+  }
   function actionsProposition(p) {
     const href = `#/planning/proposition/${p.id}`;
-    return [location.hash === href ? null : ouvrirA(href, 'Ouvrir le suivi'), p.statut === 'ouverte' ? { libelle: 'Clore la proposition', detail: 'sans créer de date', icone: ICO.croix, faire: () => { if (confirm(`Clore « ${p.titre} » ?`)) ecrire(sb.from('crescite_propositions').update({ statut: 'close' }).eq('id', p.id), 'Proposition close.', 'Clôture impossible', () => { p.statut = 'close'; }); } } : null,
+    return [location.hash === href ? null : ouvrirA(href, 'Ouvrir le suivi'), p.statut === 'ouverte' ? { libelle: 'Clore la proposition', detail: 'sans créer de date', icone: ICO.croix, faire: () => clore(p) } : null,
       { libelle: 'Proposer d’autres dates…', href: '#/planning/proposer', icone: ICO.plus }, ...liens(href)];
   }
   function actionsSeance(s) {
@@ -301,6 +307,86 @@
   if (typeof APRES_VUE !== 'undefined') APRES_VUE.push(poserPrecSuiv);
   let minuteurPs = null;
   new MutationObserver(() => { if ($('#vue .titre-ed') && !$('#vue .titre-ed .gps')) { clearTimeout(minuteurPs); minuteurPs = setTimeout(poserPrecSuiv, 60); } }).observe(document.body, { childList: true, subtree: true });
+
+  // ===================================================================================================== l'aide : « ? »
+  /* Les raccourcis de l'administration, rangés par contexte, d'après ce qui existe (index.html, gestes.js, tableau.js,
+     selection.js, tiroir.js, planning.js) : la touche « ? » hors d'un champ, le bouton « ? » de l'en-tête, « Gestes et
+     raccourcis » dans « Plus » au téléphone. Le contexte ouvert (le tableau de bord, une liste, une fiche, le tableur, le
+     planning, la diffusion) vient d'abord, marqué « ici ». Au doigt (un écran tactile), les gestes à la place des touches. */
+  const CMD = typeof SUR_MAC !== 'undefined' && SUR_MAC ? '⌘' : 'Ctrl';
+  function groupesClavier(h, fiche, liste) {
+    return [
+      { titre: 'Partout', lignes: [
+        { t: [[CMD, 'K']], d: 'Chercher une date, une personne, un lieu, une action' },
+        { t: [['?']], d: 'Montrer ces raccourcis' },
+        { t: [['Échap']], d: 'Fermer le tiroir, le menu, la recherche, la sélection' },
+        { t: [['Maj', 'F10'], ['Menu']], d: 'Les actions de l’élément choisi, comme le clic droit' },
+        { t: [['Tab']], d: 'En tête de page : « Aller au contenu »' }] },
+      { titre: 'Une liste', ici: liste, lignes: [
+        { t: [['↑'], ['↓']], d: 'La ligne précédente, la suivante (← → aussi)' },
+        { t: [['Début'], ['Fin']], d: 'La première ligne, la dernière' },
+        { t: [['Entrée']], d: 'Ouvrir la fiche' },
+        { t: [['Maj', 'clic']], d: 'Sélectionner plusieurs lignes, puis agir sur toutes' },
+        { t: [['Espace']], d: 'Pendant une sélection : prendre ou laisser la ligne' }] },
+      { titre: 'Une fiche', ici: fiche, lignes: [
+        { t: [['Alt', '↑'], ['Alt', '↓']], d: 'La fiche précédente, la suivante, dans l’ordre de la liste' },
+        { t: [[CMD, 'S']], d: 'Enregistrer' },
+        { t: [['Échap']], d: 'Fermer le tiroir (le dernier ouvert)' }] },
+      { titre: 'Le tableau de bord', ici: h === '#/accueil', lignes: [
+        { t: [['J'], ['K']], d: 'La ligne à traiter suivante, la précédente' },
+        { t: [['Entrée']], d: 'La traiter sur place' },
+        { t: [['Échap']], d: 'Refermer, ou lever le filtre d’un spectacle' }] },
+      { titre: 'La recherche', lignes: [
+        { t: [['↑'], ['↓']], d: 'Choisir un résultat' },
+        { t: [['Entrée']], d: 'L’ouvrir' },
+        { t: [['Échap']], d: 'Fermer' }] },
+      { titre: 'Le tableur', ici: h.startsWith('#/representations/tableur'), lignes: [
+        { t: [['↑'], ['↓'], ['←'], ['→']], d: 'D’une case à l’autre (Tab aussi) ; avec Maj, étendre la sélection' },
+        { t: [['Entrée'], ['F2']], d: 'Écrire dans la case ; Entrée de nouveau l’enregistre' },
+        { t: [['Échap']], d: 'Annuler la saisie' },
+        { t: [['Suppr']], d: 'Vider la case' },
+        { t: [[CMD, 'Z']], d: 'Annuler la dernière écriture' },
+        { t: [[CMD, 'A']], d: 'Tout sélectionner' }] },
+      { titre: 'Le planning', ici: h.startsWith('#/planning'), lignes: [
+        { t: [['←'], ['→'], ['↑'], ['↓']], d: 'D’un jour à l’autre dans la grille' },
+        { t: [['Page ↑'], ['Page ↓']], d: 'La période précédente, la suivante' },
+        { t: [['Entrée']], d: 'Les actions du jour choisi' },
+        { t: [['Échap']], d: 'Refermer le détail' }] },
+      { titre: 'Un menu', lignes: [
+        { t: [['↑'], ['↓']], d: 'D’une action à l’autre (Début, Fin aux bouts)' },
+        { t: [['Entrée']], d: 'Faire l’action' },
+        { t: [['Échap']], d: 'Fermer ; le focus revient où il était' }] },
+    ];
+  }
+  function groupesDoigt(h) {
+    return [
+      { titre: 'Partout', lignes: [
+        { g: 'Appui long', d: 'Sur une ligne, une carte, une tuile : ce qu’on peut en faire, en feuille depuis le bas' },
+        { g: '« + »', d: 'Créer : une date, une fiche, un lieu, une opportunité, une proposition, une séance' },
+        { g: '« Plus »', d: 'Les autres rubriques, la carte, la corbeille, la recherche, le compte' },
+        { g: 'La loupe', d: 'Chercher une date, une personne, un lieu' },
+        { g: 'La pastille', d: 'En haut : la base est-elle à jour ? La toucher la relit' }] },
+      { titre: 'Une fiche', ici: !!$('#vue .titre-ed .gps'), lignes: [
+        { g: 'Précédent, suivant', d: 'Les deux boutons du titre : la fiche d’avant, d’après, dans l’ordre de la liste' }] },
+      { titre: 'Le tableau de bord', ici: h === '#/accueil', lignes: [
+        { g: 'L’éclair', d: 'Traiter une ligne sur place' },
+        { g: 'Appui long sur une tuile', d: 'Ses réglages, sa largeur, la masquer' }] },
+      { titre: 'Le planning', ici: h.startsWith('#/planning'), lignes: [
+        { g: 'Balayer', d: 'Vers la gauche : la période suivante ; vers la droite : la précédente' }] },
+      { titre: 'La diffusion', ici: h.startsWith('#/diffusion'), lignes: [
+        { g: 'Les flèches d’une carte', d: 'L’étape d’avant, d’après (à la souris, la carte se glisse aussi d’une colonne à l’autre)' },
+        { g: 'Appui long sur une carte', d: 'Relance faite, reporter la relance, le courriel' }] },
+    ];
+  }
+  function ouvrirAide(rendre = null) {
+    const h = location.hash || '#/accueil', tiroir = typeof TIROIR !== 'undefined' && TIROIR.ouvert();
+    const fiche = tiroir || !!$('#vue .titre-ed'), liste = !fiche && !!$('#vue [data-liste] a.ligne, #vue .tb-l');
+    const doigt = G.tactile();
+    G.aide({ titre: doigt ? 'Gestes et raccourcis' : 'Raccourcis clavier', intro: doigt ? 'Au doigt, dans l’administration :' : '', groupes: doigt ? groupesDoigt(h) : groupesClavier(h, fiche, liste && h !== '#/accueil'), rendre });
+  }
+  window.ouvrirAide = ouvrirAide;
+  document.addEventListener('keydown', e => { if (G.toucheAide(e) && typeof E !== 'undefined' && E.pret) { e.preventDefault(); ouvrirAide(); } });
+  document.addEventListener('click', e => { if (e.target.closest?.('[data-aide]')) { e.preventDefault(); ouvrirAide(); } });
 
   // ===================================================================================================== styles
   document.head.insertAdjacentHTML('beforeend', `<style id="styles-menus">

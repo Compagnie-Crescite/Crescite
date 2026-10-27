@@ -231,11 +231,18 @@ fs.mkdirSync(CAPT, { recursive: true });
   ok('le mémo aussi', (await page.$eval(`${tuile('memo')} .tb-memo`, e => e.value)) === 'Rappeler le Volcan lundi');
   ok('les réglages aussi (5 dates, sans les options ; sans les contrats)', (await compte(page, `${tuile('prochaines')} .tb-l`)) === 5 && (await compte(page, `${tuile('prochaines')} a[href="#/representations/105"]`)) === 0 && (await texte(page, `${tuile('urgent')} .tb-badge`)) === '6', await texte(page, `${tuile('urgent')} .tb-badge`));
   await page.click('#tb-personnaliser');
-  page.once('dialog', d => d.accept());
+  let natifsReinit = 0;
+  page.on('dialog', d => { natifsReinit++; d.dismiss().catch(() => {}); });
   await page.click('#tb-reinit');
   await page.waitForTimeout(200);
   const defaut = await page.$$eval('.tb-tuile', xs => xs.map(x => x.dataset.k));
-  ok('« Réinitialiser » remet la disposition d’origine', defaut.join(',') === 'actions,urgent,avant,prochaines,chiffres,equipe,diffusion,propositions,ateliers,journal' && await page.$eval('#tb-grille', e => e.dataset.colonnes === 'auto'), defaut.join(','));
+  ok('« Réinitialiser » remet la disposition d’origine, tout de suite, sans « Êtes-vous sûr ? »', natifsReinit === 0 && defaut.join(',') === 'actions,urgent,avant,prochaines,chiffres,equipe,diffusion,propositions,ateliers,journal' && await page.$eval('#tb-grille', e => e.dataset.colonnes === 'auto'), defaut.join(','));
+  // l'annonce porte « Annuler » : la disposition d'avant revient, tuiles, tailles, colonnes et mémo
+  ok('« Réinitialiser » : l’annonce porte « Annuler »', /Disposition d’origine remise/.test(await texte(page, '.annonce')) && (await compte(page, '.annonce button')) === 1, await texte(page, '.annonce'));
+  await page.click('.annonce button');
+  await page.waitForTimeout(250);
+  const revenue = await page.$$eval('.tb-tuile', xs => xs.map(x => `${x.dataset.k}${x.classList.contains('taille-m') ? '*' : ''}${x.classList.contains('replie') ? '-' : ''}`));
+  ok('« Annuler » remet la disposition d’avant, et le mémo', revenue.join(',') === 'chiffres,actions,avant,urgent*,prochaines*,equipe,diffusion,propositions,journal-,memo' && await page.$eval('#tb-grille', e => e.dataset.colonnes === '3') && (await page.$eval(`${tuile('memo')} .tb-memo`, e => e.value).catch(() => '')) === 'Rappeler le Volcan lundi', revenue.join(','));
   ok('aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();
 }
@@ -280,6 +287,28 @@ fs.mkdirSync(CAPT, { recursive: true });
   ok('la page n’a pas bougé (le clic qui suit l’appui est avalé)', await page.evaluate(() => location.hash) === '#/accueil');
   await page.click('.gm-feuille .gm-voile', { position: { x: 10, y: 10 } });
   ok('toucher le voile ferme la feuille', (await compte(page, '.gm-boite')) === 0);
+  // l'en-tête arrimé tient sur une ligne (il en prenait trois, 126 px) : la marque, le direct, la loupe ; le compte passe
+  // dans « Plus », dont les rubriques, sur deux colonnes, tiennent dans l'écran, celle où l'on est marquée
+  const tete = await page.evaluate(() => { const b = document.querySelector('.barre'), m = b.querySelector('.marque').getBoundingClientRect(), c = b.querySelector('.chercher').getBoundingClientRect();
+    return { h: Math.round(b.getBoundingClientRect().height), uneLigne: Math.abs((m.top + m.bottom) / 2 - (c.top + c.bottom) / 2) < 4, loupe: [Math.round(c.width), Math.round(c.height)], compte: getComputedStyle(b.querySelector('#b-sortir')).display }; });
+  ok('au téléphone, l’en-tête sur une ligne (64 px au plus), la loupe de 44 px, le compte ôté de l’en-tête', tete.h <= 64 && tete.uneLigne && tete.loupe[0] >= 44 && tete.loupe[1] >= 44 && tete.compte === 'none', JSON.stringify(tete));
+  const plusVue = async () => { await page.click('.ob-barre [data-ob="plus"]'); await page.waitForSelector('.ob-voile.la .ob-feuille', { timeout: 3000 }); await page.waitForTimeout(300);
+    return page.evaluate(() => { const f = document.querySelector('.ob-feuille'), it = [...f.querySelectorAll('.ob-item')], fermer = f.querySelector('.ob-fermer').getBoundingClientRect();
+      return { items: it.map(x => x.textContent.trim().split('\n')[0].replace(/\s+/g, ' ')), courant: it.filter(x => x.getAttribute('aria-current') === 'page').map(x => x.textContent.trim()), focus: document.activeElement?.textContent.trim(),
+        enVue: fermer.bottom <= innerHeight + 1 && f.scrollHeight <= f.clientHeight + 1, cible: Math.min(...it.map(x => x.getBoundingClientRect().height)) }; }); };
+  let plus = await plusVue();
+  await page.screenshot({ path: `${CAPT}/telephone-plus.png`, fullPage: false });
+  ok('« Plus » : les rubriques sur deux colonnes, puis le compte (voir le site, le modifier, le mot de passe, la déconnexion), tout en vue', ['Feuilles de route', 'Spectacles', 'Lieux', 'Textes du site', 'Journal', 'Voir le site ↗', 'Mot de passe', 'Déconnexion'].every(x => plus.items.includes(x)) && plus.enVue && plus.cible >= 44 && !plus.courant.length, JSON.stringify(plus));
+  await page.keyboard.press('Escape'); await page.waitForTimeout(300);
+  await page.evaluate(() => { location.hash = '#/textes'; }); await page.waitForTimeout(800);
+  plus = await plusVue();
+  ok('depuis « Textes du site », « Plus » la marque comme la rubrique courante, et le focus s’y pose', plus.courant.join() === 'Textes du site' && plus.focus === 'Textes du site', JSON.stringify(plus));
+  await page.keyboard.press('Escape'); await page.waitForTimeout(300);
+  await page.setViewportSize({ width: 360, height: 800 });
+  plus = await plusVue();
+  await page.screenshot({ path: `${CAPT}/telephone-plus-360.png`, fullPage: false });
+  ok('à 360 × 800, « Plus » tient dans l’écran sans défiler, « Fermer » compris', plus.enVue && !(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), JSON.stringify(plus));
+  await page.keyboard.press('Escape'); await page.waitForTimeout(300);
   ok('aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();
   const s = await ouvrir(navigateur, { sombre: true, hash: '#/accueil' });
@@ -489,6 +518,37 @@ fs.mkdirSync(CAPT, { recursive: true });
   await page.click('#tb-brief [data-tb-brief-fermer]');
   await page.screenshot({ path: `${CAPT}/dix-idees.png`, fullPage: true });
   ok('dix idées · aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+
+// ================================================================================ les repères (axe-core : landmark-one-main, region)
+// l'en-tête, le menu des rubriques (nommé, la rubrique ouverte marquée), le contenu, le pied ; « Aller au contenu » en
+// premier arrêt du clavier, qui pose le focus sur le titre sans changer l'adresse ; la porte a aussi son repère principal
+for (const [largeur, hauteur, nom] of [[1440, 900, 'bureau'], [390, 844, 'téléphone']]) {
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur, hauteur, hash: '#/representations' });
+  await page.waitForSelector('main#vue h1', { timeout: 15000 });
+  const reperes = await page.evaluate(() => {
+    const hors = [...document.querySelectorAll('#app > *')].filter(e => !e.matches('header, main, footer, .evitement'));
+    return { mains: document.querySelectorAll('main').length, tete: !!document.querySelector('#app > header .marque'), nav: document.querySelector('header nav[aria-label="Rubriques"] a[aria-current="page"]')?.textContent,
+      pied: !!document.querySelector('#app > footer'), hors: hors.map(e => e.className || e.tagName) };
+  });
+  ok(`repères (${nom}) : un en-tête, le menu des rubriques (Représentations marquée), un contenu, un pied, rien hors d’eux`, reperes.mains === 1 && reperes.tete && reperes.nav === 'Représentations' && reperes.pied && !reperes.hors.length, JSON.stringify(reperes));
+  await page.keyboard.press('Tab');
+  const lien = await page.evaluate(() => { const a = document.activeElement; return { texte: a.textContent, classe: a.className, haut: Math.round(a.getBoundingClientRect().top) }; });
+  ok(`« Aller au contenu » (${nom}) : le premier arrêt du clavier, visible quand il a le focus`, lien.texte === 'Aller au contenu' && lien.classe === 'evitement' && lien.haut >= 0, JSON.stringify(lien));
+  if (nom === 'bureau') await page.screenshot({ path: `${CAPT}/evitement.png` });
+  await page.keyboard.press('Enter');
+  ok(`« Aller au contenu » (${nom}) : le titre de la rubrique reçoit le focus, l’adresse ne change pas`, await page.evaluate(() => document.activeElement === document.querySelector('main#vue h1') && location.hash === '#/representations'));
+  ok(`repères (${nom}) : aucune erreur de script`, erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+{
+  const ctx = await navigateur.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'fr-FR' });
+  await ctx.route(/supabase\.co|fonts\.g/, r => r.abort());
+  const page = await ctx.newPage();
+  await page.goto(URL0);
+  await page.waitForSelector('#f-connexion', { timeout: 15000 });
+  ok('la porte (sans session) : le formulaire et la marque dans le repère principal, le pied à côté', await page.evaluate(() => document.querySelectorAll('main').length === 1 && !!document.querySelector('main #f-connexion .marque') && !!document.querySelector('main + footer.pied-espace')));
   await ctx.close();
 }
 

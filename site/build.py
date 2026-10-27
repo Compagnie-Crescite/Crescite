@@ -432,6 +432,10 @@ LIBELLES = {
     # les filtres des saisons (la synthèse) : effacer ceux en cours, et au téléphone, leur barre en bas de l'écran et leur
     # panneau, qui mène aux dates gardées
     "filtres": "Filtres", "effacerFiltres": "Tout effacer", "voirLesDates": "Voir les dates", "touteLaFrance": "Toute la France", "rapprocher": "Rapprocher",
+    # ce que l'œil voit, dit aux lecteurs d'écran (texte masqué) : une date déjà jouée (vidée et cochée sur la frise, éteinte
+    # dans la liste), le geste d'une étiquette de filtre en cours (elle l'efface), et le nombre de dates que gardent les
+    # filtres, annoncé quand ils changent ({n} : le nombre)
+    "jouee": "jouée", "retirerFiltre": "Retirer le filtre", "nDates": "{n} dates", "uneDate": "1 date", "aucuneDate": "Aucune date",
     "actionsMenees": "Les actions culturelles menées",
     # les chiffres du bilan (le nombre de dates : « dates », de communes, de saisons)
     "communes": "Communes", "saisons": "Saisons",
@@ -454,6 +458,14 @@ LIBELLES = {
     "contactDiffusion": "Contact diffusion", "dossierPdf": "Dossier du spectacle (PDF)", "aTelecharger": "À télécharger",
     "conditionsFinancieres": "Conditions financières sur demande", "ficheTechniqueSurDemande": "Fiche technique sur demande",
     "documentsScolaires": "Documents pour les enseignants", "objetProgrammation": "Programmation",
+    # le catalogue d'un regard, avant les fiches de « Je souhaite programmer » : son titre (un tableau, une ligne par spectacle)
+    "dUnRegard": "Le catalogue d’un regard",
+    # « Je représente un établissement scolaire » : le nombre de spectacles que gardent les filtres de l'action culturelle
+    "nSpectacles": "{n} spectacles", "unSpectacle": "1 spectacle",
+    # chercher partout : la loupe du menu et sa boîte (son nom, le titre de ses pages, rien trouvé, le nombre de propositions,
+    # dit aux lecteurs d'écran ; {n} : le nombre)
+    "chercherSite": "Rechercher sur le site", "pages": "Pages", "aucunResultat": "Aucun résultat",
+    "nResultats": "{n} résultats", "unResultat": "1 résultat",
     # les frises chronologiques (règle 15) : le repère du jour
     "aujourdhui": "Aujourd’hui",
     # réserver une date (règle 17, RESERVER) : la carte de réservation, et les noms courts des boutons de date
@@ -461,10 +473,32 @@ LIBELLES = {
     "reserver": "Réserver", "surLeSiteDuLieu": "sur le site du lieu", "horaireAPreciser": "horaire à préciser",
     "reservationAupresDuLieu": "Réservation auprès du lieu", "choisirUneDate": "Choisir une date",
     "joursCourts": JOURSC, "moisCourts": MOISC,
+    # la date choisie dans son agenda à soi : un fichier .ics de la date (ses séances, son lieu, son lien de réservation)
+    "ajouterAgenda": "Ajouter à mon agenda",
+    # la page d'un spectacle : partager son adresse (le partage de l'appareil, sinon l'adresse copiée), et ses voisins dans
+    # l'ordre des spectacles, au pied de la page
+    "partager": "Partager", "lienCopie": "Lien copié",
+    # un lien qui s'ouvre dans un nouvel onglet (une billetterie, un document, un autre site) : sa petite flèche, et ce texte
+    # masqué pour les lecteurs d'écran
+    "nouvelOnglet": "(nouvel onglet)",
+    "spectaclePrecedent": "Spectacle précédent", "spectacleSuivant": "Spectacle suivant",
+    # au bout d'une saison passée ouverte (#/saisons/<saison>, les saisons passées de #/saisons) : passer à la voisine
+    "saisonPrecedente": "Saison précédente", "saisonSuivante": "Saison suivante",
+    # trier les spectacles (#/spectacles) : la puce qui les garde tous, à côté de « En tournée » et du statut « En création »
+    "tous": "Tous",
+    # une adresse qui ne mène à aucune vue : sa page, et d'où repartir
+    "introuvable": "Page introuvable", "introuvableTexte": "Cette adresse ne mène à aucune page du site.",
+    # la ligne de navigation du pied de page (son nom pour les lecteurs d'écran)
+    "planDuSite": "Plan du site",
+    # la page lue sans JavaScript (le <noscript> de la page assemblée) : ce qu'il lui faut
+    "sansScript": "Ce site a besoin de JavaScript pour afficher ses pages.",
+    # le sommaire arrimé d'une page longue (les deux pages de l'espace pro, la compagnie) : son nom pour les lecteurs d'écran
+    "sommaire": "Sommaire",
     # les vidéos lues dans le site (règle 18, LECTEUR)
     "lire": "Lire la vidéo", "pleinEcran": "Plein écran", "assombrir": "Assombrir", "rallumer": "Rallumer", "fermer": "Fermer",
     # le jour et la nuit (règle 19, THEME) : le nom du bouton du menu (lecteurs d'écran, bulle), et les deux thèmes
     "modeNuit": "Mode nuit", "jour": "Jour", "nuit": "Nuit",
+    "hautDePage": "Haut de page",   # le bouton rond qui ramène en haut d'une page longue (au-delà de deux écrans lus)
     "pause": "Pause",   # le bouton qui arrête ce qui bouge de lui-même (l'accueil de la synthèse : les photos, la pieuvre)
     # alertes de proximité (chantier 1)
     "alerteTournee": "Être prévenu du prochain passage",
@@ -941,14 +975,66 @@ def avec_outils(name, src):
 
 # l'icône d'onglet du site public : celle des espaces réservés, à la couleur de la saison (faite par equipe(dest), à côté)
 ICONE_SITE = '<link rel="icon" href="equipe/icones/192.png" type="image/png">\n<link rel="apple-touch-icon" href="equipe/icones/180.png">'
+# l'aperçu d'un lien partagé (une messagerie, un courriel, un réseau) : le nom de la compagnie et sa phrase de présentation
+# (celle que le site donne déjà aux moteurs, schema.org) ; la barre du navigateur du téléphone à la nuit du site ; la
+# connexion à la base préparée avant que le script la demande
+APERCU = ('<meta name="description" content="{d}">\n<meta property="og:type" content="website">\n'
+          '<meta property="og:site_name" content="{n}">\n<meta property="og:title" content="{n}">\n'
+          '<meta property="og:description" content="{d}">\n<meta property="og:locale" content="fr_FR">\n'
+          '<meta name="twitter:card" content="summary">\n<meta name="theme-color" content="#1b1117">\n'
+          '<link rel="preconnect" href="' + BASE + '" crossorigin>')
+PRESENTATION = "Compagnie de théâtre professionnelle basée à Rouen, dirigée par Angelo Jossec."
+
+
+def sans_script(D):
+    """Le site lu sans JavaScript : la page est vide (tout est dessiné par le script). Un <noscript> sobre, à la nuit du site et
+    à la couleur de la saison (D.site.couleurSaison), le dit (LIBELLES.sansScript) et donne de quoi joindre la compagnie, tirés
+    de D au moment du build : le logo, le nom, l'adresse, « Écrire à la compagnie » (le courriel du contact diffusion) et les
+    textes légaux, dépliables (<details>, sans script) ; l'en-tête et le pied vides du site sont masqués."""
+    from html import escape as e
+    S, L = D["site"], D["site"]["libelles"]
+    co, T = S["coordonnees"], S.get("couleurSaison") or {}
+    courriel = ((S.get("programmation") or {}).get("contact") or {}).get("email")
+    bloc = lambda b: b if b.lstrip().startswith("<h") else f"<p>{b}</p>"
+    legaux = "".join(
+        f'<details id="sj-{e(x["href"][2:])}"><summary>{e(x["texte"])}</summary>{"".join(bloc(b) for b in S["legal"][x["href"][2:]]["blocs"])}</details>'
+        for x in S.get("liensLegaux", []) if x["href"][2:] in S.get("legal", {}))
+    css = (":root{--saison:%s;--saison-vive:%s}" % (T.get("couleur", "currentColor"), T.get("vive", "currentColor"))
+           + ".top,.top-cale,.evitement,#main,body>footer{display:none!important}"
+           ".sj{max-width:40rem;margin:0 auto;padding:clamp(40px,8vw,96px) var(--gout) 64px}"
+           ".sj-logo{display:block;width:88px;margin:0 0 20px}.sj-logo svg{display:block;width:100%;height:auto}"
+           ".sj h1{margin:0;font:500 clamp(2.25rem,1.6rem + 2.6vw,3.25rem)/1.05 var(--titre);color:var(--encre)}"
+           ".sj address{margin:16px 0 0;font-style:normal;color:var(--gris)}"
+           ".sj-x{margin:28px 0 0;padding:14px 18px;border-left:3px solid var(--saison-vive);background:var(--papier-2)}"
+           ".sj-bt{display:inline-flex;align-items:center;min-height:48px;margin-top:24px;padding:0 24px;border-radius:999px;background:var(--saison-vive);color:var(--nuit);"
+           "font:700 .86rem/1.1 var(--etiq);letter-spacing:.08em;text-transform:uppercase;text-decoration:none}"
+           ".sj-l{margin-top:40px;border-top:1px solid var(--filet)}.sj details{border-bottom:1px solid var(--filet)}"
+           ".sj summary{min-height:44px;padding:10px 0;cursor:pointer;font:600 1rem/1.5 var(--texte)}"
+           ".sj details>:not(summary){font-size:.94rem}.sj details h2{margin:20px 0 6px;font:500 1.15rem var(--titre)}"
+           ".sj a{color:var(--saison-vive)}.sj .sj-bt{color:var(--nuit)}"
+           ".sj :focus-visible{outline:2px solid var(--saison-vive);outline-offset:3px}")
+    return (f'<noscript><style>{css}</style><div class="sj">'
+            f'<span class="sj-logo" aria-hidden="true">{D["logo"]["mark"]}</span>'
+            f'<h1>{e(co["nom"])}</h1><address>{"<br>".join(e(x) for x in co["adresse"])}</address>'
+            f'<p class="sj-x">{e(L["sansScript"])}</p>'
+            + (f'<p><a class="sj-bt" href="mailto:{e(courriel)}">{e(S["ecrire"]["texte"])}</a></p>' if courriel else '')
+            + (f'<div class="sj-l">{legaux}</div>' if legaux else '')
+            + '</div></noscript>')
 
 
 def assemble(name, D, photo_urls):
     src = avec_outils(name, (SRC / f"{name}.html").read_text(encoding="utf-8"))
+    # sans JavaScript (le site public) : la nuit d'emblée (theme.js la pose sinon) et le <noscript>, juste après <body>
+    if name == "index":
+        src = src.replace('<html lang="fr">', '<html lang="fr" data-theme="nuit">', 1).replace("<body>", "<body>\n" + sans_script(D), 1)
     if 'rel="icon"' not in src:
         m = re.search(r'<meta name="viewport"[^>]*>', src)
         if m:
             src = src[:m.end()] + "\n" + ICONE_SITE + src[m.end():]
+    if 'property="og:title"' not in src:
+        m = re.search(r'<meta name="viewport"[^>]*>', src)
+        if m:
+            src = src[:m.end()] + "\n" + APERCU.format(n=D["site"]["nom"], d=PRESENTATION) + src[m.end():]
     data = dict(D, photos=photo_urls)
     if name in PAGES_PIEUVRE:
         data["pieuvre"] = pieuvre_data()

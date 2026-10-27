@@ -260,7 +260,7 @@ const TABLEAU = (() => {
         const retard = ps.filter(p => p.date_prochaine_relance && p.date_prochaine_relance < AUJ && !['bilan', 'refus', 'converti_en_date'].includes(p.etape)).length;
         const devis = (E.devis || []), nouveaux = devis.filter(d => (d.statut || 'nouveau') === 'nouveau').length, enCours = devis.filter(d => ['en_cours', 'devis_envoye'].includes(d.statut)).length;
         const alertes = E.alertesInstallees ? E.alertes.filter(a => a.active && a.confirme_le).length : null, attente = E.alertesInstallees ? E.alertes.filter(a => a.active && !a.confirme_le).length : 0;
-        const etapes = ETAPES_CRM.map(([k, l], i) => [k, l.replace(/^\d\.\s*/, ''), ps.filter(p => p.etape === k).length, `color-mix(in srgb, var(--accent) ${35 + i * 16}%, var(--carte))`]);
+        const etapes = ETAPES_CRM.map(([k, l], i) => [k, l.replace(/^\d\.\s*/, ''), ps.filter(p => p.etape === k).length, `color-mix(in srgb, var(--accent) ${70 + i * 7}%, var(--carte))`]);
         const total = etapes.reduce((n, e) => n + e[2], 0);
         const kpi = (l, v, sous, href, classe = '') => `<a href="${esc(href)}"${classe ? ` class="${classe}"` : ''}><span>${l}</span><b>${v}</b>${sous ? `<small>${sous}</small>` : ''}</a>`;
         return { n: nouveaux + retard, html: `<div class="tb-kpi">
@@ -603,8 +603,14 @@ const TABLEAU = (() => {
         conf().depart = t.dataset.tbDepart; garder();
         $$('[data-tb-depart]').forEach(b => b.setAttribute('aria-pressed', String(b === t)));
       } else if (t.id === 'tb-reinit') {
-        if (!confirm('Revenir à la disposition d’origine du tableau de bord ? Les réglages des tuiles et le mémo seront effacés.')) return;
-        T.conf = defauts(); T.ouverts.clear(); garder(true); dessiner(); preparer(); annoncerSr('Disposition d’origine remise.');
+        // tout de suite, sans question : l'annonce porte « Annuler », qui remet la disposition d'avant (tuiles, réglages, mémo)
+        const avant = clone(T.conf);
+        T.conf = defauts(); T.ouverts.clear(); garder(true); dessiner(); preparer();
+        annoncer('Disposition d’origine remise : les réglages des tuiles et le mémo sont effacés.', { libelle: 'Annuler', delai: 8000, action: () => {
+          T.conf = avant; garder(true);
+          if ($('#tb-grille')) { dessiner(); preparer(); }
+          annoncer('La disposition d’avant est revenue.');
+        } });
       } else if (t.id === 'tb-fini') {
         T.edition = false; dessiner(); $('#tb-personnaliser')?.focus();
       } else if (t.matches('[data-tb-action]')) {
@@ -1156,7 +1162,7 @@ const TABLEAU = (() => {
   function courbe(titre, xs, mois, { format = entier, unite = '' } = {}) {
     const max = Math.max(1, ...xs), total = xs.reduce((a, b) => a + b, 0);
     if (!total) return '';
-    return `<div class="tb-courbe"><span class="tb-courbe-t">${esc(titre)} <b>${format(total)}${unite}</b></span><span class="tb-barres" role="img" aria-label="${esc(`${titre}, mois par mois : ${xs.map((v, i) => `${MC[+mois[i].slice(5, 7) - 1]} ${format(v)}`).join(', ')}`)}">${xs.map((v, i) => `<button type="button" data-tb-mois="${esc(mois[i])}" style="--h:${Math.round(v / max * 100)}%" title="${esc(`${MC[+mois[i].slice(5, 7) - 1]} ${mois[i].slice(0, 4)} : ${format(v)}${unite}`)}" aria-label="${esc(`${MC[+mois[i].slice(5, 7) - 1]} ${mois[i].slice(0, 4)} : ${format(v)}${unite}, voir ses dates`)}"><i></i></button>`).join('')}</span><span class="tb-mois">${mois.map(k => `<small>${esc(MC[+k.slice(5, 7) - 1].replace('.', ''))}</small>`).join('')}</span></div>`;
+    return `<div class="tb-courbe"><span class="tb-courbe-t">${esc(titre)} <b>${format(total)}${unite}</b></span><span class="tb-barres" role="group" aria-label="${esc(`${titre}, mois par mois : ${xs.map((v, i) => `${MC[+mois[i].slice(5, 7) - 1]} ${format(v)}`).join(', ')}`)}">${xs.map((v, i) => `<button type="button" data-tb-mois="${esc(mois[i])}" style="--h:${Math.round(v / max * 100)}%" title="${esc(`${MC[+mois[i].slice(5, 7) - 1]} ${mois[i].slice(0, 4)} : ${format(v)}${unite}`)}" aria-label="${esc(`${MC[+mois[i].slice(5, 7) - 1]} ${mois[i].slice(0, 4)} : ${format(v)}${unite}, voir ses dates`)}"><i></i></button>`).join('')}</span><span class="tb-mois">${mois.map(k => `<small>${esc(MC[+k.slice(5, 7) - 1].replace('.', ''))}</small>`).join('')}</span></div>`;
   }
   function courbesSaison(S, c, p) {
     const s = seriesSaison(S), ici = auMemePoint(S), avant = auMemePoint(saisonDecalee(S, -1));
@@ -1304,7 +1310,7 @@ const TABLEAU = (() => {
 .tb-kpi > .ok b { color: var(--ok); }
 .tb-kpi > .alerte b { color: var(--alerte); }
 .tb-kpi small { font-size: 12px; color: var(--gris); }
-.tb-pipe { display: flex; height: 10px; margin-top: 4px; border-radius: 999px; overflow: hidden; background: var(--doux); }
+.tb-pipe { display: flex; gap: 2px; height: 10px; margin-top: 4px; border-radius: 999px; overflow: hidden; background: var(--doux); }
 .tb-pipe span { display: block; min-width: 3px; }
 .tb-legende { display: flex; flex-wrap: wrap; gap: 3px 12px; margin: 0; font-size: 12.5px; color: var(--gris); }
 .tb-legende span { display: inline-flex; align-items: center; gap: 5px; }

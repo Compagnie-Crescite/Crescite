@@ -235,6 +235,21 @@ fs.mkdirSync(CAPT, { recursive: true });
   ok('7 · sans changement récent, pas de lavis', await page.evaluate(() => !document.querySelector('.horaires li.fraiche')));
   // 8. la checklist : le bloc demande le septième script (absent hors ligne) ; la règle de la coche est en place
   ok('8 · la coche dessinée : règles en place', await page.evaluate(() => [...document.styleSheets].some(s => { try { return [...s.cssRules].some(r => r.cssText.includes('.camion-item.coche .coche-svg path')); } catch (e) { return false; } })));
+  // le titre de la barre, au téléphone (390 puis 360 px) : dans une vue de second niveau, « Installer » se réduit à son
+  // icône (un rond de 44 px, son nom gardé aux lecteurs d'écran) et le titre se lit en entier, sur deux lignes au besoin
+  const barre = [];
+  for (const [l, h] of [[390, 844], [360, 800]]) {
+    await page.setViewportSize({ width: l, height: h });
+    await page.goto(`${URL0}#/propositions`); await page.waitForSelector('#contenu .titre-vue', { timeout: 8000 }); await page.waitForTimeout(300);
+    barre.push(await page.evaluate(() => {
+      const t = document.querySelector('.barre-titre'), b = document.querySelector('[data-installer-barre]'), r = b.getBoundingClientRect();
+      return { l: innerWidth, titre: t.textContent, entier: t.scrollWidth <= t.clientWidth + 1 && t.scrollHeight <= t.clientHeight + 2, lignes: Math.round(t.clientHeight / parseFloat(getComputedStyle(t).lineHeight)),
+        inst: [Math.round(r.width), Math.round(r.height)], nom: b.textContent.trim(), bulle: b.title, deborde: document.documentElement.scrollWidth > innerWidth };
+    }));
+    await page.screenshot({ path: path.join(CAPT, `barre-titre-${l}.png`), clip: { x: 0, y: 0, width: l, height: 120 } });
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  ok('la barre au téléphone : le titre « Propositions de dates » entier à 390 et 360 px, « Installer » en rond de 44 px nommé', barre.every(x => x.titre === 'Propositions de dates' && x.entier && x.lignes <= 2 && x.inst[0] === 44 && x.inst[1] === 44 && x.nom === 'Installer l’application' && x.bulle && !x.deborde), JSON.stringify(barre));
   ok('erreurs de page : aucune', erreurs.length === 0, erreurs.join(' | ').slice(0, 300));
   const longues = await page.evaluate(() => window.__longues);
   console.log(`tâches longues (ms) : ${JSON.stringify(longues)}`);
@@ -303,6 +318,30 @@ fs.mkdirSync(CAPT, { recursive: true });
   ok('ordinateur · pas de bouton « Installer » dans la barre', await page.$eval('[data-installer-barre]', e => getComputedStyle(e).display === 'none'));
   await page.screenshot({ path: `${CAPT}/ordinateur-date.png` });
   ok('ordinateur · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' | ').slice(0, 300));
+  await ctx.close();
+}
+
+// ================================================================================ hors connexion : une lecture qui échoue le dit, à sa place
+// (les propositions, une proposition, les agendas, une feuille de route qui n'est pas gardée : plus de « Lecture… » sans fin)
+{
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { hash: '#/propositions' });
+  const vues = {};
+  for (const [h, mot] of [['#/propositions', 'Les propositions'], ['#/proposition/1', 'La proposition'], ['#/agendas', 'Vos agendas'], ['#/feuille/102', 'Cette feuille de route']]) {
+    if (h !== '#/propositions') await page.evaluate(x => { location.hash = x; }, h);
+    const t0 = Date.now();
+    vues[h] = await page.waitForFunction(m => [...document.querySelectorAll('#contenu .echec-lecture')].some(e => e.textContent.startsWith(m) && e.querySelector('[data-relire]')), mot, { timeout: 4000 }).then(() => Date.now() - t0, () => null);
+  }
+  ok('hors connexion · propositions, proposition, agendas, feuille : l’échec dit en moins de 4 s, avec « Réessayer »', Object.values(vues).every(v => v != null), JSON.stringify(vues));
+  ok('hors connexion · la phrase dit que la feuille se lit en ligne', /se lit en ligne : vérifiez votre connexion/.test(await page.$eval('#contenu .echec-lecture', e => e.textContent)));
+  await page.screenshot({ path: `${CAPT}/hors-connexion-feuille.png` });
+  await page.click('#contenu [data-relire]');
+  await page.waitForTimeout(150);
+  const apres = await page.evaluate(() => ({ focus: document.activeElement === document.querySelector('#contenu h1'), hash: location.hash }));
+  await page.waitForSelector('#contenu .echec-lecture [data-relire]', { timeout: 4000 }).catch(() => {});
+  ok('« Réessayer » relance la lecture sur place (le titre garde le focus, l’adresse ne bouge pas), qui échoue de nouveau', apres.focus && apres.hash === '#/feuille/102' && !!(await page.$('#contenu .echec-lecture')), JSON.stringify(apres));
+  const cible = await page.$eval('#contenu [data-relire]', e => Math.round(e.getBoundingClientRect().height));
+  ok('« Réessayer » : une cible de 44 px au moins', cible >= 44, String(cible));
+  ok('hors connexion · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' | ').slice(0, 300));
   await ctx.close();
 }
 

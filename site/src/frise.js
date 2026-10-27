@@ -72,6 +72,8 @@ const FRISE = (() => {
   'use strict';
   // le nom d'une semaine de résidence (règle 23), un texte de D
   const LIB_RESIDENCE = () => (typeof D !== 'undefined' && D && D.site && D.site.libelles && D.site.libelles.residence) || '';
+  // une date déjà jouée (son repère évidé, en retrait) : le lecteur d'écran l'entend aussi, un texte de D
+  const LIB_JOUEE = () => (typeof D !== 'undefined' && D && D.site && D.site.libelles && D.site.libelles.jouee) || '';
   const MOIS = typeof AGENDA !== 'undefined' && AGENDA.MOIS ? AGENDA.MOIS
     : ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
   const COUPE = (() => { try { return new URLSearchParams(location.search).get('anim') === '0'; } catch (e) { return false; } })();
@@ -126,8 +128,8 @@ const FRISE = (() => {
 :where(.frise[data-frise]) :where(.frise-repere):focus-visible { outline: 2px solid var(--fr-accent); outline-offset: 1px; }
 :where(.frise[data-frise]) :where(.frise-point) > :where(.frise-repere)::before { content: ""; display: block; width: var(--fr-point); height: var(--fr-point);
   border-radius: 50%; background: var(--fr-c, currentColor); box-shadow: 0 0 0 2px var(--fr-fond); transition: scale .16s var(--fr-courbe), opacity .16s; }
-:where(.frise[data-frise]) :where(.frise-point) > :where(.frise-repere:hover, .frise-repere:focus-visible)::before,
-:where(.frise[data-frise]) :where(.frise-point.est-allume, .frise-point.est-focus) > :where(.frise-repere)::before { scale: 1.45; }
+:where(.frise[data-frise]) :where(.frise-point) > :where(.frise-repere:focus-visible)::before, :where(.frise[data-frise]) :where(.frise-point.est-allume, .frise-point.est-focus) > :where(.frise-repere)::before { scale: 1.45; }
+@media (hover: hover) { :where(.frise[data-frise]) :where(.frise-point) > :where(.frise-repere:hover)::before { scale: 1.45; } }
 :where(.frise[data-frise]) :where(.frise-point.est-passe) > :where(.frise-repere)::before { opacity: var(--fr-passe); }
 :where(.frise[data-frise]) :where(.frise-point.est-passe.est-allume, .frise-point.est-passe.est-focus) > :where(.frise-repere)::before { opacity: 1; }
 :where(.frise[data-frise]) :where(.frise-point.est-scolaire:not(.est-duree)) > :where(.frise-repere)::before { border-radius: 2px; rotate: 45deg; width: calc(var(--fr-point) * .86); height: calc(var(--fr-point) * .86); }
@@ -140,8 +142,8 @@ const FRISE = (() => {
 /* une semaine de résidence (règle 23) : un repère carré évidé ; une période, un trait en pointillé */
 :where(.frise[data-frise]) :where(.frise-point.est-residence:not(.est-duree)) > :where(.frise-repere)::before { border-radius: 2px; background: var(--fr-fond); box-shadow: inset 0 0 0 2px var(--fr-c, currentColor), 0 0 0 2px var(--fr-fond); }
 :where(.frise[data-frise]) :where(.frise-point.est-duree.est-residence) > :where(.frise-repere)::before { background: repeating-linear-gradient(90deg, var(--fr-c, currentColor) 0 5px, transparent 5px 9px); }
-:where(.frise[data-frise]) :where(.frise-point.est-duree) > :where(.frise-repere:hover, .frise-repere:focus-visible)::before,
-:where(.frise[data-frise]) :where(.frise-point.est-duree.est-allume) > :where(.frise-repere)::before { scale: 1 1.6; }
+:where(.frise[data-frise]) :where(.frise-point.est-duree) > :where(.frise-repere:focus-visible)::before, :where(.frise[data-frise]) :where(.frise-point.est-duree.est-allume) > :where(.frise-repere)::before { scale: 1 1.6; }
+@media (hover: hover) { :where(.frise[data-frise]) :where(.frise-point.est-duree) > :where(.frise-repere:hover)::before { scale: 1 1.6; } }
 :where(.frise[data-frise]) :where(.frise-point.est-groupe) > :where(.frise-repere) { pointer-events: none; }
 :where(.frise[data-frise]) :where(.frise-point.est-groupe) > :where(.frise-repere)::before { opacity: 0; }
 :where(.frise[data-frise]) :where(.frise-grappe) > span { position: absolute; left: 0; top: 0; width: 22px; height: 22px; margin: -11px 0 0 -11px;
@@ -149,7 +151,8 @@ const FRISE = (() => {
   background: radial-gradient(closest-side, var(--fr-fond) 66%, transparent 69%), conic-gradient(var(--fr-g, currentColor));
   transition: scale .16s var(--fr-courbe); }
 :where(.frise[data-frise]) :where(.frise-grappe.est-passe) > span { opacity: .6; }
-:where(.frise[data-frise]) :where(.frise-grappe:hover, .frise-grappe.est-allume, .frise-grappe.est-focus) > span { scale: 1.25; opacity: 1; }
+:where(.frise[data-frise]) :where(.frise-grappe.est-allume, .frise-grappe.est-focus) > span { scale: 1.25; opacity: 1; }
+@media (hover: hover) { :where(.frise[data-frise]) :where(.frise-grappe:hover) > span { scale: 1.25; opacity: 1; } }
 :where(.frise[data-frise]) :where(.frise-grappe-n) { font-size: 10.5px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
 :where(.frise[data-frise].frise--etiquettes) :where(.frise-point) { top: var(--fr-axe); }
 :where(.frise[data-frise]) :where(.frise-etiquette) { position: absolute; left: 20px; bottom: calc(20px + var(--fr-y, 0) * var(--fr-couloir)); width: max-content;
@@ -166,7 +169,8 @@ const FRISE = (() => {
   text-align: center; font-size: var(--fr-taille); font-variant-numeric: tabular-nums; transition: bottom .3s var(--fr-courbe); }
 :where(.frise[data-frise]) :where(.frise-bande-nom) { position: absolute; left: 0; right: 0; top: calc(var(--fr-bande-h) + 8px); text-align: center;
   font-size: calc(var(--fr-taille) - 1px); white-space: nowrap; font-variant-numeric: tabular-nums; }
-:where(.frise[data-frise]) :where(.frise-bande.est-allume, .frise-bande:hover) :where(.frise-bande-barre) { opacity: 1; }
+:where(.frise[data-frise]) :where(.frise-bande.est-allume) :where(.frise-bande-barre) { opacity: 1; }
+@media (hover: hover) { :where(.frise[data-frise]) :where(.frise-bande:hover) :where(.frise-bande-barre) { opacity: 1; } }
 :where(.frise[data-frise]) :where(.frise-bande.est-passe) :where(.frise-bande-barre) { opacity: .5; }
 :where(.frise[data-frise]) :where(.frise-aujourdhui) { position: absolute; left: calc(var(--fr-x) * 1%); top: 0; width: 0; height: var(--fr-axe); pointer-events: none; }
 :where(.frise[data-frise]) :where(.frise-aujourdhui)::before { content: ""; position: absolute; left: -.5px; top: 16px; bottom: 0; width: 1px;
@@ -423,7 +427,8 @@ const FRISE = (() => {
       // les repères
       const courant = M.pts.find(q => !q.passe) || M.pts[M.pts.length - 1];
       const lieux = new Map(), lieu = l => { if (l == null) return ''; let n = lieux.get(l); if (n === undefined) { n = nomLieu(l); lieux.set(l, n); } return n; };
-      const nom = q => { const p = q.p, c = lieu(p.l) || p.commune || ''; let s = quandDe(p); if (p.titre) s += (s ? ', ' : '') + p.titre; if (c) s += ', ' + c; if (p.residence && LIB_RESIDENCE()) s += ', ' + LIB_RESIDENCE(); if (p.etat) s += ', ' + p.etat; return s; };
+      const nom = q => { const p = q.p, c = lieu(p.l) || p.commune || ''; let s = quandDe(p); if (p.titre) s += (s ? ', ' : '') + p.titre; if (c) s += ', ' + c; if (p.residence && LIB_RESIDENCE()) s += ', ' + LIB_RESIDENCE(); if (p.etat) s += ', ' + p.etat;
+        else if (q.passe && !p.residence && !p.annulee && LIB_JOUEE()) s += ', ' + LIB_JOUEE(); return s; };
       const repere = (q) => {
         const p = q.p, cls = 'frise-point' + (q.passe ? ' est-passe' : '') + (p.scolaire ? ' est-scolaire' : '') + (p.residence ? ' est-residence' : '') + (p.annulee ? ' est-annule' : '') + (q.duree ? ' est-duree' : '')
           + (q.grappe ? ' est-groupe' : '') + (q.droite ? ' est-a-droite' : '');

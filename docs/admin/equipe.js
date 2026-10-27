@@ -199,7 +199,7 @@ function listePersonnes(zone, actif) {
       <span class="corps"><span class="t">${esc(nomDe(p))}</span><span class="ou">${esc((p.metiers || []).join(', ') || 'Métier à préciser')}</span>
       ${sps.length ? `<span class="pastilles">${sps.map(s => `<span><span class="pastille" style="--c:${couleurSp(s)}"></span>${esc(s.titre.split(' – ')[0])}</span>`).join('')}</span>` : ''}</span>
       <span class="badges">${pr?.user_id ? '<span class="badge ok">Compte</span>' : ''}${p.publie ? '' : '<span class="badge masquee">Non publiée</span>'}</span></a>`;
-  }).join('') || '<p class="vide">Personne ne correspond.</p>';
+  }).join('') || listeVide(!!(q || f.categorie), { rien: 'Personne ne correspond.', aucun: 'Aucune fiche pour l’instant.', ajouter: ['#/equipe/nouvelle', '＋ Nouvelle fiche'] });
 }
 
 const SPEC_PERSONNE = [
@@ -297,11 +297,21 @@ function editeurPersonne(id) {
     if (b.id === 'pe-sans-photo') { F.photo = null; marquerSale(); dessinerPhoto(); return; }
     if (b.id === 'pe-copier') return copier((priveeDe(etat.p0.id)?.email || '').trim(), 'Adresse');
     if (b.id === 'pe-copier-lien') return copier(new URL('../equipe/', location.href).href, 'Adresse de son espace');
+    // détacher le compte : tout de suite, sans question ; l'annonce porte « Annuler », qui le rattache de nouveau
     if (b.id === 'pe-detacher') {
-      if (!confirm(`Détacher le compte de ${nomDe(etat.p0)} ? ${nomDe(etat.p0)} ne verra plus son espace tant qu’un compte ne s’y rattache pas de nouveau.`)) return;
-      const { data, error } = await sb.from('crescite_personnes_privees').update({ user_id: null }).eq('personne_id', etat.p0.id).select().single();
+      const p0 = etat.p0, avant = priveeDe(p0.id)?.user_id;
+      const ecrireCompte = v => sb.from('crescite_personnes_privees').update({ user_id: v }).eq('personne_id', p0.id).select().single();
+      const { data, error } = await ecrireCompte(null);
       if (error) return erreur(error);
-      remplacerLigne(E.privees, data, 'personne_id'); dessinerAcces(); annoncer('Compte détaché.'); return;
+      remplacerLigne(E.privees, data, 'personne_id'); dessinerAcces();
+      annoncer(`Compte détaché : ${nomDe(p0)} ne verra plus son espace tant qu’un compte ne s’y rattache pas de nouveau.`, { libelle: 'Annuler', delai: 8000, action: avant ? async () => {
+        const r = await ecrireCompte(avant);
+        if (r.error) return erreur(r.error, 'Rattachement impossible');
+        remplacerLigne(E.privees, r.data, 'personne_id');
+        if (zone.isConnected && etat.p0 === p0) dessinerAcces();
+        annoncer('Compte rattaché de nouveau.');
+      } : null });
+      return;
     }
     if (b.id === 'pe-suppr') return supprimerPersonne(etat.p0);
     if (!b.matches('[data-enregistrer]')) return;
@@ -903,11 +913,11 @@ async function retablirEquipeDate(c) {
 const avecFeuille = dateId => E.feuilles.some(x => x.date_id === dateId);
 // prévenir l'équipe d'une date : une notification dans l'espace de chacun, et sur son téléphone s'il s'est abonné
 // (crescite_prevenir_equipe, troisième script SQL)
-const boutonPrevenir = dateId => E.sql3 && E.equipeInstallee ? '<button type="button" class="btn" id="d-prevenir" aria-controls="d-prevenir-zone">Prévenir l’équipe</button>' : '';
+const boutonPrevenir = dateId => E.sql3 && E.equipeInstallee ? '<button type="button" class="btn" id="d-prevenir" aria-expanded="false">Prévenir l’équipe</button>' : '';
 function panneauPrevenir(zone, d) {
   if (!d) return;
   const ouvert = $('#d-prevenir-zone', zone);
-  if (ouvert) { ouvert.remove(); $('#d-prevenir', zone)?.setAttribute('aria-expanded', 'false'); return; }
+  if (ouvert) { ouvert.remove(); $('#d-prevenir', zone)?.setAttribute('aria-expanded', 'false'); $('#d-prevenir', zone)?.removeAttribute('aria-controls'); return; }
   const s = spectacle(d.spectacle_id), n = equipeDeLaDate(d).length;
   const p = document.createElement('div');
   p.className = 'bloc ad-neuf'; p.id = 'd-prevenir-zone';
@@ -917,10 +927,10 @@ function panneauPrevenir(zone, d) {
     <div class="champ"><label for="pv-texte">Message</label><textarea id="pv-texte" rows="3" maxlength="600" placeholder="La représentation de jeudi commence à 20h30 au lieu de 20h."></textarea><span class="aide">Facultatif : sans message, la notification donne la date et le lieu.</span></div>
     <div class="fm-boutons"><button type="button" class="btn principal" id="pv-envoyer"${n ? '' : ' disabled'}>Envoyer</button><button type="button" class="btn" id="pv-annuler">Annuler</button></div>`;
   ($('#d-equipe', zone) || $('.pied-ed', zone)).after(p);
-  $('#d-prevenir', zone)?.setAttribute('aria-expanded', 'true');
+  $('#d-prevenir', zone)?.setAttribute('aria-expanded', 'true'); $('#d-prevenir', zone)?.setAttribute('aria-controls', 'd-prevenir-zone');
   p.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   $('#pv-texte', p).focus();
-  $('#pv-annuler', p).addEventListener('click', () => { p.remove(); $('#d-prevenir', zone)?.setAttribute('aria-expanded', 'false'); $('#d-prevenir', zone)?.focus(); });
+  $('#pv-annuler', p).addEventListener('click', () => { p.remove(); $('#d-prevenir', zone)?.setAttribute('aria-expanded', 'false'); $('#d-prevenir', zone)?.removeAttribute('aria-controls'); $('#d-prevenir', zone)?.focus(); });
   $('#pv-envoyer', p).addEventListener('click', async e => {
     const titre = $('#pv-titre', p).value.trim(), texte = $('#pv-texte', p).value.trim();
     if (!titre) return annoncer('Donnez un titre à la notification.', { erreur: true });
@@ -931,7 +941,7 @@ function panneauPrevenir(zone, d) {
       if (/PGRST202|42883|Could not find the function|does not exist/i.test(`${error.code || ''} ${error.message || ''}`)) return annoncer('Les notifications ne sont pas encore installées : il manque le troisième script SQL.', { erreur: true });
       return erreur(error, 'Notification non envoyée');
     }
-    p.remove(); $('#d-prevenir', zone)?.setAttribute('aria-expanded', 'false');
+    p.remove(); $('#d-prevenir', zone)?.setAttribute('aria-expanded', 'false'); $('#d-prevenir', zone)?.removeAttribute('aria-controls');
     const b = $('#d-prevenir', zone); if (b && +data) { b.classList.add('sonne'); setTimeout(() => b.classList.remove('sonne'), 900); }   // la cloche sonne
     annoncer(+data ? `Notification envoyée à ${+data} personne${+data > 1 ? 's' : ''}.` : 'Personne à prévenir : l’équipe de cette date est vide.');
   });
@@ -998,11 +1008,14 @@ function listeFeuilles(zone) {
       ${reps.length ? `<span class="reps">${reps.slice(0, 6).map(r => `<span class="rep${r.public === 'scolaire' ? ' sco' : ''}${r.annulee ? ' ann' : ''}">${jours.length > 1 ? `${+r.jour.slice(8, 10)}/${+r.jour.slice(5, 7)} ` : ''}${r.heure ? AGENDA.heureTexte(h5(r.heure)) : 'heure ?'}</span>`).join('')}${reps.length > 6 ? `<span class="rep">+${reps.length - 6}</span>` : ''}</span>` : ''}</span>
       <span class="badges">${badgeFeuille(d.id)}${resteFeuille(d.id)}${d.statut === 'option' ? '<span class="badge option">Option</span>' : d.statut === 'annulee' ? '<span class="badge annulee">Annulée</span>' : d.statut === 'reportee' ? '<span class="badge option">Reportée</span>' : ''}</span></a>`;
   };
+  // les dates rangées par mois, comme Représentations : l'en-tête du mois reste en vue pendant qu'on fait défiler ses dates
+  const parMois = ds => { let m = '', h = ''; ds.forEach(d => { const k = d.debut.slice(0, 7); if (k !== m) { m = k; h += `<div class="mois">${AGENDA.MOIS[+k.slice(5) - 1]} ${k.slice(0, 4)}</div>`; } h += ligne(d); }); return h; };
   const saisons = [...new Set(passees.map(d => d.saison))].sort().reverse(), enCours = AGENDA.saisonDe(AUJ);
-  zone.innerHTML = `<h2 class="mois" style="font-size:13px;color:var(--accent)">À venir</h2>${avenir.map(ligne).join('') || '<p class="vide">Aucune date à venir.</p>'}
+  if (!xs.length) { zone.innerHTML = listeVide(cherche, { rien: 'Aucune date ne correspond à ces filtres.', aucun: 'Aucune date pour l’instant.', ajouter: ['#/representations/nouvelle', '＋ Nouvelle date'] }); return; }
+  zone.innerHTML = `<h2 class="mois" style="font-size:13px;color:var(--accent)">À venir</h2>${avenir.length ? parMois(avenir) : '<p class="vide">Aucune date à venir.</p>'}
     <h2 class="mois" style="font-size:13px;color:var(--accent);margin-top:24px">Dates passées</h2>
     ${saisons.map(sa => `<details class="saison-ad" data-saison="${sa}"${cherche || sa === enCours || f.ouvertes.includes(sa) ? ' open' : ''}><summary class="ligne" style="grid-template-columns:1fr auto;cursor:pointer;border-left-color:var(--trait)"><span class="t">Saison ${sa}</span><span class="badge">${passees.filter(d => d.saison === sa).length}</span></summary><div class="contenu-saison"></div></details>`).join('') || '<p class="vide">Aucune date passée.</p>'}`;
-  const remplir = det => { const c = $('.contenu-saison', det); if (det.open && !c.innerHTML) c.innerHTML = passees.filter(d => d.saison === det.dataset.saison).map(ligne).join(''); };
+  const remplir = det => { const c = $('.contenu-saison', det); if (det.open && !c.innerHTML) c.innerHTML = parMois(passees.filter(d => d.saison === det.dataset.saison)); };
   $$('details.saison-ad', zone).forEach(det => { remplir(det); det.addEventListener('toggle', () => { const sa = det.dataset.saison; f.ouvertes = det.open ? [...new Set([...f.ouvertes, sa])] : f.ouvertes.filter(x => x !== sa); garderFiltres(); remplir(det); }); });
 }
 
@@ -2511,7 +2524,7 @@ function listeAcces(zone, actif) {
     return `<a class="ligne acces-l${st.ouverte ? '' : ' close'}" href="#/pro/${a.id}"${String(actif) === String(a.id) ? ' aria-current="true"' : ''}>
       <span class="corps"><span class="t">${esc(a.nom)}</span><span class="ou">${esc([a.contact, sps].filter(Boolean).join(' · '))}</span><span class="vu">${esc(visitesTexte(a))}</span></span>
       <span class="badges"><span class="badge ${st.classe}">${esc(st.texte)}</span></span></a>`;
-  }).join('') || `<p class="vide">${E.acces.length ? 'Aucune invitation ne correspond.' : 'Aucune invitation pour l’instant.'}</p>`;
+  }).join('') || listeVide(E.acces.length > 0, { rien: 'Aucune invitation ne correspond.', aucun: 'Aucune invitation pour l’instant.', ajouter: ['#/pro/nouvelle', '＋ Nouvelle invitation'] });
 }
 // sans invitation choisie : ce qu'est l'espace pro, et ce que chaque spectacle y montre
 function accueilPro() {

@@ -50,6 +50,9 @@
 .pied-espace { max-width: 600px; margin: 0 auto; padding: 14px calc(20px + var(--ds)) 30px calc(20px + var(--gs)); }
 /* la marque de l'en-tête, comme dans l'administration et l'espace de l'équipe : la pieuvre (../admin/tentacules.js la pose
    dans [data-pieuvre], d'après ../admin/logo.js), « Compagnie Crescite », et dessous le nom de l'espace ; elle mène au site */
+/* le lien d'évitement, comme sur le site et dans les autres espaces : il paraît au premier Tab */
+.evitement { position: absolute; left: 8px; top: -80px; z-index: 90; padding: 10px 14px; border-radius: 10px; background: var(--encre); color: var(--papier); font-weight: 600; text-decoration: none; }
+.evitement:focus { top: 8px; color: var(--papier); }
 .marque { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; color: var(--encre); text-decoration: none; min-width: 0; }
 .marque:hover { color: var(--encre); }
 .marque .pieuvre { display: inline-block; flex: none; width: 46px; height: 26px; color: var(--pieuvre); }
@@ -59,10 +62,11 @@
 .marque-nom { font: 500 1.12rem/1.1 var(--serif); }
 .marque small { font: 700 .66rem/1 var(--etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--magenta); }
 /* le pied commun des espaces réservés : sobre, en fin de contenu */
-.pied-espace { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 20px; border-top: 1px solid var(--filet); color: var(--gris); font-size: .84rem; }
+.pied-espace { display: flex; flex-wrap: wrap; align-items: center; gap: 0 20px; border-top: 1px solid var(--filet); color: var(--gris); font-size: .84rem; }
 .pied-espace .pied-nom { margin: 0; font: 500 .95rem/1.3 var(--serif); color: var(--encre); }
-.pied-espace nav { display: flex; flex-wrap: wrap; gap: 2px 16px; }
-.pied-espace a { display: inline-block; padding: 6px 0; color: var(--gris); }
+.pied-espace nav { display: flex; flex-wrap: wrap; gap: 0 16px; }
+/* chaque lien du pied, une cible de 44 px (la ligne reste sobre : la hauteur ne se voit pas) */
+.pied-espace a { display: inline-flex; align-items: center; min-height: 44px; color: var(--gris); }
 .pied-espace a:hover { color: var(--magenta); }
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
@@ -91,7 +95,8 @@ h1 { font: 500 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
 .principal { min-height: 48px; padding: 0 22px; border-radius: 999px; border: 0; background: var(--magenta); color: var(--sur-magenta); font-weight: 700; cursor: pointer; }
 .principal:hover { background: var(--magenta-fonce); }
 .principal:disabled, .secondaire:disabled { opacity: .6; cursor: default; }
-.secondaire { padding: 0; border: 0; background: none; color: var(--gris); text-decoration: underline; text-underline-offset: .18em; cursor: pointer; }
+/* « Répondre autrement » : un lien d'aspect, une cible de 44 px quand même */
+.secondaire { display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--gris); text-decoration: underline; text-underline-offset: .18em; cursor: pointer; }
 
 .etat { margin-top: 18px; padding: 12px 16px; border-left: 4px solid var(--magenta); border-radius: 0 12px 12px 0; background: var(--surface); font-weight: 600; }
 .etat:empty { display: none; }
@@ -105,13 +110,19 @@ h1 { font: 500 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
 .choix button { min-height: 48px; padding: 6px 8px; border-radius: 14px; border: 1.5px solid var(--magenta); background: transparent; font-weight: 600; line-height: 1.2; cursor: pointer; transition: background-color .15s, color .15s, transform .12s; }
 .choix button[aria-pressed="true"] { background: var(--magenta); color: var(--sur-magenta); }
 .choix button:active { transform: scale(.96); }
-.choix button:disabled { opacity: .5; cursor: default; transform: none; }
+/* une proposition close : les boutons ne répondent plus, mais la réponse donnée se lit encore (pas de voile : un cadre
+   en tirets, le gris pour les autres choix ; le choix fait garde sa couleur) */
+.choix button:disabled { cursor: default; transform: none; border-style: dashed; color: var(--gris); }
+.choix button[aria-pressed="true"]:disabled { border-style: solid; color: var(--sur-magenta); }
 .choix button.en-cours { opacity: .7; }
 .note { margin-top: 8px; color: var(--magenta); font-weight: 600; font-size: .94rem; }
 .note:empty { display: none; }
 .close { margin-top: 18px; color: var(--gris); }
 .pied { margin-top: 26px; color: var(--gris); font-size: .94rem; }
 .pied p + p { margin-top: 6px; }
+/* un lien seul sur sa ligne (« Les dates de la compagnie », « Ne plus la recevoir ») : une cible de 44 px ; au fil d'une
+   phrase, il reste un lien */
+.lien-seul { display: inline-flex; align-items: center; min-height: 44px; }
 
 /* une alerte de tournée : ses secteurs (le spectacle à la ligne), et ce qu'on peut en faire */
 .secteurs { list-style: none; margin: 12px 0 0; padding: 0; }
@@ -125,6 +136,7 @@ h1 { font: 500 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
 <style id="couleurs-saison">/* écrit par site/build.py : les couleurs de la saison (cassandres) */ :root { --saison: #1f3a73; --saison-vive: #7f9fe0; --saison-porteur: #45629f; --saison-profond: #11203f; --saison-texte: #1f3a73; --saison-fonce: #192e5c; --saison-doux: #e4e6e9; --saison-texte-nuit: #7f9fe0; --saison-fonce-nuit: #a5bce9; --saison-doux-nuit: #313043; }</style>
 </head>
 <body>
+<a class="evitement" href="#page">Aller au contenu</a>
 <header class="barre">
   <a class="marque" href="../"><span class="pieuvre" data-pieuvre aria-hidden="true"></span><span class="marque-texte"><span class="marque-nom">Compagnie Crescite</span><small>Vos réponses</small></span><span class="sr"> : le site de la compagnie</span></a>
 </header>
@@ -142,6 +154,8 @@ h1 { font: 500 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
   const CONTACT = 'contact@crescite.fr';
   const CHOIX = { oui: 'Disponible', non: 'Pas disponible', peut_etre: 'Peut-être' };
   const main = document.getElementById('page');
+  // « Aller au contenu » : le titre reçoit le focus, l'adresse (qui porte la proposition) ne change pas
+  document.querySelector('.evitement').addEventListener('click', e => { e.preventDefault(); const h = main.querySelector('h1') || main; if (h !== main) h.setAttribute('tabindex', '-1'); h.focus(); });
   const q = new URLSearchParams(location.search || location.hash.replace(/^#/, ''));
   const r = q.get('r') || '';
   let vise = { j: q.get('j'), c: q.get('c') };          // le choix fait dans le courriel, à confirmer
@@ -223,11 +237,17 @@ h1 { font: 500 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
     });
   }
 
+  // ne rien perdre en partant : une réponse en route (le bouton touché, la réponse pas encore revenue) ; fermer ou quitter
+  // la page pendant ce temps pose la question du navigateur (beforeunload), la réponse n'a peut-être pas été enregistrée
+  let enRoute = 0;
+  window.addEventListener('beforeunload', e => { if (enRoute) { e.preventDefault(); e.returnValue = ''; } });
+
   async function repondre(j, c, bouton) {
     const li = bouton.closest('li');
     (li ? li.querySelectorAll('button') : [bouton]).forEach(b => { b.disabled = true; });
     bouton.classList.add('en-cours');
     let texte;
+    enRoute++;
     try {
       const w = await appeler({ r, j: Number(j), c });
       if (!w) return introuvable();
@@ -238,7 +258,7 @@ h1 { font: 500 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
         : (v.proposition.statut === 'close' ? 'Cette proposition est close : la réponse n’a pas été enregistrée.' : 'Cette réponse n’a pas pu être enregistrée.');
     } catch (e) {
       texte = 'La réponse n’a pas pu partir. Vérifiez la connexion, puis réessayez.';
-    }
+    } finally { enRoute--; }
     // le choix venu du courriel, ou une proposition close entre-temps : la page se recompose, la réponse en tête
     if (!li || v.proposition.statut === 'close') {
       oublierVise();
@@ -285,7 +305,7 @@ h1 { font: 500 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
   let va = null;                               // l'alerte vue par son jeton : { alerte, attente, autres }
   let faitAlerte = null;                       // ce qui vient d'être fait : { action, n, liste, tout }
   const secteurs = xs => `<ul class="secteurs">${xs.map(a => `<li>${esc(a.secteur)}<span>${esc(a.spectacle || 'Tous les spectacles')}</span></li>`).join('')}</ul>`;
-  const piedAlerte = () => `<div class="pied"><p><a href="${DATES}">Les dates de la compagnie</a></p><p>Une question ? <a href="mailto:${CONTACT}">${CONTACT}</a></p></div>`;
+  const piedAlerte = () => `<div class="pied"><p><a class="lien-seul" href="${DATES}">Les dates de la compagnie</a></p><p>Une question ? <a href="mailto:${CONTACT}">${CONTACT}</a></p></div>`;
 
   function alerteIntrouvable() {
     document.title = 'Lien expiré · Compagnie Crescite';
@@ -320,7 +340,7 @@ h1 { font: 500 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
         <p class="note-alerte">${plus ? 'Tant qu’elles ne sont pas confirmées' : 'Tant qu’elle n’est pas confirmée'}, rien ne vous est envoyé. Ce n’est pas vous ? Fermez simplement cette page.</p></section>`;
     } else if (a.active && a.confirmee) {
       corps = `<h1 tabindex="-1">Votre alerte est déjà active</h1><p class="bonjour">Vous recevez par courriel les dates de la compagnie confirmées dans ce secteur :</p>${secteurs([a])}
-        <p class="bonjour"><a href="?alerte=${encodeURIComponent(jetonAlerte)}&amp;action=arreter">Ne plus la recevoir</a></p>`;
+        <p class="bonjour"><a class="lien-seul" href="?alerte=${encodeURIComponent(jetonAlerte)}&amp;action=arreter">Ne plus la recevoir</a></p>`;
     } else {
       corps = `<h1 tabindex="-1">Cette alerte est désactivée</h1><p class="bonjour">La compagnie l’a désactivée : elle ne vous écrit plus.
         Pour en créer une nouvelle : <a href="${DATES}">les dates de la compagnie</a>.</p>`;
@@ -334,6 +354,7 @@ h1 { font: 500 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
     main.querySelectorAll('button[data-alerte]').forEach(b => { b.disabled = true; });
     bouton.classList.add('en-cours');
     let texte = '';
+    enRoute++;
     try {
       const w = await appeler({ alerte: jetonAlerte, action, tout });
       if (!w) return alerteIntrouvable();
@@ -347,7 +368,7 @@ h1 { font: 500 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
       }
     } catch (e) {
       texte = 'Cela n’a pas pu se faire. Vérifiez la connexion, puis réessayez.';
-    }
+    } finally { enRoute--; }
     rendreAlerte(texte);
     (texte ? main.querySelector('.etat') : main.querySelector('h1'))?.focus();
   }

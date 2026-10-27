@@ -3,7 +3,7 @@
 // sur la base fictive commune (admin-fictif.mjs).
 //   node site/niveau.mjs
 // Dix idées, chacune regardée : les fiches en tiroir, la sélection multiple, le parcours d'une date, annuler plutôt que
-// confirmer (et la corbeille), les garde-fous, la carte de tournée, les documents générés, les séries et modèles, le
+// confirmer (et la corbeille ; ce qui ne se rattrape pas, dans la boîte de la charte), les garde-fous, la carte de tournée, les documents générés, les séries et modèles, le
 // téléphone, les notes internes. Les captures vont dans site/dist/shots-niveau/. Sort en erreur si une vérification manque.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -147,7 +147,6 @@ const attendre = (page, fn, ms = 6000) => page.waitForFunction(fn, null, { timeo
 // ================================================================================ 8 · les séries et modèles, 7 · les documents générés, 10 · les notes
 {
   const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1440, hauteur: 900, hash: '#/representations/nouvelle' });
-  page.on('dialog', d => d.accept());   // « Des modifications ne sont pas enregistrées » en quittant la série non enregistrée
   await page.waitForSelector('#d-serie', { timeout: 15000 });
   await page.click('#d-serie');
   await page.waitForSelector('.gf [role="dialog"]', { timeout: 5000 });
@@ -160,6 +159,10 @@ const attendre = (page, fn, ms = 6000) => page.waitForFunction(fn, null, { timeo
   const reps = await page.$$eval('#d-reps tr', xs => xs.map(x => `${x.querySelector('[data-r="jour"]').value} ${x.querySelector('[data-r="heure"]').value} ${x.querySelector('[data-r="public"]').value}`));
   ok('8 · « Série… » pose les séances d’un coup : une semaine du lundi au vendredi à 10 h et 14 h 30, scolaires', reps.length === 10 && reps.every(r => /scolaire$/.test(r)) && reps.filter(r => / 10:00 /.test(r)).length === 5, reps.join(' | '));
   await page.goto(`${URL0}#/spectacles/berenice`);
+  // la série n'est pas enregistrée : la boîte de la charte pose la question (GESTES.quitter), on quitte quand même
+  await page.waitForSelector('dialog.gq[open] [data-gq="oui"]', { timeout: 5000 });
+  await page.waitForTimeout(400);   // (la boîte ignore les clics de ses 350 premières ms : un appui qui l'a ouverte)
+  await page.click('dialog.gq [data-gq="oui"]');
   await page.waitForSelector('[data-onglet="Déroulé type"]', { timeout: 15000 });
   await page.click('[data-onglet="Déroulé type"]');
   await page.waitForSelector('#md-heures', { timeout: 5000 });
@@ -262,6 +265,54 @@ const attendre = (page, fn, ms = 6000) => page.waitForFunction(fn, null, { timeo
   ok('9 · une fiche en plein écran : la liste s’efface, le bouton « + » aussi, le pied reste au-dessus de la barre', await page.$eval('.deux', e => e.classList.contains('edition')) && await page.$eval('.ob-plus', e => e.hidden) && await page.$eval('.pied-ed', e => parseFloat(getComputedStyle(e).bottom) >= 60));
   await page.screenshot({ path: `${CAPT}/telephone-fiche.png`, fullPage: false });
   ok('9 · aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+
+// ================================================================================ 4 bis · supprimer sans trembler
+// ce qui se rattrape se fait tout de suite, avec « Annuler » dans l'annonce (un compte détaché, une proposition close) ;
+// ce qui ne se rattrape pas (deux lieux fusionnés) se demande dans la boîte de la charte, jamais par confirm() : le
+// bouton nommé par son action, à la couleur d'alerte, « Annuler » a le focus
+{
+  DB.crescite_personnes_privees[0].user_id = 'u-camille';
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1440, hauteur: 900, hash: '#/equipe/1' });
+  let dialogues = 0;
+  page.on('dialog', d => { dialogues++; d.dismiss(); });
+  await page.waitForSelector('#pe-detacher', { timeout: 15000 });
+  const n1 = MODIFS.length;
+  await page.click('#pe-detacher');
+  await attendre(page, () => document.querySelector('.annonce button') && !document.querySelector('#pe-detacher'));
+  ok('4 bis · « Détacher ce compte » : tout de suite, sans « Êtes-vous sûr ? », l’annonce porte « Annuler »', dialogues === 0 && MODIFS.slice(n1).some(m => m.table === 'crescite_personnes_privees' && m.body && m.body.user_id === null) && /Compte détaché/.test(await texte(page, '.annonce')) && (await compte(page, '.annonce button')) === 1, await texte(page, '.annonce'));
+  await page.click('.annonce button');
+  await attendre(page, () => !!document.querySelector('#pe-detacher'));
+  ok('4 bis · « Annuler » rattache le compte de nouveau', MODIFS.slice(n1).some(m => m.table === 'crescite_personnes_privees' && m.body && m.body.user_id === 'u-camille') && (await compte(page, '#pe-detacher')) === 1);
+  // clore une proposition
+  await page.goto(`${URL0}#/planning/proposition/1`);
+  await page.waitForSelector('[data-dp="clore"]', { timeout: 15000 });
+  const n2 = MODIFS.length;
+  await page.click('[data-dp="clore"]');
+  await attendre(page, () => !!document.querySelector('[data-dp="rouvrir"]') && document.querySelector('.annonce button'));
+  ok('4 bis · « Clore la proposition » : tout de suite, sans question, l’annonce porte « Annuler »', dialogues === 0 && MODIFS.slice(n2).some(m => m.table === 'crescite_propositions' && m.body && m.body.statut === 'close') && (await compte(page, '[data-dp="rouvrir"]')) === 1 && /Proposition close/.test(await texte(page, '#annonces')), await texte(page, '#annonces'));
+  await page.click('.annonce button:has-text("Annuler")');
+  await attendre(page, () => !!document.querySelector('[data-dp="clore"]'));
+  ok('4 bis · « Annuler » rouvre la proposition', MODIFS.slice(n2).some(m => m.table === 'crescite_propositions' && m.body && m.body.statut === 'ouverte') && (await compte(page, '[data-dp="clore"]')) === 1);
+  // fusionner deux lieux : la question d'abord
+  await page.goto(`${URL0}#/lieux/8`);
+  await page.waitForSelector('#li-fusion input', { timeout: 15000 });
+  const fusion = async () => { await page.fill('#li-fusion input', 'Volcan'); await page.waitForTimeout(150); await page.click('#li-fusion .suggestions button[data-id="6"]'); await page.waitForSelector('dialog.gq[open]', { timeout: 4000 }).catch(() => {}); await page.waitForTimeout(400); };
+  const n3 = MODIFS.length;
+  await fusion();
+  const b = await page.evaluate(() => ({ titre: document.querySelector('dialog.gq[open] h2')?.textContent, ok: document.querySelector('dialog.gq[open] [data-gq="oui"]')?.textContent, focus: document.activeElement?.dataset?.gq, danger: !!document.querySelector('dialog.gq.gq-danger[open]'), couleur: getComputedStyle(document.querySelector('dialog.gq[open] [data-gq="oui"]') || document.body).color, alerte: getComputedStyle(document.documentElement).getPropertyValue('--alerte').trim() }));
+  ok('4 bis · fusionner deux lieux : la boîte de la charte, pas confirm() ; « Fusionner les lieux » à la couleur d’alerte, « Annuler » a le focus', dialogues === 0 && /^Fusionner « Théâtre de Flers/.test(b.titre || '') && b.ok === 'Fusionner les lieux' && b.focus === 'non' && b.danger, JSON.stringify(b));
+  await calme(page);
+  await page.screenshot({ path: `${CAPT}/fusionner.png`, fullPage: false });
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(300);
+  ok('4 bis · Échap répond « Annuler » : rien n’est écrit', !(await page.$('dialog.gq[open]')) && MODIFS.length === n3 && await page.evaluate(() => location.hash === '#/lieux/8'));
+  await fusion();
+  await page.click('dialog.gq [data-gq="oui"]');
+  await attendre(page, () => location.hash === '#/lieux/6');
+  ok('4 bis · « Fusionner les lieux » : les dates passent au lieu choisi, le doublon part', MODIFS.slice(n3).some(m => m.table === 'crescite_dates' && m.body && m.body.lieu_id === 6) && MODIFS.slice(n3).some(m => m.table === 'crescite_lieux' && m.delete && m.delete.includes(8)) && await page.evaluate(() => location.hash === '#/lieux/6'));
+  ok('4 bis · aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();
 }
 

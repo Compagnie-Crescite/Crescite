@@ -1,6 +1,8 @@
 // Les gestes de l'espace de l'équipe (equipe/equipe.js avec ../admin/gestes.js), vérifiés dans Chromium, hors ligne :
 // l'appui long sur un billet (une feuille d'actions depuis le bas), la date d'avant et d'après (les boutons, le balayage
-// au doigt, ← → au clavier), le clic droit sur une notification.
+// au doigt, ← → au clavier), le clic droit sur une notification ; ne rien perdre en partant ; supprimer dans la boîte de
+// la charte (jamais confirm()), un retard signalé et un mot pour l'administration commencés protégés du départ ; le
+// témoin de la connexion (à jour, hors ligne, le retour) ; l'aide « ? » (les raccourcis, au doigt les gestes).
 //   python3 site/build.py && node site/gestes-equipe.mjs
 // Même saison fictive que mouvement-equipe.mjs (aucune donnée réelle, la base coupée). Demande Playwright et Chromium.
 import http from 'node:http';
@@ -208,8 +210,9 @@ fs.mkdirSync(CAPT, { recursive: true });
   await page.waitForFunction(() => location.hash === '#/date/102' && document.querySelector('.heros-page'), null, { timeout: 8000 }).catch(() => {});
   ok('« Ouvrir la date » ouvre la page de la date', (await hash(page)) === '#/date/102', await hash(page));
   await page.waitForTimeout(500);
-  const nav = await page.$eval('#contenu .nav-dates', e => [...e.querySelectorAll('[data-gps]')].map(x => `${x.dataset.gps}:${x.dataset.href || 'off'}:${x.textContent.trim()}`)).catch(() => []);
-  ok('la page a « date précédente / date suivante », nommées (le jour, puis le spectacle)', /^-1:#\/date\/101:\S+ \d+(er)? \S+ · Bérénice$/.test(nav[0] || '') && /^1:#\/date\/103:\S+ \d+(er)? \S+ · Bérénice$/.test(nav[1] || ''), nav.join(' | '));
+  const nav = await page.$eval('#contenu .nav-dates', e => [...e.querySelectorAll('[data-gps]')].map(x => `${x.dataset.gps}:${x.dataset.href || 'off'}:${x.querySelector('.gps-quoi')?.firstChild?.textContent || ''}:${x.querySelector('.gps-l')?.textContent || ''}:${x.getAttribute('aria-label')}`)).catch(() => []);
+  ok('la page a « Date précédente / Date suivante », nommées par le jour et le lieu (le spectacle pour le lecteur d’écran)', /^-1:#\/date\/101:Date précédente:\S+ \d+(er)? \S+ · Caen:Date précédente : \S+ \d+(er)? \S+ · Caen, Bérénice \(←\)$/.test(nav[0] || '') && /^1:#\/date\/103:Date suivante:\S+ \d+(er)? \S+ · Paris:Date suivante : .+ · Paris, Bérénice \(→\)$/.test(nav[1] || ''), nav.join(' | '));
+  ok('les mêmes deux boutons au pied de la page', (await page.$$eval('#contenu .nav-dates', xs => xs.length)) === 2 && await page.$eval('#contenu .nav-dates-bas [data-gps="1"]', e => e.dataset.href === '#/date/103').catch(() => false));
   await page.screenshot({ path: `${CAPT}/date.png`, fullPage: false });
   // (après un changement de page, la transition de vue couvre l'écran un instant : le doigt attend qu'elle finisse)
   const pageDe = async id => { await page.waitForFunction(h => location.hash === h && document.querySelector('#contenu .nav-dates') && [...document.querySelectorAll('#contenu .nav-dates [data-gps]')].every(b => b.dataset.href !== h), `#/date/${id}`, { timeout: 6000 }).catch(() => {}); await page.waitForTimeout(500); };
@@ -253,6 +256,9 @@ fs.mkdirSync(CAPT, { recursive: true });
   await page.keyboard.press('ArrowLeft');
   await pageDe(102);
   ok('← revient à la précédente', (await hash(page)) === '#/date/102', await hash(page));
+  await page.keyboard.press('ArrowDown'); await page.waitForTimeout(400);
+  ok('↓ fait défiler la page, sans changer de date', (await hash(page)) === '#/date/102', await hash(page));
+  ok('à l’ordinateur, chaque bouton montre sa touche (← →)', await page.$eval('#contenu .nav-dates .gps-suiv .gps-touche', e => getComputedStyle(e).display !== 'none' && e.textContent === '→').catch(() => false));
   await page.click('#contenu .nav-dates [data-gps="-1"]');
   await pageDe(101);
   await page.click('#contenu .nav-dates [data-gps="-1"]');
@@ -397,6 +403,11 @@ fs.mkdirSync(CAPT, { recursive: true });
   await page.waitForTimeout(500);
   await menuSur(page, '.feuille-item[data-date="102"]', 'Repasser en brouillon');
   await page.tap('.gm-feuille [data-gm]:has-text("Repasser en brouillon")');
+  // la question dans la boîte de la charte (jamais confirm()) : le bouton nommé par son action, « Annuler » a le focus
+  await page.waitForSelector('dialog.gq[open] [data-gq="oui"]', { timeout: 4000 }).catch(() => {}); await page.waitForTimeout(400);
+  const boiteBrouillon = await page.evaluate(() => ({ ok: document.querySelector('dialog.gq[open] [data-gq="oui"]')?.textContent, focus: document.activeElement?.dataset?.gq, danger: !!document.querySelector('dialog.gq.gq-danger[open]') }));
+  ok('« Repasser en brouillon » : la boîte de la charte, « Repasser en brouillon » à la couleur d’alerte, « Annuler » a le focus', boiteBrouillon.ok === 'Repasser en brouillon' && boiteBrouillon.focus === 'non' && boiteBrouillon.danger, JSON.stringify(boiteBrouillon));
+  await page.tap('dialog.gq [data-gq="oui"]').catch(() => {});
   await page.waitForFunction(() => !document.querySelector('.feuille-item[data-date="102"]'), null, { timeout: 10000 }).catch(() => {});
   ok('dans la liste, « Repasser en brouillon » (après confirmation) : la feuille n’est plus publiée, la liste la retire', MODIFS.some(m => m.table === 'crescite_feuilles' && m.patch && m.patch.statut === 'brouillon') && base.DB.crescite_feuilles.find(f => f.id === 7).statut === 'brouillon' && (await compte(page, '.feuille-item[data-date="102"]')) === 0);
   await page.goto(`${URL0}#/date/102`);
@@ -421,6 +432,216 @@ fs.mkdirSync(CAPT, { recursive: true });
   ok('Composer : la feuille est composée depuis la base (blocs au format 2, l’instantané des horaires), publiée, et s’ouvre', !!compo && compo.post[0].date_id === 103 && compo.post[0].statut === 'publiee' && compo.post[0].contenu.format === 2 && compo.post[0].contenu.blocs.length > 5 && compo.post[0].contenu.instantane.length === 2 && (await page.evaluate(() => location.hash)) === '#/feuille/103' && (await compte(page, '.feuille-cadre [data-bloc]')) > 5, `${compo && compo.post[0].contenu.blocs.length} blocs · ${await page.evaluate(() => location.hash)} · ${await texte(page, '#annonces')}`);
   await page.waitForTimeout(400); await page.screenshot({ path: `${CAPT}/admin-feuille.png`, fullPage: false });
   ok('administrateur · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+
+// ================================================================================ ne rien perdre en partant, le titre de l'onglet
+// la fiche « Moi » changée : changer de vue, le bouton précédent posent la question dans une boîte de la charte (jamais
+// confirm()) ; « Rester » garde la saisie et l'adresse ; une feuille de modification changée aussi ; fermer l'onglet, la
+// question du navigateur
+{
+  const base = baseSimulee();
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { hash: '#/date/102', base });
+  let natifs = 0;
+  page.on('dialog', d => { natifs++; d.dismiss().catch(() => {}); });
+  const question = () => page.waitForFunction(() => !!document.querySelector('dialog.gq[open]'), null, { timeout: 4000 }).then(() => page.waitForTimeout(400)).then(() => true).catch(() => false);   // (la boîte ignore les clics de ses 350 premières ms)
+  const adresse = () => page.evaluate(() => location.hash);
+  // un vrai geste sur la barre des onglets (une entrée d'historique sans geste, le précédent du navigateur la saute)
+  const onglet = k => page.locator(`.nav-item[data-onglet="${k}"]:visible`).first().tap();
+  await page.waitForSelector('.heros[data-date="102"]', { timeout: 10000 }).catch(() => {});
+  await page.waitForFunction(() => /La Folle Idée · /.test(document.title), null, { timeout: 5000 }).catch(() => {});
+  ok('titre · une date : le spectacle, le jour, l’onglet (« La Folle Idée · … · Ma saison · Équipe · Compagnie Crescite »)', /^(\(\d+\) )?La Folle Idée · \S+ \S+ \S+ · Ma saison · Équipe · Compagnie Crescite$/.test(await page.title()), await page.title());
+  await onglet('moi');
+  await page.waitForSelector('#f-telephone', { timeout: 10000 });
+  await page.waitForTimeout(400);
+  ok('titre · une vue d’onglet : « Moi · Équipe · Compagnie Crescite »', /(^|\) )Moi · Équipe · Compagnie Crescite$/.test(await page.title()), await page.title());
+  await onglet('saison');
+  await page.waitForFunction(() => location.hash === '#/saison' && document.querySelector('#contenu .heros, #contenu .billet'), null, { timeout: 6000 }).catch(() => {});
+  ok('partir · la fiche sans changement : on change de vue sans question', !(await page.$('dialog.gq[open]')) && (await adresse()) === '#/saison');
+  await page.goBack();
+  await page.waitForSelector('#f-telephone', { timeout: 10000 });
+  await page.fill('#f-telephone', '06 00 00 00 01');
+  await onglet('planning');
+  ok('partir · la fiche changée : changer de vue pose la question, pas confirm()', await question() && natifs === 0 && (await adresse()) === '#/moi', await adresse());
+  await page.waitForTimeout(300); await page.screenshot({ path: `${CAPT}/partir-question.png`, fullPage: false });
+  await page.tap('dialog.gq [data-gq="non"]');
+  ok('partir · « Rester » : la fiche et sa saisie restent', !(await page.$('dialog.gq[open]')) && (await page.$eval('#f-telephone', e => e.value)) === '06 00 00 00 01' && (await adresse()) === '#/moi');
+  await page.goBack();
+  ok('partir · le bouton précédent pose la même question, l’adresse revient à la fiche', await question() && (await adresse()) === '#/moi', await adresse());
+  await page.tap('dialog.gq [data-gq="oui"]').catch(() => {});
+  // (la vue d'avant la fiche : la date, « Planning » ayant pris la place de « Ma saison » dans l'historique)
+  await page.waitForFunction(() => location.hash === '#/date/102', null, { timeout: 6000 }).catch(() => {});
+  ok('partir · « Quitter sans enregistrer » : la vue d’avant (le précédent rejoué)', (await adresse()) === '#/date/102' && !(await page.$('dialog.gq[open]')), await adresse());
+  await page.goForward();
+  await page.waitForSelector('#f-telephone', { timeout: 10000 });
+  ok('partir · le suivant revient à la fiche, telle qu’enregistrée, sans question', (await page.$eval('#f-telephone', e => e.value)) === '06 12 34 56 78' && !(await page.$('dialog.gq[open]')), await page.$eval('#f-telephone', e => e.value));
+  // une feuille de modification changée : Annuler, puis changer de vue
+  await page.evaluate(() => { GESTES.formulaire({ titre: 'Essai', champs: [{ k: 'texte', t: 'texte', l: 'Texte', valeur: 'avant' }] }); });
+  await page.waitForSelector('.gf form', { timeout: 4000 });
+  await page.fill('.gf [name="texte"]', 'après');
+  await page.tap('.gf button[data-gf-annuler]');
+  ok('feuille · changée : Annuler pose la question par-dessus la feuille', await question() && (await compte(page, '.gf form')) === 1);
+  await page.tap('dialog.gq [data-gq="non"]');
+  await page.evaluate(() => { location.hash = '#/saison'; });   // (la feuille couvre la barre des onglets)
+  ok('feuille · changée : changer de vue pose la question, la feuille reste', await question() && (await compte(page, '.gf form')) === 1 && (await adresse()) === '#/moi');
+  await page.tap('dialog.gq [data-gq="oui"]').catch(() => {});
+  await page.waitForFunction(() => !document.querySelector('.gf') && location.hash === '#/saison', null, { timeout: 6000 }).catch(() => {});
+  ok('feuille · « Quitter sans enregistrer » ferme la feuille et change de vue', !(await page.$('.gf')) && (await adresse()) === '#/saison' && natifs === 0);
+  // fermer l'onglet sur une fiche changée : la question du navigateur
+  await onglet('moi');
+  await page.waitForSelector('#f-telephone', { timeout: 10000 });
+  await page.tap('#f-telephone');   // (un geste : le navigateur ne pose sa question qu'à une page touchée)
+  await page.fill('#f-telephone', '06 00 00 00 02');
+  page.removeAllListeners('dialog');
+  const vu = new Promise(r => { page.once('dialog', d => { r(d.type()); d.dismiss().catch(() => {}); }); setTimeout(() => r(null), 5000); });
+  ok('partir · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' / '));
+  await page.close({ runBeforeUnload: true });
+  const avantQuitter = await vu;
+  ok('partir · fermer l’onglet sur la fiche changée : la question du navigateur (beforeunload)', avantQuitter === 'beforeunload', String(avantQuitter));
+  await ctx.close();
+}
+
+// ================================================================================ supprimer sans trembler, les dernières saisies protégées
+// supprimer une date : la boîte de la charte (jamais confirm()), « Supprimer la date » à la couleur d'alerte, « Annuler »
+// a le focus et ne supprime rien ; le retard signalé, un mot pour l'administration commencés : la question en partant
+{
+  const base = baseSimulee();
+  base.DB.crescite_propositions = [{ id: 1, titre: 'Option : Théâtre de Flers', message: null, statut: 'ouverte', spectacle_id: 1, cree_le: new Date(d0 - 864e5).toISOString(), spectacle: { id: 1, titre: 'Bérénice', slug: 'berenice' },
+    jours: [{ id: 11, debut: `${plus(40)}T00:00:00+00:00`, fin: `${plus(41)}T00:00:00+00:00`, journee: true, reponses: [{ personne_id: 1, reponse: null, commentaire: null, repondu_le: null }] }] }];
+  base.DB.crescite_indisponibilites = [];   // (le planning installé : sans la table, la proposition se dirait « bientôt »)
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { hash: '#/date/102', base });
+  let natifs = 0;
+  page.on('dialog', d => { natifs++; d.dismiss().catch(() => {}); });
+  const question = () => page.waitForFunction(() => !!document.querySelector('dialog.gq[open]'), null, { timeout: 4000 }).then(() => page.waitForTimeout(400)).then(() => true).catch(() => false);
+  const boite = () => page.evaluate(() => ({ titre: document.querySelector('dialog.gq[open] h2')?.textContent, ok: document.querySelector('dialog.gq[open] [data-gq="oui"]')?.textContent, annuler: document.querySelector('dialog.gq[open] [data-gq="non"]')?.textContent, focus: document.activeElement?.dataset?.gq, danger: !!document.querySelector('dialog.gq.gq-danger[open]') }));
+  await page.waitForSelector('.heros[data-date="102"]', { timeout: 10000 }).catch(() => {}); await page.waitForTimeout(500);
+  await menuSur(page, '.heros[data-date="102"]', 'Supprimer la date…', { dy: -30 });
+  await page.tap('.gm-feuille [data-gm]:has-text("Supprimer la date…")');
+  const b1 = await question() && await boite();
+  ok('supprimer · une date : la boîte de la charte, pas confirm() ; « Supprimer la date » à la couleur d’alerte, « Annuler » a le focus', !!b1 && natifs === 0 && /^Supprimer « La Folle Idée · /.test(b1.titre) && b1.ok === 'Supprimer la date' && b1.annuler === 'Annuler' && b1.focus === 'non' && b1.danger, JSON.stringify(b1));
+  await page.screenshot({ path: path.join(CAPT, 'supprimer-date-telephone.png') });
+  await page.tap('dialog.gq [data-gq="non"]');
+  await page.waitForTimeout(300);
+  ok('supprimer · « Annuler » : rien n’est supprimé, la date reste', !(await page.$('dialog.gq[open]')) && !MODIFS.some(m => m.table === 'crescite_dates' && m.delete) && (await compte(page, '.heros[data-date="102"]')) === 1);
+  await menuSur(page, '.heros[data-date="102"]', 'Supprimer la date…', { dy: -30 });
+  await page.tap('.gm-feuille [data-gm]:has-text("Supprimer la date…")');
+  await question();
+  await page.tap('dialog.gq [data-gq="oui"]');
+  await page.waitForFunction(() => location.hash === '#/saison', null, { timeout: 8000 }).catch(() => {});
+  ok('supprimer · « Supprimer la date » : la date part de la base, retour à la saison', MODIFS.some(m => m.table === 'crescite_dates' && m.delete && m.delete.includes(102)) && (await page.evaluate(() => location.hash)) === '#/saison');
+  // le retard signalé : une précision écrite ne se perd pas d'un Échap
+  await page.goto(`${URL0}#/date/101`);
+  await page.waitForSelector('[data-retard]', { timeout: 10000 }).catch(() => {});
+  await page.tap('[data-retard]');
+  await page.waitForSelector('#retard-texte', { timeout: 4000 });
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(300);
+  ok('retard · rien d’écrit : Échap ferme sans question', !(await page.$('#modale-retard')) && !(await page.$('dialog.gq[open]')));
+  await page.tap('[data-retard]');
+  await page.waitForSelector('#retard-texte', { timeout: 4000 });
+  await page.fill('#retard-texte', 'Accident A13, arrivée vers 14h20');
+  await page.keyboard.press('Escape');
+  const b2 = await question() && await boite();
+  ok('retard · une précision écrite : Échap pose la question (« Fermer sans envoyer », « Rester »)', !!b2 && b2.ok === 'Fermer sans envoyer' && b2.focus === 'non' && (await compte(page, '#modale-retard')) === 1, JSON.stringify(b2));
+  await page.screenshot({ path: path.join(CAPT, 'retard-question-telephone.png') });
+  await page.tap('dialog.gq [data-gq="non"]');
+  ok('retard · « Rester » : la boîte et la précision restent', !(await page.$('dialog.gq[open]')) && (await page.$eval('#retard-texte', e => e.value).catch(() => '')) === 'Accident A13, arrivée vers 14h20');
+  await page.evaluate(() => { location.hash = '#/saison'; });
+  ok('retard · changer de vue pose la question, la boîte reste', await question() && (await compte(page, '#modale-retard')) === 1 && (await page.evaluate(() => location.hash)) === '#/date/101');
+  await page.tap('dialog.gq [data-gq="oui"]').catch(() => {});
+  await page.waitForFunction(() => !document.querySelector('#modale-retard') && location.hash === '#/saison', null, { timeout: 6000 }).catch(() => {});
+  ok('retard · « Fermer sans envoyer » ferme la boîte et change de vue, rien n’est parti', !(await page.$('#modale-retard')) && (await page.evaluate(() => location.hash)) === '#/saison' && !MODIFS.some(m => m.rpc === 'crescite_signaler'));
+  // un mot pour l'administration, sans réponse choisie : il ne part pas ; changer de vue pose la question
+  await page.evaluate(() => { location.hash = '#/proposition/1'; });
+  await page.waitForSelector('[data-commentaire="11"]', { timeout: 10000 }).catch(() => {});
+  await page.waitForTimeout(400);
+  await page.evaluate(() => { location.hash = '#/saison'; });
+  await page.waitForTimeout(500);
+  ok('proposition · rien d’écrit : on change de vue sans question', !(await page.$('dialog.gq[open]')) && (await page.evaluate(() => location.hash)) === '#/saison');
+  await page.goBack();
+  await page.waitForSelector('[data-commentaire="11"]', { timeout: 10000 }).catch(() => {});
+  await page.waitForTimeout(400);
+  await page.fill('[data-commentaire="11"]', 'Libre le premier jour seulement, après 14 h.');
+  await page.evaluate(() => { location.hash = '#/saison'; });
+  ok('proposition · un mot commencé : changer de vue pose la question', await question() && (await page.evaluate(() => location.hash)) === '#/proposition/1');
+  await page.tap('dialog.gq [data-gq="non"]');
+  ok('proposition · « Rester » : le mot reste', (await page.$eval('[data-commentaire="11"]', e => e.value).catch(() => '')) === 'Libre le premier jour seulement, après 14 h.');
+  await page.tap('[data-commentaire="11"]');
+  const avantRep = MODIFS.length;
+  await page.tap('[data-jour-prop="11"] [data-reponse="oui"]');
+  await page.waitForFunction(() => document.querySelector('[data-jour-prop="11"] [data-reponse="oui"][aria-pressed="true"]'), null, { timeout: 6000 }).catch(() => {});
+  ok('proposition · une réponse choisie emporte le mot', MODIFS.slice(avantRep).some(m => m.rpc === 'crescite_repondre' && m.corps.commentaire_ === 'Libre le premier jour seulement, après 14 h.'), JSON.stringify(MODIFS.slice(avantRep)));
+  await page.evaluate(() => { location.hash = '#/saison'; });
+  await page.waitForTimeout(500);
+  ok('proposition · le mot parti avec la réponse : on change de vue sans question', !(await page.$('dialog.gq[open]')) && (await page.evaluate(() => location.hash)) === '#/saison' && natifs === 0);
+  ok('supprimer, retard, proposition · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+
+// ================================================================================ le témoin de la connexion : à jour, hors ligne, le retour
+{
+  // au téléphone, hors ligne (la base coupée) : la pastille sur l'icône qui relit, « Installer » garde son nom
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { hash: '#/saison' });
+  await page.waitForTimeout(600);
+  const t1 = await page.evaluate(() => { const b = document.querySelector('[data-temoin]'), r = b.getBoundingClientRect(); return { etat: b.dataset.etat, nom: b.textContent.trim(), l: Math.round(r.width), h: Math.round(r.height), bandeau: document.querySelector('#bandeau-etat')?.textContent.trim().slice(0, 12) }; });
+  ok('témoin (téléphone) · hors ligne : la pastille sur l’icône (44 px), son nom dit « Hors ligne · lu … · Actualiser », le bandeau aussi', t1.etat === 'horsligne' && /^Hors ligne · lu .+ · Actualiser$/.test(t1.nom) && t1.l >= 44 && t1.h >= 44 && t1.bandeau === 'Hors ligne :', JSON.stringify(t1));
+  ok('témoin (téléphone) · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+{
+  // à l'ordinateur, en ligne (la base simulée) : « À jour » ; le réseau tombe puis revient
+  const base = baseSimulee();
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { telephone: false, hash: '#/date/102', base });
+  const etat = () => page.evaluate(() => { const b = document.querySelector('[data-temoin]'); return { etat: b.dataset.etat, texte: b.textContent.trim(), sr: document.querySelector('#sr-connexion')?.textContent || '', bandeau: document.querySelector('#bandeau-etat')?.textContent.trim() || '' }; });
+  await page.waitForFunction(() => document.querySelector('[data-temoin]')?.dataset.etat === 'ajour', null, { timeout: 10000 }).catch(() => {});
+  const e1 = await etat();
+  ok('témoin (ordinateur) · en ligne : « À jour », sans bandeau', e1.etat === 'ajour' && /^À jour/.test(e1.texte) && !e1.bandeau, JSON.stringify(e1));
+  await ctx.setOffline(true);
+  await page.waitForFunction(() => document.querySelector('[data-temoin]')?.dataset.etat === 'horsligne', null, { timeout: 4000 }).catch(() => {});
+  const e2 = await etat();
+  ok('témoin (ordinateur) · le réseau tombe : « Hors ligne · lu à l’instant », le bandeau, « Connexion perdue » aux lecteurs d’écran', e2.etat === 'horsligne' && /Hors ligne · lu à l’instant/.test(e2.texte) && /^Hors ligne :/.test(e2.bandeau) && /^Connexion perdue/.test(e2.sr), JSON.stringify(e2));
+  await page.screenshot({ path: `${CAPT}/temoin-horsligne-ordinateur.png`, fullPage: false });
+  await ctx.setOffline(false);
+  await page.waitForFunction(() => document.querySelector('[data-temoin]')?.dataset.etat === 'ajour', null, { timeout: 10000 }).catch(() => {});
+  const e3 = await etat();
+  ok('témoin (ordinateur) · le réseau revient : l’espace se relit, « À jour », « Connexion rétablie »', e3.etat === 'ajour' && !e3.bandeau && /^Connexion rétablie/.test(e3.sr), JSON.stringify(e3));
+  ok('témoin (ordinateur) · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+
+// ================================================================================ l'aide « ? » : les raccourcis, au doigt les gestes
+{
+  // au téléphone : « Gestes et raccourcis », au bas de « Moi »
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { hash: '#/moi' });
+  await page.waitForSelector('.moi-aide [data-aide]', { timeout: 8000 });
+  await page.tap('.moi-aide [data-aide]');
+  await page.waitForSelector('dialog.gq-aide[open]', { timeout: 3000 }).catch(() => {});
+  const a = await page.evaluate(() => { const d = document.querySelector('dialog.gq-aide[open]'); return d && { titre: d.querySelector('h2').textContent, gestes: [...d.querySelectorAll('.gq-geste')].map(x => x.textContent), kbd: d.querySelectorAll('kbd').length }; });
+  ok('aide (téléphone) · « Gestes et raccourcis », au bas de « Moi » : l’appui long, tirer vers le bas, balayer ; pas de touches', a && a.titre === 'Gestes et raccourcis' && ['Appui long', 'Tirer vers le bas', 'Balayer', 'Glisser depuis le bord gauche'].every(g => a.gestes.includes(g)) && a.kbd === 0, JSON.stringify(a));
+  await page.waitForTimeout(300); await page.screenshot({ path: `${CAPT}/aide-telephone.png`, fullPage: false });
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
+  ok('aide (téléphone) · Échap la ferme, le focus revient au bouton', await page.evaluate(() => !document.querySelector('dialog.gq-aide') && document.activeElement?.matches('.moi-aide [data-aide]')));
+  ok('aide (téléphone) · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+{
+  // à l'ordinateur : la touche « ? », « Raccourcis » au pied de la colonne
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { telephone: false, hash: '#/date/102' });
+  await page.waitForSelector('#contenu .nav-dates', { timeout: 10000 }).catch(() => {});
+  await page.keyboard.press('?');
+  await page.waitForSelector('dialog.gq-aide[open]', { timeout: 3000 }).catch(() => {});
+  const a = await page.evaluate(() => { const d = document.querySelector('dialog.gq-aide[open]'); return d && { titre: d.querySelector('h2').textContent, ici: d.querySelector('section h3')?.textContent, kbd: [...d.querySelectorAll('kbd')].map(k => k.textContent) }; });
+  ok('aide (ordinateur) · « ? » : les raccourcis, la date d’abord (← →, « ici »), Échap, Maj F10', a && a.titre === 'Raccourcis clavier' && /Une date/.test(a.ici) && /ici/.test(a.ici) && ['←', '→', 'Échap', 'F10', '?'].every(k => a.kbd.includes(k)), JSON.stringify(a));
+  await page.keyboard.press('ArrowRight'); await page.waitForTimeout(300);
+  ok('aide (ordinateur) · ouverte, → ne change pas de date', (await hash(page)) === '#/date/102', await hash(page));
+  await page.keyboard.press('Escape'); await page.waitForTimeout(200);
+  await page.click('.nav-pied [data-aide]');
+  await page.waitForSelector('dialog.gq-aide[open]', { timeout: 3000 }).catch(() => {});
+  ok('aide (ordinateur) · « Raccourcis », au pied de la colonne, l’ouvre aussi', (await compte(page, 'dialog.gq-aide[open]')) === 1);
+  await page.waitForTimeout(400); await page.click('dialog.gq-aide [data-gq-fermer]'); await page.waitForTimeout(300);
+  ok('aide (ordinateur) · « Fermer » la ferme, le focus revient à « Raccourcis »', await page.evaluate(() => !document.querySelector('dialog.gq-aide') && document.activeElement?.matches('.nav-pied [data-aide]')));
+  ok('aide (ordinateur) · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();
 }
 
