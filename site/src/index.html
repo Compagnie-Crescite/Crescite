@@ -4830,7 +4830,10 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const tout = retenu('agendaPasse', agendaPasse), passe = tout.filter(s => s.k !== D.saison);
     const lignes = sansADefinir(retenu('lignesEnCours', lignesEnCours)), puces = spectaclesAgenda(datesFixees, tout);
     const proch = datesFixees.map(d => ({ d, cle: d.slug, l: d.l, id: cleProchaine(d), txt: norm(`${d.titre} ${d.ligne} ${(d.details || []).map(x => x.texte).join(' ')} ${CARTE.lieux[d.l] ? CARTE.nom(CARTE.lieux[d.l]) : ''}`) }));
-    if (!surPlace || !etat.voir) { const l0 = q.get('l'); etat.voir = { q: '', slug: null, l: l0 !== null && [...lieux, ...passeC].some(x => x.l === +l0) ? +l0 : null, ouv: new Set(ouvrir ? [ouvrir] : []), avant: null, date: q.get('date'), mois: null, moisPar: null, jour: null }; }
+    // (les filtres de l'adresse, relus à l'arrivée : ?spectacle=, ?mois= (un mois de la saison en cours), ?l= (une commune de la
+    // carte), ?recherche= ; ce qui ne se retrouve pas dans D est oublié, plus bas)
+    if (!surPlace || !etat.voir) { const l0 = q.get('l'), m0 = q.get('mois') || '', moisOk = /^\d{4}-\d{2}$/.test(m0) && m0 >= `${D.saison.slice(0, 4)}-09` && m0 <= `${D.saison.slice(5)}-08`;
+      etat.voir = { q: (q.get('recherche') || '').slice(0, 120), slug: q.get('spectacle') || null, l: l0 !== null && [...lieux, ...passeC].some(x => x.l === +l0) ? +l0 : null, ouv: new Set(ouvrir ? [ouvrir] : []), avant: null, date: q.get('date'), mois: moisOk ? m0 : null, moisPar: moisOk ? 'clic' : null, jour: null }; }
     else if (ouvrir) etat.voir.ouv.add(ouvrir);
     const F = etat.voir;
     if (F.slug && !puces.some(s => s.cle === F.slug)) F.slug = null;
@@ -5109,6 +5112,20 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       if ($('#cherche').value !== F.q) $('#cherche').value = F.q;
       majFiltres();
       fond();
+      adresseFiltres();
+    }
+    // les filtres en cours vont dans l'adresse, après la route, à la manière de ?date= (que RESERVER y garde) : le spectacle, le
+    // mois choisi d'un clic (un mois survolé ne fait que passer), la commune, la recherche ; une adresse filtrée se partage, et
+    // le retour arrière rend les filtres. history.replaceState : ni rechargement, ni entrée d'historique (sa clé, k, reste)
+    function adresseFiltres() {
+      if (!racine.isConnected) return;
+      try {
+        const h = location.hash || '#/', i = h.indexOf('?'), chemin = i < 0 ? h : h.slice(0, i), p = new URLSearchParams(i < 0 ? '' : h.slice(i + 1)), avant = p.toString();
+        const poser = (k, v) => { if (v == null || v === '') p.delete(k); else p.set(k, String(v)); };
+        poser('spectacle', F.slug); poser('mois', F.moisPar === 'clic' ? F.mois : null); poser('l', F.l); poser('recherche', F.q.trim());
+        const s = p.toString();
+        if (s !== avant) history.replaceState(history.state, '', `${location.pathname}${location.search}${chemin}${s ? '?' + s : ''}`);
+      } catch (e) { /* l'adresse reste telle quelle */ }
     }
     // le spectacle choisi prend le sous-menu (sa couleur, à peine) et le fond des saisons : sa photo, discrète, sous un voile de
     // sa couleur qui se fond dans la nuit ; un autre spectacle, et le fond s'éteint puis revient ; aucun, et il s'en va
