@@ -115,7 +115,8 @@ hoche et se tourne à part du corps, au bout d'un ressort) : quand la lecture de
 marge, jamais sur la même ligne : elle choisit un point à sa portée (la marge, ou le vide sous le titre d'un métier), y
 file au galop (elle se ramasse, bondit étirée dans le sens du bond, un sillage derrière elle), y flotte, repart ; une
 tentacule attrape le médaillon du métier qu'on lit, qui s'anime. Choisir quelqu'un (un clic sur une de ses places) :
-elle sursaute, puis ses tentacules, lumineuses, vont tenir toutes ses places (`c.tenir`), à la place des fils des liens.
+sa fiche s'ouvre par-dessus sa photo (plus bas) ; la pieuvre sursaute, puis ses tentacules, lumineuses, vont tenir la
+fiche et ses autres places (`c.tenir`), à la place des fils des liens.
 
 `onglets.mjs` compare chaque texte affiché aux sources et signale tout texte qui n'en vient pas ; il vérifie aussi
 le menu (à portée sur chaque vue, un seul élément marqué comme courant), les redirections des anciennes adresses,
@@ -154,7 +155,12 @@ par `build.py` :
   jour/nuit. Les espaces réservés aussi sont de nuit par défaut (plus bas).
 - `troupe.js` (TROUPE) : sur la page de la compagnie, toutes les personnes des équipes, par catégories de métiers (le jeu,
   la mise en scène, l'écriture, les décors et costumes, la lumière et le son, la production), une vignette seulement pour
-  une photo publiée ; survoler ou choisir une personne allume toutes ses places et les relie par des bras.
+  une photo publiée ; survoler ou choisir une personne allume toutes ses places et les relie par des bras. La choisir (un
+  clic, Entrée) ouvre sa fiche par-dessus sa photo : la vignette grandit en portrait et la fiche s'ouvre autour d'elle ; son
+  nom, ses métiers, ses spectacles (sa fonction, son rôle, son alternance, « En tournée » ou son statut), chacun menant à sa
+  page, et les prochaines dates de ceux qui tournent, s'il y en a (cinq au plus, puis « Toutes les dates »). Rien que D
+  (`ficheHTML`, dans `index.html`). Elle se ferme quand la personne est relâchée (un second clic, Échap, un clic ailleurs,
+  sa croix) et rend le focus à sa place.
 - `cadrage.js` (CADRAGE) : chaque photo des spectacles garde dans son cadre sa zone d'intérêt (les comédiens, pas le
   noir du plateau), sur ordinateur comme sur téléphone ; les zones sont dans `data/cadrages.json` (une par photo, posée
   à l'œil sur chacune), et une photo ajoutée y reçoit la sienne.
