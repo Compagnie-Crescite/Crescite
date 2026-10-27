@@ -460,6 +460,8 @@ LIBELLES = {
     "documentsScolaires": "Documents pour les enseignants", "objetProgrammation": "Programmation",
     # le catalogue d'un regard, avant les fiches de « Je souhaite programmer » : son titre (un tableau, une ligne par spectacle)
     "dUnRegard": "Le catalogue d’un regard",
+    # « Je représente un établissement scolaire » : le nombre de spectacles que gardent les filtres de l'action culturelle
+    "nSpectacles": "{n} spectacles", "unSpectacle": "1 spectacle",
     # les frises chronologiques (règle 15) : le repère du jour
     "aujourdhui": "Aujourd’hui",
     # réserver une date (règle 17, RESERVER) : la carte de réservation, et les noms courts des boutons de date

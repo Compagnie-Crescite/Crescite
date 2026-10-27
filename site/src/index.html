@@ -718,6 +718,18 @@ html:not(.ed-actif) .ct-tel.vide { display: none; }
 .ep-ecole { max-width: 62ch; margin: 0; font: 400 clamp(1.2rem, 1rem + .7vw, 1.6rem)/1.5 var(--texte); }
 .ep-ecole::first-letter { color: var(--saison-texte); font: 700 2.4em/.8 var(--titre); }
 .acs { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: clamp(16px, 2vw, 28px); margin: 0; padding: 0; list-style: none; }
+/* choisir une action culturelle : les puces des filtres des saisons, par groupe (le lieu, le public), et au bout le nombre de
+   spectacles gardés ; au téléphone, les groupes l'un sous l'autre, les puces passent à la ligne */
+.ef-in { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 18px clamp(24px, 3vw, 44px); padding: 18px 0; border-block: 1px solid var(--filet); }
+.ef-g { min-width: 0; max-width: 100%; }
+.ef-k { margin: 0 0 8px; color: var(--gris); font: 700 .72rem/1.3 var(--etiq); letter-spacing: .12em; text-transform: uppercase; }
+.ef-puces { display: flex; flex-wrap: wrap; gap: 8px; }
+.ef-bout { display: flex; align-items: center; gap: 14px; min-height: 44px; margin-left: auto; }
+.ef-n { margin: 0; font: 500 1.06rem/1.2 var(--titre); font-variant-numeric: tabular-nums; white-space: nowrap; }
+@media (max-width: 759px) {
+  .ef-in { flex-direction: column; align-items: stretch; }
+  .ef-bout { justify-content: space-between; margin-left: 0; }
+}
 .ep-act { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(36px, 6vw, 96px); align-items: start; }
 .ep-prose { max-width: 68ch; overflow-wrap: break-word; }
 .ep-prose p, .ep-prose ul { margin: 0 0 1em; }
@@ -3953,7 +3965,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const A = s.actionCulturelle || {}, t = (A.textes || [])[0], href = lienSp(s.slug, 'etablissement');
     const ph = (s.photos || []).find(p => p.etablissement), img = ph ? D.photos[ph.cle] : D.photos[s.slug];
     const ac = (...k) => edS(s, 'actionCulturelle', ...k), aType = !(A.aCompleter || !A.type);
-    return `<li class="ac ${uClasse(s)}" style="${uVars(s)}">
+    return `<li class="ac ${uClasse(s)}" style="${uVars(s)}" data-ef-lieu="${esc(A.lieu || '')}" data-ef-public="${esc(A.public || '')}">
       <div class="ac-tete"><h3 class="ac-t"><a href="${href}"${edS(s, 'titre')}>${esc(s.titre)}</a></h3>${petit(mo(s))}</div>
       <a class="ac-ph" href="${href}" tabindex="-1" aria-hidden="true"${ph ? edP(s, 'photos', rangPh(s, ph)) : edP(s, 'photo')}><img src="${img}" alt="" loading="lazy"></a>
       <p class="ac-type${aType ? '' : ' x'}"${aType ? ac('type') : ''}>${esc(aType ? A.type : L.aCompleter)}</p>
@@ -5946,8 +5958,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   /* ---------- je représente un établissement scolaire (la 05) : l'en-tête d'aplat, la position de la compagnie sur les publics
      jeunes, la convention, l'action culturelle de chaque spectacle par lieu, le dossier scolaire, les actions culturelles, les
      dates scolaires à côté de leur carte, l'appel final ---------- */
-  function etablissement() {
+  function etablissement(q, surPlace) {
     vue = 'etablissement';
+    if (!surPlace) etatEtab = { lieu: null, pub: null };
     const e = E.etablissement, A = S.actions && S.actions.blocs ? S.actions : null, sco = D.dates.filter(d => d.scolaire), lieux = CARTE.aVenir('scolaire');
     const ac = s => s.actionCulturelle || {}, avecAction = D.shows.filter(s => s.actionCulturelle);   // un spectacle sans action culturelle n'est pas ici (règle 14)
     const groupes = [['etablissement', L.lieu.etablissement], ['salle', L.lieu.salle]].map(([k, t]) => [t, avecAction.filter(s => ac(s).lieu === k)]).filter(g => g[1].length);
@@ -5971,8 +5984,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
           <div id="conv-modal" class="conv-modal" hidden></div>
         </div>
       </div></section>
+      ${filtresEtab(avecAction)}
       ${groupes.map((x, i) => `<section class="ep-sec" id="${g(i)}" aria-labelledby="${g(i)}-h"><div class="wrap">${SEP}<h2 class="ep-sec-t" id="${g(i)}-h" data-mv="monte">${esc(x[0])}</h2><ul class="acs">${ordre(x[1]).map(ficheEtab).join('')}</ul></div></section>`).join('')}
-      ${reste.length ? `<div class="ep-sec"><div class="wrap"><ul class="acs">${reste.map(ficheEtab).join('')}</ul></div></div>` : ''}
+      ${reste.length ? `<div class="ep-sec" id="e-reste"><div class="wrap"><ul class="acs">${reste.map(ficheEtab).join('')}</ul></div></div>` : ''}
       ${ber ? `<section class="ep-sec" id="e-dossier" aria-labelledby="e-dossier-h"><div class="wrap"><a class="dos-appel ${uClasse(ber)}" style="${uVars(ber)}" href="${lienSp(ber.slug, 'etablissement')}">
           <span class="dos-appel-ph" aria-hidden="true"${edP(ber, 'photo')}><img src="${D.photos[ber.slug]}" alt=""></span>
           <span class="dos-appel-c"><span class="dos-type"${ed(`dossiers.${ber.dossier}.type`)}>${esc(B.type)}</span><h2 class="dos-titre" id="e-dossier-h"${ed(`dossiers.${ber.dossier}.titre`)}>${esc(B.titre)}</h2><span class="dos-auteur"${ed(`dossiers.${ber.dossier}.auteur`)}>${esc(B.auteur)}</span><span class="dos-public"${ed(`dossiers.${ber.dossier}.public`)}>${esc(B.public)}</span><span class="bu plein">${esc(L.dossierScolaire)}${FLECHE}</span></span></a></div></section>` : ''}
@@ -5996,8 +6010,52 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       auFil(liste, svg, fSco);   // (scrollytelling) les dates scolaires se dessinent au fil de la lecture
     }
     lierSommairePage();
+    lierFiltresEtab();
     bientot(() => { initEspaceScolaire(); });
     return { titre: e.texte, entree: 'etablissement' };
+  }
+  /* choisir une action culturelle : avant les spectacles par lieu, des puces (celles des filtres des saisons) tirées de ce que D
+     dit de l'action culturelle de chaque spectacle, son lieu (dans l'établissement, en salle) et son public quand il est dit,
+     chacune avec le nombre de ses spectacles ; une puce choisie ne garde que les siens (la choisir encore la rend), les groupes
+     vides s'effacent avec leur pièce du sommaire arrimé ; le nombre de spectacles gardés est écrit à côté et dit aux lecteurs
+     d'écran quand il change. Les filtres tiennent tant que la vue se refait sur place (D qui change), pas d'une visite à l'autre */
+  let etatEtab = { lieu: null, pub: null };
+  const nSpectacles = n => (n === 1 ? L.unSpectacle || '1' : String(L.nSpectacles || '{n}').replace('{n}', n));
+  function filtresEtab(xs) {
+    const A = s => s.actionCulturelle || {}, lieux = ['etablissement', 'salle'].map(k => [k, L.lieu[k], xs.filter(s => A(s).lieu === k).length]).filter(x => x[2]);
+    const pubs = [...new Set(xs.map(s => A(s).public).filter(Boolean))].map(p => [p, xs.filter(s => A(s).public === p).length]);
+    if (lieux.length + pubs.length < 2) return '';
+    const puce = (attr, v, t, n) => `<button type="button" class="s7-chip" data-ef="${attr}" data-v="${esc(v)}" aria-pressed="false"><i aria-hidden="true"></i><span class="s7-ct">${esc(t)}</span><small>${n}</small></button>`;
+    const groupe = (id, t, puces) => (puces.length ? `<div class="ef-g" role="group" aria-labelledby="${id}"><p class="ef-k" id="${id}">${esc(t)}</p><div class="ef-puces">${puces.join('')}</div></div>` : '');
+    return `<div class="ep-sec ef" id="e-filtres"><div class="wrap"><div class="ef-in">
+      ${groupe('ef-kl', L.actionCulturelle, lieux.map(([k, t, n]) => puce('lieu', k, t, n)))}${groupe('ef-kp', L.public, pubs.map(([p, n]) => puce('pub', p, p, n)))}
+      <div class="ef-bout"><p class="ef-n" id="ef-n" role="status">${esc(nSpectacles(xs.length))}</p>${L.effacerFiltres ? `<button type="button" class="ft7-tout" data-ef-tout hidden>${esc(L.effacerFiltres)}</button>` : ''}</div>
+    </div></div></div>`;
+  }
+  function lierFiltresEtab() {
+    const zone = $('#e-filtres', main); if (!zone) return;
+    const fiches = $$('li.ac[data-ef-lieu]', main), F = etatEtab;
+    const garde = li => (!F.lieu || li.dataset.efLieu === F.lieu) && (!F.pub || li.dataset.efPublic === F.pub);
+    const appliquer = () => {
+      let n = 0;
+      fiches.forEach(li => { const g = garde(li); li.hidden = !g; if (g) n++; });
+      // (un groupe dont aucune fiche ne reste s'efface, et sa pièce du sommaire arrimé avec lui ; le sommaire ne lit plus que
+      // les sections montrées)
+      $$('section[id^="e-g"], #e-reste', main).forEach(sec => { sec.hidden = !$$('li.ac', sec).some(li => !li.hidden); });
+      psomB.forEach((b, i) => { const c = document.getElementById(b.dataset.som); const cache = !!(c && c.hidden); b.closest('li').hidden = cache; psomC[i] = cache ? null : c; });
+      $$('[data-ef]', zone).forEach(b => b.setAttribute('aria-pressed', String((b.dataset.ef === 'lieu' ? F.lieu : F.pub) === b.dataset.v)));
+      const t = $('[data-ef-tout]', zone); if (t) t.hidden = !(F.lieu || F.pub);
+      const p = $('#ef-n', zone), txt = nSpectacles(n); if (p.textContent !== txt) p.textContent = txt;
+    };
+    zone.addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      if (b.matches('[data-ef-tout]')) { F.lieu = null; F.pub = null; appliquer(); const x = $('[data-ef]', zone); if (x) x.focus(); return; }
+      if (!b.dataset.ef) return;
+      const k = b.dataset.ef === 'lieu' ? 'lieu' : 'pub';
+      F[k] = F[k] === b.dataset.v ? null : b.dataset.v;
+      appliquer();
+    });
+    appliquer();
   }
 
   /* ---------- les spectacles : le sommaire de la 08 ----------
