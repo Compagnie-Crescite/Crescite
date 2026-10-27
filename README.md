@@ -85,6 +85,21 @@ l'une des trois entrées : `#/spectacle/berenice/voir`, `…/programmer`, `…/e
 sert de défaut. L'espace pro à mot de passe a disparu : ses anciennes adresses mènent à « Je souhaite programmer »,
 celles de l'agenda et des actions culturelles aux deux autres entrées. La pieuvre ne compte pas les spectacles.
 
+**Le menu d'aujourd'hui** (règle 21 du contrat) : Saisons, Les spectacles, La compagnie, Espace pro ; les trois entrées
+restent les onglets de la page d'un spectacle. `#/espace-pro` se lit sur deux étages, du plus ouvert au plus réservé :
+d'abord les deux pages ouvertes à tous, côte à côte en grandes portes photographiques (« Je souhaite programmer », « Je
+représente un établissement scolaire ») ; puis, plus discrets, sur le papier, les espaces réservés qui demandent une
+connexion (« Avec connexion », un cadenas) : l'espace des salles, celui de l'équipe, l'administration. Aucune entrée ne
+reprend la couleur d'un spectacle, hors « Je viens voir », qui est celle de la saison (règle 22) : « Programmer » est un
+ambre cuivré (`#94501a`, vive `#eda466`), plus l'or que l'on confondait avec le jaune de Mon Royaume pour un cheval.
+
+**Le nom et les textes légaux.** Le site dit « Compagnie Crescite » (titres d'onglet « Saisons · Compagnie Crescite »,
+en-tête) et, dans le texte, « les Crescite » ou « la compagnie Crescite » : `NOMS` (`maquettes/build.py`) récrit dans D,
+accords compris, les phrases des sources qui disaient « le Théâtre des Crescite » ; les mentions légales gardent cette
+dénomination entre parenthèses. Les mentions légales et la politique de confidentialité sont celles du site tel qu'il est
+(`data/textes-legaux.json` : Cloudflare Pages, la base Supabase, ce que le site recueille, ses services tiers), à la place
+de celles de l'ancien WordPress que garde le relevé ; le dix-huitième script SQL les met dans la base.
+
 **Pour les programmateurs.** « Je souhaite programmer » donne d'abord à qui parler : le contact diffusion
 (l'administratrice, le courriel de la compagnie, son téléphone s'il est saisi dans la base, « Conditions financières sur
 demande »). Puis, pour chaque spectacle, un dossier PDF composé à la demande à partir des données du site, donc toujours
@@ -947,6 +962,14 @@ base : leur adresse est écrite dans quatre fonctions (`crescite_notif_envoyer`,
 `crescite-alertes`). Le script les réécrit à l'identique, l'adresse remplacée (mêmes droits, mêmes noms, mêmes horaires),
 puis dit ce qui reste. Les scripts 3, 5 et 11 portent déjà la nouvelle adresse : une base neuve n'en a pas besoin.
 9 essais (`node projet.mjs` : les quinze scripts tels que recopiés, puis lui, deux fois).
+
+**Les textes du site d'aujourd'hui (pas encore lancé).** Le dix-huitième script,
+`supabase/migrations/20261106_crescite_textes.sql`, se lance dans le projet de la compagnie et peut être relancé. Il
+remplace les mentions légales et la politique de confidentialité de l'ancien WordPress (l'hébergeur « WP serveur »,
+Google Analytics, Gravatar, les commentaires) par celles de `data/textes-legaux.json`, mot pour mot, et récrit les
+phrases du « Théâtre des Crescite » (`NOMS`) dans les présentations des spectacles et le dossier de Bérénice. L'ancien
+texte reste au journal. Tant qu'il n'est pas lancé, le site montre les textes de la base, donc les anciens. 9 essais
+(`node legal.mjs` : le premier script, les textes de l'import, puis lui, deux fois).
 
 **Écrire dans la base.** `python3 supabase/ecrire.py` est le seul outil par lequel Claude modifie la base quand on le lui
 demande : les tables `crescite_` et les stockages de la compagnie seulement (les tables d'adrienvada.fr restent hors

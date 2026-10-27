@@ -259,8 +259,10 @@ COMMUNES_EN_PLUS = {
 ENTREES = [
     {"cle": "voir", "texte": "Je viens voir un spectacle", "court": "Voir un spectacle", "href": "#/saisons",
      "couleur": "#c2306f", "couleurVive": "#f07ab6"},
+    # (programmer : un ambre cuivré, plus l'or d'avant, que l'on confondait avec le jaune de Mon Royaume pour un cheval ;
+    # aucune entrée ne reprend la couleur d'un spectacle, hors « voir », qui est celle de la saison, règle 22)
     {"cle": "programmer", "texte": "Je souhaite programmer", "court": "Programmer", "href": "#/espace-pro/programmer",
-     "couleur": "#8a6410", "couleurVive": "#e8bc5c"},
+     "couleur": "#94501a", "couleurVive": "#eda466"},
     {"cle": "etablissement", "texte": "Je représente un établissement scolaire", "court": "Établissement scolaire",
      "href": "#/espace-pro/etablissement", "couleur": "#127a6a", "couleurVive": "#5fd0bd"},
 ]
@@ -273,6 +275,32 @@ MENU = [
     {"cle": "espacePro", "id": "espace-pro", "texte": "Espace pro", "court": "Espace pro", "href": "#/espace-pro"},
 ]
 # Les anciennes adresses, à rediriger (#/agenda/<saison> mène à #/saisons/<saison>, par le code des maquettes).
+# Les mentions légales et la politique de confidentialité (data/textes-legaux.json), celles du site tel qu'il est
+LEGAL = json.loads((ROOT / "data" / "textes-legaux.json").read_text(encoding="utf-8"))
+# Le nom de la compagnie (demande du client, octobre 2026 : « par défaut les Crescite, ou la Compagnie Crescite ») : les
+# sources disent encore « le Théâtre des Crescite » ici et là. Chaque phrase est récrite telle quelle, accords compris,
+# dans tout D ; le dix-huitième script SQL fait de même dans la base. Les mentions légales gardent la dénomination entre
+# parenthèses, après le nom.
+NOMS = [("Le Théâtre des Crescite revendique", "Les Crescite revendiquent"),
+        ("le Théâtre des Crescite imagine", "les Crescite imaginent"),
+        ("le Théâtre des Crescite cherche", "les Crescite cherchent"),
+        ("du Théâtre des Crescite est d'offrir", "de la compagnie Crescite est d'offrir"),
+        ("Le Théâtre des Crescite est conventionné par", "La compagnie Crescite est conventionnée par")]
+
+
+def nommer(o):
+    """D, ses phrases récrites selon NOMS."""
+    if isinstance(o, str):
+        for a, b in NOMS:
+            o = o.replace(a, b)
+        return o
+    if isinstance(o, list):
+        return [nommer(x) for x in o]
+    if isinstance(o, dict):
+        return {k: nommer(v) for k, v in o.items()}
+    return o
+
+
 REDIRECTIONS = {"#/voir": "#/saisons", "#/agenda": "#/saisons", "#/programmer": "#/espace-pro/programmer",
                 "#/etablissement": "#/espace-pro/etablissement", "#/actions-culturelles": "#/espace-pro/etablissement"}
 # Les seuls libellés écrits pour les maquettes : la navigation et les intitulés de rubrique des trois entrées.
@@ -300,6 +328,10 @@ LIBELLES = {
     "ouverture": "Ouverture", "dates": "Dates", "photos": "Photos", "dossierScolaire": "Dossier scolaire",
     "modifierSite": "Modifier le site",
     # « Je souhaite programmer » : ce qu'il faut à un programmateur ou un directeur de salle
+    # la page de l'espace pro (la synthèse) : d'abord les deux pages ouvertes à tous, puis, plus discrets, les espaces
+    # réservés, qui demandent une connexion
+    "epChapo": "Programmer un spectacle, le faire venir dans un établissement scolaire, ou retrouver votre espace réservé.",
+    "epPages": "Programmer ou faire venir un spectacle", "epReserves": "Espaces réservés", "epConnexion": "Avec connexion",
     "contactDiffusion": "Contact diffusion", "dossierPdf": "Dossier du spectacle (PDF)", "aTelecharger": "À télécharger",
     "conditionsFinancieres": "Conditions financières sur demande", "ficheTechniqueSurDemande": "Fiche technique sur demande",
     "documentsScolaires": "Documents pour les enseignants", "objetProgrammation": "Programmation",
@@ -657,7 +689,7 @@ def build_data():
     D = {
         "saison": D_SAISON, "aujourdhui": today,
         "site": {
-            "nom": a["coordonnees"]["nom"], "titreSuffixe": "crescite", "accueil": "Accueil",
+            "nom": a["coordonnees"]["nom"], "titreSuffixe": "Compagnie Crescite", "accueil": "Accueil",
             "entrees": [dict(e, couleur=th["couleur"], couleurVive=th["vive"]) if e["cle"] == "voir" else e for e in ENTREES],
             "menu": MENU, "redirections": REDIRECTIONS,
             "diaporama": [{"slug": d["lien"].replace("#/spectacle/", "") if d.get("lien") else None, "surtitre": d["surtitre"],
@@ -701,9 +733,9 @@ def build_data():
             "partenaires": a["pied"]["partenaires"],
             "liensLegaux": [{"texte": "Mentions légales", "href": "#/mentions-legales"},
                             {"texte": "Politique de confidentialité", "href": "#/politique-de-confidentialite"}],
-            # les mentions légales d'origine, sans le bloc de l'agence qui a conçu l'ancien site (comme son crédit en pied de page)
-            "legal": {k: {"titre": site[k][0]["titre"], "blocs": [h for b in site[k][1:] for h in b.get("html", []) if "Conception et réalisation" not in h]}
-                      for k in ("mentions-legales", "politique-de-confidentialite")},
+            # les mentions légales et la politique de confidentialité du site d'aujourd'hui (data/textes-legaux.json : son
+            # hébergeur, sa base, ses services tiers), à la place de celles de l'ancien WordPress que garde le relevé
+            "legal": {k: {"titre": v["titre"], "blocs": v["blocs"]} for k, v in LEGAL.items() if not k.startswith("_")},
             "libelles": LIBELLES,
             "saisons": [{"saison": s, "titre": saisons[s]["titre"], "menu": noms_saisons[i] if i < len(noms_saisons) else saisons[s]["titre"],
                          "href": "#/saisons" if s == D_SAISON else f"#/saisons/{s}"} for i, s in enumerate(saisons)],
@@ -722,7 +754,8 @@ def build_data():
         # l'administration ou par supabase/documents.py ; [{spectacle, type, titre, url, pour: 'pros'|'scolaires'}]
         "documents": documents_publics(),
     }
-    fichiers = photo_files(out_shows)
+    D = nommer(D)
+    fichiers = photo_files(D["shows"])
     # la zone d'intérêt de chaque photo (data/cadrages.json, règle 24) : celles des photos que les pages ont
     D["cadrages"] = {k: cadrages[k] for k in fichiers if k in cadrages}
     return D, fichiers

@@ -813,7 +813,7 @@ section.bloc.troupe { padding-top: 0; content-visibility: auto; contain-intrinsi
 .ep-sep[data-mv="trace"].mv-attente { transition: transform var(--k-lent) var(--k-doux); }
 /* l'en-tête : l'aplat (la saison ; sur ses deux pages, la couleur du parcours, --e) */
 .ep-tete { position: relative; isolation: isolate; overflow: hidden; padding: clamp(36px, 4.6vw, 68px) 0 clamp(48px, 5.6vw, 84px); background: var(--e, var(--saison)); color: #fff; --ep-sep: #fff; }
-.ep-tete :focus-visible, .ep-aplat :focus-visible, .ep-cta :focus-visible, .ep-groupes :focus-visible { outline-color: #fff; }
+.ep-tete :focus-visible, .ep-aplat :focus-visible, .ep-cta :focus-visible { outline-color: #fff; }
 .ep-tete-ph { position: absolute; top: 0; right: 0; bottom: 0; z-index: -1; width: min(48%, 680px); background: var(--e); }
 .ep-tete-ph img { width: 100%; height: 100%; object-fit: cover; }
 .ep-tete-ph::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to right, var(--e), color-mix(in srgb, var(--e) 0%, transparent) 62%); }
@@ -827,42 +827,44 @@ section.bloc.troupe { padding-top: 0; content-visibility: auto; contain-intrinsi
 .ep-rac { display: flex; flex-wrap: wrap; gap: 8px; margin: clamp(18px, 2.4vw, 28px) 0 0; padding: 0; list-style: none; }
 .ep-rac button { padding: 8px 15px; border: 1.5px solid rgba(255, 255, 255, .62); border-radius: 999px; background: transparent; color: #fff; font: 700 .72rem/1.2 var(--etiq); letter-spacing: .1em; text-transform: uppercase; cursor: pointer; }
 .ep-rac button:hover { border-color: #fff; background: #fff; color: var(--e, var(--saison)); }
-/* ses quatre groupes, dans l'ordre : 1 programmateurs et directeurs de salle (leur page et leur espace réservé, côte à côte),
-   2 établissements scolaires (leur page, sur toute la largeur), 3 l'équipe et 4 l'administration (deux aplats côte à côte) */
+/* ses deux étages : les deux pages ouvertes à tous, côte à côte sur toute la largeur ; puis les espaces réservés, trois
+   fiches sur le papier, plus petites, marquées d'un cadenas */
 .ep-groupes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
 .ep-g { display: grid; min-width: 0; }
-.ep-g.avec-page { grid-column: 1 / -1; }
-.ep-g.duo { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.ep-g.duo > .ep, .ep-g:not(.avec-page) + .ep-g:not(.avec-page) > .ep { box-shadow: inset 2px 0 0 rgba(255, 255, 255, .55); }
+.ep-g + .ep-g > .ep-porte { box-shadow: inset 2px 0 0 rgba(255, 255, 255, .55); }
 /* ses pages : de grandes portes photographiques, la photo passée dans la couleur du parcours */
-.ep-porte { position: relative; isolation: isolate; overflow: hidden; display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; height: 100%; min-height: 230px;
+.ep-porte { position: relative; isolation: isolate; overflow: hidden; display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; height: 100%; min-height: clamp(300px, 44vh, 440px);
   padding: clamp(22px, 2.4vw, 36px) clamp(20px, 2.4vw, 38px); background: var(--e); color: #fff; text-decoration: none; }
-.ep-porte > .ep-n { position: absolute; top: clamp(22px, 2.4vw, 36px); left: clamp(20px, 2.4vw, 38px); }
 .ep-porte-ph { position: absolute; inset: 0; z-index: -1; background: var(--e); }
 .ep-porte-ph img { width: 100%; height: 100%; object-fit: cover; transition: scale var(--k-lent) var(--k-doux); }
 .ep-porte-ph::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, color-mix(in srgb, var(--e) 70%, #000) 0%, transparent 70%); mix-blend-mode: multiply; }
-.ep-porte-t { flex: 1 1 auto; min-width: 0; font: 700 clamp(24px, 2.5vw, 40px)/1.02 var(--titre); letter-spacing: -.01em; text-transform: uppercase; text-wrap: balance; text-shadow: 0 1px 18px rgba(0, 0, 0, .35); }
+.ep-porte-t { flex: 1 1 auto; min-width: 0; font: 700 clamp(26px, 2.8vw, 44px)/1.02 var(--titre); letter-spacing: -.01em; text-transform: uppercase; text-wrap: balance; text-shadow: 0 1px 18px rgba(0, 0, 0, .35); }
 .ep-porte-t small { display: block; margin-top: 10px; font: 700 clamp(.8rem, .72rem + .25vw, .95rem)/1.3 var(--etiq); letter-spacing: .08em; }
 .ep-porte .fleche, .ep > .fleche { width: clamp(28px, 2.4vw, 40px); height: clamp(28px, 2.4vw, 40px); stroke-width: 1.6; transition: translate var(--k-survol) var(--k-souple); }
 .ep-porte:hover .ep-porte-ph img { scale: 1.05; }
 .ep-porte:is(:hover, :focus-visible) .fleche { translate: 6px 0; }
 .ep-porte:focus-visible { outline: 3px solid #fff; outline-offset: -8px; }
 .ep:has(.ep-a.mv-presse) { scale: .985; transition: scale var(--k-presse); }
-/* les trois espaces réservés : des aplats (la saison profonde, la saison, la nuit) ; au survol, un lavis clair prend l'aplat,
-   la flèche avance, souple */
-.ep { position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; gap: 16px; min-height: clamp(300px, 46vh, 460px);
-  padding: clamp(24px, 2.6vw, 40px); background: var(--ep); color: #fff; container-type: inline-size; }
-.ep::before { content: ""; position: absolute; inset: 0; z-index: -1; background: rgba(255, 255, 255, .12); opacity: 0; transition: opacity var(--k-survol) var(--k-doux); pointer-events: none; }
-.ep:is(:hover, :focus-within)::before { opacity: 1; }
-.ep-n { font: 700 clamp(64px, 8vw, 128px)/.8 var(--titre); letter-spacing: -.04em; opacity: .28; }
-.ep-t { margin: 0; font: 700 min(clamp(26px, 2.6vw, 42px), 9.6cqi)/1 var(--titre); letter-spacing: -.01em; text-transform: uppercase; text-wrap: balance; }
-.ep-a { color: #fff; text-decoration: none; }
-/* toute la pièce mène à l'espace : le lien s'étend sur elle (son titre reste son nom) */
+/* les espaces réservés : un étage plus bas et plus calme ; le titre de l'étage, son texte, puis trois fiches sur le papier
+   (un filet de la saison en tête, un cadenas « Avec connexion »), qui s'éclairent au survol, la flèche avance, souple */
+.ep-reserve { padding: clamp(48px, 6vw, 88px) 0 clamp(56px, 7vw, 100px); }
+.ep-reserve-t { margin: 0; color: var(--saison-texte); font: 700 min(clamp(26px, 3vw, 42px), 10cqi)/1 var(--titre); letter-spacing: -.01em; text-transform: uppercase; }
+.ep-reserve-x { max-width: 52ch; margin: 12px 0 0; color: var(--gris); font: 400 1.05rem/1.5 var(--texte); }
+.ep-acces { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: clamp(12px, 1.6vw, 20px); margin: clamp(24px, 3vw, 36px) 0 0; padding: 0; list-style: none; }
+.ep { position: relative; display: flex; flex-direction: column; gap: 10px; min-height: 200px; padding: clamp(20px, 2vw, 28px);
+  border-top: 3px solid var(--saison-texte); border-radius: 0 0 8px 8px; background: var(--papier-2); color: var(--encre); transition: background var(--k-survol) var(--k-doux); }
+.ep:is(:hover, :focus-within) { background: var(--carte); }
+.ep-cle { display: inline-flex; align-items: center; gap: 7px; margin: 0; color: var(--gris); font: 700 .72rem/1.2 var(--etiq); letter-spacing: .12em; text-transform: uppercase; }
+.ep-cadenas { width: 15px; height: 15px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ep-t { margin: 0; font: 700 clamp(1.2rem, 1rem + .7vw, 1.55rem)/1.1 var(--titre); letter-spacing: -.005em; text-wrap: balance; }
+.ep-a { color: var(--encre); text-decoration: none; }
+/* toute la fiche mène à l'espace : le lien s'étend sur elle (son titre reste son nom) */
 .ep-a::after { content: ""; position: absolute; inset: 0; z-index: 1; }
 .ep-a:focus-visible { outline: none; }
-.ep:has(.ep-a:focus-visible) { outline: 3px solid #fff; outline-offset: -8px; }
+.ep:has(.ep-a:focus-visible) { outline: 3px solid var(--saison-texte); outline-offset: 3px; }
 html.ed-actif .ep-a::after { content: none; }
-.ep-x { max-width: 36ch; margin: 0; font: 600 1.02rem/1.45 var(--texte); }
+.ep-x { flex: 1 1 auto; max-width: 40ch; margin: 0; color: var(--gris); font: 400 .98rem/1.5 var(--texte); }
+.ep > .fleche { width: 26px; height: 26px; margin-top: 4px; color: var(--saison-texte); }
 .ep:is(:hover, :focus-within) > .fleche { translate: 6px 0; }
 /* les sections des deux pages : la ligne-tentacule, puis la grande capitale à la couleur de la saison */
 .ep-sec { padding: clamp(60px, 7.6vw, 112px) 0; }
@@ -904,14 +906,11 @@ html.ed-actif .ep-a::after { content: none; }
   .ep-act { grid-template-columns: minmax(0, 1fr); }
   .ep-act-ph { position: static; max-width: 560px; }
 }
-@media (max-width: 860px) {
-  .ep { min-height: 220px; }
-}
 @media (max-width: 760px) {
-  .ep-groupes, .ep-g.duo { grid-template-columns: minmax(0, 1fr); }
-  .ep-g.duo > .ep, .ep-g:not(.avec-page) + .ep-g:not(.avec-page) > .ep { box-shadow: inset 0 2px 0 rgba(255, 255, 255, .55); }
-  .ep-porte { min-height: 130px; align-items: center; padding-left: 104px; }
-  .ep-porte > .ep-n { top: 50%; translate: 0 -50%; }
+  .ep-groupes { grid-template-columns: minmax(0, 1fr); }
+  .ep-g + .ep-g > .ep-porte { box-shadow: inset 0 2px 0 rgba(255, 255, 255, .55); }
+  .ep-porte { min-height: 200px; }
+  .ep { min-height: 0; }
   .ep-tete-ph { width: 100%; opacity: .42; }
   .ep-tete-ph::after { background: linear-gradient(to top, var(--e), transparent); }
   .ep-rac { flex-wrap: nowrap; overflow-x: auto; margin-inline: calc(-1 * var(--gout)); padding: 2px var(--gout) 4px; scrollbar-width: none; }
@@ -5909,28 +5908,33 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     $('form', main).addEventListener('submit', e => e.preventDefault());
     return { titre: nomC, menu: 'contact' };
   }
-  /* ---------- l'espace pro (règles 16 et 21), celui de la 05 : sur l'aplat de la saison, la grande capitale et son texte ; puis
-     quatre groupes numérotés, dans l'ordre de la compagnie : 1 les programmateurs et les directeurs de salle (la page
-     « programmer », en grande porte photographique à la couleur de son parcours, et à côté l'aplat de leur espace réservé,
-     pro/), 2 les établissements scolaires (leur page), 3 l'équipe (equipe/), 4 l'administration (admin/) ; les espaces
-     réservés, publiés à côté, s'ouvrent dans le même onglet ---------- */
+  /* ---------- l'espace pro (règles 16 et 21) : sur l'aplat de la saison, la grande capitale et son chapeau ; puis deux
+     étages, du plus ouvert au plus réservé. D'abord les deux pages ouvertes à tous, côte à côte, en grandes portes
+     photographiques à la couleur de leur parcours : programmer (les programmateurs et les directeurs de salle), faire
+     venir un spectacle dans un établissement scolaire. Puis, plus discrets, sur le papier, les espaces réservés qui
+     demandent une connexion, dans l'ordre de la compagnie : les salles (pro/), l'équipe (equipe/), l'administration
+     (admin/) ; ils s'ouvrent dans le même onglet ---------- */
+  const CADENAS = '<svg class="ep-cadenas" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
   function espacePro() {
     vue = 'espace-pro';
     const P = S.espacePro;
-    // (programmateurs et directeurs de salle : la saison profonde ; comédiens et techniciens : la saison ; administration : la nuit)
-    const aplats = { equipe: 'var(--saison)', salles: 'color-mix(in srgb, var(--saison) 66%, #000)', admin: 'color-mix(in srgb, var(--saison) 16%, var(--nuit))' };
-    const numero = n => `<span class="ep-n" aria-hidden="true">${n}</span>`;
-    const page = (e, n) => `<a class="ep-porte" href="${esc(e.href)}" style="--e:${esc(e.couleur)}"><span class="ep-porte-ph" aria-hidden="true">${photoEntree(e.cle) ? `<img src="${photoEntree(e.cle)}" alt="" loading="lazy">` : ''}</span>${n ? numero(n) : ''}<span class="ep-porte-t">${esc(e.court)}<small>${esc(e.texte)}</small></span>${FLECHE}</a>`;
-    const acces = (x, n) => { const i = P.portes.indexOf(x); return `<div class="ep" data-cle="${esc(x.cle)}" style="--ep:${aplats[x.cle] || 'var(--saison)'}">${n ? numero(n) : ''}
-        <h2 class="ep-t"><a class="ep-a" href="${esc(x.href)}"><span${ed(`site.espacePro.portes.${i}.titre`)}>${esc(x.titre)}</span></a></h2>
-        <p class="ep-x"${ed(`site.espacePro.portes.${i}.texte`)}>${esc(x.texte)}</p>${FLECHE}</div>`; };
-    // chaque groupe : sa page (s'il en a une) et son espace réservé ; un espace que l'ordre ne nomme pas vient à la fin
-    const ORDRE = [['programmer', 'salles'], ['etablissement'], [null, 'equipe'], [null, 'admin']];
-    const groupes = [...ORDRE, ...P.portes.filter(x => !ORDRE.some(o => o[1] === x.cle)).map(x => [null, x.cle])]
-      .map(([pg, ac]) => ({ e: pg && E[pg] && E[pg].href ? E[pg] : null, x: ac ? P.portes.find(x => x.cle === ac) : null })).filter(g => g.e || g.x);
+    const page = e => `<li class="ep-g"><a class="ep-porte" href="${esc(e.href)}" style="--e:${esc(e.couleur)}"><span class="ep-porte-ph" aria-hidden="true">${photoEntree(e.cle) ? `<img src="${photoEntree(e.cle)}" alt="" loading="lazy">` : ''}</span><span class="ep-porte-t">${esc(e.court)}<small>${esc(e.texte)}</small></span>${FLECHE}</a></li>`;
+    const acces = x => { const i = P.portes.indexOf(x); return `<li class="ep" data-cle="${esc(x.cle)}">
+        <p class="ep-cle">${CADENAS}${esc(L.epConnexion)}</p>
+        <h3 class="ep-t"><a class="ep-a" href="${esc(x.href)}"><span${ed(`site.espacePro.portes.${i}.titre`)}>${esc(x.titre)}</span></a></h3>
+        <p class="ep-x"${ed(`site.espacePro.portes.${i}.texte`)}>${esc(x.texte)}</p>${FLECHE}</li>`; };
+    // les espaces réservés dans l'ordre de la compagnie ; un espace que l'ordre ne nomme pas vient à la fin
+    const ORDRE = ['salles', 'equipe', 'admin'], rang = x => { const k = ORDRE.indexOf(x.cle); return k < 0 ? ORDRE.length : k; };
+    const portes = [...P.portes].sort((a, b) => rang(a) - rang(b));
+    const pages = ['programmer', 'etablissement'].map(k => E[k]).filter(e => e && e.href);
     main.innerHTML = `<section class="ep-tete" aria-labelledby="h-ep"><div class="wrap ep-c"><h1 class="ep-h1" id="h-ep" tabindex="-1"><span class="fleur"${ed('site.espacePro.titre')}>${esc(P.titre)}</span></h1>
-        ${P.texte ? `<p class="ep-lead"${ed('site.espacePro.texte')}>${esc(P.texte)}</p>` : ''}</div></section>
-      <ol class="ep-groupes">${groupes.map((g, k) => `<li class="ep-g${g.e ? ' avec-page' : ''}${g.e && g.x ? ' duo' : ''}">${g.e ? page(g.e, k + 1) : ''}${g.x ? acces(g.x, g.e ? 0 : k + 1) : ''}</li>`).join('')}</ol>`;
+        ${L.epChapo ? `<p class="ep-lead">${esc(L.epChapo)}</p>` : ''}</div></section>
+      ${pages.length ? `<section class="ep-ouvert" aria-labelledby="h-ep-pages"><h2 class="ep-sr" id="h-ep-pages">${esc(L.epPages)}</h2>
+        <ul class="ep-groupes">${pages.map(page).join('')}</ul></section>` : ''}
+      ${portes.length ? `<section class="ep-reserve" aria-labelledby="h-ep-reserve"><div class="wrap">
+        <h2 class="ep-reserve-t" id="h-ep-reserve">${esc(L.epReserves)}</h2>
+        ${P.texte ? `<p class="ep-reserve-x"${ed('site.espacePro.texte')}>${esc(P.texte)}</p>` : ''}
+        <ul class="ep-acces">${portes.map(acces).join('')}</ul></div></section>` : ''}`;
     return { titre: P.titre, menu: 'espace-pro' };
   }
   function legal(chemin) {
@@ -6601,7 +6605,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     $$('section.bloc:not(.sans-filet)', main).forEach(sec => { if (!sec.querySelector(':scope > .filet')) sec.insertAdjacentHTML('afterbegin', '<span class="filet" data-mv="trace" aria-hidden="true"></span>'); });
     $$('.titre-bloc, .u-eti, .rubrique, .u-h2:not(.ecrit)', main).forEach(e => { if (!e.closest('[data-mv]')) e.setAttribute('data-mv', 'monte'); });
     $$('svg.trait', main).forEach(e => { if (!e.closest('[data-mv]')) e.setAttribute('data-mv', 'trace'); });
-    $$('.fus, .ep-cat, .acs, .u-cast, .dos-ateliers, .galerie, .ep-groupes', main).forEach(e => e.setAttribute('data-mv', 'cascade'));
+    $$('.fus, .ep-cat, .acs, .u-cast, .dos-ateliers, .galerie, .ep-groupes, .ep-acces', main).forEach(e => e.setAttribute('data-mv', 'cascade'));
     $$('.u-faits .gros, .fp-rep .gros, .u-rep .gros', main).forEach(e => e.setAttribute('data-mv', 'compte'));
     if (MV) MV.reveler(main, { immediat: surPlace });
   }
@@ -6687,7 +6691,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     if (!r) { history.replaceState(null, '', '#/'); b = { chemin: '', qs: '', q: new URLSearchParams() }; r = rendre(b, false); }   // une adresse inconnue mène à l'accueil
     courant = b;
     decorer(false);
-    document.title = `${r.titre} - ${S.titreSuffixe}`;
+    document.title = `${r.titre} · ${S.titreSuffixe}`;
     marquerNav(r);
     mettreAJourSchemaOrg();
     const vit = !!avant && motionOK() && !INTRO.ouverte(), spNeuf = vue === 'spectacle' ? bySlug[(b.chemin.match(/^spectacle\/([\w-]+)/) || [])[1]] : null;
@@ -6788,7 +6792,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const r = rendre(courant, true);
     if (!r) { route(); return; }
     decorer(true);
-    document.title = `${r.titre} - ${S.titreSuffixe}`;
+    document.title = `${r.titre} · ${S.titreSuffixe}`;
     marquerNav(r);
     mettreAJourSchemaOrg();
     ouverts.forEach(i => { const d = $$('details', main)[i]; if (d) d.open = true; });
