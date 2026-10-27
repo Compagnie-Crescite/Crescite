@@ -109,12 +109,17 @@ main.ad-chargement { padding: 0; max-width: none; }
 @media (min-width: 1100px) and (max-width: 1219px) { .barre.onze .nav { flex-wrap: wrap; row-gap: 2px; overflow: visible; } }
 @media (min-width: 1940px) and (max-width: 2079px) { .barre.onze { flex-wrap: wrap; row-gap: 6px; } .barre.onze .nav { order: 3; flex-basis: 100%; } .barre.onze .qui { margin-left: auto; } .barre.onze .qui .moi, .barre.onze .chercher .mot { display: inline; } }
 @media (min-width: 2080px) and (max-width: 2219px) { .barre.onze .qui .moi { display: none; } }
-@media (min-width: 1101px) and (max-width: 1219px) { .barre.onze ~ main .deux > .liste { top: 142px; max-height: calc(100vh - 162px); } }
 /* douze rubriques (le tableau de bord et la Diffusion) : une seule ligne à partir de 2 220 px, l'adresse du compte à partir
    de 2 360 px, et les rubriques sur deux rangs jusqu'à 1 339 px */
-@media (min-width: 1220px) and (max-width: 1339px) { .barre.douze .nav { flex-wrap: wrap; row-gap: 2px; overflow: visible; } .barre.douze ~ main .deux > .liste { top: 142px; max-height: calc(100vh - 162px); } }
+@media (min-width: 1220px) and (max-width: 1339px) { .barre.douze .nav { flex-wrap: wrap; row-gap: 2px; overflow: visible; } }
 @media (min-width: 2080px) and (max-width: 2219px) { .barre.douze { flex-wrap: wrap; row-gap: 6px; } .barre.douze .nav { order: 3; flex-basis: 100%; } .barre.douze .qui { margin-left: auto; } .barre.douze .qui .moi, .barre.douze .chercher .mot { display: inline; } }
 @media (min-width: 2220px) and (max-width: 2359px) { .barre.douze .qui .moi { display: none; } }
+/* une tablette couchée, un petit portable (1 101 à 1 339 px) : sans l'adresse du compte, le compte tient sur la ligne de la
+   marque, l'en-tête perd une ligne (168 px de haut sur 820, 130 sans elle) */
+@media (min-width: 1101px) and (max-width: 1339px) { .qui .moi { display: none; } }
+/* un écran bas au doigt (un téléphone couché : 390 px de haut) : l'en-tête, sur trois lignes, en aurait pris plus du
+   tiers ; il défile avec la page au lieu d'y rester arrimé (la barre du bas du téléphone en portrait n'est pas touchée) */
+@media (max-height: 500px) and (pointer: coarse) { html:not(.ob-actif) .barre { position: relative; } }
 @media (max-width: 860px) { .qui .moi { display: none; } .barre { flex-wrap: wrap; gap: 8px 14px; padding: 8px 12px; } .nav { order: 3; flex-basis: 100%; padding-right: 28px; -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); } }
 @media (max-width: 520px) { .qui { gap: 10px; font-size: 12.5px; } .qui .long, .direct .mot { display: none; } }
 /* la recherche rapide : le bouton de l'en-tête (la loupe, « Rechercher », le raccourci Ctrl K ou ⌘K) et sa fenêtre.
@@ -186,11 +191,12 @@ input:focus, select:focus, textarea:focus, .riche:focus { border-color: var(--ac
 main { padding: 20px; max-width: 1500px; margin: 0 auto; }
 .tete { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 4px 0 16px; }
 .tete h1 { margin: 0 auto 0 0; font-size: 22px; }
-.deux { display: grid; grid-template-columns: minmax(340px, 460px) 1fr; gap: 18px; align-items: start; }
-.deux > .liste { position: sticky; top: 70px; max-height: calc(100vh - 90px); overflow: auto; }
+/* la fiche prend la place qui reste, jamais plus (minmax(0, 1fr)) : ce qu'elle contient s'y range, la page ne déborde pas */
+.deux { display: grid; grid-template-columns: minmax(340px, 460px) minmax(0, 1fr); gap: 18px; align-items: start; }
+/* la liste colle sous l'en-tête, quelle que soit sa hauteur (une, deux, trois lignes ; --haut-barre, mesurée) */
+.deux > .liste { position: sticky; top: calc(var(--haut-barre, 60px) + 10px); max-height: calc(100vh - var(--haut-barre, 60px) - 30px); overflow: auto; }
 @media (max-width: 1100px) { .deux { grid-template-columns: 1fr; } .deux > .liste { position: static; max-height: none; } .deux.edition > .liste { display: none; } }
 @media (max-width: 1100px) { .deux:not(.edition) > .editeur { display: none; } }
-@media (min-width: 1101px) and (max-width: 1939px) { .deux > .liste { top: 104px; max-height: calc(100vh - 124px); } }
 .filtres { display: grid; gap: 8px; padding: 12px; background: var(--carte); border: 1px solid var(--trait); border-radius: var(--rayon); margin-bottom: 10px; }
 .seg { display: inline-flex; border: 1px solid var(--trait); border-radius: 9px; overflow: hidden; background: var(--carte); }
 .seg button { border: 0; background: none; padding: 6px 11px; cursor: pointer; font-weight: 600; color: var(--gris); }
@@ -294,7 +300,11 @@ table.reps { width: 100%; border-collapse: separate; border-spacing: 0 6px; }
 table.reps th { text-align: left; font-size: 12px; color: var(--gris); font-weight: 700; padding: 0 6px; }
 table.reps td { padding: 0 3px; vertical-align: middle; }
 table.reps td:first-child { padding-left: 0; }
-@media (max-width: 700px) {
+/* les séances en blocs d'après la place de la fiche, pas celle de l'écran (une requête de conteneur) : à côté de la liste
+   (une tablette couchée, 1 180 px), dans un tiroir, la ligne de sept champs (près de 780 px) poussait la fiche hors de
+   l'écran ; le cadre ne prend que la largeur qu'on lui donne */
+.reps-cadre { container-type: inline-size; }
+@container (max-width: 800px) {
   table.reps thead { display: none; }
   table.reps tr { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 8px; border: 1px solid var(--trait); border-radius: 10px; margin-bottom: 8px; }
   table.reps td { padding: 0; }
@@ -1199,10 +1209,12 @@ function cadre(rubrique, contenu) {
 // lequel collent les en-têtes des listes qui défilent avec la page (le mois, le jour) et la barre d'outils d'une feuille
 const RO_BARRE = typeof ResizeObserver === 'function' ? new ResizeObserver(() => poserHautBarre(false)) : null;
 function poserHautBarre(observer = true) {
-  const b = $('.barre');
-  document.documentElement.style.setProperty('--haut-barre', `${b ? Math.round(b.getBoundingClientRect().height) : 0}px`);
+  const b = $('.barre'), arrime = b && getComputedStyle(b).position === 'sticky';     // (un écran bas : l'en-tête défile, rien ne colle dessous)
+  document.documentElement.style.setProperty('--haut-barre', `${arrime ? Math.round(b.getBoundingClientRect().height) : 0}px`);
   if (observer && RO_BARRE && b) { RO_BARRE.disconnect(); RO_BARRE.observe(b); }
 }
+// (le téléphone qu'on tourne : l'en-tête s'arrime ou défile sans changer de taille)
+if (typeof matchMedia === 'function') matchMedia('(max-height: 500px) and (pointer: coarse)').addEventListener?.('change', () => poserHautBarre(false));
 const ROUTES = [
   [/^#\/accueil$/, () => vueTableau()],
   [/^#\/representations(?:\/(nouvelle|tableur|carte|\d+))?$/, m => vueDates(m[1])],
@@ -2064,7 +2076,7 @@ function editeurDate(id, depart = null) {
       <label class="case"><input type="checkbox" id="d-visible"${F.visible && PUBLIABLE(F.nature) ? ' checked' : ''}${PUBLIABLE(F.nature) ? '' : ' disabled'}> Publiée sur le site</label></div>
 
     <div class="bloc"><h3 id="d-reps-titre">${(F.nature || 'representations') === 'representations' ? 'Représentations' : 'Séances'}</h3>
-      <table class="reps"><thead><tr><th>Jour</th><th>Heure</th>${E.sql3 ? '<th>Fin</th>' : ''}<th>Public</th><th>Précision</th><th>Billetterie</th><th><span class="sr">Retirer</span></th></tr></thead><tbody id="d-reps"></tbody></table>
+      <div class="reps-cadre"><table class="reps"><thead><tr><th>Jour</th><th>Heure</th>${E.sql3 ? '<th>Fin</th>' : ''}<th>Public</th><th>Précision</th><th>Billetterie</th><th><span class="sr">Retirer</span></th></tr></thead><tbody id="d-reps"></tbody></table></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"><button type="button" class="btn petit" id="d-meme-jour">＋ Le même jour</button><button type="button" class="btn petit" id="d-lendemain">＋ Le lendemain</button><button type="button" class="btn petit" id="d-vide">＋ Représentation</button>${typeof SERIES !== 'undefined' ? '<button type="button" class="btn petit" id="d-serie" title="Les mêmes heures chaque jour choisi, du premier au dernier">Série…</button>' : ''}</div>
       <div id="d-sans" style="margin-top:12px"></div></div>
 
