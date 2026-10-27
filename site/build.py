@@ -458,6 +458,8 @@ LIBELLES = {
     "contactDiffusion": "Contact diffusion", "dossierPdf": "Dossier du spectacle (PDF)", "aTelecharger": "À télécharger",
     "conditionsFinancieres": "Conditions financières sur demande", "ficheTechniqueSurDemande": "Fiche technique sur demande",
     "documentsScolaires": "Documents pour les enseignants", "objetProgrammation": "Programmation",
+    # le catalogue d'un regard, avant les fiches de « Je souhaite programmer » : son titre (un tableau, une ligne par spectacle)
+    "dUnRegard": "Le catalogue d’un regard",
     # les frises chronologiques (règle 15) : le repère du jour
     "aujourdhui": "Aujourd’hui",
     # réserver une date (règle 17, RESERVER) : la carte de réservation, et les noms courts des boutons de date

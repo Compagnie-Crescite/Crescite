@@ -631,6 +631,34 @@ html[data-theme="nuit"] .df[data-motif="paperboard"] .df-in { --u-texte: var(--u
    par saison et « Écrire à la compagnie », à côté de la carte de tous les lieux, en blanc sur l'aplat (les partenaires : au
    pied de page seulement). */
 .ep-cat { display: grid; gap: clamp(20px, 2.4vw, 32px); margin: 0; padding: 0; list-style: none; }
+/* le catalogue d'un regard, avant les fiches : un tableau net (celui du dossier), un spectacle par ligne, son titre dans sa
+   police et sa couleur ; au téléphone, une carte compacte par spectacle (ses faits en deux colonnes) */
+.rec { margin: 0 0 clamp(44px, 5.4vw, 80px); }
+.rec-t { width: 100%; border-collapse: collapse; font-size: .95rem; line-height: 1.4; }
+.rec-t th, .rec-t td { padding: 10px 14px; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--filet); }
+.rec-t thead th { padding-block: 0 10px; border-bottom-color: color-mix(in srgb, var(--encre) 55%, transparent); color: var(--gris); font: 700 .72rem/1.3 var(--etiq); letter-spacing: .12em; text-transform: uppercase; }
+.rec-t tbody th { width: 30%; font-weight: 400; }
+.rec-t td { color: color-mix(in srgb, var(--encre) 86%, transparent); }
+.rec-t td:nth-child(3) { white-space: nowrap; }   /* (la durée d'un tenant : « 55 minutes ») */
+.rec-t td b, .rec-c dd b { color: var(--encre); font: 700 1.05em var(--titre); }
+.rec-t tbody tr { transition: background-color var(--k-survol) var(--k-doux); }
+.rec-t tbody tr:hover { background: color-mix(in srgb, var(--c) 8%, transparent); }
+.rec-a { display: inline-flex; align-items: center; min-height: 44px; padding: 0; border: 0; background: none; color: var(--c); font: var(--rec-g, 600) 1.22rem/1.15 var(--rec-f, var(--titre));
+  text-align: left; text-decoration: underline transparent; text-decoration-thickness: 1px; text-underline-offset: .2em; cursor: pointer; transition: text-decoration-color var(--k-survol) var(--k-doux); }
+.rec-a:hover { text-decoration-color: currentColor; }
+.rec-tag { display: inline-block; margin-left: 4px; padding: 0 9px; border: 1px solid currentColor; border-radius: 999px; color: var(--gris); font: 600 .68rem/1.6 var(--etiq); letter-spacing: .08em; text-transform: uppercase; vertical-align: .15em; }
+.rec-c { display: none; }
+@media (max-width: 759px) {
+  .rec-t { display: none; }
+  .rec-c { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+  .rec-c li { padding: 4px 14px 12px; border: 1px solid var(--filet); border-left: 3px solid var(--c); border-radius: 6px; background: var(--papier-2); }
+  .rec-ct { margin: 0; }
+  .rec-c dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; margin: 2px 0 0; }
+  .rec-c dl > div { min-width: 0; }
+  .rec-c .rec-long { grid-column: 1 / -1; }
+  .rec-c dt { color: var(--gris); font: 700 .66rem/1.3 var(--etiq); letter-spacing: .12em; text-transform: uppercase; }
+  .rec-c dd { margin: 1px 0 0; font-size: .9rem; line-height: 1.35; overflow-wrap: anywhere; }
+}
 .ep-diff { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: clamp(32px, 4.4vw, 80px); align-items: center; }
 .ep-diff-t > p:not(.ep-k):not(.ep-ecrire) { max-width: 52ch; margin: 0 0 18px; font-size: 1.02rem; line-height: 1.6; }
 .ep-diff .p-diff { max-width: none; min-height: 118px; margin: clamp(18px, 2vw, 26px) 0; }
@@ -3879,7 +3907,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       s.avec ? `<li><span class="f-k"${edS(s, 'avec', 'libelle')}>${esc(s.avec.libelle)}</span> <span${edS(s, 'avec', 'valeur')}>${s.avec.valeur}</span></li>` : ''].join('');
     const sur = [s.creation && `<span${edS(s, 'creation')}>${esc(s.creation)}</span>`, s.lieuTemps && `<span${edS(s, 'lieuTemps')}>${esc(s.lieuTemps)}</span>`,
       !s.statut && s.enTournee && `<span>${esc(L.enTournee)}</span>`].filter(Boolean);
-    return `<li class="fp ${uClasse(s)}" style="${uVars(s)}">
+    return `<li class="fp ${uClasse(s)}" id="fp-${esc(s.slug)}" style="${uVars(s)}">
       <a class="fp-ph" href="${href}" tabindex="-1" aria-hidden="true"${edP(s, 'photo')}><img src="${D.photos[s.slug]}" alt="" loading="lazy"${s.focale != null ? ` style="object-position:${+s.focale}% 35%"` : ''}></a>
       <div class="fp-c">
         <p class="fp-sur">${petit(mo(s))}${sur.join('<span class="pt" aria-hidden="true"></span>')}</p>
@@ -3895,6 +3923,28 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         ${docs.length ? `<div class="fp-docs"><p class="k">${esc(L.aTelecharger)}</p><ul class="u-docs">${docs.map(x => `<li>${PDF}${lienDoc(x)}</li>`).join('')}</ul></div>` : ''}
         <p class="fp-liens">${dossierBouton(s.slug, 'bu plein')}<a class="bu plein" href="${href}" aria-label="${esc(`${s.titre} – ${L.decouvrir}`)}">${esc(L.decouvrir)}${FLECHE}</a>${lienVideo(s, 'boite')}</p>
       </div></li>`;
+  }
+  // le catalogue d'un regard, avant les fiches : un tableau, une ligne par spectacle, ce que ses fiches disent déjà (son format,
+  // sa durée, sa jauge, son public, ses représentations), une case vide quand D ne dit rien ; une valeur qui répète le nom de
+  // sa colonne (« durée : 1h10 », « Jauge par représentation : … ») n'en garde que la suite. Chaque titre, dans la police et la
+  // couleur de son spectacle, mène à sa fiche plus bas (data-va, qui y porte le focus). Au téléphone, une carte compacte par
+  // spectacle, sans ses cases vides
+  const sansEtiquette = (v, mot) => { const t = String(v || ''), m = t.match(/^([^:]{1,40}?)\s*:\s*(\S[\s\S]*)$/); return m && norm(m[1]).trim().startsWith(norm(mot).trim()) ? m[2] : t; };
+  const policeTitre = s => { const m = /--u-titre-f:([^;]+);--u-titre-g:([^;]+)/.exec(uVars(s)); return m ? `;--rec-f:${m[1]};--rec-g:${m[2]}` : ''; };
+  function recapProg() {
+    const cols = [['format', L.format], ['duree', L.duree], ['jauge', L.jauge], ['public', L.public], ['representations', L.representations]];
+    const val = (s, k) => { const P = s.programmer || {};
+      return k === 'format' ? P.format : k === 'duree' ? sansEtiquette(P.duree || s.duree, L.duree) : k === 'jauge' ? sansEtiquette(P.jauge, L.jauge)
+        : k === 'public' ? (s.actionCulturelle || {}).public : P.representations; };
+    const html = (k, v) => { if (!v) return ''; const m = k === 'representations' && String(v).match(/^(\d[\d  ]*?)(\s+\D[\s\S]*)$/); return m ? `<b>${esc(m[1])}</b>${esc(m[2])}` : esc(v); };
+    const titre = s => `<button type="button" class="rec-a" data-va="fp-${esc(s.slug)}">${esc(s.titre)}</button>${s.statut ? ` <span class="rec-tag">${esc(s.statut)}</span>` : ''}`;
+    const sty = s => esc(`--c:${couleurDe(s.slug)}${policeTitre(s)}`);
+    return `<div class="rec">
+      <h3 class="ep-k rec-h" id="rec-h">${esc(L.dUnRegard || L.lesSpectacles)}</h3>
+      <table class="rec-t" aria-labelledby="rec-h"><thead><tr><th scope="col">${esc(L.leSpectacle)}</th>${cols.map(([, t]) => `<th scope="col">${esc(t)}</th>`).join('')}</tr></thead>
+        <tbody>${D.shows.map(s => `<tr style="${sty(s)}"><th scope="row">${titre(s)}</th>${cols.map(([k]) => `<td>${html(k, val(s, k))}</td>`).join('')}</tr>`).join('')}</tbody></table>
+      <ul class="rec-c" aria-labelledby="rec-h">${D.shows.map(s => `<li style="${sty(s)}"><p class="rec-ct">${titre(s)}</p>${(xs => xs.length ? `<dl>${xs.join('')}</dl>` : '')(cols.filter(([k]) => val(s, k)).map(([k, t]) => `<div${k === 'representations' ? ' class="rec-long"' : ''}><dt>${esc(t)}</dt><dd>${html(k, val(s, k))}</dd></div>`))}</li>`).join('')}</ul>
+    </div>`;
   }
   // la fiche « établissement » (la 05), dans l'univers du spectacle : son titre et son motif, sa photo (celle d'un
   // établissement s'il y en a une), le type de son action culturelle en grande capitale (la demande 3), son public et son
@@ -5851,7 +5901,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const e = E.programmer, lieux = retenu('tout', () => CARTE.tout());
     retenir('programmer');
     main.innerHTML = `${tetePro(e, [['p-spectacles', L.lesSpectacles], ['p-simulateur', L.devisTitre], ['p-lieux', L.lieuxDiffusion], ['p-ecrire', L.ecrire]], contactHTML(null))}
-      <section class="ep-sec" id="p-spectacles" aria-labelledby="h-progs"><div class="wrap"><h2 class="ep-sr" id="h-progs">${esc(L.lesSpectacles)}</h2><ul class="ep-cat">${D.shows.map(ficheProg).join('')}</ul></div></section>
+      <section class="ep-sec" id="p-spectacles" aria-labelledby="h-progs"><div class="wrap"><h2 class="ep-sr" id="h-progs">${esc(L.lesSpectacles)}</h2>${recapProg()}<ul class="ep-cat">${D.shows.map(ficheProg).join('')}</ul></div></section>
       <section class="ep-sec" id="p-simulateur" aria-labelledby="h-simulateur"><div class="wrap">${SEP}<p class="ep-k">${esc(L.devisBadge)}</p><h2 class="ep-sec-t" id="h-simulateur" data-mv="monte">${esc(L.devisTitre)}</h2>
         <p class="simu-desc">${esc(L.devisDesc)}</p>
         <div class="simu-boite">
@@ -7076,7 +7126,10 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   main.addEventListener('click', e => {
     const va = e.target.closest('[data-va]');
     // (une pièce du sommaire d'une page : la page y va, et la section prend le focus : le clavier continue de là)
-    if (va) { vers(va.dataset.va); if (va.closest('.psom')) { const t = document.getElementById(va.dataset.va); if (t) { if (!t.hasAttribute('tabindex')) t.setAttribute('tabindex', '-1'); t.focus({ preventScroll: true }); } } return; }
+    if (va) { vers(va.dataset.va); if (va.closest('.psom')) { const t = document.getElementById(va.dataset.va); if (t) { if (!t.hasAttribute('tabindex')) t.setAttribute('tabindex', '-1'); t.focus({ preventScroll: true }); } }
+      // (un titre du catalogue d'un regard : le focus va au titre de sa fiche, le lien de sa page)
+      else if (va.closest('.rec')) { const t = document.getElementById(va.dataset.va), f = t && $('.fp-t a', t); if (f) f.focus({ preventScroll: true }); }
+      return; }
     // (le sommaire flottant d'un spectacle : sa liste est au-dessus du bouton, avant lui dans la page ; ouverte au clavier, le
     // focus y entre, sur le chapitre lu ; Échap la ferme et rend le focus au bouton, le focus qui en sort la ferme)
     const sb = e.target.closest('.som-b'); if (sb) { const l = $('#som-l'), o = l.hidden; l.hidden = !o; sb.setAttribute('aria-expanded', String(o)); if (o && MV) MV.cascade(l, { decalage: 6 });
