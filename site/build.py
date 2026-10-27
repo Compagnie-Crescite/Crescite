@@ -482,6 +482,10 @@ LIBELLES = {
     # masqué pour les lecteurs d'écran
     "nouvelOnglet": "(nouvel onglet)",
     "spectaclePrecedent": "Spectacle précédent", "spectacleSuivant": "Spectacle suivant",
+    # au bout d'une saison passée ouverte (#/saisons/<saison>, les saisons passées de #/saisons) : passer à la voisine
+    "saisonPrecedente": "Saison précédente", "saisonSuivante": "Saison suivante",
+    # trier les spectacles (#/spectacles) : la puce qui les garde tous, à côté de « En tournée » et du statut « En création »
+    "tous": "Tous",
     # une adresse qui ne mène à aucune vue : sa page, et d'où repartir
     "introuvable": "Page introuvable", "introuvableTexte": "Cette adresse ne mène à aucune page du site.",
     # la ligne de navigation du pied de page (son nom pour les lecteurs d'écran)
