@@ -461,6 +461,16 @@ LIBELLES = {
     "reserver": "Réserver", "surLeSiteDuLieu": "sur le site du lieu", "horaireAPreciser": "horaire à préciser",
     "reservationAupresDuLieu": "Réservation auprès du lieu", "choisirUneDate": "Choisir une date",
     "joursCourts": JOURSC, "moisCourts": MOISC,
+    # la date choisie dans son agenda à soi : un fichier .ics de la date (ses séances, son lieu, son lien de réservation)
+    "ajouterAgenda": "Ajouter à mon agenda",
+    # la page d'un spectacle : partager son adresse (le partage de l'appareil, sinon l'adresse copiée), et ses voisins dans
+    # l'ordre des spectacles, au pied de la page
+    "partager": "Partager", "lienCopie": "Lien copié",
+    "spectaclePrecedent": "Spectacle précédent", "spectacleSuivant": "Spectacle suivant",
+    # une adresse qui ne mène à aucune vue : sa page, et d'où repartir
+    "introuvable": "Page introuvable", "introuvableTexte": "Cette adresse ne mène à aucune page du site.",
+    # la ligne de navigation du pied de page (son nom pour les lecteurs d'écran)
+    "planDuSite": "Plan du site",
     # les vidéos lues dans le site (règle 18, LECTEUR)
     "lire": "Lire la vidéo", "pleinEcran": "Plein écran", "assombrir": "Assombrir", "rallumer": "Rallumer", "fermer": "Fermer",
     # le jour et la nuit (règle 19, THEME) : le nom du bouton du menu (lecteurs d'écran, bulle), et les deux thèmes
