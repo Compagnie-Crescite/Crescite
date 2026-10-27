@@ -158,9 +158,10 @@ async function ouvrir(navigateur, { largeur = 1600, hauteur = 1000, hash = '', s
     }
     if (req.method() === 'POST' && table in DB) {   // une insertion, ou un upsert (on_conflict) : appliqué à la base simulée, gardé dans MODIFS
       const body = JSON.parse(req.postData() || '{}'), rows = Array.isArray(body) ? body : [body], cles = (url.searchParams.get('on_conflict') || '').split(',').filter(Boolean);
-      for (const r of rows) { const existant = cles.length ? DB[table].find(x => cles.every(k => String(x[k]) === String(r[k]))) : null; if (existant) Object.assign(existant, r); else DB[table].push({ id: 9000 + DB[table].length, ...r }); }
+      // (la ligne rendue porte son id, comme celle de la base)
+      const ecrites = rows.map(r => { const existant = cles.length ? DB[table].find(x => cles.every(k => String(x[k]) === String(r[k]))) : null; if (existant) return Object.assign(existant, r); const x = { id: 9000 + DB[table].length, ...r }; DB[table].push(x); return x; });
       MODIFS.push({ table, post: rows, conflit: cles });
-      return objet ? json(201, rows[0]) : route.fulfill({ status: 201, contentType: 'application/json', body: '[]' });
+      return objet ? json(201, ecrites[0]) : route.fulfill({ status: 201, contentType: 'application/json', body: '[]' });
     }
     if (req.method() === 'DELETE' && table in DB) {
       let rows = DB[table];

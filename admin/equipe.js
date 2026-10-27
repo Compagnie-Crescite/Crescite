@@ -266,12 +266,20 @@ function editeurPersonne(id) {
       : '<p class="aide">Indiquez son adresse électronique dans les coordonnées, puis enregistrez : on pourra lui créer son accès.</p>'}
       ${p ? `<p class="aide acces">Son espace : <a href="${esc(espace)}" target="_blank" rel="noopener">${esc(espace)}</a><button type="button" class="btn lien petit" id="pe-copier-lien">Copier le lien</button></p>` : ''}`;
   };
+  // ses spectacles : une ligne par place dans une distribution (✕ l'en retire), et l'ajout à un autre spectacle, ici
+  // même ; c'est la même ligne que dans l'onglet Distribution du spectacle, enregistrée aussitôt
   const dessinerSpectacles = () => {
     const el = $('#pe-spectacles', zone); if (!el) return;
-    const ds = E.distributions.filter(x => x.personne_id === etat.p0.id), sps = [...new Set(ds.map(x => x.spectacle_id))].map(spectacle).filter(Boolean);
-    el.innerHTML = `<h3>Ses spectacles</h3>${sps.length ? `<ul class="liste-simple">${sps.map(s => `<li><span class="pastille" style="--c:${couleurSp(s)}"></span><a href="#/spectacles/${esc(s.slug)}" data-onglet-sp="Distribution">${esc(s.titre)}</a>
-      <span class="compte">${ds.filter(x => x.spectacle_id === s.id).map(x => `${libelleCategorie(x.categorie)}${x.categorie === 'jeu' ? (x.role ? ` (${esc(x.role)})` : '') : x.fonction ? ` : ${esc(x.fonction)}` : ''}${x.en_tournee ? '' : ', ne part pas en tournée'}`).join(' ; ')}</span></li>`).join('')}</ul>`
-      : '<p class="aide">Dans aucune distribution pour l’instant : on l’ajoute depuis l’onglet Distribution d’un spectacle.</p>'}`;
+    const p = etat.p0, ds = E.distributions.filter(x => x.personne_id === p.id).sort((a, b) => (spectacle(a.spectacle_id)?.ordre ?? 0) - (spectacle(b.spectacle_id)?.ordre ?? 0) || rangCategorie(a.categorie) - rangCategorie(b.categorie));
+    const sps = [...E.spectacles].sort((a, b) => (a.ordre ?? 0) - (b.ordre ?? 0)), cat = categorieProbable(p);
+    el.innerHTML = `<h3>Ses spectacles</h3>${ds.length ? `<ul class="liste-simple pe-dist">${ds.map(x => { const s = spectacle(x.spectacle_id); return s ? `<li><span class="pastille" style="--c:${couleurSp(s)}"></span><a href="#/spectacles/${esc(s.slug)}" data-onglet-sp="Distribution" title="Ouvrir la distribution du spectacle">${esc(s.titre)}</a>
+      <span class="compte">${libelleCategorie(x.categorie)}${x.categorie === 'jeu' ? (x.role ? ` (${esc(x.role)})` : '') : x.fonction ? ` : ${esc(x.fonction)}` : ''}${x.en_tournee ? '' : ', ne part pas en tournée'}</span>
+      <button type="button" class="btn petit danger" data-pe-retirer="${x.id}" title="Retirer de la distribution" aria-label="Retirer de la distribution de ${esc(s.titre)}">✕</button></li>` : ''; }).join('')}</ul>`
+      : '<p class="aide">Dans aucune distribution pour l’instant.</p>'}
+      <div class="pe-dist-ajout"><select id="pe-dist-sp" aria-label="Spectacle"><option value="">Ajouter à un spectacle…</option>${sps.map(s => `<option value="${s.id}">${esc(s.titre)}</option>`).join('')}</select>
+        <select id="pe-dist-cat" aria-label="Catégorie">${CATEGORIES.map(([k, l]) => `<option value="${k}"${k === cat ? ' selected' : ''}>${l}</option>`).join('')}</select>
+        <button type="button" class="btn petit" id="pe-dist-ok">＋ Ajouter</button></div>
+      <p class="aide">Enregistré aussitôt, sans « Enregistrer » : c’est la même distribution que dans l’onglet Distribution du spectacle, où l’on précise son rôle, sa fonction, s’il part en tournée.</p>`;
   };
   const dessinerDates = () => {
     const el = $('#pe-dates', zone); if (!el) return;
@@ -295,6 +303,22 @@ function editeurPersonne(id) {
   zone.addEventListener('click', async e => {
     const b = e.target.closest('button'); if (!b) return;
     if (b.id === 'pe-sans-photo') { F.photo = null; marquerSale(); dessinerPhoto(); return; }
+    if (b.id === 'pe-dist-ok') {
+      const sp = +$('#pe-dist-sp', zone).value, cat = $('#pe-dist-cat', zone).value;
+      if (!sp) { $('#pe-dist-sp', zone).focus(); return annoncer('Choisissez d’abord le spectacle.', { erreur: true }); }
+      const x = await ajouterADistribution(sp, etat.p0.id, cat);
+      if (!x) return;
+      dessinerSpectacles(); dessinerDates();
+      const s = spectacle(sp);
+      annoncer(`Ajouté à la distribution de ${s?.titre || 'ce spectacle'} (${libelleCategorie(cat)}).`, { libelle: 'Voir la distribution', action: () => { try { sessionStorage.setItem('crescite-onglet-sp', 'Distribution'); } catch { /* navigation privée */ } location.hash = `#/spectacles/${s.slug}`; } });
+      $('#pe-dist-ok', zone)?.focus();
+      return;
+    }
+    if (b.dataset.peRetirer) {
+      const x = E.distributions.find(y => y.id === +b.dataset.peRetirer);
+      if (x) await retirerDeDistribution(x, () => { if (zone.isConnected) { dessinerSpectacles(); dessinerDates(); } });
+      return;
+    }
     if (b.id === 'pe-copier') return copier((priveeDe(etat.p0.id)?.email || '').trim(), 'Adresse');
     if (b.id === 'pe-copier-lien') return copier(new URL('../equipe/', location.href).href, 'Adresse de son espace');
     // détacher le compte : tout de suite, sans question ; l'annonce porte « Annuler », qui le rattache de nouveau
@@ -424,18 +448,136 @@ function ongletEquipe(onglet, zone, F, s0) {
   else { z.innerHTML = `<div class="bloc"><h3>${E.sql3 || E.sql4 ? 'Documents' : 'Documents de l’équipe'}</h3><p class="aide">Le texte, le dossier, la fiche technique… pour l’équipe du spectacle, dans son espace et ses feuilles de route ; « Administration seulement » les garde ici. Chaque changement est enregistré aussitôt.</p><div id="docs-sp"></div></div>`; documentsEditeur($('#docs-sp', z), s0); }
 }
 
+// ———— la distribution, des deux côtés : l'onglet Distribution d'un spectacle et la fiche d'une personne (« Ses spectacles »)
+// lisent et écrivent la même ligne (crescite_distributions). Ajouter quelqu'un d'un côté le montre aussitôt de l'autre, sur
+// la page du spectacle (« publiée ») et dans l'équipe des dates (« en tournée »).
+const A_CATEGORIE = { jeu: 'au jeu', creation: 'à la création', technique: 'à la technique', production: 'à la production' };
+// les métiers qui vont d'habitude avec chaque catégorie (sans accents, comme norm) : ceux-là passent en tête quand on choisit
+const METIERS_CATEGORIE = {
+  jeu: /\bjeu\b|comedi|acteur|actrice|interpret|chant|dans/,
+  creation: /mise en scene|metteu|creat|scenograph|costum|choregraph|auteur|autrice|adapt|musique|compos|dramaturg|assistan/,
+  technique: /regi|techni|plateau|machin|\bson\b|lumiere|eclairag/,
+  production: /produc|admin|diffus|communic|mediat|charge|presse/,
+};
+const pourCategorie = (p, cat) => (p?.metiers || []).some(m => METIERS_CATEGORIE[cat]?.test(norm(m)));
+const categorieProbable = p => (CATEGORIES.find(([k]) => pourCategorie(p, k)) || CATEGORIES[0])[0];
+const spectaclesDe = pid => [...new Set(E.distributions.filter(x => x.personne_id === pid).map(x => x.spectacle_id))].map(spectacle).filter(Boolean);
+// l'ordre : par catégorie, puis la place de chacun ; on le réécrit en entier pour que site et administration s'accordent
+async function renumeroterDistribution(xs) {
+  const changes = xs.map((x, i) => [x, (i + 1) * 10]).filter(([x, o]) => x.ordre !== o);
+  const rs = await Promise.all(changes.map(([x, o]) => sb.from('crescite_distributions').update({ ordre: o }).eq('id', x.id)));
+  const r = rs.find(x => x.error); if (r) throw r.error;
+  changes.forEach(([x, o]) => { x.ordre = o; });
+}
+// ajouter quelqu'un à la distribution d'un spectacle, au bout de sa catégorie (sa fonction tirée de ses métiers, hors jeu ;
+// en tournée pour le jeu et la technique) → la ligne, ou null (déjà là, ou refusé par la base)
+async function ajouterADistribution(spId, pid, cat) {
+  const p = personne(pid);
+  if (E.distributions.some(y => y.spectacle_id === spId && y.personne_id === pid && y.categorie === cat)) { annoncer(`${nomDe(p)} est déjà dans la distribution (${libelleCategorie(cat)}).`, { erreur: true }); return null; }
+  const fonction = cat === 'jeu' ? '' : ((p?.metiers || []).find(m => !/^jeu$/i.test(m.trim())) || '');
+  const xs = distributionDe(spId), dernier = [...xs].reverse().find(x => rangCategorie(x.categorie) <= rangCategorie(cat));
+  const { data, error } = await sb.from('crescite_distributions').insert({ spectacle_id: spId, personne_id: pid, categorie: cat, fonction, en_tournee: cat === 'jeu' || cat === 'technique', publie: true, ordre: (dernier?.ordre || 0) + 5 }).select().single();
+  if (error) { erreur(error, 'Ajout impossible'); return null; }
+  E.distributions.push(data);
+  try { await renumeroterDistribution(distributionDe(spId)); } catch (e) { erreur(e, 'Ordre non enregistré'); }
+  return data;
+}
+// retirer une ligne, tout de suite ; l'annonce porte « Annuler », qui la remet ; apres() redessine
+async function retirerDeDistribution(x, apres) {
+  const { error } = await sb.from('crescite_distributions').delete().eq('id', x.id);
+  if (error) return erreur(error, 'Retrait impossible');
+  E.distributions = E.distributions.filter(y => y.id !== x.id);
+  apres();
+  annoncer(`Retiré de la distribution de ${spectacle(x.spectacle_id)?.titre || 'ce spectacle'} : ${nomDe(personne(x.personne_id))}.`, { libelle: 'Annuler', action: async () => {
+    const r = await sb.from('crescite_distributions').insert(sansMeta(x)).select().single();
+    if (r.error) return erreur(r.error, 'Rétablissement impossible');
+    E.distributions.push(r.data); apres();
+  } });
+}
+// « Ajouter à la distribution » : toute la troupe (les fiches de la rubrique Équipe), à chercher par nom, métier ou
+// spectacle, ceux dont le métier va avec la catégorie en tête. Un geste ajoute ; la fenêtre reste ouverte pour en ajouter
+// d'autres, et qui y est déjà est coché. Une personne qui n'a pas encore de fiche : on la crée au vol.
+function choisirDansLaTroupe(s, { categorie = 'jeu', declencheur = null, apres = () => {} } = {}) {
+  $('#troupe-choix')?.remove();
+  let cat = categorie, q = '';
+  const ajoutes = [];
+  const dlg = document.createElement('dialog');
+  dlg.id = 'troupe-choix'; dlg.className = 'tab-dialogue large troupe-choix'; dlg.setAttribute('aria-labelledby', 'tc-titre');
+  dlg.innerHTML = `<div class="tab-dialogue-boite">
+      <div class="tc-tete"><h2 id="tc-titre">Ajouter à la distribution de ${esc(s.titre)}</h2><button type="button" class="btn principal petit" data-tc-fermer>Terminé</button></div>
+      <div class="tc-cat"><span id="tc-cat-lib">Pour</span><div class="seg" role="group" aria-labelledby="tc-cat-lib">${CATEGORIES.map(([k, l]) => `<button type="button" data-tc-cat="${k}" aria-pressed="${k === cat}">${l}</button>`).join('')}</div></div>
+      <input type="search" id="tc-q" placeholder="Rechercher dans la troupe : nom, métier, spectacle…" aria-label="Rechercher dans la troupe" autocomplete="off">
+      <ul class="tc-liste" id="tc-liste"></ul>
+      <p class="tc-msg" role="status" aria-live="polite"></p>
+      <p class="aide">Chaque personne a une seule fiche, dans la rubrique Équipe : l’ajouter ici l’inscrit aussitôt dans « Ses spectacles » sur sa fiche, sur la page du spectacle, et dans l’équipe des dates si elle part en tournée.</p>
+    </div>`;
+  const liste = $('#tc-liste', dlg), champ = $('#tc-q', dlg), msg = $('.tc-msg', dlg);
+  const dessiner = () => {
+    const nq = norm(q).trim(), ici = pid => E.distributions.filter(x => x.spectacle_id === s.id && x.personne_id === pid);
+    const xs = E.personnes.filter(p => !nq || norm(`${nomDe(p)} ${(p.metiers || []).join(' ')} ${spectaclesDe(p.id).map(t => t.titre).join(' ')}`).includes(nq))
+      .sort((a, b) => pourCategorie(b, cat) - pourCategorie(a, cat) || norm(a.nom).localeCompare(norm(b.nom)) || norm(a.prenom).localeCompare(norm(b.prenom)));
+    const creer = q.trim() && !E.personnes.some(p => norm(nomDe(p)) === nq);
+    liste.innerHTML = xs.map(p => {
+      const ds = ici(p.id), deja = ds.some(x => x.categorie === cat), sps = spectaclesDe(p.id);
+      return `<li><button type="button" class="tc-p" data-p="${p.id}"${deja ? ' aria-disabled="true"' : ''}>${avatar(p, true)}<span class="tc-nom"><b>${esc(nomDe(p))}</b>
+        <small>${esc((p.metiers || []).join(', ') || 'Métier à préciser')}${sps.length ? ` · ${esc(sps.map(t => t.titre.split(' – ')[0]).join(', '))}` : ''}</small></span>
+        <span class="tc-etat">${deja ? `✓ ${esc(libelleCategorie(cat))}` : `＋ Ajouter${ds.length ? `<small>déjà : ${esc(ds.map(x => libelleCategorie(x.categorie)).join(', '))}</small>` : ''}`}</span></button></li>`;
+    }).join('') + (creer ? `<li><button type="button" class="tc-p tc-creer" data-tc-creer><span class="avatar petit" aria-hidden="true">＋</span><span class="tc-nom"><b>Nouvelle fiche : ${esc(q.trim())}</b><small>créée dans Équipe, puis ajoutée ${A_CATEGORIE[cat]}</small></span><span class="tc-etat">＋ Créer</span></button></li>` : '')
+      || `<li class="aide tc-vide">${E.personnes.length ? 'Personne ne correspond.' : 'La troupe est vide pour l’instant : tapez un nom pour créer la première fiche.'}</li>`;
+  };
+  const ajouter = async b => {
+    if (b.getAttribute('aria-disabled') === 'true') { msg.textContent = `${b.querySelector('b').textContent} est déjà ${A_CATEGORIE[cat].replace(/^au /, 'dans le ').replace(/^à la /, 'dans la ')}.`; return; }
+    if (b.dataset.occupe) return;
+    b.dataset.occupe = '1';
+    let pid = +b.dataset.p;
+    if (b.dataset.tcCreer !== undefined) {
+      try { pid = (await creerPersonne(q.trim(), cat === 'jeu' ? ['Jeu'] : [])).id; } catch (e) { delete b.dataset.occupe; return erreur(e, 'Fiche non créée'); }
+      q = ''; champ.value = '';
+    }
+    const x = await ajouterADistribution(s.id, pid, cat);
+    delete b.dataset.occupe;
+    if (!x) return;
+    ajoutes.push(x); apres(x);
+    msg.textContent = `Ajouté ${A_CATEGORIE[cat]} : ${nomDe(personne(pid))}. Sa fiche est à jour.`;
+    dessiner();
+    ($(`.tc-p[data-p="${pid}"]`, liste) || champ).focus();
+  };
+  const boutons = () => $$('.tc-p', liste);
+  champ.addEventListener('input', () => { q = champ.value; dessiner(); });
+  champ.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); boutons()[0]?.focus(); }
+    if (e.key === 'Enter') { e.preventDefault(); const b = boutons().find(x => x.getAttribute('aria-disabled') !== 'true'); if (b && champ.value.trim()) ajouter(b); }
+  });
+  liste.addEventListener('keydown', e => {
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    e.preventDefault();
+    const bs = boutons(), i = bs.indexOf(document.activeElement), j = i + (e.key === 'ArrowDown' ? 1 : -1);
+    (j < 0 ? champ : bs[Math.min(j, bs.length - 1)])?.focus();
+  });
+  dlg.addEventListener('click', e => {
+    if (e.target === dlg || e.target.closest('[data-tc-fermer]')) { dlg.close(); return; }
+    const c = e.target.closest('[data-tc-cat]');
+    if (c) { cat = c.dataset.tcCat; $$('[data-tc-cat]', dlg).forEach(x => x.setAttribute('aria-pressed', x === c)); msg.textContent = ''; dessiner(); return; }
+    const b = e.target.closest('.tc-p'); if (b) ajouter(b);
+  });
+  dlg.addEventListener('close', () => {
+    dlg.remove();
+    if (declencheur?.isConnected) declencheur.focus();
+    if (ajoutes.length === 1) { const pid = ajoutes[0].personne_id; annoncer(`Ajouté à la distribution : ${nomDe(personne(pid))}. Sa fiche est à jour.`, { libelle: 'Voir sa fiche', action: () => { location.hash = `#/equipe/${pid}`; } }); }
+    else if (ajoutes.length > 1) annoncer(`${ajoutes.length} personnes ajoutées à la distribution : leurs fiches sont à jour.`);
+  });
+  document.body.append(dlg);
+  dessiner();
+  dlg.showModal();
+  champ.focus();
+}
+
 function ongletDistribution(z, s) {
   const etat = t => { const el = $('#dist-etat', z); if (el) el.textContent = t; };
-  // l'ordre : par catégorie, puis la place de chacun ; on le réécrit en entier pour que site et administration s'accordent
-  const renumeroter = async xs => {
-    const changes = xs.map((x, i) => [x, (i + 1) * 10]).filter(([x, o]) => x.ordre !== o);
-    const rs = await Promise.all(changes.map(([x, o]) => sb.from('crescite_distributions').update({ ordre: o }).eq('id', x.id)));
-    const r = rs.find(x => x.error); if (r) throw r.error;
-    changes.forEach(([x, o]) => { x.ordre = o; });
-  };
+  const renumeroter = renumeroterDistribution;
   const ligne = (x, i, n) => {
     const p = personne(x.personne_id);
-    return `<div class="dist-l" data-di="${x.id}">${avatar(p, true)}<span class="dist-nom"><a href="#/equipe/${x.personne_id}">${esc(nomDe(p) || '?')}</a><small>${esc((p?.metiers || []).slice(0, 2).join(', '))}</small></span>
+    return `<div class="dist-l" data-di="${x.id}">${avatar(p, true)}<span class="dist-nom"><a href="#/equipe/${x.personne_id}" title="Ouvrir sa fiche">${esc(nomDe(p) || '?')}</a><small>${esc((p?.metiers || []).slice(0, 2).join(', '))}</small></span>
       <span class="dist-champs"><input type="text" data-dc="fonction" value="${esc(x.fonction || '')}" placeholder="${x.categorie === 'jeu' ? 'Fonction' : 'Régie générale…'}" title="${x.categorie === 'jeu' ? 'Vide pour le jeu, d’habitude' : 'Ce que la personne fait dans ce spectacle'}" aria-label="Fonction">
         <input type="text" data-dc="role" value="${esc(x.role || '')}" placeholder="Rôle" aria-label="Rôle"><input type="text" data-dc="alternance" value="${esc(x.alternance || '')}" placeholder="En alternance avec…" aria-label="Alternance">
         <select data-dc="categorie" aria-label="Catégorie">${CATEGORIES.map(([k, l]) => `<option value="${k}"${x.categorie === k ? ' selected' : ''}>${l}</option>`).join('')}</select></span>
@@ -444,30 +586,14 @@ function ongletDistribution(z, s) {
   };
   const dessiner = () => {
     const xs = distributionDe(s.id);
-    z.innerHTML = `<div class="bloc"><h3>Distribution</h3><p class="aide">Qui fait quoi dans ce spectacle. « En tournée » : la personne part sur chaque date (l’équipe se règle ensuite date par date, dans Représentations). « Publiée » : elle apparaît sur la page du spectacle. Chaque changement est enregistré aussitôt. <span id="dist-etat" class="dist-etat" aria-live="polite"></span></p>
+    z.innerHTML = `<div class="bloc"><div class="dist-tete"><h3>Distribution</h3><button type="button" class="btn principal" data-dist-ajouter="">＋ Ajouter quelqu’un de la troupe</button></div>
+      <p class="aide">Qui fait quoi dans ce spectacle, choisi parmi les fiches de la troupe (rubrique Équipe) : chacun y retrouve ce spectacle dans « Ses spectacles ». « En tournée » : la personne part sur chaque date (l’équipe se règle ensuite date par date, dans Représentations). « Publiée » : elle apparaît sur la page du spectacle. Chaque changement est enregistré aussitôt. <span id="dist-etat" class="dist-etat" aria-live="polite"></span></p>
       <div class="dist-l dist-entete" aria-hidden="true"><span></span><span></span><span class="dist-champs"><span>Fonction</span><span>Rôle</span><span>Alternance</span><span>Catégorie</span></span><span class="dist-cases"><span>Part en tournée, apparaît sur le site</span></span><span class="dist-outils"><span>Ordre</span></span></div>
-      ${CATEGORIES.map(([k, l]) => { const ys = xs.filter(x => x.categorie === k); return `<div class="dist-cat" data-cat="${k}"><h4>${l}${ys.length ? ` <span class="badge">${ys.length}</span>` : ''}</h4>${ys.map((x, i) => ligne(x, i, ys.length)).join('') || '<p class="aide dist-vide">Personne.</p>'}</div>`; }).join('')}
-      <div class="dist-ajout"><span class="lib">Ajouter à la distribution</span><div class="dist-ajout-l"><div id="dist-combo"></div><select id="dist-cat" aria-label="Catégorie de la personne ajoutée">${CATEGORIES.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></div>
-        <span class="aide">Une personne de l’équipe, ou une nouvelle fiche créée au vol (on la complète ensuite dans Équipe).</span></div></div>`;
-    comboPersonne($('#dist-combo', z), { placeholder: 'Nom de la personne…', creer: true, onChoix: ajouter,
-      onCreer: async texte => {
-        try { const cat = $('#dist-cat', z).value, p = await creerPersonne(texte, cat === 'jeu' ? ['Jeu'] : []); await ajouter(p.id); annoncer(`Fiche créée pour ${nomDe(p)} : complétez-la dans Équipe.`, { action: () => { location.hash = `#/equipe/${p.id}`; }, libelle: 'Ouvrir' }); }
-        catch (e) { erreur(e, 'Fiche non créée'); }
-      } });
+      ${CATEGORIES.map(([k, l]) => { const ys = xs.filter(x => x.categorie === k); return `<div class="dist-cat" data-cat="${k}"><h4>${l}${ys.length ? ` <span class="badge">${ys.length}</span>` : ''}</h4>${ys.map((x, i) => ligne(x, i, ys.length)).join('') || '<p class="aide dist-vide">Personne pour l’instant.</p>'}
+        <button type="button" class="btn lien petit dist-ajouter-cat" data-dist-ajouter="${k}">＋ Ajouter ${A_CATEGORIE[k]}</button></div>`; }).join('')}</div>`;
   };
-  async function ajouter(pid) {
-    const cat = $('#dist-cat', z).value, p = personne(pid);
-    const fonction = cat === 'jeu' ? '' : ((p?.metiers || []).find(m => !/^jeu$/i.test(m.trim())) || '');
-    if (E.distributions.some(y => y.spectacle_id === s.id && y.personne_id === pid && y.categorie === cat && (y.fonction || '') === fonction)) return annoncer(`${nomDe(p)} est déjà dans la distribution (${libelleCategorie(cat)}).`, { erreur: true });
-    const xs = distributionDe(s.id), dernier = [...xs].reverse().find(x => rangCategorie(x.categorie) <= rangCategorie(cat));
-    const { data, error } = await sb.from('crescite_distributions').insert({ spectacle_id: s.id, personne_id: pid, categorie: cat, fonction, en_tournee: cat === 'jeu' || cat === 'technique', publie: true, ordre: (dernier?.ordre || 0) + 5 }).select().single();
-    if (error) return erreur(error, 'Ajout impossible');
-    E.distributions.push(data);
-    try { await renumeroter(distributionDe(s.id)); } catch (e) { erreur(e, 'Ordre non enregistré'); }
-    dessiner();
-    annoncer(`Ajouté à la distribution : ${nomDe(p)} (${libelleCategorie(cat)}).`);
-    const l = $(`[data-di="${data.id}"]`, z); if (l) { tt('ajouter', l); $('[data-dc="fonction"]', l)?.focus(); }
-  }
+  const ouvrirChoix = b => choisirDansLaTroupe(s, { categorie: b.dataset.distAjouter || 'jeu', declencheur: b,
+    apres: x => { dessiner(); const l = $(`[data-di="${x.id}"]`, z); if (l) tt('ajouter', l); } });
   z.addEventListener('change', async e => {
     const t = e.target, l = t.closest('[data-di]'); if (!l || !t.dataset.dc) return;
     const x = E.distributions.find(y => y.id === +l.dataset.di); if (!x) return;
@@ -482,6 +608,8 @@ function ongletDistribution(z, s) {
     etat(`Enregistré à ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h')}.`);
   });
   z.addEventListener('click', async e => {
+    const a = e.target.closest('[data-dist-ajouter]');
+    if (a) { ouvrirChoix(a); return; }
     const b = e.target.closest('button'), l = b?.closest('[data-di]'); if (!l) return;
     const x = E.distributions.find(y => y.id === +l.dataset.di); if (!x) return;
     const p = personne(x.personne_id);
@@ -495,17 +623,7 @@ function ongletDistribution(z, s) {
       $(`[data-di="${x.id}"] [data-dm="${b.dataset.dm}"]:not([disabled])`, z)?.focus();
       return;
     }
-    if (b.dataset.dr !== undefined) {
-      const { error } = await sb.from('crescite_distributions').delete().eq('id', x.id);
-      if (error) return erreur(error, 'Retrait impossible');
-      E.distributions = E.distributions.filter(y => y.id !== x.id);
-      dessiner();
-      annoncer(`Retiré de la distribution : ${nomDe(p)}.`, { libelle: 'Annuler', action: async () => {
-        const r = await sb.from('crescite_distributions').insert(sansMeta(x)).select().single();
-        if (r.error) return erreur(r.error, 'Rétablissement impossible');
-        E.distributions.push(r.data); dessiner();
-      } });
-    }
+    if (b.dataset.dr !== undefined) await retirerDeDistribution(x, () => { if (z.isConnected) dessiner(); });
   });
   dessiner();
 }
@@ -3060,11 +3178,39 @@ input[type=tel]:focus { border-color: var(--accent); outline: none; box-shadow: 
 .dist-cases .case { font-size: 13px; gap: 6px; white-space: nowrap; }
 .dist-cases .case input { width: 16px; height: 16px; }
 .dist-outils { display: flex; gap: 4px; justify-content: flex-end; }
-.dist-ajout { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--trait); display: grid; gap: 6px; }
-.dist-ajout .lib { font-weight: 650; font-size: 13.5px; }
-.dist-ajout-l { display: grid; grid-template-columns: minmax(0, 2fr) minmax(130px, 1fr); gap: 8px; }
+.dist-tete { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 14px; margin-bottom: 8px; }
+.dist-tete h3 { margin: 0; }
+.dist-ajouter-cat { margin: 2px 0 0; }
+/* la troupe, pour choisir qui ajouter (choisirDansLaTroupe) */
+dialog.troupe-choix { max-height: min(720px, calc(100dvh - 24px)); }
+dialog.troupe-choix[open] { display: flex; }
+.troupe-choix .tab-dialogue-boite { grid-template-rows: auto auto auto minmax(0, 1fr) auto auto; width: 100%; min-height: 0; }
+.tc-tete { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.tc-cat { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-weight: 650; font-size: 13.5px; }
+.tc-cat .seg { flex-wrap: wrap; }
+#tc-q { width: 100%; min-height: 42px; }
+.tc-liste { list-style: none; margin: 0; padding: 2px; display: grid; gap: 4px; overflow: auto; min-height: 120px; align-content: start; }
+.tc-p { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 7px 10px; border: 1px solid var(--trait); border-radius: 10px; background: var(--carte); color: var(--encre); font: inherit; text-align: left; cursor: pointer; }
+.tc-p:hover, .tc-p:focus-visible { border-color: var(--accent); background: var(--accent-doux); }
+.tc-p[aria-disabled="true"] { cursor: default; background: var(--doux); border-color: transparent; }
+.tc-p[aria-disabled="true"] .tc-etat { color: var(--ok); }
+.tc-nom { min-width: 0; line-height: 1.25; }
+.tc-nom small { display: block; color: var(--gris); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tc-etat { font-weight: 700; font-size: 13px; color: var(--accent); text-align: right; white-space: nowrap; }
+.tc-etat small { display: block; font-weight: 500; color: var(--gris); font-size: 11.5px; }
+.tc-creer .avatar { display: grid; place-items: center; font-weight: 700; }
+.tc-msg { min-height: 1.3em; color: var(--ok); font-weight: 650; }
+.tc-msg:empty { min-height: 0; }
+.pe-dist li { display: grid; grid-template-columns: auto minmax(0, auto) minmax(0, 1fr) auto; align-items: center; }
+.pe-dist li > button { justify-self: end; }
+.pe-dist-ajout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(110px, 1fr) auto; gap: 8px; margin-top: 10px; }
+@media (max-width: 560px) {
+  .pe-dist-ajout { grid-template-columns: 1fr 1fr; } .pe-dist-ajout #pe-dist-sp { grid-column: 1 / -1; }
+  dialog.troupe-choix { width: 100%; max-height: calc(100dvh - 12px); margin: auto auto 0; border-radius: 16px 16px 0 0; }
+  .troupe-choix .tab-dialogue-boite { padding: 14px; }
+  .tc-tete h2 { font-size: 16px; }
+}
 @media (max-width: 1250px) { .dist-l { grid-template-columns: 30px minmax(0, 1fr) auto; grid-template-areas: "av nom outils" "champs champs champs" "cases cases cases"; } .dist-champs { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); } .dist-l.dist-entete { display: none; } }
-@media (max-width: 560px) { .dist-ajout-l { grid-template-columns: 1fr; } }
 .fm-lignes { display: grid; gap: 6px; }
 .fm-l.fm-entete { padding-top: 0; padding-bottom: 0; border: 0; background: none; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--gris); }
 @media (max-width: 1000px) { .fm-l.fm-entete { display: none; } }

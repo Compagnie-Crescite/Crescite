@@ -1,0 +1,25 @@
+{
+  "name": "Administration · Compagnie Crescite",
+  "short_name": "Admin Crescite",
+  "description": "L’administration de la compagnie Crescite : les dates, le planning, l’équipe, les spectacles, les lieux et les textes du site.",
+  "lang": "fr",
+  "dir": "ltr",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#1b1117",
+  "theme_color": "#1b1117",
+  "categories": ["productivity", "business"],
+  "icons": [
+    { "src": "../equipe/icones/192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "../equipe/icones/512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "../equipe/icones/masquable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Tableau de bord", "short_name": "Tableau", "url": "./#/accueil" },
+    { "name": "Dates et représentations", "short_name": "Dates", "url": "./#/representations" },
+    { "name": "Planning", "short_name": "Planning", "url": "./#/planning" }
+  ]
+}

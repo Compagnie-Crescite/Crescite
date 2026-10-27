@@ -6,7 +6,9 @@
    les annonces au-dessus de la barre. Le compte (voir le site, le modifier, le mot de passe, la déconnexion) passe dans
    « Plus » : l'en-tête, arrimé en haut, tenait sur trois lignes (126 px sur 844, avec la barre du bas plus d'un écran
    sur cinq). Le témoin de la connexion y reste, réduit à sa pastille sur l'icône qui relit la base. « Plus » mène aussi
-   aux gestes et raccourcis (l'aide de menus.js). Rien ne change à l'ordinateur. Chargé après tiroir.js et corbeille.js.
+   aux gestes et raccourcis (l'aide de menus.js), et à l'installation de l'administration sur l'écran d'accueil
+   (manifest.webmanifest, sw.js, enregistré ici : l'invite du navigateur, ou la marche à suivre sur l'iPhone ; l'ordinateur
+   peut l'installer aussi, depuis son navigateur). Rien d'autre ne change à l'ordinateur. Chargé après tiroir.js et corbeille.js.
    MOBILE.feuille(titre, items)   MOBILE.actif() */
 const MOBILE = (() => {
   const MQ = '(max-width: 640px)';
@@ -19,9 +21,19 @@ const MOBILE = (() => {
     equipe: ico('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.5"/><path d="M15.5 14.5a5 5 0 0 1 6 5"/>'),
     plus: ico('<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>'),
     ajouter: ico('<path d="M12 5v14M5 12h14"/>'),
+    installer: ico('<rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M12 7v7M9 11l3 3 3-3"/>'),
   };
   const ONGLETS = [['accueil', 'Tableau', 'tableau'], ['representations', 'Dates', 'dates'], ['planning', 'Planning', 'planning'], ['equipe', 'Équipe', 'equipe']];
   const rubrique = () => (location.hash.match(/^#\/([a-z]+)/) || [])[1] || 'accueil';
+  // l'installation : l'invite du navigateur (Chrome, Edge, Android) quand il en donne une, sinon, sur l'iPhone, Safari
+  const mq = q => (typeof matchMedia === 'function' ? matchMedia(q) : { matches: false });
+  const installee = () => mq('(display-mode: standalone)').matches || mq('(display-mode: fullscreen)').matches || navigator.standalone === true;
+  const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const HORS_SAFARI = IOS && (!/Safari\//.test(navigator.userAgent) || /CriOS|FxiOS|EdgiOS|OPiOS|GSA\/|FBAN|FBAV|Instagram|Line\//.test(navigator.userAgent));
+  let invite = null;
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); invite = e; });
+  window.addEventListener('appinstalled', () => { invite = null; if (typeof annoncer === 'function') annoncer('L’administration est installée : retrouvez-la sur votre écran d’accueil.'); });
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js', { scope: './' }).catch(e => { if (navigator.onLine) console.warn('service de l’administration', e); });
   let barre = null, bouton = null, feuilleOuverte = null;
   function poser() {
     if (!actif() || !E.pret || !$('#vue')) { if (barre) { barre.remove(); barre = null; } if (bouton) { bouton.remove(); bouton = null; } document.documentElement.classList.remove('ob-actif'); return; }
@@ -39,19 +51,21 @@ const MOBILE = (() => {
     $$('[data-ob]', barre).forEach(a => { const ici = a.dataset.ob === r || (a.dataset.ob === 'plus' && !tabs.has(r)); if (ici) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     bouton.hidden = /^#\/[a-z]+\/(nouvelle|nouveau|\d+)$/.test(location.hash) || !!$('.deux.edition');
   }
-  // une feuille qui monte du bas : des liens et des actions ; un élément { groupe } est un intertitre, demi le range sur
-  // deux colonnes avec ses voisins, courant le marque comme la rubrique où l'on est, nouvel l'ouvre dans un autre onglet
-  function feuille(titre, items) {
+  // une feuille qui monte du bas : des liens et des actions ; un élément { groupe } est un intertitre, { html } un texte, demi le range sur
+  // deux colonnes avec ses voisins, courant le marque comme la rubrique où l'on est, nouvel l'ouvre dans un autre onglet ;
+  // tete, un bouton { libelle, icone, faire } à droite du titre
+  function feuille(titre, items, tete = null) {
     fermerFeuille();
     const m = document.createElement('div'); m.className = 'ob-voile';
     const classe = x => `ob-item${x.demi ? ' demi' : ''}`, corps = x => `${x.icone || ''}<span>${esc(x.libelle)}${x.nouvel ? '\u00a0↗' : ''}${x.detail ? `<small>${esc(x.detail)}</small>` : ''}</span>`;
-    m.innerHTML = `<div class="ob-feuille" role="dialog" aria-modal="true" aria-label="${esc(titre)}"><span class="gm-poignee" aria-hidden="true"></span><h2>${esc(titre)}</h2>
-      <div class="ob-items">${items.filter(Boolean).map((x, i) => x.groupe ? `<h3 class="ob-groupe">${esc(x.groupe)}</h3>`
+    m.innerHTML = `<div class="ob-feuille" role="dialog" aria-modal="true" aria-label="${esc(titre)}"><span class="gm-poignee" aria-hidden="true"></span><div class="ob-tete"><h2>${esc(titre)}</h2>${tete ? `<button type="button" class="ob-tete-btn" data-ob-tete>${tete.icone || ''}<span>${esc(tete.libelle)}</span></button>` : ''}</div>
+      <div class="ob-items">${items.filter(Boolean).map((x, i) => x.groupe ? `<h3 class="ob-groupe">${esc(x.groupe)}</h3>` : x.html ? `<div class="ob-texte">${x.html}</div>`
         : x.href ? `<a class="${classe(x)}" href="${esc(x.href)}" data-ob-i="${i}"${x.courant ? ' aria-current="page"' : ''}${x.nouvel ? ' target="_blank" rel="noopener"' : ''}>${corps(x)}</a>`
         : `<button type="button" class="${classe(x)}" data-ob-i="${i}">${corps(x)}</button>`).join('')}</div>
       <button type="button" class="btn ob-fermer" data-ob-fermer>Fermer</button></div>`;
     m.addEventListener('click', e => {
       if (e.target === m || e.target.closest('[data-ob-fermer]')) { fermerFeuille(); return; }
+      if (tete && e.target.closest('[data-ob-tete]')) { fermerFeuille(); tete.faire(); return; }
       const b = e.target.closest('[data-ob-i]'); if (!b) return;
       const x = items.filter(Boolean)[+b.dataset.obI];
       fermerFeuille();
@@ -72,7 +86,18 @@ const MOBILE = (() => {
     items.push({ libelle: 'Carte de tournée', href: '#/representations/carte', demi: true, courant: carte }, { libelle: 'Gestes et raccourcis', demi: true, faire: () => { if (typeof ouvrirAide === 'function') ouvrirAide($('.ob-barre [data-ob="plus"]')); } }, { libelle: 'Corbeille', detail: 'ce qui a été supprimé ces trente derniers jours', href: '#/corbeille', courant: r === 'corbeille' }, { libelle: 'Rechercher', detail: 'une date, une personne, un lieu…', faire: () => ouvrirRecherche() });
     if ($('#b-sortir')) items.push({ groupe: 'Compte' }, { libelle: 'Voir le site', href: SITE, nouvel: true, demi: true }, { libelle: 'Modifier sur le site', href: `${SITE}?edition`, nouvel: true, demi: true },
       { libelle: 'Mot de passe', demi: true, faire: () => $('#b-mdp')?.click() }, { libelle: 'Se déconnecter', demi: true, faire: () => $('#b-sortir')?.click() });
-    feuille('Les autres rubriques', items);
+    // l'installation, à droite du titre (la feuille tient dans l'écran sans défiler, même à 360 × 800)
+    feuille('Les autres rubriques', items, installee() ? null : { libelle: 'Installer', icone: ICONES.installer, faire: installer });
+  }
+  async function installer() {
+    if (invite) {
+      const p = invite; invite = null;
+      try { p.prompt(); const { outcome } = await p.userChoice; if (outcome !== 'accepted') invite = null; } catch (e) { /* refusé */ }
+      return;
+    }
+    const etapes = IOS ? `<ol>${HORS_SAFARI ? `<li>Ouvrez d’abord cette page dans <b>Safari</b> : depuis une autre application, l’iPhone ne l’installe pas (son adresse : <b>${esc(location.origin + location.pathname)}</b>).</li>` : ''}<li>Dans Safari, touchez <b>Partager</b> en bas de l’écran.</li><li>Choisissez <b>Sur l’écran d’accueil</b>, puis <b>Ajouter</b>.</li><li>Ouvrez <b>Admin Crescite</b> depuis son icône, et connectez-vous une fois.</li></ol>`
+      : '<p>Dans le menu de votre navigateur, choisissez <b>Installer l’application</b> ou <b>Ajouter à l’écran d’accueil</b>. Ce navigateur ne le propose pas ? Ouvrez cette page dans Chrome, Edge ou Safari.</p>';
+    feuille('Installer l’application', [{ html: `<p>L’administration s’ouvre alors en un geste depuis l’écran d’accueil, en plein écran.</p>${etapes}` }]);
   }
   function feuilleCreer() {
     feuille('Créer', [
@@ -130,6 +155,9 @@ const MOBILE = (() => {
 .ob-feuille { position: absolute; left: 0; right: 0; bottom: 0; max-height: 88vh; overflow: auto; padding: 8px 14px calc(14px + env(safe-area-inset-bottom, 0px)); background: var(--carte); color: var(--encre); border-radius: 18px 18px 0 0; box-shadow: 0 -12px 40px -16px rgba(0, 0, 0, .5); transform: translateY(100%); transition: transform .22s cubic-bezier(.3, .7, .3, 1); }
 .ob-voile.la .ob-feuille { transform: none; }
 .ob-feuille h2 { margin: 6px 0 10px; font-size: 16px; }
+.ob-tete { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ob-tete-btn { display: inline-flex; align-items: center; gap: 6px; flex: none; min-height: 36px; margin: 0 0 4px; padding: 0 12px 0 9px; border: 0; border-radius: 999px; background: var(--principal, var(--accent)); color: #fff; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.ob-tete-btn svg { width: 18px; height: 18px; }
 .ob-items { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
 .ob-items > :not(.demi) { grid-column: 1 / -1; }
 .ob-groupe { margin: 10px 2px 2px; font: 700 11px/1.2 var(--etiq, inherit); letter-spacing: .12em; text-transform: uppercase; color: var(--gris); }
@@ -141,6 +169,10 @@ const MOBILE = (() => {
 .ob-item:hover, .ob-item:focus-visible { background: var(--accent-doux); }
 .ob-item[aria-current="page"] { background: var(--accent-doux); color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
 .ob-fermer { width: 100%; margin-top: 10px; justify-content: center; }
+.ob-texte { grid-column: 1 / -1; padding: 0 2px; line-height: 1.5; }
+.ob-texte p { margin: 0 0 8px; }
+.ob-texte ol { margin: 0; padding-left: 22px; }
+.ob-texte li { margin: 6px 0; }
 @media (prefers-reduced-motion: reduce) { .ob-voile, .ob-feuille { transition: none; } }`;
   document.head.append(style);
   setTimeout(poser, 0);

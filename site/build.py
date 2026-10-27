@@ -1105,7 +1105,8 @@ def poser_saison(page):
 
 def admin(dest):
     """L'administration (admin/index.html, son client Supabase et l'outil des lignes d'agenda), à côté des maquettes, avec
-    les outils communs qu'elle charge ou chargera : tentacules.js, frise.js (FRISE) et mouvement.js (MOUVEMENT)."""
+    les outils communs qu'elle charge ou chargera : tentacules.js, frise.js (FRISE) et mouvement.js (MOUVEMENT). Elle
+    s'installe sur le téléphone (manifest.webmanifest, sw.js), avec les icônes de l'espace de l'équipe (equipe(dest))."""
     import shutil
     (dest / "admin" / "vendor").mkdir(parents=True, exist_ok=True)
     fond_carte()
@@ -1113,7 +1114,8 @@ def admin(dest):
     # la feuille de route et le planning (communs avec equipe/), l'équipe, la rubrique Planning (propositions de dates), le
     # tableau de bord
     for f in ("feuille.js", "equipe.js", "planning.js", "disponibilites.js", "tableau.js", "gestes.js", "menus.js", "corbeille.js", "tiroir.js", "selection.js",
-              "parcours.js", "gardefous.js", "series.js", "modeles.js", "notes.js", "fond-carte.js", "tournee.js", "mobile.js", "habillage.js"):
+              "parcours.js", "gardefous.js", "series.js", "modeles.js", "notes.js", "fond-carte.js", "tournee.js", "mobile.js", "habillage.js",
+              "manifest.webmanifest", "sw.js"):
         shutil.copyfile(ROOT / "admin" / f, dest / "admin" / f)
     for f in (ROOT / "admin" / "vendor").iterdir():
         shutil.copyfile(f, dest / "admin" / "vendor" / f.name)
