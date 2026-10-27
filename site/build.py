@@ -474,7 +474,7 @@ LIBELLES = {
     "reservationAupresDuLieu": "Réservation auprès du lieu", "choisirUneDate": "Choisir une date",
     "joursCourts": JOURSC, "moisCourts": MOISC,
     # la date choisie dans son agenda à soi : un fichier .ics de la date (ses séances, son lieu, son lien de réservation)
-    "ajouterAgenda": "Ajouter à mon agenda",
+    "ajouterAgenda": "Ajouter à mon agenda", "agendaTelecharge": "Fichier d’agenda téléchargé",
     # la page d'un spectacle : partager son adresse (le partage de l'appareil, sinon l'adresse copiée), et ses voisins dans
     # l'ordre des spectacles, au pied de la page
     "partager": "Partager", "lienCopie": "Lien copié",
