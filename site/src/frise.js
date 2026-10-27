@@ -226,6 +226,26 @@ const FRISE = (() => {
 :where(.frise[data-frise].frise--v.est-vue:not(.est-immobile)) :where(.frise-axe) { animation-name: fr-trace-v; }
 @keyframes fr-trace-v { from { transform: scale(1, 0); } to { transform: none; } }
 :where(.frise[data-frise].est-immobile) *, :where(.frise[data-frise].est-immobile) *::before, :where(.frise[data-frise].est-immobile) *::after { animation: none !important; transition: none !important; }
+/* au doigt (WCAG 2.5.8, 44 px) : la prise d'un repère s'élargit autour de son point, qui ne bouge pas */
+@media (pointer: coarse) {
+  :where(.frise[data-frise]) :where(.frise-point:not(.est-duree)) > :where(.frise-repere) { width: 44px; height: 44px; margin: -22px 0 0 -22px; }
+  /* (une période : son trait garde sa longueur, la prise déborde de part et d'autre jusqu'à 44 px ; les pourcentages des marges
+     se lisent sur la largeur de la période) */
+  :where(.frise[data-frise]) :where(.frise-point.est-duree) > :where(.frise-repere) { box-sizing: content-box; height: 44px; margin-top: -22px;
+    padding-inline: max(0px, calc((44px - 100%) / 2)); margin-left: min(0px, calc((100% - 44px) / 2)); }
+  /* (une bande, une saison : sa prise monte au-dessus de sa barre jusqu'à 44 px ; l'option anMin lui donne sa largeur) */
+  :where(.frise[data-frise]) :where(.frise-bande) > :where(.frise-repere) { height: max(44px, var(--fr-bande-h)); margin-top: calc(-1 * max(44px, var(--fr-bande-h))); }
+}
+/* le contraste élevé (forced-colors) : les points, l'axe, les barres et le repère du jour, dessinés par des fonds, prennent les
+   couleurs du système (le texte ; une date passée, GrayText ; un repère allumé ou au focus, Highlight) */
+@media (forced-colors: active) {
+  :where(.frise[data-frise]) :where(.frise-point) > :where(.frise-repere)::before, :where(.frise[data-frise]) :where(.frise-axe, .frise-bande-barre, .frise-aujourdhui)::before,
+  :where(.frise[data-frise]) :where(.frise-axe, .frise-bande-barre), :where(.frise[data-frise]) :where(.frise-aujourdhui)::after { forced-color-adjust: none; background: CanvasText; box-shadow: none; }
+  :where(.frise[data-frise]) :where(.frise-point.est-passe) > :where(.frise-repere)::before { background: GrayText; opacity: 1; }
+  :where(.frise[data-frise]) :where(.frise-point.est-annule, .frise-point.est-residence:not(.est-duree), .frise-point.est-duree.est-scolaire) > :where(.frise-repere)::before { background: Canvas; box-shadow: inset 0 0 0 2px CanvasText; }
+  :where(.frise[data-frise]) :where(.frise-point.est-allume, .frise-point.est-focus) > :where(.frise-repere)::before, :where(.frise[data-frise]) :where(.frise-bande.est-allume) :where(.frise-bande-barre) { background: Highlight; }
+  :where(.frise[data-frise]) :where(.frise-grappe) > span { forced-color-adjust: none; background: Canvas; color: CanvasText; box-shadow: inset 0 0 0 2px CanvasText; }
+}
 @media (prefers-reduced-motion: reduce) { :where(.frise[data-frise]) *, :where(.frise[data-frise]) *::before, :where(.frise[data-frise]) *::after { animation: none !important; transition: none !important; } }`;
   function styles() {
     if (document.getElementById('frise-style')) return;
