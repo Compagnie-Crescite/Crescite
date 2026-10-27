@@ -409,6 +409,23 @@ html.still .sc-pause { display: none; }   /* rien ne bouge de lui-même : rien �
 .sc-t.est-actif .sc-q { opacity: 1; transform: none; }
 .scene.a-actif .sc-t:not(.est-actif) { color: var(--sc-terne); }
 .sc-t:focus-visible { outline: 2px solid #fff; outline-offset: 6px; border-radius: 4px; }
+/* l'indication du premier écran (indiceScene) : en bas de l'écran, au-dessus du menu (au téléphone, de la barre d'onglets),
+   hors de la scène ; une pastille de nuit, le texte blanc (AA sur toute photo). La phrase du geste s'efface au premier geste ;
+   celle du clavier paraît quand un titre de la scène a le focus */
+.sc-indice { position: fixed; z-index: 30; left: 50%; bottom: calc(var(--bas) + 84px); display: grid; width: max-content; max-width: min(40rem, calc(100vw - 32px)); translate: -50% 0; pointer-events: none; }
+.sc-indice p { grid-area: 1 / 1; justify-self: center; margin: 0; padding: 2px 18px; border-radius: 22px; background: color-mix(in srgb, #0b0710 93%, transparent); color: #fff;
+  font: 600 .8rem/1.35 var(--etiq); letter-spacing: .03em; text-align: center; box-shadow: 0 6px 24px rgb(0 0 0 / .35);
+  opacity: 0; visibility: hidden; translate: 0 6px; transition: opacity .24s var(--k-doux), translate .24s var(--k-doux), visibility 0s .24s; }
+.sc-indice p:not(:has(a)) { padding-block: 12px; }
+.sc-ind-g { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; column-gap: .3em; }
+.sc-indice.est-vu:not(.au-clavier) .sc-ind-g, .sc-indice.au-clavier .sc-ind-k { opacity: 1; visibility: visible; translate: none; transition: opacity .24s var(--k-doux), translate .24s var(--k-doux); }
+.sc-ind-g a { display: inline-flex; align-items: center; gap: .35em; min-height: 44px; margin-left: .3em; padding: 0 4px; color: #fff; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; pointer-events: auto; }
+.sc-ind-g a .fleche { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.sc-indice:not(.est-vu) .sc-ind-g a { pointer-events: none; }
+html.intro-active .sc-indice, html.ed-actif .sc-indice { display: none; }
+@media (max-width: 759px) { .sc-indice { bottom: calc(var(--bas) + 12px); } .sc-indice p { padding: 10px 14px 0; border-radius: 16px; font-size: .78rem; } .sc-indice p:not(:has(a)) { padding-block: 12px; } .sc-ind-g a { margin: 0; } }
+@media (prefers-reduced-motion: reduce) { .sc-indice p { transition: none !important; translate: none; } }
+@media (forced-colors: active) { .sc-indice p { border: 1px solid CanvasText; background: Canvas; color: CanvasText; } }
 .scene.mobile .sc-tl { font-size: 1.25rem; }
 .scene.mobile .sc-med { width: 32px; height: 32px; }
 .scene.mobile .sc-q { opacity: 1; transform: none; max-width: calc(100vw - 92px); }
@@ -4999,6 +5016,35 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   }
 
   /* ---------- l'accueil : la scène (la pieuvre), le menu, les spectacles un par écran, la saison sur la carte, les donateurs ---------- */
+  /* l'indication du premier écran de l'accueil : un nouveau visiteur ne devine ni que les titres de la pieuvre se
+     touchent (une fois, le spectacle se montre ; deux fois, sa page s'ouvre), ni où sont toutes les dates. Une phrase
+     courte (L.indiceScene), et « Toutes les dates » qui mène aux saisons, posées en bas de l'écran, hors de la scène ; elles
+     s'effacent au premier geste (toucher, clic, molette, défilement, touche) et ne reviennent plus de la visite. Au clavier,
+     un titre de la scène qui a le focus montre les siennes (L.indiceClavier : les flèches, Entrée) tant qu'il l'a. Cachée
+     aux lecteurs d'écran : un titre y est un lien qui s'ouvre d'emblée */
+  let indiceVu = false;
+  try { indiceVu = sessionStorage.getItem('crescite-indice') === '1'; } catch (e) { /* sans stockage : la visite seule */ }
+  let indiceFin = null;
+  function indiceScene(surPlace) {
+    if (indiceFin) { indiceFin.abort(); indiceFin = null; }
+    $$('.sc-indice').forEach(x => x.remove());
+    if (!L.indiceScene) return;
+    const ms = menuDe('saisons'), x = document.createElement('div');
+    x.className = 'sc-indice'; x.setAttribute('aria-hidden', 'true');
+    x.innerHTML = `<p class="sc-ind-g">${esc(L.indiceScene)}${ms && L.toutesLesDates ? ` <a href="${esc(ms.href)}" tabindex="-1">${esc(L.toutesLesDates)}${FLECHE}</a>` : ''}</p>${L.indiceClavier ? `<p class="sc-ind-k">${esc(L.indiceClavier)}</p>` : ''}`;
+    main.appendChild(x);
+    if (!indiceVu) x.classList.add('est-vu');
+    const ac = indiceFin = new AbortController(), o = { signal: ac.signal, passive: true, capture: true };
+    const effacer = e => { if (indiceVu || (e && e.target && e.target.closest && e.target.closest('.sc-indice'))) return;
+      indiceVu = true; x.classList.remove('est-vu'); try { sessionStorage.setItem('crescite-indice', '1'); } catch (er) { /* rien */ } };
+    ['pointerdown', 'wheel', 'keydown'].forEach(t => addEventListener(t, effacer, o));
+    addEventListener('scroll', () => { if (scrollY > 40) effacer(); }, o);
+    // (au clavier : le titre de la scène qui a le focus montre les touches, tant qu'il l'a)
+    document.addEventListener('focusin', e => { x.classList.toggle('au-clavier', !!(e.target.closest && e.target.closest('.sc-t') && e.target.matches(':focus-visible'))); }, o);
+    document.addEventListener('focusout', e => { if (!e.relatedTarget || !(e.relatedTarget.closest && e.relatedTarget.closest('.sc-t'))) x.classList.remove('au-clavier'); }, o);
+    // (la page quittée : l'indication part avec elle, ses écoutes aussi)
+    new MutationObserver((_, mo) => { if (!x.isConnected) { ac.abort(); mo.disconnect(); } }).observe(main, { childList: true });
+  }
   function accueil(q, surPlace) {
     vue = 'accueil';
     const lieux = CARTE.aVenir(), vus = new Set(lieux.map(x => x.l)), passe = tous().filter(x => !vus.has(x.l)), ms = menuDe('saisons');
@@ -5012,6 +5058,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       </div></section>
       <section class="merci"><div class="wrap">${trait()}<p${ed('site.donateurs')}>${S.donateurs || ''}</p></div></section></div>`;
     Scene.monter($('#sc-place', main), surPlace);
+    indiceScene(surPlace);
     const svg = $('.une-carte svg', main), ol = $('.prochaines', main);
     const montre = bulleSur(svg, $('#bulle'), l => { const x = lieux.find(y => y.l === l);
       return x ? `<b>${esc(CARTE.nom(x))}</b><ul>${x.dates.map(d => `<li><span class="t">${esc(d.titre)}</span><span>${esc(d.ligneDate)}</span>${d.scolaire ? `<em class="tag">${esc(L.scolaire)}</em>` : ''}</li>`).join('')}</ul>` : ''; },
