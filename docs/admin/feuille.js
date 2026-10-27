@@ -457,7 +457,7 @@ ${s} .s{background:${MISE.surligne}}`;
     };
     const s = { ...(suivi || {}), lieu_contact: suivi?.lieu?.contact ?? suivi?.lieu_contact };
     SOURCES_CONTACT.forEach(([source, champ, role]) => { if (txt(s[champ])) ajouter(lireContact(s[champ], role), source); });
-    (autres || []).forEach(c => ajouter(c, 'autre'));
+    (autres || []).forEach(c => ajouter(c, c.source || 'autre'));
     return out;
   }
   // une ligne de contact d'avant ces clés (« contact:0 ») : son champ se lit dans le rôle qu'elle écrit
@@ -508,7 +508,10 @@ ${s} .s{background:${MISE.surligne}}`;
   //     contacts: [{nom, prenom, role, telephone, email}] (l'administration et la régie générale de la compagnie),
   //     depart: {commune, latitude, longitude}, suivi: {organisateur, contact, lieu: {contact, jauge, plateau}},
   //     documents: [{id, titre, pour}], anterieures: [{contenu, debut, lieu_id, spectacle_id, lieu: {nom, commune}, date_id,
-  //     ecrit_le}] (les feuilles des autres dates ; ecrit_le : quand la feuille a été écrite pour la dernière fois) }
+  //     ecrit_le}] (les feuilles des autres dates ; ecrit_le : quand la feuille a été écrite pour la dernière fois),
+  //     carnet: {contacts: [{id, nom, role, telephone, email}] (ceux du lieu à écrire dans la feuille), hebergements: [{id,
+  //     nom, genre, adresse, commune, telephone, email, site_web, prix, details, lieu_id, lieu, memeLieu}]} (le carnet des
+  //     lieux : ceux du lieu, puis ceux de la même commune) }
   // Repas et transports viennent de la feuille précédente du même spectacle ; l'hébergement, de la dernière feuille écrite
   // au même lieu, à défaut dans la même commune (hebergements : le choix se change ensuite, reprendreHebergement) ; les
   // adresses et contacts écrits à la main, de la feuille précédente au même lieu ; sinon une amorce.
@@ -623,7 +626,8 @@ ${s} .s{background:${MISE.surligne}}`;
       const precisions = [sl.jauge ? `jauge : ${sl.jauge} places` : '', txt(sl.plateau) ? `plateau : ${txt(sl.plateau)}` : ''].filter(Boolean).join(' ; ');
       if (precisions) base('ligne', [seg(maj(precisions))], 'lieu:precisions');
     } else B('ligne', [amorce('le lieu : nom, adresse ?')]);
-    const contacts = composerContacts(suivi, []);
+    // (les contacts du carnet du lieu cochés « sur la feuille de route » : chacun sa clé, contact:carnet<id>)
+    const contacts = composerContacts(suivi, ((S.carnet && S.carnet.contacts) || []).map(c => ({ nom: c.nom, role: c.role, telephone: c.telephone, email: c.email, source: `carnet${c.id}` })));
     contacts.forEach(c => base('ligne', [seg(`${c.nom || c.role}${c.nom && c.role ? `, ${minuscule(c.role)}` : ''} : `), ...(c.telephone ? [seg(c.telephone)] : []), ...(c.telephone && c.email ? [seg(', ')] : []), ...(c.email ? [seg(c.email)] : []), ...(!c.telephone && !c.email ? [amorce('téléphone ?')] : [])], `contact:${c.sources.join('+')}`));
     // personne dans le suivi : la ligne du contact sur place, celui du lieu (sans lieu, celui de la date). Le contact écrit à
     // la main dans la feuille précédente au même lieu, que la base n'a pas appris, est repris tel quel (avec sa clé)
@@ -655,7 +659,7 @@ ${s} .s{background:${MISE.surligne}}`;
     const out = blocs.map(bloc);
     return {
       format: 2, blocs: out, composees: out.filter(b => b.cle).map(b => b.cle), pages: [],
-      instantane: seances.map(r => ({ jour: r.jour, heure: r.heure, annulee: r.annulee })), compose_le: new Date().toISOString(),
+      instantane: seances.map(r => ({ jour: r.jour, heure: r.heure, fin: r.fin ?? null, annulee: r.annulee })), compose_le: new Date().toISOString(),
     };
   }
   // les blocs d'une rubrique d'une autre feuille (repas, transports…), repris comme écrits à la main
@@ -679,10 +683,12 @@ ${s} .s{background:${MISE.surligne}}`;
   // ---- l'hébergement : de quelle feuille le reprendre
   const MOTS_HEB = /^hebergements?|^hotels?|^logements?/;
   const VIDE_HEB = 'hôtel : nom, adresse, heure d’arrivée ?';
-  const origineReprise = x => `repris de la feuille ${x.debut ? `du ${jourLong(x.debut)}` : 'précédente'}${x.lieu?.nom || x.lieu?.commune ? ` (${txt(x.lieu.nom) || txt(x.lieu.commune)})` : ''} : à vérifier`;
+  const origineReprise = x => x.carnet ? `du carnet du lieu${x.memeLieu ? '' : ` (${txt(x.lieu?.nom) || txt(x.lieu?.commune) || 'un autre lieu'})`} : réservation et heure d’arrivée à vérifier` : `repris de la feuille ${x.debut ? `du ${jourLong(x.debut)}` : 'précédente'}${x.lieu?.nom || x.lieu?.commune ? ` (${txt(x.lieu.nom) || txt(x.lieu.commune)})` : ''} : à vérifier`;
   // les feuilles d'où reprendre l'hébergement (sources : celles de composer) : celles des autres dates au même lieu qui en
   // ont un, à défaut celles de la même commune ; la dernière écrite d'abord (ecrit_le), pas la précédente dans le temps.
-  // → [{date_id, debut, lieu, lieu_id, ecrit_le, memeLieu, blocs (l'hébergement écrit, sans l'amorce de reprise)}]
+  // Les hébergements du carnet des lieux s'y ajoutent : ceux du lieu après ses feuilles, ceux de la commune en dernier.
+  // → [{date_id, debut, lieu, lieu_id, ecrit_le, memeLieu, blocs (l'hébergement écrit, sans l'amorce de reprise), carnet?}]
+  //   (une entrée du carnet : date_id « carnet:<id> », debut null, nom)
   function hebergements(sources) {
     const S = sources || {}, l = S.lieu || null;
     if (!l) return [];
@@ -690,8 +696,21 @@ ${s} .s{background:${MISE.surligne}}`;
       .map(x => ({ ...x, memeLieu: x.lieu_id != null && String(x.lieu_id) === String(l.id), blocs: extraire(contenu({ contenu: x.contenu }).blocs, 'hebergement', MOTS_HEB) }))
       .filter(x => x.blocs.length);
     const ici = xs.filter(x => x.memeLieu), commune = norm(txt(l.commune));
-    return (ici.length ? ici : xs.filter(x => commune && norm(txt(x.lieu?.commune)) === commune))
+    const feuilles = (ici.length ? ici : xs.filter(x => commune && norm(txt(x.lieu?.commune)) === commune))
       .sort((a, b) => String(b.ecrit_le || '').localeCompare(String(a.ecrit_le || '')) || String(b.debut || '').localeCompare(String(a.debut || '')));
+    const carnet = ((S.carnet && S.carnet.hebergements) || []).filter(h => h && txt(h.nom)).map(h => ({ date_id: `carnet:${h.id}`, debut: null, lieu: h.lieu || null, lieu_id: h.lieu_id,
+      ecrit_le: h.modifie_le || null, memeLieu: h.memeLieu !== false, carnet: true, nom: txt(h.nom), blocs: blocsCarnet(h) }));
+    return [...(ici.length ? feuilles : []), ...carnet.filter(x => x.memeLieu), ...(ici.length ? [] : feuilles), ...carnet.filter(x => !x.memeLieu)];
+  }
+  // un hébergement du carnet, en lignes de feuille : son nom et son adresse (le lien vers la carte), son téléphone, ce qu'il
+  // faut savoir
+  function blocsCarnet(h) {
+    const adresse = [txt(h.adresse), txt(h.commune) && !norm(h.adresse).includes(norm(h.commune)) ? txt(h.commune) : ''].filter(Boolean).join(', ');
+    const out = [bloc({ type: 'ligne', segments: [seg(txt(h.nom), { gras: true }), ...(adresse ? [seg(' : '), seg(adresse, { lien: carteAdresse([txt(h.nom), adresse].join(', ')) })] : [])] })];
+    const coord = [telTexte(h.telephone), txt(h.email)].filter(Boolean).join(', ');
+    if (coord) out.push(bloc({ type: 'ligne', segments: [seg(coord)] }));
+    if (txt(h.details)) out.push(bloc({ type: 'ligne', segments: [seg(txt(h.details))] }));
+    return out;
   }
   // les lignes de la rubrique Hébergement repris d'une feuille (x, de hebergements), ou l'amorce sans elle
   const sectionHebergement = x => (x && x.blocs.length ? [bloc({ type: 'ligne', segments: [amorce(origineReprise(x))] }), ...x.blocs.map(b => bloc({ ...b, id: null }))] : [bloc({ type: 'ligne', segments: [amorce(VIDE_HEB)] })]);

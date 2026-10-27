@@ -31,9 +31,9 @@ fs.mkdirSync(CAPT, { recursive: true });
   ok('actions rapides : les dix gestes par défaut, « Nouvelle date » en premier', actions.length === 10 && actions[0] === '＋ Nouvelle date' && actions.includes('＋ Proposer des dates') && actions.includes('＋ Inviter une salle') && actions.includes('＋ Opportunité de diffusion'), actions.join(' | '));
   // à traiter
   const cats = await page.$$eval(`${tuile('urgent')} .tb-cat`, xs => xs.map(x => [x.querySelector('h3 a').textContent.trim(), x.querySelectorAll('.tb-l').length]));
-  const attendu = { 'Demandes de devis à répondre': 1, 'Relances de diffusion en retard': 1, 'Notes de frais à valider': 1, 'Options à confirmer': 1, 'Dates sans horaire': 1, 'Contrats à suivre': 2, 'Feuilles de route à publier': 2, 'Propositions de dates en attente': 1, 'Invitations pro qui échoient': 1 };
-  ok('« À traiter » : neuf sujets, les bons comptes', JSON.stringify(Object.fromEntries(cats)) === JSON.stringify(attendu), JSON.stringify(cats));
-  ok('« À traiter » : le badge fait le total (11)', (await texte(page, `${tuile('urgent')} .tb-badge`)) === '11', await texte(page, `${tuile('urgent')} .tb-badge`));
+  const attendu = { 'Demandes de devis à répondre': 1, 'Relances de diffusion en retard': 1, 'Notes de frais à valider': 1, 'Options à confirmer': 1, 'Dates sans horaire': 1, 'Contrats à suivre': 2, 'Conflits d’équipe': 1, 'Feuilles de route à publier': 2, 'Propositions de dates en attente': 1, 'Invitations pro qui échoient': 1 };
+  ok('« À traiter » : dix sujets (Jean indisponible le jour où il part), les bons comptes', JSON.stringify(Object.fromEntries(cats)) === JSON.stringify(attendu), JSON.stringify(cats));
+  ok('« À traiter » : le badge fait le total (12)', (await texte(page, `${tuile('urgent')} .tb-badge`)) === '12', await texte(page, `${tuile('urgent')} .tb-badge`));
   const devis = await page.$eval(`${tuile('urgent')} .tb-cat:first-child .tb-l`, e => ({ href: e.getAttribute('href'), t: e.querySelector('.tb-l-t').textContent, d: e.querySelector('.tb-l-d').textContent }));
   ok('la demande de devis mène à sa fiche, dit depuis quand', devis.href === '#/diffusion/devis/1' && devis.t === 'Salle des fêtes de Lisieux' && /il y a 2 heures/.test(devis.d), JSON.stringify(devis));
   const option = await page.$eval(`${tuile('urgent')} a[href="#/representations/105"]`, e => ({ viser: e.dataset.viser, d: e.querySelector('.tb-l-d').textContent }));
@@ -45,7 +45,7 @@ fs.mkdirSync(CAPT, { recursive: true });
   // avant la tournée
   const avant = await page.$$eval(`${tuile('avant')} .tb-cat`, xs => xs.map(x => [x.querySelector('h3').firstChild.textContent.trim(), [...x.querySelectorAll('.tb-l')].map(l => l.querySelector('.tb-l-t').textContent)]));
   const jours = await page.evaluate(js => js.map(jourSansAn), [plus(9), plus(23), plus(50)]);
-  ok('avant la tournée : Jean Durand sans téléphone, le lycée sans adresse, trois feuilles à composer (les répétitions aussi) ; badge 5', JSON.stringify(avant) === JSON.stringify([['Téléphones', ['Jean Durand']], ['Lieux', ['Lycée Voltaire, Paris']], ['Feuilles de route', [`${jours[0]} · Le Volcan, Le Havre`, `${jours[1]} · Lycée Voltaire, Paris`, `${jours[2]} · Théâtre de Caen, Caen`]]]) && (await texte(page, `${tuile('avant')} .tb-badge`)) === '5', JSON.stringify(avant));
+  ok('avant la tournée : Jean Durand sans téléphone, le lycée sans adresse, personne n’a de compte (donc pas prévenu), trois feuilles à composer (les répétitions aussi) ; badge 8', JSON.stringify(avant) === JSON.stringify([['Téléphones', ['Jean Durand']], ['Lieux', ['Lycée Voltaire, Paris']], ['Qui ne sera pas prévenu', ['Camille Essai', 'Jean Durand', 'Léa Martin']], ['Feuilles de route', [`${jours[0]} · Le Volcan, Le Havre`, `${jours[1]} · Lycée Voltaire, Paris`, `${jours[2]} · Théâtre de Caen, Caen`]]]) && (await texte(page, `${tuile('avant')} .tb-badge`)) === '8', JSON.stringify(avant));
   ok('le téléphone manquant vise le champ de la fiche', await page.$eval(`${tuile('avant')} a[href="#/equipe/2"]`, e => e.dataset.viser) === 'telephone');
   // prochaines dates
   const prochaines = await page.$$eval(`${tuile('prochaines')} .tb-l`, xs => xs.map(x => x.getAttribute('href').split('/').pop()));
@@ -53,7 +53,7 @@ fs.mkdirSync(CAPT, { recursive: true });
   ok('la date sans horaire dit « heure ? » ; la scolaire porte ses deux séances', /heure \?/.test(await texte(page, `${tuile('prochaines')} a[href="#/representations/102"]`)) && (await compte(page, `${tuile('prochaines')} a[href="#/representations/103"] .rep.sco`)) === 2);
   // la saison en chiffres
   const kpi = await page.$$eval(`${tuile('chiffres')} .tb-kpi > *`, xs => xs.map(x => `${x.querySelector('span').textContent}=${x.querySelector('b').textContent}${x.querySelector('small') ? ` (${x.querySelector('small').textContent})` : ''}`));
-  ok('la saison en chiffres : 4 dates (1 jouée, 3 à venir), 5 représentations, 3 lieux dans 3 départements, 1 scolaire, 2 séances (4 h), 180 spectateurs', kpi.join(' | ') === 'Dates confirmées=4 (1 jouée, 3 à venir) | Représentations=5 | Lieux=3 (dans 3 départements) | Séances scolaires=1 | Séances d’atelier=2 (4 h d’éducation artistique) | Spectateurs=180 (sur 1 date renseignée)', kpi.join(' | '));
+  ok('la saison en chiffres : 4 dates (1 jouée, 3 à venir), 5 représentations, 3 lieux dans 3 départements, 1 scolaire, 2 séances (4 h), 180 spectateurs', kpi.join(' | ') === 'Dates confirmées=4 (1 jouée, 3 à venir) | Représentations=5 | Lieux=3 (dans 3 départements) | Dates scolaires=1 | Séances d’atelier=2 (4 h d’éducation artistique) | Spectateurs=180 (sur 1 date renseignée)', kpi.join(' | '));
   ok('la saison en tête, avec son option et sa résidence', /Saison \d{4}-\d{4} · 1 option · 1 résidence/.test(await texte(page, `${tuile('chiffres')} .tb-saison`)), await texte(page, `${tuile('chiffres')} .tb-saison`));
   // qui part bientôt
   const equipe = await page.$$eval(`${tuile('equipe')} .tb-l`, xs => xs.map(x => `${x.querySelector('.tb-l-t').textContent}:${x.querySelector('.tb-l-d').textContent.trim()}`));
@@ -86,7 +86,7 @@ fs.mkdirSync(CAPT, { recursive: true });
   await page.screenshot({ path: `${CAPT}/menu.png`, fullPage: false });
   await page.click('.gm-boite [data-gm]:has-text("Marquer « En cours »")');
   await page.waitForFunction(() => !document.querySelector('.gm-boite') && !document.querySelector('.tb-tuile[data-k="urgent"] a[data-devis="1"]'), null, { timeout: 4000 }).catch(() => {});
-  ok('« Marquer En cours » écrit le statut dans la base et la demande quitte « À traiter » (badge 10)', MODIFS.some(m => m.table === 'crescite_devis_demandes' && m.body.statut === 'en_cours') && (await compte(page, `${tuile('urgent')} a[data-devis="1"]`)) === 0 && (await texte(page, `${tuile('urgent')} .tb-badge`)) === '10', JSON.stringify(MODIFS));
+  ok('« Marquer En cours » écrit le statut dans la base et la demande quitte « À traiter » (badge 11)', MODIFS.some(m => m.table === 'crescite_devis_demandes' && m.body.statut === 'en_cours') && (await compte(page, `${tuile('urgent')} a[data-devis="1"]`)) === 0 && (await texte(page, `${tuile('urgent')} .tb-badge`)) === '11', JSON.stringify(MODIFS));
   await page.click(`${tuile('urgent')} a[data-frais="1"]`, { button: 'right' });
   await page.waitForSelector('.gm-boite [data-gm]:has-text("Valider")', { timeout: 3000 });
   await page.click('.gm-boite [data-gm]:has-text("Valider")');
@@ -193,10 +193,10 @@ fs.mkdirSync(CAPT, { recursive: true });
   ok('sans les options, la date de Flers quitte la liste', (await compte(page, `${tuile('prochaines')} a[href="#/representations/105"]`)) === 0);
   await page.click(`${tuile('avant')} [data-tb-reglages]`);
   await page.selectOption(`${tuile('avant')} select[data-tb-reg="jours"]`, '30');
-  ok('réglage « 30 prochains jours » : la répétition dans 50 jours sort, badge 4', (await texte(page, `${tuile('avant')} .tb-badge`)) === '4', await texte(page, `${tuile('avant')} .tb-badge`));
+  ok('réglage « 30 prochains jours » : la répétition dans 50 jours sort, badge 7', (await texte(page, `${tuile('avant')} .tb-badge`)) === '7', await texte(page, `${tuile('avant')} .tb-badge`));
   await page.click(`${tuile('urgent')} [data-tb-reglages]`);
   await page.uncheck(`${tuile('urgent')} input[data-tb-reg="categories"][value="contrats"]`);
-  ok('« À traiter » sans les contrats : badge 6 (le devis, la note de frais et la relance traités, les deux contrats écartés), le sujet disparaît', (await texte(page, `${tuile('urgent')} .tb-badge`)) === '6' && (await compte(page, `${tuile('urgent')} a[data-viser="#s-contrat"]`)) === 0, await texte(page, `${tuile('urgent')} .tb-badge`));
+  ok('« À traiter » sans les contrats : badge 7 (le devis, la note de frais et la relance traités, les deux contrats écartés, le conflit reste), le sujet disparaît', (await texte(page, `${tuile('urgent')} .tb-badge`)) === '7' && (await compte(page, `${tuile('urgent')} a[data-viser="#s-contrat"]`)) === 0, await texte(page, `${tuile('urgent')} .tb-badge`));
   // le mémo
   await page.fill(`${tuile('memo')} .tb-memo`, 'Rappeler le Volcan lundi');
   await page.waitForFunction(() => document.querySelector('.tb-memo-etat')?.textContent === 'Enregistré', null, { timeout: 6000 }).catch(() => {});
@@ -229,7 +229,7 @@ fs.mkdirSync(CAPT, { recursive: true });
   const ordre = await page.$$eval('.tb-tuile', xs => xs.map(x => `${x.dataset.k}${x.classList.contains('taille-m') ? '*' : ''}${x.classList.contains('replie') ? '-' : ''}`));
   ok('la disposition du compte revient : ordre, tailles, tuile réduite, atelier masqué, trois colonnes', ordre.join(',') === 'chiffres,actions,avant,urgent*,prochaines*,equipe,diffusion,propositions,journal-,memo' && await page.$eval('#tb-grille', e => e.dataset.colonnes === '3'), ordre.join(','));
   ok('le mémo aussi', (await page.$eval(`${tuile('memo')} .tb-memo`, e => e.value)) === 'Rappeler le Volcan lundi');
-  ok('les réglages aussi (5 dates, sans les options ; sans les contrats)', (await compte(page, `${tuile('prochaines')} .tb-l`)) === 5 && (await compte(page, `${tuile('prochaines')} a[href="#/representations/105"]`)) === 0 && (await texte(page, `${tuile('urgent')} .tb-badge`)) === '6', await texte(page, `${tuile('urgent')} .tb-badge`));
+  ok('les réglages aussi (5 dates, sans les options ; sans les contrats)', (await compte(page, `${tuile('prochaines')} .tb-l`)) === 5 && (await compte(page, `${tuile('prochaines')} a[href="#/representations/105"]`)) === 0 && (await texte(page, `${tuile('urgent')} .tb-badge`)) === '7', await texte(page, `${tuile('urgent')} .tb-badge`));
   await page.click('#tb-personnaliser');
   let natifsReinit = 0;
   page.on('dialog', d => { natifsReinit++; d.dismiss().catch(() => {}); });

@@ -1833,7 +1833,9 @@
     E.distributions.filter(x => x.spectacle_id === sp && x.en_tournee && !absents.has(x.personne_id))
       .sort((a, b) => (RANG[a.categorie] ?? 9) - (RANG[b.categorie] ?? 9) || a.ordre - b.ordre)
       .forEach(x => ajouter(x.personne_id, x.personne, x.categorie === 'jeu' ? (x.role ? `jeu (${x.role})` : 'jeu') : (x.fonction || CATEGORIES[x.categorie])));
-    eq.filter(e => e.present).forEach(e => ajouter(e.personne_id, e.personne, e.fonction, e.note));
+    // la fonction écrite pour la date remplace celle de la distribution (la règle de l'administration et de la base :
+    // crescite_equipe_date)
+    eq.filter(e => e.present).forEach(e => { const g = gens.get(e.personne_id); if (g && e.fonction) g.fonctions = []; ajouter(e.personne_id, e.personne, e.fonction, e.note); });
     return [...gens.values()];
   }
   // un portrait rond : la photo de la fiche si elle est publique, sinon les initiales, dans la couleur du spectacle

@@ -77,7 +77,7 @@ const DB = {
     { id: 3, spectacle_id: 2, personne_id: 1, categorie: 'jeu', fonction: '', en_tournee: true, publie: true, ordre: 10 },
     { id: 4, spectacle_id: 2, personne_id: 3, categorie: 'jeu', fonction: '', en_tournee: true, publie: true, ordre: 20 },
   ],
-  crescite_equipes: [], crescite_documents: [],
+  crescite_equipes: [], crescite_documents: [], crescite_documents_generes: [],
   crescite_feuilles: [{ id: 1, date_id: 101, titre: 'Caen', contenu: {}, statut: 'brouillon', version: 1, publiee_le: null }],
   crescite_acces_pro: [{ id: 1, nom: 'Le Volcan', contact: 'Mme Leroux', courriel: 'l@volcan.fr', jeton: 'abc', code: 'K7QM4TZPXW', spectacles: [1], expire_le: plus(7), actif: true, visites: 2, derniere_visite: ilYA(300), cree_le: ilYA(3000) },
     { id: 2, nom: 'Festival d’Avignon', contact: null, jeton: 'def', spectacles: [], expire_le: plus(60), actif: true, visites: 0, cree_le: ilYA(4000) }],
@@ -133,6 +133,29 @@ async function ouvrir(navigateur, { largeur = 1600, hauteur = 1000, hash = '', s
     }
     if (!url.pathname.startsWith('/rest/v1/')) return route.abort();
     if (latence) await new Promise(r => setTimeout(r, latence));   // une base lente (latence, en ms, à chaque lecture)
+    // un document émis : la base donne le numéro (le suivant de l'année pour ce type) et le pose dans la page
+    if (table === 'crescite_emettre_document') {
+      const c = JSON.parse(req.postData() || '{}'), an = new Date().getFullYear(), pre = { devis: 'DEV', contrat: 'CES', facture: 'FAC', fiche_technique: 'FT' }[c.type_];
+      const rang = Math.max(0, ...DB.crescite_documents_generes.filter(x => x.type === c.type_ && x.annee === an).map(x => x.rang)) + 1, numero = `${pre}-${an}-${String(rang).padStart(3, '0')}`;
+      const x = { id: 9000 + DB.crescite_documents_generes.length, type: c.type_, annee: an, rang, numero, date_id: c.date_ ?? null, dates: c.dates_ || [], prospect_id: c.prospect_ ?? null,
+        demande_id: c.demande_ ?? null, structure: c.structure_ ?? null, montant_ht: c.ht ?? null, montant_ttc: c.ttc ?? null, valeurs: { ...(c.valeurs_ || {}), numero },
+        html: String(c.html_ || '').replaceAll('{{numero}}', numero), emis_le: new Date().toISOString(), echeance: c.echeance_ ?? null, paye_le: null, annule_le: null, note: null };
+      DB.crescite_documents_generes.push(x); MODIFS.push({ rpc: table, corps: c });
+      return json(200, x);
+    }
+    // une date enregistrée : la base rend son identifiant (la date, ses séances et son suivi, comme crescite_enregistrer_date)
+    if (table === 'crescite_enregistrer_date') {
+      const c = JSON.parse(req.postData() || '{}'), d = c.d || {}, champs = ['spectacle_id', 'lieu_id', 'debut', 'fin', 'precision', 'saison', 'public', 'statut', 'visible', 'intitule', 'details', 'lien', 'nb_representations', 'nature'];
+      let x = d.id ? DB.crescite_dates.find(y => String(y.id) === String(d.id)) : null;
+      if (!x) { x = { id: 9500 + DB.crescite_dates.length }; DB.crescite_dates.push(x); }
+      champs.forEach(k => { if (k in d) x[k] = d[k] === '' ? null : d[k]; });
+      if (Array.isArray(d.representations)) {
+        DB.crescite_representations = DB.crescite_representations.filter(r => r.date_id !== x.id).concat(d.representations.map((r, i) => ({ id: r.id || 9700 + DB.crescite_representations.length + i, date_id: x.id, jour: r.jour, heure: r.heure || null, fin: r.fin || null, public: r.public || 'tout_public', annulee: !!r.annulee, lien: r.lien || null, note: r.note || null })));
+      }
+      if (d.suivi) { let su = DB.crescite_dates_suivi.find(y => y.date_id === x.id); if (!su) { su = { date_id: x.id }; DB.crescite_dates_suivi.push(su); } ['organisateur', 'contact', 'contrat', 'notes'].forEach(k => { if (k in d.suivi) su[k] = d.suivi[k] || null; }); }
+      MODIFS.push({ rpc: table, corps: c });
+      return json(200, x.id);
+    }
     if (url.pathname.startsWith('/rest/v1/rpc/')) { MODIFS.push({ rpc: table, corps: JSON.parse(req.postData() || '{}') }); return json(200, table === 'crescite_prevenir_equipe' ? 2 : null); }
     if (prefsAbsentes && table === 'crescite_preferences') return json(404, { code: 'PGRST205', message: `Could not find the table 'public.${table}' in the schema cache` });
     if (req.method() === 'GET') {

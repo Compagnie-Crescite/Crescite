@@ -316,7 +316,8 @@ function editeurPersonne(id) {
       if (!x) return;
       dessinerSpectacles(); dessinerDates();
       const s = spectacle(sp);
-      annoncer(`Ajouté à la distribution de ${s?.titre || 'ce spectacle'} (${libelleCategorie(cat)}).`, { libelle: 'Voir la distribution', action: () => { try { sessionStorage.setItem('crescite-onglet-sp', 'Distribution'); } catch { /* navigation privée */ } location.hash = `#/spectacles/${s.slug}`; } });
+      const avant = x.en_tournee && datesDuSpectacle(sp).some(d => finDe(d) < AUJ);
+      annoncer(`Ajouté à la distribution de ${s?.titre || 'ce spectacle'} (${libelleCategorie(cat)}).${avant ? ' Il compte aussi sur ses dates passées : sa période se règle dans « Qui a joué quand ».' : ''}`, { libelle: 'Voir la distribution', delai: avant ? 9000 : 5000, action: () => { try { sessionStorage.setItem('crescite-onglet-sp', 'Distribution'); } catch { /* navigation privée */ } location.hash = `#/spectacles/${s.slug}`; } });
       $('#pe-dist-ok', zone)?.focus();
       return;
     }
@@ -587,7 +588,8 @@ function choisirDansLaTroupe(s, { categorie = 'jeu', declencheur = null, apres =
 // crescite_equipes), lue en périodes. Une période se règle d'un coup : on écrit, date par date, les écarts qu'elle change
 // (comme l'import de l'historique, supabase/equipe.py) ; rien d'autre ne change dans la base, et tout ce qui lit l'équipe
 // d'une date (feuilles de route, espace de l'équipe, notifications, agendas) suit.
-const datesDuSpectacle = spId => E.dates.filter(d => d.spectacle_id === spId && d.statut !== 'annulee').sort((a, b) => a.debut < b.debut ? -1 : a.debut > b.debut ? 1 : a.id - b.id);
+// (ce qu'on a joué : les représentations confirmées ; ni les options, ni les reports, ni les répétitions ou résidences)
+const datesDuSpectacle = spId => E.dates.filter(d => d.spectacle_id === spId && d.statut === 'confirmee' && (d.nature || 'representations') === 'representations').sort((a, b) => a.debut < b.debut ? -1 : a.debut > b.debut ? 1 : a.id - b.id);
 const finDe = d => d.fin || d.debut;
 const jourEntier = j => { if (!j) return ''; const d = new Date(`${j}T12:00:00`); return `${d.getDate() === 1 ? '1er' : d.getDate()} ${MC[d.getMonth()]} ${d.getFullYear()}`; };
 // les dates du spectacle et, pour chacune, qui en est
@@ -1147,10 +1149,11 @@ function blocEquipeDate(zone, F, changer) {
     const ajouts = F.equipe.filter(x => x.present && !ids.has(x.personne_id));
     const absents = tournee.filter(x => ecart(x.personne_id)?.present === false);
     el.innerHTML = `<h3>Équipe de cette date</h3>
-      ${tournee.length ? `<p class="aide">La distribution « en tournée » part sur chaque date : décochez qui ne vient pas.</p><ul class="eq-date">${tournee.map(x => { const part = ecart(x.personne_id)?.present !== false; return `<li${part ? '' : ' class="absent"'}><label class="case"><input type="checkbox" data-eqd-part="${x.personne_id}"${part ? ' checked' : ''}> ${esc(nomDe(personne(x.personne_id)))}</label><span class="compte">${esc(x.fonctions.join(', '))}${part ? '' : ' · ne part pas sur cette date'}</span>${part ? telEquipe(x.personne_id) : ''}</li>`; }).join('')}</ul>`
+      ${tournee.length ? `<p class="aide">La distribution « en tournée » part sur chaque date : décochez qui ne vient pas.</p><ul class="eq-date">${tournee.map(x => { const part = ecart(x.personne_id)?.present !== false; return `<li${part ? '' : ' class="absent"'}><label class="case"><input type="checkbox" data-eqd-part="${x.personne_id}"${part ? ' checked' : ''}> ${esc(nomDe(personne(x.personne_id)))}</label><span class="compte">${esc(x.fonctions.join(', '))}${part ? '' : ' · ne part pas sur cette date'}</span>${part ? telEquipe(x.personne_id) : ''}${part ? `<input type="text" class="eq-note" data-eqd-note="${x.personne_id}" value="${esc(ecart(x.personne_id)?.note || '')}" placeholder="Note pour cette date (train de 14h12, dort sur place…)" aria-label="Note pour ${esc(nomDe(personne(x.personne_id)))} sur cette date">` : ''}</li>`; }).join('')}</ul>`
         : `<p class="aide">${spectacle(sp) ? 'Personne n’est « en tournée » dans la distribution de ce spectacle (Spectacles → Distribution).' : 'Choisissez d’abord le spectacle.'}</p>`}
       ${ajouts.length ? `<div class="eq-ajouts"><span class="lib">Remplaçants et renforts</span>${ajouts.map(x => `<div class="eq-ajout" data-eqd-ajout="${x.personne_id}">${avatar(personne(x.personne_id), true)}<a class="eq-nom" href="#/equipe/${x.personne_id}" title="Sa fiche">${esc(nomDe(personne(x.personne_id)))}</a>
         <input type="text" data-eqd-fonction value="${esc(x.fonction || '')}" placeholder="${esc(absents.length ? `Remplace ${nomDe(personne(absents[0].personne_id))}` : 'Renfort régie, remplaçant…')}" aria-label="Fonction sur cette date">
+        <input type="text" class="eq-note" data-eqd-note="${x.personne_id}" value="${esc(x.note || '')}" placeholder="Note (train, hébergement…)" aria-label="Note pour cette date">
         <button type="button" class="btn petit danger" data-eqd-retirer title="Retirer de cette date" aria-label="Retirer de cette date">✕</button></div>`).join('')}</div>` : ''}
       <div class="champ eq-ajouter"><span class="lib">Ajouter quelqu’un</span><div id="eqd-combo"></div><span class="aide">Un remplaçant ou un renfort, pour cette date seulement, avec sa fonction.</span></div>`;
     comboPersonne($('#eqd-combo', el), { placeholder: 'Nom de la personne…', creer: true, avant: distributionDe(sp).map(x => x.personne_id),
@@ -1167,9 +1170,18 @@ function blocEquipeDate(zone, F, changer) {
   el.addEventListener('change', e => {
     const t = e.target; if (!t.dataset.eqdPart) return;
     const pid = +t.dataset.eqdPart, x = ecart(pid);
-    if (t.checked) { if (x) enlever(x); } else if (x) x.present = false; else F.equipe.push({ personne_id: pid, present: false, fonction: '', note: null });
+    if (t.checked) { if (x && (x.note || '').trim()) x.present = true; else if (x) enlever(x); } else if (x) x.present = false; else F.equipe.push({ personne_id: pid, present: false, fonction: '', note: null });
     dessiner(); changer();
     $(`[data-eqd-part="${pid}"]`, el)?.focus();
+  });
+  // la note d'une personne sur cette date (crescite_equipes.note, que son espace montre) : pour la distribution, une ligne
+  // « présente » qui ne porte que la note ; vidée, la ligne s'en va
+  el.addEventListener('input', e => {
+    const t = e.target; if (t.dataset.eqdNote === undefined) return;
+    const pid = +t.dataset.eqdNote, v = t.value; let x = ecart(pid);
+    if (!x && v.trim()) { x = { personne_id: pid, present: true, fonction: '', note: v }; F.equipe.push(x); }
+    else if (x) { x.note = v; if (!v.trim() && x.present && !(x.fonction || '').trim() && distributionDe(+F.spectacle_id).some(y => y.en_tournee && y.personne_id === pid)) enlever(x); }
+    changer();
   });
   el.addEventListener('input', e => { const t = e.target; if (t.dataset.eqdFonction === undefined) return; const x = ecart(+t.closest('[data-eqd-ajout]').dataset.eqdAjout); if (x) { x.fonction = t.value; changer(); } });
   el.addEventListener('click', e => { const b = e.target.closest('[data-eqd-retirer]'); if (!b) return; const x = ecart(+b.closest('[data-eqd-ajout]').dataset.eqdAjout); if (x) enlever(x); dessiner(); changer(); });
@@ -1184,8 +1196,8 @@ async function enregistrerEquipeDate(dateId, F) {
   F.equipe.forEach(x => { if (x.present || tournee.has(x.personne_id)) { const i = voulus.findIndex(y => y.personne_id === x.personne_id); if (i >= 0) voulus.splice(i, 1); voulus.push(x); } });
   const actuels = E.equipes.filter(x => x.date_id === dateId);
   const aRetirer = actuels.filter(a => !voulus.some(v => v.personne_id === a.personne_id)).map(a => a.personne_id);
-  const aEcrire = voulus.filter(v => { const a = actuels.find(x => x.personne_id === v.personne_id); return !a || a.present !== !!v.present || (a.fonction || '') !== (v.fonction || '').trim(); })
-    .map(v => ({ date_id: dateId, personne_id: v.personne_id, present: !!v.present, fonction: (v.fonction || '').trim() || null, note: v.note ?? null }));
+  const aEcrire = voulus.filter(v => { const a = actuels.find(x => x.personne_id === v.personne_id); return !a || a.present !== !!v.present || (a.fonction || '') !== (v.fonction || '').trim() || (a.note || '') !== (v.note || '').trim(); })
+    .map(v => ({ date_id: dateId, personne_id: v.personne_id, present: !!v.present, fonction: (v.fonction || '').trim() || null, note: (v.note || '').trim() || null }));
   try {
     if (aRetirer.length) { const { error } = await sb.from('crescite_equipes').delete().eq('date_id', dateId).in('personne_id', aRetirer); if (error) throw error; }
     if (aEcrire.length) { const { error } = await sb.from('crescite_equipes').upsert(aEcrire, { onConflict: 'date_id,personne_id' }); if (error) throw error; }
@@ -1339,11 +1351,25 @@ function sourcesFeuille(d) {
   // les feuilles des autres dates : repas, transports, hébergement s'en recopient
   const anterieures = E.feuilles.filter(f => f.date_id !== d.id && f.contenu).map(f => {
     const x = E.dates.find(y => y.id === f.date_id);
-    return x && { contenu: f.contenu, debut: x.debut, lieu_id: x.lieu_id, spectacle_id: x.spectacle_id, lieu: lieu(x.lieu_id) || null, date_id: f.date_id, ecrit_le: f.modifie_le || null };
+    return x && x.statut !== 'annulee' && { contenu: f.contenu, debut: x.debut, lieu_id: x.lieu_id, spectacle_id: x.spectacle_id, lieu: lieu(x.lieu_id) || null, date_id: f.date_id, ecrit_le: f.modifie_le || null };
   }).filter(Boolean);
-  return { date: d, spectacle: spectacle(d.spectacle_id), lieu: lieu(d.lieu_id), representations: repsDe(d.id), equipe, contacts, depart: DEPART,
+  return { date: d, spectacle: spectacle(d.spectacle_id), lieu: lieu(d.lieu_id), representations: repsDe(d.id), equipe, contacts, depart: departDe(d),
     suivi: { ...(E.suivis.find(x => x.date_id === d.id) || {}), lieu: E.lieuxSuivi.find(x => x.lieu_id === d.lieu_id) || {} },
-    documents: E.documents.filter(x => (x.spectacle_id === d.spectacle_id || x.spectacle_id == null) && x.pour === 'equipe'), anterieures };
+    documents: E.documents.filter(x => (x.spectacle_id === d.spectacle_id || x.spectacle_id == null) && x.pour === 'equipe'), anterieures,
+    carnet: typeof CARNET !== 'undefined' ? CARNET.pourFeuille(d) : null };
+}
+// d'où part l'équipe : du lieu de la date de la veille quand deux dates du spectacle s'enchaînent (la tournée), sinon de Rouen
+function departDe(d) {
+  const veille = E.dates.filter(x => x.id !== d.id && x.spectacle_id === d.spectacle_id && x.statut === 'confirmee' && (x.fin || x.debut) < d.debut
+    && (x.fin || x.debut) >= plusJours(d.debut, -1) && lieu(x.lieu_id)?.latitude != null).sort((a, b) => ((a.fin || a.debut) < (b.fin || b.debut) ? 1 : -1))[0];
+  const l = veille ? lieu(veille.lieu_id) : null;
+  return l && l.id !== d.lieu_id ? { commune: l.commune, latitude: l.latitude, longitude: l.longitude, veille: true } : DEPART;
+}
+// les régimes alimentaires de l'équipe de la date, à transmettre à l'accueil (fiches privées : jamais dans la feuille publiée)
+function regimesDe(d) {
+  const par = new Map();
+  equipeDeLaDate(d).forEach(x => { const r = (priveeDe(x.personne_id)?.regime || '').trim(); if (!r) return; const k = norm(r); if (!par.has(k)) par.set(k, { r, qui: [] }); par.get(k).qui.push(personne(x.personne_id)); });
+  return [...par.values()];
 }
 const contexteFeuille = d => {
   const s = spectacle(d.spectacle_id) || {};
@@ -1354,8 +1380,12 @@ const contexteFeuille = d => {
 const composerPour = d => FEUILLE.composer(sourcesFeuille(d));
 // les prénoms à surligner : l'équipe de la date
 const nomsDeLaDate = d => [...new Set(equipeDeLaDate(d).map(x => personne(x.personne_id)?.prenom).filter(Boolean))];
-const horairesChanges = (d, c) => Array.isArray(c?.instantane) && c.instantane.length > 0
-  && c.instantane.map(r => `${r.jour} ${h5(r.heure)} ${!!r.annulee}`).sort().join('|') !== repsDe(d.id).map(r => `${r.jour} ${h5(r.heure)} ${!!r.annulee}`).sort().join('|');
+// (l'heure de fin compte aussi, pour les feuilles composées depuis qu'elle est gardée : une répétition « 9h-18h »)
+const horairesChanges = (d, c) => {
+  if (!Array.isArray(c?.instantane) || !c.instantane.length) return false;
+  const avecFin = c.instantane.some(r => 'fin' in r), cle = r => `${r.jour} ${h5(r.heure)}${avecFin ? ` ${h5(r.fin)}` : ''} ${!!r.annulee}`;
+  return c.instantane.map(cle).sort().join('|') !== repsDe(d.id).map(cle).sort().join('|');
+};
 const feuilleVersForm = (f, d) => ({ titre: f.titre || '', contenu: FEUILLE.contenu(f, contexteFeuille(d)), statut: f.statut, version: f.version, publiee_le: f.publiee_le });
 const signatureFeuille = F => F ? JSON.stringify([F.titre, F.contenu.blocs, F.contenu.composees]) : 'null';
 
@@ -1384,6 +1414,13 @@ function alertesFeuille(d, F) {
   if (!repsDe(d.id).length) out.push('Cette date n’a pas de représentation détaillée (jour et heure) : le planning restera vide.');
   if (s && (d.nature || 'representations') === 'representations' && !FEUILLE.dureeMinutes(s.duree)) out.push(`La durée du spectacle n’est pas indiquée (<a href="#/spectacles/${esc(s.slug)}" data-onglet-sp="Général">Spectacles → Général → Durée</a>) : les étapes d’après le spectacle (démontage) restent sans heure.`);
   if (s && (d.nature || 'representations') === 'representations' && !(s.feuille_modele || []).length) out.push(`${esc(s.titre)} n’a pas de déroulé type (<a href="#/spectacles/${esc(s.slug)}" data-onglet-sp="Déroulé type">Spectacles → Déroulé type</a>) : le planning ne contient que les représentations.`);
+  // les conflits d'équipe de la date (gardefous.js) : quelqu'un indisponible ou déjà sur une autre date
+  if (typeof GARDEFOUS !== 'undefined' && typeof dateVersForm === 'function') {
+    try { GARDEFOUS.alertes(dateVersForm(d), d).filter(a => a.niveau === 'alerte' && !/contrat|accueille/i.test(a.texte)).forEach(a => out.push(`${esc(a.texte)} <a href="${esc(a.href || `#/representations/${d.id}`)}">${esc(a.lien || 'Voir')}</a>`)); } catch (e) { /* rien */ }
+  }
+  // les régimes : à dire à l'accueil, pas à écrire dans la feuille que toute l'équipe lit
+  const rg = regimesDe(d);
+  if (rg.length) out.push(`À transmettre à l’accueil pour les repas (fiches privées, pas dans la feuille) : ${rg.map(x => `${esc(x.r)} (${x.qui.map(p => esc(p?.prenom || nomDe(p))).join(', ')})`).join(' · ')}.`);
   if (F && horairesChanges(d, F.contenu)) out.push('Les horaires de la date ont changé depuis la composition de cette feuille. <button type="button" class="btn lien" data-fr-maj>Mettre à jour depuis la base</button>');
   // ce qui manque (en gris) et que la base sait maintenant : un téléphone gardé depuis une autre feuille, une adresse…
   const avant = F ? FEUILLE.manques(F.contenu.blocs) : [];
@@ -1512,7 +1549,7 @@ function dessinerFeuille(etat) {
   // remplace la rubrique (« Annuler » le reprend) ; retouchée à la main, la liste le dit.
   const hebs = FEUILLE.hebergements(sourcesFeuille(d)), pr = $('#fr-reprise', zone);
   const ecriteLe = x => (x.ecrit_le && !isNaN(new Date(x.ecrit_le)) ? `, écrite le ${new Date(x.ecrit_le).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}` : '');
-  const libelleHeb = x => `repris de la feuille du ${FEUILLE.jourLong(x.debut)}${x.memeLieu ? '' : ` (${x.lieu?.nom || x.lieu?.commune || 'un autre lieu'})`}${ecriteLe(x)}`;
+  const libelleHeb = x => x.carnet ? `du carnet du lieu : ${x.nom}${x.memeLieu ? '' : ` (${x.lieu?.nom || x.lieu?.commune || 'un autre lieu'})`}` : `repris de la feuille du ${FEUILLE.jourLong(x.debut)}${x.memeLieu ? '' : ` (${x.lieu?.nom || x.lieu?.commune || 'un autre lieu'})`}${ecriteLe(x)}`;
   let repriseVue = null;
   function dessinerReprise() {
     if (!hebs.length) return;
@@ -2849,8 +2886,10 @@ function editeurAcces(id) {
   const cur = () => (id ? E.acces.find(x => x.id === id) : null) || null;
   const a0 = cur();
   if (id && !a0) { zone.innerHTML = '<div class="vide bloc">Cette invitation n’existe plus.</div>'; return; }
-  const F = a0 ? { nom: a0.nom || '', contact: a0.contact || '', courriel: a0.courriel || '', spectacles: (a0.spectacles || []).map(Number), expire_le: a0.expire_le, notes: a0.notes || '' }
-    : { nom: '', contact: '', courriel: '', spectacles: [], expire_le: plusJours(AUJ, 90), notes: '' };
+  const F = a0 ? { nom: a0.nom || '', contact: a0.contact || '', courriel: a0.courriel || '', spectacles: (a0.spectacles || []).map(Number), expire_le: a0.expire_le, notes: a0.notes || '', prospect_id: a0.prospect_id ?? null }
+    : { nom: '', contact: '', courriel: '', spectacles: [], expire_le: plusJours(AUJ, 90), notes: '', prospect_id: null };
+  // la piste de diffusion de cette salle (le vingt-deuxième script) : ses visites remontent dans la piste, sa relance donne ce lien
+  const pistes = E.diffusionReliee ? (E.prospects || []).filter(p => p.etape !== 'refus' || p.id === F.prospect_id).sort((x, y) => norm(x.structure).localeCompare(norm(y.structure))) : [];
   const choix = E.spectacles.filter(s => s.page || F.spectacles.includes(s.id) || E.documents.some(d => d.spectacle_id === s.id && (estSalles(d) || estPros(d)))).sort((a, b) => (b.page - a.page) || a.ordre - b.ordre);
   nChamp = 0;
   zone.innerHTML = `<div class="titre-ed"><a class="btn petit" data-tt="retour" href="#/pro" aria-label="Retour aux invitations">←</a><h2>${esc(a0 ? a0.nom : 'Nouvelle invitation')}</h2></div>
@@ -2864,6 +2903,8 @@ function editeurAcces(id) {
       <div class="champ"><label for="pro-fin">Accès ouvert jusqu’au</label>
         <div class="pro-duree"><input type="date" id="pro-fin" value="${esc(F.expire_le)}" min="${AUJ}"><div class="seg" role="group" aria-label="Durée à partir d’aujourd’hui">${DUREES_PRO.map(n => `<button type="button" data-jours="${n}">${n} jours</button>`).join('')}</div></div>
         <span class="aide">Une durée à partir d’aujourd’hui, ou une date. Ensuite, le lien ne s’ouvre plus.</span></div>
+      ${E.diffusionReliee ? `<div class="champ"><label for="pro-piste">Piste de diffusion</label><select id="pro-piste"><option value="">— Aucune —</option>${pistes.map(p => `<option value="${p.id}"${F.prospect_id === p.id ? ' selected' : ''}>${esc(`${p.structure} · ${p.commune}`)}</option>`).join('')}</select>
+        <span class="aide">Ses visites et les documents ouverts apparaissent dans la piste ; la relance de la piste donne ce lien.</span></div>` : ''}
       ${champ(SPEC_ACCES[3], F)}
     </div>
     ${a0 ? `<div class="bloc"><div class="pro-journal-tete"><h3 aria-level="2">Journal</h3><button type="button" class="btn petit" id="pro-actualiser">Actualiser</button></div><div id="pro-journal">${typeof attenteLignes === 'function' ? attenteLignes(3, 44) : '<p class="aide">Chargement…</p>'}</div></div>` : ''}
@@ -2883,6 +2924,7 @@ function editeurAcces(id) {
     const t = e.target;
     if (t.dataset.sp) { const v = +t.dataset.sp; F.spectacles = t.checked ? [...new Set([...F.spectacles, v])] : F.spectacles.filter(x => x !== v); majSps(); marquerSale(); }
     if (t.id === 'pro-fin') { F.expire_le = t.value; majDuree(); marquerSale(); }
+    if (t.id === 'pro-piste') { F.prospect_id = t.value ? +t.value : null; marquerSale(); }
   });
   $('#pro-f', zone).addEventListener('click', e => {
     const b = e.target.closest('[data-jours]'); if (!b) return;
@@ -2968,7 +3010,7 @@ function editeurAcces(id) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(F.expire_le || '')) { $('#pro-fin', zone).focus(); return annoncer('Choisissez la date de fin de l’accès.', { erreur: true }); }
     const ordre = x => E.spectacles.findIndex(s => s.id === x);
     const ligneA = { nom, contact: (F.contact || '').trim() || null, courriel: mel || null, spectacles: F.spectacles.length ? [...F.spectacles].sort((x, y) => ordre(x) - ordre(y)) : null,
-      expire_le: F.expire_le, notes: (F.notes || '').trim() || null };
+      expire_le: F.expire_le, notes: (F.notes || '').trim() || null, ...(E.diffusionReliee ? { prospect_id: F.prospect_id } : {}) };
     e.target.disabled = true;
     const r = a0 ? await sb.from('crescite_acces_pro').update(ligneA).eq('id', id).select().single() : await sb.from('crescite_acces_pro').insert(ligneA).select().single();
     e.target.disabled = false;
@@ -3365,6 +3407,7 @@ input[type=tel]:focus { border-color: var(--accent); outline: none; box-shadow: 
 .a-completer[hidden] { display: none; }
 #d-feuille .a-completer { margin-left: 2px; }
 .dist-cat { margin-top: 16px; }
+.eq-date li .eq-note, .eq-ajout .eq-note { flex: 1 1 220px; min-height: 32px; padding: 4px 8px; font-size: 13px; }
 .dist-l.dist-entete { margin: 12px 0 -8px; padding-top: 0; padding-bottom: 0; border: 0; background: none; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--gris); }
 .dist-entete .dist-champs > span { padding-left: 9px; }
 .dist-entete .dist-cases, .dist-entete .dist-outils { font-size: 10.5px; letter-spacing: 0; text-transform: none; line-height: 1.2; }

@@ -1,7 +1,8 @@
 'use strict';
 /* Le parcours d'une date : ce qui la mène de l'option au bilan, étape par étape, calculé d'après la base (rien à saisir).
    Confirmée (le statut), contrat (le suivi : à envoyer, envoyé, signé), lieu complet (adresse et contact du lieu), équipe
-   (qui part, et son téléphone), feuille de route (composée, publiée), bilan (les spectateurs, une fois la date passée).
+   (qui part, et son téléphone), feuille de route (composée, publiée), bilan (les spectateurs, une fois la date passée),
+   facture (émise, payée ; en retard passé son échéance).
    Dans la fiche d'une date, un stepper sous le titre : chaque étape dit où elle en est et s'ouvre là où on la complète
    (le champ du statut, du contrat, le lieu, la feuille…) ; dans les listes et les prochaines dates du tableau de bord, des
    points colorés (vert : fait, ambre : en cours, gris : à faire). Une répétition ou une date « autre » n'a ni contrat ni
@@ -39,6 +40,13 @@ const PARCOURS = (() => {
       const c = F ? F.chiffres?.spectateurs : (E.chiffres || []).find(x => x.date_id === d.id)?.spectateurs;
       const rempli = c !== '' && c != null;
       xs.push({ k: 'bilan', l: 'Bilan', etat: rempli ? 'fait' : passee(d) ? 'afaire' : 'attente', detail: rempli ? `${nombreFr(c)} spectateurs` : passee(d) ? 'spectateurs à noter' : 'après la date', viser: '#c-spectateurs' });
+    }
+    // la facture (les documents émis, le vingtième script) : émise, payée ; en retard, elle le dit
+    if (avecContrat({ nature }) && E.docsInstalles && d) {
+      const fs = (E.docsGeneres || []).filter(x => x.type === 'facture' && !x.annule_le && (x.date_id === d.id || (x.dates || []).map(Number).includes(Number(d.id))));
+      const payee = fs.find(x => x.paye_le), due = fs.find(x => !x.paye_le), retard = due && due.echeance && due.echeance < AUJ;
+      xs.push({ k: 'facture', l: 'Facture', etat: payee && !due ? 'fait' : fs.length ? 'encours' : passee(d) ? 'afaire' : 'attente',
+        detail: payee && !due ? `payée le ${jourCourt(payee.paye_le)}` : due ? `${due.numero}${retard ? ' · en retard' : due.echeance ? ` · avant le ${jourCourt(due.echeance)}` : ''}` : passee(d) ? 'à émettre' : 'après la date', viser: '#d-documents' });
     }
     return xs;
   }

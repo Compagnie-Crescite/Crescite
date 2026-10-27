@@ -188,6 +188,22 @@ const TIROIR = (() => {
     return { nom: nom || t.f.nom, rubrique: cleDe(t).split('/')[0] };
   }
 
+  // ce que la compagnie sait déjà de cette piste : son lieu (ses dates, ses spectateurs, sa dernière cession), la date qu'elle
+  // est devenue, ses invitations à l'espace pro (visites : le bon moment pour relancer)
+  function savoirPiste(p) {
+    const l = p.lieu_id != null ? lieu(p.lieu_id) : null, invs = (E.acces || []).filter(a => a.prospect_id === p.id), dc = p.date_convertie_id ? E.dates.find(d => d.id === p.date_convertie_id) : null;
+    if (!l && !invs.length && !dc) return '';
+    const lignes = [];
+    if (dc) lignes.push(`<li>Devenue la date du <a href="#/representations/${dc.id}">${esc(jourCourt(dc.debut))}</a></li>`);
+    if (l) {
+      const ds = E.dates.filter(d => d.lieu_id === l.id && d.statut === 'confirmee' && (d.nature || 'representations') === 'representations').sort((a, b) => (a.debut < b.debut ? 1 : -1));
+      const passees = ds.filter(d => (d.fin || d.debut) < AUJ), spect = passees.reduce((t, d) => t + (Number((E.chiffres || []).find(c => c.date_id === d.id)?.spectateurs) || 0), 0);
+      const cession = ds.map(d => E.suivis.find(s => s.date_id === d.id)?.montant_cession).find(m => m != null && m !== '');
+      lignes.push(`<li><a href="#/lieux/${l.id}">${esc(l.nom || l.commune)}</a> : ${ds.length ? `${ds.length} date${ds.length > 1 ? 's' : ''} de la compagnie${passees[0] ? `, la dernière le ${esc(jourCourt(passees[0].debut))} (${esc(spectacle(passees[0].spectacle_id)?.titre || '')})` : ''}${spect ? `, ${spect.toLocaleString('fr-FR')} spectateurs` : ''}${cession != null ? `, dernière cession ${Number(cession).toLocaleString('fr-FR')} € HT` : ''}` : 'la compagnie n’y a pas encore joué'}</li>`);
+    }
+    invs.forEach(a => lignes.push(`<li><a href="#/pro/${a.id}">Invitation à l’espace pro</a> : ${a.visites ? `${a.visites} visite${a.visites > 1 ? 's' : ''}${a.derniere_visite ? `, la dernière le ${esc(jourCourt(String(a.derniere_visite).slice(0, 10)))}` : ''}` : 'pas encore ouverte'}${a.actif && a.expire_le >= AUJ ? '' : ' · close'}</li>`));
+    return `<div class="bloc"><h3>Ce que la compagnie sait</h3><ul class="liste-simple">${lignes.join('')}</ul></div>`;
+  }
   // une piste de diffusion, en résumé : ce que la carte du Kanban dit, et ses actions (le Kanban la modifie)
   const ETAPES = () => (typeof ETAPES_CRM !== 'undefined' ? ETAPES_CRM : []);
   function dessinerPiste(id) {
@@ -205,7 +221,7 @@ const TIROIR = (() => {
         ${fiche('Dernier contact', p.date_dernier_contact ? esc(jourCourt(p.date_dernier_contact)) : '')}
         ${fiche('Prochaine relance', p.date_prochaine_relance ? `<span class="${retard ? 'manque' : ''}">${esc(jourCourt(p.date_prochaine_relance))}${retard ? ' · en retard' : ''}</span>` : '')}</dl>
         ${p.notes ? `<p class="dv-message">${esc(p.notes)}</p>` : ''}</div>
-      <div class="bloc" id="piste-docs"></div><div class="bloc" id="piste-notes"></div>
+      ${savoirPiste(p)}<div class="bloc" id="piste-docs"></div><div class="bloc" id="piste-notes"></div>
       <div class="pied-ed"><span class="etat-ed">Le Kanban modifie cette opportunité.</span><button type="button" class="btn" data-piste-relance>Relance faite aujourd’hui</button>${p.contact_email ? `<a class="btn" href="mailto:${esc(p.contact_email)}">Écrire</a>` : ''}<a class="btn principal" href="#/diffusion" data-tiroir-pleine>Ouvrir la diffusion</a></div>`;
     if (typeof NOTES !== 'undefined' && NOTES.bloc) NOTES.bloc($('#piste-notes', z), 'crescite_diffusion_prospects', p.id, { titre: 'Notes sur cette opportunité' });
     else $('#piste-notes', z)?.remove();

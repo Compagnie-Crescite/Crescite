@@ -121,6 +121,22 @@ const TABLEAU = (() => {
       lignes: () => E.dates.filter(d => d.statut === 'confirmee' && aVenir(d) && !sansJour(d) && (d.nature || 'representations') === 'representations' && dansJours(d.debut) <= 90)
         .map(d => ({ d, c: (E.suivis.find(s => s.date_id === d.id)?.contrat || '').trim() })).filter(x => x.c !== 'signé')
         .map(({ d, c }) => ({ tri: d.debut, href: `#/representations/${d.id}`, viser: '#s-contrat', couleur: couleurDate(d), titre: esc(titreDate(d)), sous: `${esc(jourSansAn(d.debut))} · ${esc(ouDe(d))}`, droite: `<span class="badge${c ? ' option' : ''}">${esc(c ? `contrat ${c}` : 'contrat ?')}</span>` })) },
+    // les conflits d'équipe des dates qui viennent (60 jours) : quelqu'un indisponible ou déjà ailleurs, le lieu déjà pris
+    // (les garde-fous de la fiche, gardefous.js, ici pour toutes les dates à la fois)
+    { k: 'conflits', titre: 'Conflits d’équipe', tout: '#/planning', dispo: () => E.equipeInstallee && typeof GARDEFOUS !== 'undefined' && typeof dateVersForm === 'function',
+      lignes: () => E.dates.filter(d => ['confirmee', 'option'].includes(d.statut) && aVenir(d) && !sansJour(d) && dansJours(d.debut) <= 60).flatMap(d => {
+        let xs = []; try { xs = GARDEFOUS.alertes(dateVersForm(d), d).filter(a => a.niveau === 'alerte' && !/contrat/i.test(a.texte)); } catch (e) { xs = []; }
+        return xs.map(a => ({ tri: d.debut, href: `#/representations/${d.id}`, couleur: couleurDate(d), titre: esc(titreDate(d)), sous: `${esc(jourSansAn(d.debut))} · ${esc(a.texte)}`, droite: `<span class="badge annulee">${esc(dansTexte(d.debut))}</span>` })); }) },
+    // les factures (le vingtième script) : en retard passé leur échéance ; les dates jouées, cession convenue, sans facture
+    { k: 'paiements', titre: 'Factures en retard', tout: '#/representations', dispo: () => E.docsInstalles && typeof MODELES !== 'undefined',
+      lignes: () => MODELES.enRetard().map(x => { const d = E.dates.find(y => y.id === x.date_id); return { tri: x.echeance, href: d ? `#/representations/${d.id}` : '#/diffusion', viser: '#d-documents', couleur: d ? couleurDate(d) : 'var(--alerte)',
+        titre: `${esc(x.numero)} · ${esc(x.structure || '')}`, sous: esc([x.montant_ttc != null ? `${euros(x.montant_ttc)} TTC` : '', d ? titreDate(d) : ''].filter(Boolean).join(' · ')), droite: `<span class="badge annulee">échue le ${esc(jourSansAn(x.echeance))}</span>` }; }) },
+    { k: 'factures', titre: 'Dates jouées sans facture', tout: '#/representations', dispo: () => E.docsInstalles && typeof MODELES !== 'undefined',
+      lignes: () => { const facturees = new Set(MODELES.generes().filter(x => x.type === 'facture' && !x.annule_le).flatMap(x => [x.date_id, ...(x.dates || [])].filter(v => v != null).map(Number)));
+        return E.dates.filter(d => d.statut === 'confirmee' && (d.nature || 'representations') === 'representations' && !aVenir(d) && !sansJour(d) && dansJours(d.fin || d.debut) >= -120 && !facturees.has(Number(d.id)))
+          .map(d => ({ d, su: E.suivis.find(s => s.date_id === d.id) || {} })).filter(({ su }) => (su.contrat || '').trim() === 'signé' || Number(su.montant_cession) > 0)
+          .map(({ d, su }) => ({ tri: d.debut, href: `#/representations/${d.id}`, viser: '#d-documents', couleur: couleurDate(d), titre: esc(titreDate(d)), sous: `${esc(jourSansAn(d.debut))} · ${esc(ouDe(d))}`,
+            droite: su.montant_cession ? `<b>${esc(euros(su.montant_cession))} HT</b>` : '<span class="badge option">à facturer</span>' })); } },
     { k: 'feuilles', titre: 'Feuilles de route à publier', tout: '#/feuilles', dispo: () => E.equipeInstallee,
       lignes: () => E.dates.filter(d => d.statut === 'confirmee' && aVenir(d) && !sansJour(d) && dansJours(d.debut) <= 21).map(d => ({ d, f: E.feuilles.find(x => x.date_id === d.id) })).filter(x => !x.f || x.f.statut !== 'publiee')
         .map(({ d, f }) => ({ tri: d.debut, href: `#/feuilles/${d.id}`, viser: f ? '#fr-manques' : '#fr-composer', couleur: couleurDate(d), titre: esc(titreDate(d)), sous: `${esc(jourSansAn(d.debut))} · ${esc(ouDe(d))}`, droite: f ? `<span class="badge option">brouillon${aCompleter(d.id) ? ` · ${aCompleter(d.id)} à compléter` : ''}</span>` : '<span class="badge">à composer</span>' })) },
@@ -148,7 +164,36 @@ const TABLEAU = (() => {
     return { dates: confs.length, avenir, passees: confs.length - avenir, reps, options: ds.filter(d => d.statut === 'option').length, scolaires: confs.filter(d => d.public === 'scolaire' || d.public === 'mixte').length,
       lieux: lieux.size, deps: deps.size, spectacles: new Set(confs.map(d => d.spectacle_id)).size, seances: seances.length, heures: Math.round(heures * 10) / 10,
       residences: E.dates.filter(d => d.saison === S && d.nature === 'residence' && d.statut !== 'annulee').length,
-      spectateurs: E.chiffresInstalles ? chiffres.reduce((n, c) => n + (Number(c.spectateurs) || 0), 0) : null, renseignees: chiffres.filter(c => c.spectateurs != null).length };
+      spectateurs: E.chiffresInstalles ? chiffres.reduce((n, c) => n + (Number(c.spectateurs) || 0), 0) : null, renseignees: chiffres.filter(c => c.spectateurs != null).length,
+      ...recoupements(S, confs, seances) };
+  }
+  // ce que la base sait d'autre de la saison : le remplissage, les cessions (par spectacle, par département), les élèves et
+  // les heures par dispositif, les kilomètres de la tournée (à vol d'oiseau, de lieu en lieu)
+  function recoupements(S, confs, seances) {
+    const jouees = confs.filter(d => !aVenir(d));
+    const taux = typeof remplissage === 'function' ? remplissage(jouees) : null;
+    const cession = d => (typeof cessionDe === 'function' ? cessionDe(d) : null);
+    const recettes = confs.reduce((t, d) => t + (cession(d) || 0), 0), sansMontant = confs.filter(d => cession(d) == null).length;
+    const parSp = new Map(), parDep = new Map();
+    confs.forEach(d => { const m = cession(d) || 0, k = d.spectacle_id, dep = lieu(d.lieu_id)?.departement || '?';
+      const a = parSp.get(k) || { dates: 0, recettes: 0, spectateurs: 0 }; a.dates++; a.recettes += m; a.spectateurs += (typeof spectateursDe === 'function' ? spectateursDe(d) : 0) || 0; parSp.set(k, a);
+      const b = parDep.get(dep) || { dates: 0, recettes: 0 }; b.dates++; b.recettes += m; parDep.set(dep, b); });
+    const eleves = seances.reduce((t, x) => t + (Number(x.nb_eleves) || 0), 0), parDisp = new Map();
+    seances.forEach(x => { const k = (x.dispositif || '').trim() || 'sans dispositif'; const a = parDisp.get(k) || { seances: 0, eleves: 0, heures: 0 }; a.seances++; a.eleves += Number(x.nb_eleves) || 0; a.heures += heuresSeance(x); parDisp.set(k, a); });
+    let km = null;
+    if (typeof TOURNEE !== 'undefined' && TOURNEE.etapes) { try { km = Math.round(TOURNEE.etapes(confs.filter(d => d.lieu_id)).filter(x => x.trajet && x.km != null).reduce((t, x) => t + x.km, 0)); } catch (e) { km = null; } }
+    return { taux, recettes, sansMontant, parSp, parDep, eleves, parDisp, km };
+  }
+  // le détail sous les chiffres : une ligne par recoupement, et les tableaux par spectacle, département, dispositif (repliés)
+  function detailSaison(c) {
+    const bits = [c.taux != null ? `remplissage <b>${c.taux} %</b>` : '', c.recettes ? `<b>${euros(c.recettes)}</b> HT de cessions${c.sansMontant ? ` <span class="compte">(${pl(c.sansMontant, 'date')} sans montant)</span>` : ''}` : '',
+      c.eleves ? `<b>${entier(c.eleves)}</b> élèves en atelier` : '', c.km ? `<b>${entier(c.km)} km</b> de lieu en lieu` : ''].filter(Boolean);
+    if (!bits.length && !c.parSp.size) return '';
+    const table = (t, tete, lignes) => `<details class="tb-det"><summary>${t}</summary><table class="simple"><thead><tr>${tete.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${lignes.join('')}</tbody></table></details>`;
+    return `<p class="tb-recoup">${bits.join(' · ')}</p><div class="tb-dets">
+      ${c.parSp.size ? table('Par spectacle', ['Spectacle', 'Dates', 'Spectateurs', 'Cessions HT'], [...c.parSp].sort((a, b) => b[1].dates - a[1].dates).map(([k, a]) => `<tr><td>${esc(sp(k)?.titre || '?')}</td><td>${a.dates}</td><td>${a.spectateurs ? entier(a.spectateurs) : '—'}</td><td>${a.recettes ? euros(a.recettes) : '—'}</td></tr>`)) : ''}
+      ${c.parDep.size > 1 ? table('Par département', ['Département', 'Dates', 'Cessions HT'], [...c.parDep].sort((a, b) => b[1].dates - a[1].dates).map(([k, a]) => `<tr><td>${esc(k)}</td><td>${a.dates}</td><td>${a.recettes ? euros(a.recettes) : '—'}</td></tr>`)) : ''}
+      ${c.parDisp.size ? table('Action culturelle, par dispositif', ['Dispositif', 'Séances', 'Élèves', 'Heures'], [...c.parDisp].sort((a, b) => b[1].eleves - a[1].eleves).map(([k, a]) => `<tr><td>${esc(k)}</td><td>${a.seances}</td><td>${a.eleves ? entier(a.eleves) : '—'}</td><td>${entier(Math.round(a.heures * 10) / 10)}</td></tr>`)) : ''}</div>`;
   }
   // le lien d'une ligne du journal : la fiche qu'elle concerne, sinon le journal
   function lienJournal(j) {
@@ -214,6 +259,7 @@ const TABLEAU = (() => {
         const html = a.n ? section('Téléphones', a.pers.map(x => ligne({ href: `#/equipe/${x.p.id}`, viser: 'telephone', couleur: 'var(--option)', titre: esc(nomDe(x.p)), sous: `pas de téléphone · part ${esc(quand(x.dates))}` })))
           + section('Lieux', [...a.lieux.map(x => ligne({ href: `#/lieux/${x.l.id}`, viser: x.manque[0], couleur: 'var(--option)', titre: esc(x.l.nom ? `${x.l.nom}, ${x.l.commune}` : x.l.commune), sous: `${x.manque.map(m => `sans ${m}`).join(', ')} · ${esc(quand(x.dates))}` })),
             ...a.sansLieu.map(d => ligne({ href: `#/representations/${d.id}`, viser: '#d-lieu input', attrs: `data-date="${d.id}" data-sp="${d.spectacle_id}"`, couleur: couleurDate(d), titre: 'Lieu à préciser', sous: `${esc(titreDate(d))} · le ${esc(jourSansAn(d.debut))}` }))])
+          + section('Qui ne sera pas prévenu', (a.joignables || []).map(x => ligne({ href: `#/equipe/${x.p.id}`, viser: 'email', couleur: 'var(--option)', titre: esc(nomDe(x.p)), sous: `${x.sansCompte ? 'pas de compte : ni feuille ni notification' : `agenda « ${esc(x.agenda.nom || 'relié')} » en erreur`} · part ${esc(quand(x.dates))}` })))
           + section('Feuilles de route', a.feuilles.map(x => ligne({ href: `#/feuilles/${x.d.id}`, viser: x.f ? '#fr-manques' : '#fr-composer', attrs: `data-date="${x.d.id}" data-sp="${x.d.spectacle_id}"`, couleur: couleurDate(x.d), titre: `${esc(jourSansAn(x.d.debut))} · ${esc(ouDe(x.d))}`, sous: esc(titreDate(x.d)), droite: x.f ? `<span class="badge option">${x.n} à compléter</span>` : '<span class="badge">à composer</span>' })))
           : rien(a.ds.length ? `Rien ne manque pour ${pl(a.ds.length, 'date confirmée')} : téléphones, lieux et feuilles de route sont complets.` : 'Aucune date confirmée dans cette période.', !!a.ds.length);
         return { n: a.n, ok: !a.n, html };
@@ -235,10 +281,10 @@ const TABLEAU = (() => {
           ${kpi('Dates confirmées', entier(c.dates), c.dates ? `${c.passees} jouée${c.passees > 1 ? 's' : ''}, ${c.avenir} à venir` : vs(c.dates, p.dates), '#/representations')}
           ${kpi('Représentations', entier(c.reps), vs(c.reps, p.reps))}
           ${kpi('Lieux', entier(c.lieux), c.deps ? `dans ${pl(c.deps, 'département')}` : vs(c.lieux, p.lieux), '#/lieux')}
-          ${kpi('Séances scolaires', entier(c.scolaires), c.scolaires || p.scolaires ? vs(c.scolaires, p.scolaires) : 'dates scolaires ou mixtes')}
+          ${kpi('Dates scolaires', entier(c.scolaires), c.scolaires || p.scolaires ? vs(c.scolaires, p.scolaires) : 'dates scolaires ou mixtes')}
           ${kpi('Séances d’atelier', entier(c.seances), c.heures ? `${entier(c.heures)} h d’éducation artistique` : vs(c.seances, p.seances), '#/ateliers/seances')}
           ${E.chiffresInstalles ? kpi('Spectateurs', entier(c.spectateurs), c.renseignees ? `sur ${pl(c.renseignees, 'date renseignée')}` : 'à renseigner dans chaque date') : kpi('Spectacles joués', entier(c.spectacles), vs(c.spectacles, p.spectacles), '#/spectacles')}
-        </div>${courbesSaison(S, c, p)}` };
+        </div>${detailSaison(c)}${courbesSaison(S, c, p)}` };
       } },
     equipe: { titre: 'Qui part bientôt', description: 'Les personnes de l’équipe en tournée dans les jours qui viennent, avec leur téléphone.', taille: 'p', dispo: () => E.equipeInstallee, lien: () => ['#/equipe', 'Équipe'],
       reglages: [{ k: 'jours', t: 'choix', l: 'Dans les', choix: JOURS.slice(0, 3), defaut: 14 }],
@@ -1302,6 +1348,8 @@ const TABLEAU = (() => {
 .tb-actions .btn { justify-content: flex-start; padding: 10px 12px; text-align: left; white-space: normal; }
 .tb-bouton { justify-self: start; margin-top: 4px; }
 .tb-saison { margin: 0 2px 2px; font-size: 13.5px; color: var(--gris); }
+.tb-recoup { margin: 10px 0 4px; font-size: 13.5px; color: var(--gris); } .tb-recoup b { color: var(--encre); }
+.tb-dets { display: grid; gap: 4px; margin-bottom: 6px; } .tb-det summary { cursor: pointer; font-size: 13px; font-weight: 650; color: var(--gris); } .tb-det table { margin: 6px 0; font-size: 13px; }
 .tb-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); gap: 8px; }
 .tb-kpi > * { display: grid; gap: 1px; align-content: start; padding: 10px 12px; border-radius: 10px; background: var(--doux); color: var(--encre); text-decoration: none; min-width: 0; }
 .tb-kpi > a:hover { background: color-mix(in srgb, var(--doux) 55%, var(--accent-doux)); }

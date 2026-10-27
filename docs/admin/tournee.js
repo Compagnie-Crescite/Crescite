@@ -54,7 +54,7 @@ const TOURNEE = (() => {
       <div class="tn-deux"><div class="bloc tn-carte" id="tn-carte"></div><div class="tn-cote"><div class="bloc" id="tn-resume"></div><div class="bloc" data-liste id="tn-etapes"></div></div></div>`);
     const zone = $('#tn-etapes');
     const dessiner = () => {
-      const ds = E.dates.filter(d => d.statut !== 'annulee' && ['representations', 'residence'].includes(d.nature || 'representations') && (f.saison === 'toutes' || d.saison === f.saison) && (!f.spectacle || String(d.spectacle_id) === String(f.spectacle)) && (!f.avenir || (d.fin || d.debut) >= AUJ)).sort(parDebut);
+      const ds = E.dates.filter(d => !['annulee', 'reportee'].includes(d.statut) && ['representations', 'residence'].includes(d.nature || 'representations') && (f.saison === 'toutes' || d.saison === f.saison) && (!f.spectacle || String(d.spectacle_id) === String(f.spectacle)) && (!f.avenir || (d.fin || d.debut) >= AUJ)).sort(parDebut);
       const xs = etapes(ds);
       // les lieux : une pastille par lieu, avec ses dates
       const lieux = new Map();

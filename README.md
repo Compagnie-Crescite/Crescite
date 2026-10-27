@@ -382,8 +382,23 @@ compte du projet inscrit dans `crescite_admins`.
     d'accueil, depuis une date (ses séances, son lieu, son équipe en tournée) ou une piste (sa structure, son contact), à
     partir des modèles de la compagnie (Textes du site → « Modèle : devis »…, créés avec un texte de départ à la première
     demande, à relire), les coordonnées et le contact de la compagnie, le montant, la TVA (5,5 %) et les conditions
-    demandés dans un formulaire ; numérotés (DEV-2026-003…), en A4 avec le logo, imprimés ou enregistrés en PDF par le
-    navigateur, gardés dans la fiche (`crescite_textes`, `documents:generes`) et réimprimables.
+    demandés dans un formulaire (et l'échéance d'une facture) ; en A4 avec le logo, imprimés ou enregistrés en PDF par le
+    navigateur. Chacun est émis par la base (`crescite_documents_generes`, le vingtième script, réservé à
+    l'administration) : elle donne le numéro (DEV-2026-003…, le suivant de l'année pour ce type, sous un verrou) et garde
+    la page telle qu'émise, que « Imprimer » reproduit à l'identique ; un document émis ne change plus, une facture ne
+    se supprime pas. Sans le script, rien n'est émis. **La chaîne commerciale** : le montant de cession HT se saisit
+    dans la fiche d'une date (et dans le tableur, et à l'import) et préremplit le devis, le contrat, la facture ; un
+    document émis fait suivre le reste sans rien écraser (la cession d'une date encore vide, un contrat « à envoyer »
+    qui devient « envoyé », une piste au premier contact qui passe à « Dossier / Devis », une demande du site qui a son
+    devis) ; une facture a son échéance, se note payée, un document s'annule (il reste numéroté). Le parcours d'une date
+    a son étape « Facture » ; le tableau de bord, « Factures en retard » et « Dates jouées sans facture ». Une sélection
+    de dates fait un seul devis pour la tournée, une ligne par séance et son lieu. Dans la Diffusion : une piste se
+    marque perdue (« Pistes perdues », elle se rouvre), a son lieu, son téléphone, la date de son dernier contact (qui ne
+    se remet plus à aujourd'hui à chaque correction) ; « Cession confirmée » propose de créer la date, pré-remplie, que
+    la piste retient ; la relance est signée du contact diffusion et donne le lien personnel de l'invitation reliée,
+    « Relance faite » note la suivante à quinze jours ; la piste dit ce que la compagnie sait (son lieu, ses dates, ses
+    spectateurs, sa dernière cession, les visites de l'invitation). Une demande de devis devient piste, fiche de lieu
+    et devis d'un geste.
   - **Les séries et modèles de dates** (`admin/series.js`) : « Série… » dans une fiche pose d'un coup les séances du … au
     …, les jours choisis, aux heures voulues (10:00, 14:30) ; « Dupliquer vers… » sur une sélection recopie les dates
     décalées de n jours (364 : le même jour de la semaine l'an d'après), en option, avec « Annuler » ; chaque spectacle a
@@ -568,6 +583,30 @@ Bérénice dans le stockage privé. L'import n'écrase jamais le travail de l'ad
   demande si elles le gardent. La fiche de la personne dit aussi ce qu'elle a joué, et quand. Rien ne change dans la
   base : ce sont les écarts de `crescite_equipes`, comme ceux de l'historique importé. **Dans chaque date** : son équipe (la distribution « en tournée » cochée ; on décoche qui ne part pas, on ajoute un
   remplaçant).
+- **Ce que la base sait, montré là où l'on agit** (l'audit du 27 octobre 2026) : la fiche d'un lieu fait son bilan (les
+  représentations jouées, depuis quand, les spectateurs, le remplissage, les cessions ; saison par saison ; ses
+  organisateurs successifs ; les pistes et les demandes de devis du lieu ou de sa commune) et montre toutes ses dates ;
+  la fiche d'une date a son budget (la cession, les notes de frais qui la concernent, ce qui reste, ce qui est facturé et
+  encaissé) et, « Côté équipe », qui a lu la feuille de route publiée (et qui ne la reçoit pas : sans compte, sans
+  téléphone abonné), les retards signalés et les changements faits depuis l'espace de l'équipe ; chacun y a sa note
+  logistique pour la date (« train de 14h12 », que son espace montre). « La saison en chiffres » ajoute le remplissage,
+  les cessions, les élèves en atelier et les kilomètres, et se détaille par spectacle, par département, par dispositif.
+  « À traiter » relève les conflits d'équipe des soixante jours qui viennent ; « À compléter avant la tournée », qui ne
+  sera pas prévenu (sans compte, agenda relié en erreur). La feuille de route dit les conflits, les régimes à
+  transmettre à l'accueil (jamais dans la feuille), et son trajet part du lieu de la veille quand deux dates
+  s'enchaînent. La liste des dates se filtre par nature, département, contrat et période, montre la nature, et la
+  recherche (la liste comme Ctrl K) trouve une date par son organisateur ou son contact.
+- **Le carnet des lieux et les droits des photos** : la fiche d'un lieu a son carnet, jamais publié : ses contacts
+  (direction, régie, accueil des compagnies…, chacun son rôle, son téléphone, son courriel) et les hébergements à côté
+  (hôtel, gîte, chez l'habitant ; adresse, prix, ce qu'il faut savoir). Un contact coché « sur la feuille de route »
+  s'écrit dans la rubrique « Adresses et contacts » des feuilles des dates de ce lieu ; un hébergement du carnet se
+  propose comme rubrique Hébergement (après les feuilles déjà écrites au même lieu ; ceux des autres lieux de la commune
+  en dernier). La fiche d'une date montre les contacts et l'hébergement de son lieu ; une fusion de lieux emporte le
+  carnet. Chaque photo d'un spectacle a son crédit (qui passe devant celui du spectacle sur le site), ses droits
+  (accordés, à vérifier, ou « usage interne » : la photo reste hors du site, de la base comme de l'instantané) et ses
+  conditions d'utilisation. L'équipe d'une date suit partout la même règle : la distribution « en tournée », moins les
+  retirés, plus les renforts, la fonction écrite pour la date remplaçant celle de la distribution (l'administration,
+  l'espace de l'équipe, et la base, qui la tient dans une vue).
 - **Feuilles de route** : la feuille d'une date s'écrit directement sur une page A4 à l'écran, dans la forme des
   feuilles de la compagnie (le logo rond noir, la police FdR Sans, dérivée de Carlito et métriquement identique à
   Calibri, les jours en gras, les personnes surlignées en jaune, les alertes en rouge). La barre d'outils est courte :
@@ -989,6 +1028,37 @@ codes essayés en vain sont comptés : au-delà de 60 en dix minutes, plus aucun
 si). Relancer le quatrième script après lui rend aux salles le seul jeton : relancer alors le dix-neuvième. 18 essais
 (`node pro-code.mjs`), et `node site/code-salles.mjs` (22 vérifications, administration fictive) et
 `site/salles-reponse.mjs` (le code tapé) dans Chromium.
+
+**Les documents générés à l'abri (pas encore lancé, urgent).** Le vingtième script,
+`supabase/migrations/20261107_crescite_documents_generes.sql`, se lance dans le projet de la compagnie et peut être
+relancé. Les devis, contrats, factures et fiches techniques étaient gardés dans `crescite_textes`, que le site public lit
+en entier : ils vont dans `crescite_documents_generes`, que seule l'administration lit, et la base les numérote
+(`crescite_emettre_document`). Les clés `modele:…` et `modele-date:…` des textes ne sont plus publiques (même règle dans le
+script de base, qu'une relance ne rouvre donc pas). Tant qu'il n'est pas lancé, l'administration n'émet aucun document.
+19 essais (`node documents_generes.mjs` : tous les scripts, un devis gardé à l'ancienne, puis lui, deux fois).
+
+**Les correctifs de l'audit (pas encore lancé).** Le vingt-et-unième script, `supabase/migrations/20261108_crescite_correctifs.sql`,
+se lance dans le projet de la compagnie et peut être relancé ; il ne change aucune table. Un « Prévenir l'équipe » ne
+remplace plus le précédent (chacun part sur les téléphones) ; deux propositions de dates, ou les réponses de deux
+personnes, ne se fondent plus ; une feuille republiée pour une date passée se tait, retirée elle le dit ; l'absent posé à
+la création d'une date n'apprend pas qu'il « ne part plus » ; une date déplacée prévient ; on ne répond plus à une
+proposition close ni pour un jour passé ; pistes, demandes de devis, frais, matériel, invitations pro et propositions vont
+au journal ; les notes internes se datent. 17 essais (`node correctifs.mjs`). La fonction `crescite-agenda` est à
+redéployer : elle ignore désormais, à la relecture d'un agenda relié, les dates de la compagnie qu'on y a importées (sans
+quoi chacune était en conflit avec elle-même).
+
+**La diffusion reliée (pas encore lancé).** Le vingt-deuxième script, `supabase/migrations/20261109_crescite_diffusion.sql`,
+se lance dans le projet de la compagnie et peut être relancé. Une piste de diffusion connaît son lieu (`lieu_id`), une
+invitation à l'espace pro et une demande de devis leur piste (`prospect_id`) ; les étapes d'une piste (dont `refus`, une
+piste perdue) et les statuts d'une demande sont tenus par la base. 7 essais (`node diffusion.mjs`). Sans lui,
+l'administration ne propose pas ces liens et marche comme avant.
+
+**L'équipe d'une date et le carnet des lieux (pas encore lancé).** Le vingt-troisième script,
+`supabase/migrations/20261110_crescite_carnet.sql`, se lance dans le projet de la compagnie et peut être relancé. La vue
+`crescite_equipe_date` dit qui part sur une date (et avec quelle fonction) ; `crescite_membres_date` (qui prévenir) et
+`crescite_membre_date` (qui lit quoi) la lisent désormais, sans rien changer à ce qu'elles rendent. Les tables
+`crescite_contacts` et `crescite_hebergements` (le carnet des lieux) ne se lisent que dans l'administration et vont au
+journal. 21 essais (`node carnet.mjs`). Sans lui, la fiche d'un lieu dit que le carnet attend son script.
 
 **Écrire dans la base.** `python3 supabase/ecrire.py` est le seul outil par lequel Claude modifie la base quand on le lui
 demande : les tables `crescite_` et les stockages de la compagnie seulement (les tables d'adrienvada.fr restent hors

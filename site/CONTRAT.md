@@ -46,8 +46,12 @@ Lance `python3 site/build.py mNN` puis lis `site/dist/data.json` pour les valeur
   - `lieuTemps` (« Rome, an 79. », « Royaume de Pyrie, 124 av. J-C. », « 2077 » ; null ailleurs), `accroche` (une phrase,
     tirée des sources), `affirmations` `[{texte, source}]`, `citations` `[{vers: [lignes], source, prose?}]` (un vers par
     ligne ; `prose` : une réplique, pas un vers), `video` `{titre, url, source}` ou null (en LIEN seulement, jamais d'iframe),
-    `photos` `[{id, cle, legende|null, source, etablissement?, atelier?}]` → l'image est `D.photos[cle]`, `creditPhotos`,
-    `creditDossier` (Bérénice : « Crédit photos : Olivier Héron », pour les photos de source « dossier »).
+    `photos` `[{id, cle, legende|null, source, etablissement?, atelier?, credit?, droits?, conditions?}]` → l'image est
+    `D.photos[cle]`, `creditPhotos`, `creditDossier` (Bérénice : « Crédit photos : Olivier Héron », pour les photos de source
+    « dossier »). Les droits de chaque photo (écrits dans l'administration) : `credit` (« © Olivier Héron ») passe devant
+    `creditPhotos` / `creditDossier` ; `droits` vaut `accordes`, `interne` (pas de publication : une photo `interne` n'arrive
+    jamais dans `D`, ni de la base ni de l'instantané) ou rien (à vérifier) ; `conditions` (« presse seulement, jusqu'en
+    2027 ») ne se montre pas.
   - `actionCulturelle` : `{type|null, public|null, lieu: 'etablissement'|'salle'|null, statut?, textes: [{texte: HTML, source}],
     formule?: [lignes], dispositifs: [HTML], dossier?: true, aCompleter?: true}`. Le TYPE d'action culturelle de chaque spectacle :
     Bérénice « Spectacle in situ » (À partir de la seconde, formule « 6 classes : 2 représentations / 6 ateliers de 1h (1/cl) »,

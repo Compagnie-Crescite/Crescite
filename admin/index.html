@@ -257,6 +257,7 @@ main { padding: 20px; max-width: 1500px; margin: 0 auto; }
 .badge.annulee, .badge.masquee { background: var(--alerte-doux); color: var(--alerte); }
 .badge.sco { background: #e6f0fb; color: #1e4f8a; }
 .badge.ok { background: var(--ok-doux); color: var(--ok); }
+.mini.ph-interne img { opacity: .45; filter: grayscale(1); }
 .vide { padding: 30px 16px; text-align: center; color: var(--gris); }
 /* une liste vide dit pourquoi (listeVide) : une phrase, puis le geste utile (« Effacer les filtres », « ＋ Nouvelle date ») */
 .vide.liste-vide { display: grid; justify-items: center; gap: 12px; margin: 0; }
@@ -381,6 +382,10 @@ table.reps td:first-child { padding-left: 0; }
 .journal-ligne .diff { color: var(--gris); font-size: 13px; }
 @media (max-width: 700px) { .journal-ligne { grid-template-columns: 1fr; } }
 table.simple { width: 100%; border-collapse: collapse; background: var(--carte); border-radius: var(--rayon); overflow: hidden; }
+.f-periode { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--gris); } .f-periode label { display: inline-flex; gap: 4px; align-items: center; } .f-periode input { min-height: 34px; padding: 4px 6px; }
+.lieu-bilan { margin: 0 0 10px; } .lieu-saisons { margin: 4px 0 12px; } .lieu-plus summary { cursor: pointer; margin: 8px 0; font-weight: 650; }
+.budget-l { display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; margin: 0; } .budget-l dt { color: var(--gris); } .budget-l dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.budget-l .total { font-weight: 800; border-top: 1px solid var(--trait); padding-top: 4px; }
 table.simple th, table.simple td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--trait); vertical-align: top; }
 table.simple th { font-size: 12.5px; color: var(--gris); }
 table.simple tr.cliquable { cursor: pointer; }
@@ -793,10 +798,17 @@ const NOMS_TABLES = { crescite_spectacles: 'Spectacle', crescite_lieux: 'Lieu', 
   crescite_dates_suivi: 'Suivi d’une date', crescite_lieux_suivi: 'Suivi d’un lieu', crescite_ateliers: 'Atelier', crescite_seances: 'Séance d’atelier', crescite_textes: 'Texte du site',
   crescite_personnes: 'Fiche d’une personne', crescite_personnes_privees: 'Coordonnées d’une personne', crescite_personnes_suivi: 'Notes sur une personne',
   crescite_distributions: 'Distribution', crescite_equipes: 'Équipe d’une date', crescite_documents: 'Document', crescite_feuilles: 'Feuille de route',
-  crescite_diffusion_prospects: 'Opportunité de diffusion', crescite_notes_frais: 'Note de frais', crescite_materiel: 'Matériel de tournée', crescite_devis_demandes: 'Demande de devis' };
+  crescite_diffusion_prospects: 'Opportunité de diffusion', crescite_notes_frais: 'Note de frais', crescite_materiel: 'Matériel de tournée', crescite_devis_demandes: 'Demande de devis',
+  crescite_acces_pro: 'Invitation à l’espace pro', crescite_propositions: 'Proposition de dates', crescite_notes: 'Note interne' };
 // les chiffres des dates (la jauge, les spectateurs, les heures d'ateliers : supabase/migrations/20261029_crescite_chiffres.sql),
 // jamais publiés : lus et écoutés à part, et seulement quand la base les a (E.chiffresInstalles)
 const TABLES_CHIFFRES = { crescite_dates_chiffres: ['chiffres', 'date_id'] };
+// les documents générés (le vingtième script, modeles.js) : E.docsGeneres, sans leur page
+const TABLES_DOCUMENTS = { crescite_documents_generes: ['docsGeneres', 'id'] };
+NOMS_TABLES.crescite_documents_generes = 'Document généré';
+// le carnet des lieux (le vingt-troisième script, carnet.js) : E.contacts, E.hebergements
+const TABLES_CARNET = { crescite_contacts: ['contacts', 'id'], crescite_hebergements: ['hebergements', 'id'] };
+NOMS_TABLES.crescite_contacts = 'Contact d’un lieu'; NOMS_TABLES.crescite_hebergements = 'Hébergement près d’un lieu';
 NOMS_TABLES.crescite_dates_chiffres = 'Chiffres d’une date';
 
 // ===================================================================================================== outils
@@ -1135,11 +1147,16 @@ async function demarrer() {
   if (versAdmin) { versAdmin = false; requestAnimationFrame(() => tt('page', getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#5f565a')); }
 }
 
+// la clé de chaque table qu'on lit en entier (id, sinon celle-ci) : l'ordre des pages de 1 000 doit être total, sans quoi
+// deux pages se chevauchent ou se manquent dès qu'une table dépasse 1 000 lignes (trier sur debut ou jour ne suffit pas)
+const CLES_TABLES = { crescite_dates_suivi: ['date_id'], crescite_lieux_suivi: ['lieu_id'], crescite_dates_chiffres: ['date_id'], crescite_textes: ['cle'],
+  crescite_admins: ['user_id'], crescite_equipes: ['date_id', 'personne_id'], crescite_personnes_privees: ['personne_id'], crescite_personnes_suivi: ['personne_id'] };
 async function tout(table, ordre) {
   const out = [];
   for (let a = 0; ; a += 1000) {
     let q = sb.from(table).select('*').range(a, a + 999);
     if (ordre) q = q.order(ordre, { ascending: true });
+    for (const k of CLES_TABLES[table] || ['id']) if (k !== ordre) q = q.order(k, { ascending: true });
     const { data, error } = await q;
     if (error) throw error;
     out.push(...data);
@@ -1150,6 +1167,8 @@ async function chargerTout() {
   const equipe = chargerEquipe();   // l'équipe (equipe.js) : ne lève jamais d'erreur, même quand la base ne l'a pas encore
   const chiffres = tout('crescite_dates_chiffres').then(x => x, () => null);   // null : la base n'a pas encore le dixième script
   const tableau = typeof TABLEAU !== 'undefined' ? TABLEAU.charger() : null;   // la disposition du tableau de bord (tableau.js) : ne lève jamais d'erreur
+  const documents = typeof MODELES !== 'undefined' ? MODELES.charger() : null;   // les documents générés (modeles.js) : ne lève jamais d'erreur
+  const carnet = typeof CARNET !== 'undefined' ? CARNET.charger() : null;      // le carnet des lieux (carnet.js) : ne lève jamais d'erreur
   let ideale = false;               // la base a les tables de TABLES_IDEALE (une au moins se lit)
   const facultative = table => tout(table, 'id').then(x => { ideale = true; return x; }, () => []);   // (par id : des pages de 1 000 qui ne se chevauchent pas)
   const [sp, li, da, re, su, ls, at, se, tx, ad, pr, fr, mt, dv] = await Promise.all([
@@ -1164,7 +1183,19 @@ async function chargerTout() {
   const c = await chiffres;
   E.chiffres = c || []; E.chiffresInstalles = !!c;
   if (ideale) await lireAlertes();
+  // les indisponibilités, pour les conflits d'équipe du tableau de bord (gardefous.js) : lues sans attendre, puis on redessine
+  if (E.equipeInstallee && typeof GARDEFOUS !== 'undefined') GARDEFOUS.charger().then(() => { if (E.pret && !E.sale) rafraichirListes(); });
+  // qui reçoit quoi : les téléphones abonnés aux notifications, les agendas reliés qui ne se relisent plus (le cinquième script)
+  if (E.equipeInstallee) {
+    const [ab, ag] = await Promise.all([sb.from('crescite_abonnements').select('personne_id'), sb.from('crescite_agendas_lies').select('personne_id,nom,erreur,derniere_synchro').not('erreur', 'is', null)]);
+    E.abonnes = new Set(ab.error ? [] : (ab.data || []).map(x => x.personne_id)); E.abonnesLus = !ab.error;
+    E.agendasErreur = ag.error ? [] : ag.data || [];
+  }
+  // la diffusion reliée (le vingt-deuxième script) : une piste a son lieu, une invitation pro sa piste
+  E.diffusionReliee = ideale ? !(await sb.from('crescite_diffusion_prospects').select('lieu_id').limit(1)).error : false;
   await tableau;
+  await documents;
+  await carnet;
 }
 // les alertes de tournée, avec leur confirmation (le onzième script, supabase/migrations/20261030_crescite_alertes.sql) :
 // sans leur jeton (les liens des courriels) ni rien d'autre que ce que le résumé montre. Sans le script (confirme_le
@@ -1222,6 +1253,16 @@ function ecouter() {
     const ci = sb.channel('crescite-admin-ideale');
     Object.keys(TABLES_IDEALE).forEach(t => ci.on('postgres_changes', { event: '*', schema: 'public', table: t }, p => changement(t, p)));
     ci.subscribe();
+  }
+  if (E.docsInstalles) {
+    const cd = sb.channel('crescite-admin-documents');
+    Object.keys(TABLES_DOCUMENTS).forEach(t => cd.on('postgres_changes', { event: '*', schema: 'public', table: t }, p => changement(t, p)));
+    cd.subscribe();
+  }
+  if (E.carnetInstalle) {
+    const cn = sb.channel('crescite-admin-carnet');
+    Object.keys(TABLES_CARNET).forEach(t => cn.on('postgres_changes', { event: '*', schema: 'public', table: t }, p => changement(t, p)));
+    cn.subscribe();
   }
   if (E.chiffresInstalles) {
     const cc = sb.channel('crescite-admin-chiffres');
@@ -1318,7 +1359,7 @@ setInterval(() => { if (document.visibilityState === 'visible') majTemoin(); }, 
 document.addEventListener('visibilitychange', () => { if (document.visibilityState !== 'visible' || !E.pret) return; majTemoin(); if (!E.direct && !E.horsLigne && Date.now() - (E.luLe || 0) > 900000) actualiser({ discret: true }); });
 
 function changement(t, p) {
-  const [k, pk] = TABLES[t] || TABLES_EQUIPE[t] || TABLES_IDEALE[t] || TABLES_CHIFFRES[t];
+  const [k, pk] = TABLES[t] || TABLES_EQUIPE[t] || TABLES_IDEALE[t] || TABLES_CHIFFRES[t] || TABLES_DOCUMENTS[t] || TABLES_CARNET[t];
   const pd = $('.direct.on'); if (pd) { pd.classList.remove('bat'); void pd.offsetWidth; pd.classList.add('bat'); }
   // la clé : une colonne, ou plusieurs (l'équipe d'une date : date_id et personne_id)
   const coll = E[k], ligne = p.eventType === 'DELETE' ? p.old : p.new, cles = [].concat(pk);
@@ -1730,8 +1771,8 @@ function indexRch() {
     const etat = { option: 'option', annulee: 'annulée', reportee: 'reportée' }[d.statut];
     const jours = new Set(joursDe.get(d.id) || []);
     if (d.precision !== 'mois' && d.precision !== 'saison') for (let j = d.debut, n = 0; j <= fin && n < 62; j = plusJours(j, 1), n++) jours.add(j);
-    const plus = `${l ? `${l.commune} ${l.departement || ''}` : ''} ${d.intitule || ''} ${(NATURES_DATE.find(x => x[0] === d.nature) || [])[1] || ''} ${[...jours].map(jourRch).join(' ')}`;
-    const su = (E.suivis || []).find(x => x.date_id === d.id) || {};
+    const su = (E.suivis || []).find(x => x.date_id === d.id) || {};   // (l'organisateur, son contact, les notes du suivi : une date se retrouve par son programmateur)
+    const plus = `${l ? `${l.commune} ${l.departement || ''}` : ''} ${d.intitule || ''} ${(NATURES_DATE.find(x => x[0] === d.nature) || [])[1] || ''} ${su.organisateur || ''} ${su.contact || ''} ${su.notes || ''} ${[...jours].map(jourRch).join(' ')}`;
     const passages = passagesRch([...[...jours].sort().map(j => ['Jour', jourLettresRch(j), jourRch(j)]), ['Intitulé', d.intitule], ['Organisateur', su.organisateur], ['Contact', su.contact]]);
     const base = { titre: s?.titre || 'Spectacle à préciser', couleur: couleurSp(s), ordre: avenir ? t : 1e9 - t, avenir, passages, sous: `${quand} · ${ou}${etat ? ` · ${etat}` : ''}` };
     mettre({ ...base, type: 'Date', href: `#/representations/${d.id}` }, plus);
@@ -2165,13 +2206,18 @@ function formNouveauLieu(zone, texte, etablissement, fini) {
 function vueDates(param) {
   if (param === 'tableur') return TABLEUR.vue();   // le tableur : une ligne par séance, branché sur la base
   if (param === 'carte') { if (typeof TOURNEE !== 'undefined') return TOURNEE.vue(); location.replace('#/representations'); return; }   // la carte de tournée (tournee.js)
-  const f = session.dates = Object.assign({ spectacle: '', public: '', statut: '', q: '', ouvertes: [] }, session.dates || {});
+  const f = session.dates = Object.assign({ spectacle: '', public: '', statut: '', nature: '', dep: '', contrat: '', du: '', au: '', q: '', ouvertes: [] }, session.dates || {});
+  const deps = [...new Set(E.dates.map(d => lieu(d.lieu_id)?.departement).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), 'fr', { numeric: true }));
   const saisons = [...new Set(E.dates.map(d => d.saison))].sort().reverse();
   cadre('representations', `<div class="tete"><h1>Représentations</h1>${TABLEUR.choixVue('liste')}<a class="btn principal" href="#/representations/nouvelle">＋ Nouvelle date</a></div>
     <div class="deux${param ? ' edition' : ''}"><div class="liste"><div id="avant"></div><div class="filtres">
       <input type="search" id="f-q" placeholder="Chercher un lieu, une commune, un spectacle" value="${esc(f.q)}" aria-label="Chercher">
       <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center"><select id="f-saison" aria-label="Aller à la saison"><option value="">Aller à une saison…</option>${saisons.map(s => `<option value="${s}">Saison ${s}</option>`).join('')}</select>
       <select id="f-public" aria-label="Public"><option value="">Tous publics</option><option value="tout_public"${f.public === 'tout_public' ? ' selected' : ''}>Tout public</option><option value="scolaire"${f.public === 'scolaire' ? ' selected' : ''}>Scolaire</option></select>
+      <select id="f-nature" aria-label="Nature"><option value="">Toutes natures</option>${[['representations', 'Représentations'], ['repetitions', 'Répétitions'], ['residence', 'Résidences']].map(([k, l]) => `<option value="${k}"${f.nature === k ? ' selected' : ''}>${l}</option>`).join('')}</select>
+      <select id="f-dep" aria-label="Département"><option value="">Tous départements</option>${deps.map(k => `<option value="${esc(k)}"${f.dep === k ? ' selected' : ''}>${esc(k)}</option>`).join('')}</select>
+      <select id="f-contrat" aria-label="Contrat"><option value="">Tous contrats</option>${[['aucun', 'Sans contrat'], ['à envoyer', 'À envoyer'], ['envoyé', 'Envoyé'], ['signé', 'Signé']].map(([k, l]) => `<option value="${k}"${f.contrat === k ? ' selected' : ''}>${l}</option>`).join('')}</select>
+      <span class="f-periode"><label>du <input type="date" id="f-du" value="${esc(f.du)}"></label><label>au <input type="date" id="f-au" value="${esc(f.au)}"></label></span>
       <select id="f-statut" aria-label="Statut"><option value="">Tous statuts</option>${[['option', 'Options'], ['confirmee', 'Confirmées'], ['annulee', 'Annulées'], ['reportee', 'Reportées'], ['masquee', 'Masquées']].map(([k, l]) => `<option value="${k}"${f.statut === k ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
       <div class="puces" role="group" aria-label="Spectacle">${E.spectacles.filter(s => s.page).map(s => `<button type="button" class="puce" data-sp="${s.id}" style="--c:${couleurSp(s)}" aria-pressed="${String(f.spectacle) === String(s.id)}"><span class="pastille"></span>${esc(s.titre.split(' – ')[0])}</button>`).join('')}</div>
       <span class="compte" id="f-compte"></span></div><div data-liste id="l-dates"></div></div>
@@ -2190,6 +2236,7 @@ function vueDates(param) {
   });
   $('#f-public').addEventListener('change', e => { f.public = e.target.value; maj(); });
   $('#f-statut').addEventListener('change', e => { f.statut = e.target.value; maj(); });
+  [['f-nature', 'nature'], ['f-dep', 'dep'], ['f-contrat', 'contrat'], ['f-du', 'du'], ['f-au', 'au']].forEach(([i, k]) => $(`#${i}`)?.addEventListener('change', e => { f[k] = e.target.value; maj(); }));
   $$('[data-sp]').forEach(b => b.addEventListener('click', () => { f.spectacle = String(f.spectacle) === b.dataset.sp ? '' : b.dataset.sp; $$('[data-sp]').forEach(x => x.setAttribute('aria-pressed', String(f.spectacle) === x.dataset.sp)); maj(); }));
   // une nouvelle date pré-remplie ailleurs (« Créer la date » d'une proposition : E.dateDepart) : à enregistrer
   const depart = param === 'nouvelle' ? E.dateDepart || null : null;
@@ -2211,19 +2258,22 @@ const jourSansAn = j => jourCourt(j).replace(/ \d{4}$/, '');
 function aCompleterAvant(jours) {
   const fin = plusJours(AUJ, jours);
   const ds = E.dates.filter(d => (d.fin || d.debut) >= AUJ && d.debut <= fin && !['annulee', 'reportee', 'option'].includes(d.statut)).sort((a, b) => a.debut.localeCompare(b.debut) || a.id - b.id);
-  const pers = new Map(), lieux = new Map(), sansLieu = [], feuilles = [];
+  const pers = new Map(), lieux = new Map(), sansLieu = [], feuilles = [], joint = new Map();
   ds.forEach(d => {
     if (E.equipeInstallee) {
+      // qui ne sera pas prévenu : sans compte (ni feuille de route ni notification), ou son agenda relié ne se relit plus
+      equipeDeLaDate(d).forEach(x => { const p = personne(x.personne_id); if (!p) return; const sansCompte = !priveeDe(x.personne_id)?.user_id, agenda = (E.agendasErreur || []).find(a => a.personne_id === x.personne_id);
+        if (!sansCompte && !agenda) return; if (!joint.has(p.id)) joint.set(p.id, { p, sansCompte, agenda, dates: [] }); joint.get(p.id).dates.push(d); });
       equipeDeLaDate(d).forEach(x => { if (!(priveeDe(x.personne_id)?.telephone || '').trim() && personne(x.personne_id)) { if (!pers.has(x.personne_id)) pers.set(x.personne_id, { p: personne(x.personne_id), dates: [] }); pers.get(x.personne_id).dates.push(d); } });
       const f = E.feuilles.find(x => x.date_id === d.id), n = f ? aCompleter(d.id) : 0;
       if (!f || n) feuilles.push({ d, f, n });
     }
     const l = lieu(d.lieu_id);
     if (!l) { sansLieu.push(d); return; }
-    const manque = [!(l.adresse || '').trim() && 'adresse', !(E.lieuxSuivi.find(x => x.lieu_id === l.id)?.contact || '').trim() && 'contact'].filter(Boolean);
+    const manque = [!(l.adresse || '').trim() && 'adresse', !(E.lieuxSuivi.find(x => x.lieu_id === l.id)?.contact || '').trim() && !(E.contacts || []).some(x => x.lieu_id === l.id) && 'contact'].filter(Boolean);
     if (manque.length) { if (!lieux.has(l.id)) lieux.set(l.id, { l, manque, dates: [] }); lieux.get(l.id).dates.push(d); }
   });
-  return { ds, pers: [...pers.values()], lieux: [...lieux.values()], sansLieu, feuilles, n: pers.size + lieux.size + sansLieu.length + feuilles.length };
+  return { ds, pers: [...pers.values()], lieux: [...lieux.values()], sansLieu, feuilles, joignables: [...joint.values()], n: pers.size + lieux.size + sansLieu.length + feuilles.length + joint.size };
 }
 function dessinerAvant(el) {
   if (!el) return;
@@ -2237,6 +2287,7 @@ function dessinerAvant(el) {
     ${section('Téléphones', a.pers.map(x => `<li><a href="#/equipe/${x.p.id}" data-viser="telephone">${esc(nomDe(x.p))}</a><span class="compte">pas de téléphone · part ${esc(quand(x.dates))}</span></li>`))}
     ${section('Lieux', [...a.lieux.map(x => `<li><a href="#/lieux/${x.l.id}" data-viser="${x.manque[0]}">${esc(x.l.nom ? `${x.l.nom}, ${x.l.commune}` : x.l.commune)}</a><span class="compte">${x.manque.map(m => `sans ${m}`).join(', ')} · ${esc(quand(x.dates))}</span></li>`),
       ...a.sansLieu.map(d => `<li><a href="#/representations/${d.id}" data-viser="#d-lieu input">Lieu à préciser</a><span class="compte">${esc(spectacle(d.spectacle_id)?.titre || '?')} · le ${esc(jourSansAn(d.debut))}</span></li>`)])}
+    ${section('Qui ne sera pas prévenu', a.joignables.map(x => `<li><a href="#/equipe/${x.p.id}" data-viser="email">${esc(nomDe(x.p))}</a><span class="compte">${x.sansCompte ? 'pas de compte : ni feuille de route ni notification' : `son agenda « ${esc(x.agenda.nom || 'relié')} » ne se relit plus`} · part ${esc(quand(x.dates))}</span></li>`))}
     ${section('Feuilles de route', a.feuilles.map(x => `<li><a href="#/feuilles/${x.d.id}" data-viser="${x.f ? '#fr-manques' : '#fr-composer'}">${esc(jourSansAn(x.d.debut))} · ${esc(ouDe(x.d))}</a><span class="compte">${esc(spectacle(x.d.spectacle_id)?.titre || '?')}</span>${x.f ? `<span class="badge option">${x.n} à compléter</span>` : '<span class="badge">à composer</span>'}</li>`))}</div></details>`;
   listeQuiSeVide(el, r.jours);
 }
@@ -2271,12 +2322,17 @@ function relierAvant(el) {
   el.addEventListener('change', e => { if (e.target.id !== 'avant-jours') return; garderAvant({ ...reglagesAvant(), jours: +e.target.value }); dessinerAvant(el); $('#avant-jours', el)?.focus(); });
 }
 function listeDates(zone, actif) {
-  const f = session.dates, q = norm(f.q).trim(), cherche = !!(q || f.spectacle || f.public || f.statut);
+  const f = session.dates, q = norm(f.q).trim(), cherche = !!(q || f.spectacle || f.public || f.statut || f.nature || f.dep || f.contrat || f.du || f.au);
   const xs = E.dates.filter(d => {
     if (f.spectacle && String(d.spectacle_id) !== String(f.spectacle)) return false;
+    if (f.nature && (d.nature || 'representations') !== f.nature) return false;
+    if (f.dep && lieu(d.lieu_id)?.departement !== f.dep) return false;
+    if (f.contrat) { const c = (E.suivis.find(x => x.date_id === d.id)?.contrat || '').trim(); if (f.contrat === 'aucun' ? c : c !== f.contrat) return false; }
+    if (f.du && (d.fin || d.debut) < f.du) return false;
+    if (f.au && d.debut > f.au) return false;
     if (f.public && !(d.public === f.public || (d.public === 'mixte'))) return false;
     if (f.statut === 'masquee' ? d.visible : f.statut && d.statut !== f.statut) return false;
-    if (q) { const s = spectacle(d.spectacle_id), l = lieu(d.lieu_id); if (!norm(`${s?.titre} ${l?.nom} ${l?.commune} ${d.intitule || ''}`).includes(q)) return false; }
+    if (q) { const s = spectacle(d.spectacle_id), l = lieu(d.lieu_id), su = E.suivis.find(x => x.date_id === d.id) || {}; if (!norm(`${s?.titre} ${l?.nom} ${l?.commune} ${d.intitule || ''} ${su.organisateur || ''} ${su.contact || ''}`).includes(q)) return false; }
     return true;
   });
   const avenir = xs.filter(d => (d.fin || d.debut) >= AUJ).sort((a, b) => a.debut < b.debut ? -1 : a.debut > b.debut ? 1 : a.id - b.id);
@@ -2286,7 +2342,8 @@ function listeDates(zone, actif) {
     const s = spectacle(d.spectacle_id), l = lieu(d.lieu_id), reps = repsDe(d.id);
     const badges = [d.statut === 'option' && '<span class="badge option">Option</span>', d.statut === 'annulee' && '<span class="badge annulee">Annulée</span>',
       d.statut === 'reportee' && '<span class="badge option">Reportée</span>', !d.visible && '<span class="badge masquee">Masquée</span>',
-      d.public === 'scolaire' && '<span class="badge sco">Scolaire</span>', d.public === 'mixte' && '<span class="badge sco">Mixte</span>'].filter(Boolean).join('');
+      d.public === 'scolaire' && '<span class="badge sco">Scolaire</span>', d.public === 'mixte' && '<span class="badge sco">Mixte</span>',
+      d.nature === 'repetitions' && '<span class="badge">Répétitions</span>', d.nature === 'residence' && '<span class="badge">Résidence</span>'].filter(Boolean).join('');
     const jours = [...new Set(reps.map(r => r.jour))];
     return `<a class="ligne" href="#/representations/${d.id}" style="--c:${couleurSp(s)}"${String(actif) === String(d.id) ? ' aria-current="true"' : ''}>
       <span class="jj"><b>${+d.debut.slice(8, 10)}</b>${MC[+d.debut.slice(5, 7) - 1]}${(d.fin && d.fin !== d.debut) ? `<br>→ ${+d.fin.slice(8, 10)}` : ''}</span>
@@ -2324,9 +2381,12 @@ function nouvelleDate() {
 function dateVersForm(d) {
   const reps = repsDe(d.id).map(r => ({ id: r.id, jour: r.jour, heure: h5(r.heure), fin: h5(r.fin), public: r.public, annulee: r.annulee, lien: r.lien || '', note: r.note || '' }));
   const su = E.suivis.find(x => x.date_id === d.id) || {};
-  return { ...clone(d), nature: d.nature || 'representations', lien: d.lien || '', representations: reps, suivi: { organisateur: su.organisateur || '', contact: su.contact || '', contrat: su.contrat || '', notes: su.notes || '' },
+  return { ...clone(d), nature: d.nature || 'representations', lien: d.lien || '', representations: reps, suivi: { organisateur: su.organisateur || '', contact: su.contact || '', contrat: su.contrat || '', notes: su.notes || '', montant_cession: su.montant_cession ?? '' },
     equipe: ecartsDate(d.id), chiffres: chiffresVersForm(d.id) };
 }
+// une copie de date (Dupliquer, Dupliquer vers…) garde l'organisateur et son contact, pas le contrat ni les notes de l'autre
+// date (un contrat « signé » l'an d'après serait un contrat fantôme), ni ses chiffres
+const suiviPourCopie = su => ({ organisateur: su?.organisateur || '', contact: su?.contact || '', contrat: '', notes: '', montant_cession: '' });
 // les chiffres d'une date (le dixième script) : la jauge, les spectateurs, les heures d'ateliers ; dans le formulaire, des
 // nombres ou '' (vide)
 const CHIFFRES = [['jauge', 'Jauge (places)', 1, 100000], ['spectateurs', 'Spectateurs', 1, 1000000], ['heures_ateliers', 'Heures d’ateliers', .5, 100000]];
@@ -2387,13 +2447,15 @@ function editeurDate(id, depart = null) {
       <div class="champ"><label for="d-lien">Lien (billetterie ou page du lieu)</label><input type="url" id="d-lien" value="${esc(F.lien)}" placeholder="https://…"></div></div>
 
     <div class="bloc" id="d-equipe"></div>
+    ${d0 && E.equipeInstallee ? '<div class="bloc" id="d-retours" hidden></div>' : ''}
 
     <div class="bloc"><h3>Suivi interne <span class="aide" style="font-weight:400">— jamais publié</span></h3><div class="rangee">
       <div class="champ"><label for="s-org">Organisateur</label><input type="text" id="s-org" value="${esc(F.suivi.organisateur)}"></div>
-      <div class="champ"><label for="s-contrat">Contrat</label><select id="s-contrat">${['', 'à envoyer', 'envoyé', 'signé'].map(x => `<option${F.suivi.contrat === x ? ' selected' : ''}>${x}</option>`).join('')}</select></div></div>
+      <div class="champ"><label for="s-contrat">Contrat</label><select id="s-contrat">${['', 'à envoyer', 'envoyé', 'signé'].map(x => `<option${F.suivi.contrat === x ? ' selected' : ''}>${x}</option>`).join('')}</select></div>
+      ${E.ideale ? `<div class="champ"><label for="s-montant">Montant de cession HT (€)</label><input type="number" id="s-montant" min="0" step="0.01" inputmode="decimal" value="${esc(F.suivi.montant_cession ?? '')}" placeholder="Repris dans le devis, le contrat, la facture"></div>` : ''}</div>
       <div class="champ"><label for="s-contact">Contact</label><input type="text" id="s-contact" value="${esc(F.suivi.contact)}" placeholder="Nom, téléphone, adresse électronique"></div>
       <div class="champ"><label for="s-notes">Notes</label><textarea id="s-notes">${esc(F.suivi.notes)}</textarea></div></div>
-    ${d0 && typeof MODELES !== 'undefined' ? '<div class="bloc" id="d-documents"></div>' : ''}${d0 && typeof NOTES !== 'undefined' ? '<div class="bloc" id="d-notes"></div>' : ''}
+    ${d0 && E.ideale ? '<div class="bloc" id="d-budget"></div>' : ''}${d0 && typeof MODELES !== 'undefined' ? '<div class="bloc" id="d-documents"></div>' : ''}${d0 && typeof NOTES !== 'undefined' ? '<div class="bloc" id="d-notes"></div>' : ''}
     ${E.chiffresInstalles ? `<div class="bloc"><h3>Les chiffres <span class="aide" style="font-weight:400">— jamais publiés ; l’équipe les lit</span></h3><div class="rangee">
       ${CHIFFRES.map(([k, l, pas, max]) => `<div class="champ"><label for="c-${k}">${l}</label><input type="number" id="c-${k}" data-chiffre="${k}" min="0" max="${max}" step="${pas}" inputmode="${pas < 1 ? 'decimal' : 'numeric'}" value="${esc(F.chiffres?.[k] ?? '')}"></div>`).join('')}</div></div>` : ''}
     ${pied(id ? 'Tout est enregistré' : 'Nouvelle date', `${id ? `${boutonFeuille(id)}${boutonPrevenir(id)}<button type="button" class="btn" id="d-dupliquer">Dupliquer</button><button type="button" class="btn danger" id="d-suppr">Supprimer</button>` : ''}`, { replier: true, marque: id && E.equipeInstallee ? resteFeuille(id, 'nombre') : '' })}`;
@@ -2441,12 +2503,57 @@ function editeurDate(id, depart = null) {
     if (!l) { el.innerHTML = ''; return; }
     const sl = E.lieuxSuivi.find(x => x.lieu_id === l.id) || {};
     el.innerHTML = `<div class="lieu-resume"><span>${l.adresse ? `${esc([l.adresse, l.commune].join(', '))} · <a href="${esc(FEUILLE.itineraire(l))}" target="_blank" rel="noopener">Itinéraire ↗</a>` : '<span class="manque">Adresse à compléter dans la fiche du lieu</span>'}</span>
-      <span>${sl.contact ? `Contact du lieu : ${texteEnLiens(sl.contact)}` : '<span class="manque">Pas de contact dans la fiche du lieu</span>'}</span>
+      ${(() => { const cs = typeof CARNET !== 'undefined' ? CARNET.contacts(l.id) : [], hs = typeof CARNET !== 'undefined' ? CARNET.hebergements(l.id) : [];
+        return `<span>${sl.contact ? `Contact du lieu : ${texteEnLiens(sl.contact)}` : cs.length ? '' : '<span class="manque">Pas de contact dans la fiche du lieu</span>'}</span>
+        ${cs.length ? `<span>${cs.slice(0, 3).map(c => `${esc(c.nom)}${c.role ? ` (${esc(c.role)})` : ''}${c.telephone ? ` : ${texteEnLiens(c.telephone)}` : ''}`).join(' · ')}${cs.length > 3 ? ` · +${cs.length - 3}` : ''}</span>` : ''}
+        ${hs.length ? `<span>Hébergement : ${hs.slice(0, 2).map(h => esc(h.nom)).join(', ')}${hs.length > 2 ? ` · +${hs.length - 2}` : ''}</span>` : ''}`; })()}
       ${sl.jauge || sl.plateau ? `<span>${[sl.jauge && `Jauge : ${esc(sl.jauge)} places`, sl.plateau && `plateau : ${esc(sl.plateau)}`].filter(Boolean).join(' · ')}</span>` : ''}
       <a href="#/lieux/${l.id}">Fiche du lieu →</a></div>`;
   };
   dessinerReps(); dessinerDetails(); titre(); dessinerLieu(); parcours();
   if (d0 && typeof MODELES !== 'undefined') MODELES.bloc($('#d-documents', zone), { date: d0 });
+  // le budget de la date : sa cession, les notes de frais qui la concernent, ce qui reste ; ce qui est facturé et encaissé
+  const dessinerBudget = () => {
+    const el = $('#d-budget', zone); if (!el) return;
+    const cession = F.suivi.montant_cession === '' || F.suivi.montant_cession == null ? null : Number(F.suivi.montant_cession);
+    const frais = (E.frais || []).filter(x => x.date_id === d0.id && x.statut !== 'refuse'), totalFrais = frais.reduce((t, x) => t + (Number(x.montant_ttc) || 0), 0);
+    const fac = typeof MODELES !== 'undefined' && E.docsInstalles ? MODELES.generes().filter(x => x.type === 'facture' && !x.annule_le && (x.date_id === d0.id || (x.dates || []).map(Number).includes(Number(d0.id)))) : [];
+    const facture = fac.reduce((t, x) => t + (Number(x.montant_ttc) || 0), 0), encaisse = fac.filter(x => x.paye_le).reduce((t, x) => t + (Number(x.montant_ttc) || 0), 0);
+    const ligne = (l, v, cls = '') => `<dt class="${cls}">${l}</dt><dd class="${cls}">${v}</dd>`;
+    el.innerHTML = `<h3>Budget <span class="aide" style="font-weight:400">— jamais publié</span></h3>
+      ${cession == null && !frais.length && !fac.length ? '<p class="aide">Indiquez le montant de cession dans le suivi : le budget de la date s’en tire, avec les notes de frais qui la concernent.</p>' : `<dl class="budget-l">
+        ${ligne('Cession HT', cession != null ? eurosCourt(cession) : '<span class="manque">à indiquer</span>')}
+        ${ligne(`Notes de frais (${frais.length})`, frais.length ? `− ${eurosCourt(totalFrais)}` : '—')}
+        ${cession != null ? ligne('Reste', eurosCourt(cession - totalFrais), 'total') : ''}
+        ${fac.length ? ligne('Facturé TTC', `${eurosCourt(facture)}${encaisse ? ` · encaissé ${eurosCourt(encaisse)}` : ' · rien d’encaissé'}`) : ''}</dl>`}
+      ${frais.length ? `<p class="aide">${frais.map(x => `${esc(nomDe(personne(x.personne_id)) || 'Quelqu’un')} : ${esc(eurosCourt(x.montant_ttc))}${x.statut === 'en_attente' ? ' (à valider)' : ''}`).join(' · ')} — <a href="#/equipe/frais">les frais</a></p>` : ''}`;
+  };
+  dessinerBudget();
+  // ce que l'équipe a fait de la date : qui a lu la feuille de route publiée (et qui ne la reçoit pas : sans compte, sans
+  // téléphone abonné), les retards et imprévus signalés, les changements faits depuis son espace (lus à l'ouverture)
+  (async () => {
+    const el = $('#d-retours', zone); if (!el) return;
+    const [nf, sg, mo] = await Promise.all([
+      sb.from('crescite_notifications').select('personne_id,lue_le,cree_le,titre').eq('date_id', d0.id).eq('type', 'feuille').order('cree_le', { ascending: false }).limit(200),
+      sb.from('crescite_signalements').select('personne_id,texte,cree_le,prevenus').eq('date_id', d0.id).order('cree_le', { ascending: false }).limit(50),
+      sb.from('crescite_modifications').select('personne_id,titre,texte,cree_le').eq('date_id', d0.id).order('cree_le', { ascending: false }).limit(50)]);
+    if (!el.isConnected) return;
+    const f = E.feuilles.find(x => x.date_id === d0.id), eq = equipeDeLaDate(d0).map(x => x.personne_id), parts = [];
+    const quand = t => new Date(t).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    const nom = id => esc(nomDe(personne(id)) || 'Quelqu’un');
+    if (f && f.statut === 'publiee' && !nf.error) {
+      const der = new Map(); (nf.data || []).forEach(n => { if (!der.has(n.personne_id)) der.set(n.personne_id, n); });
+      const lus = eq.filter(id => der.get(id)?.lue_le), nonLus = eq.filter(id => der.has(id) && !der.get(id).lue_le), sansCompte = eq.filter(id => !priveeDe(id)?.user_id);
+      const sansTel = E.abonnesLus ? eq.filter(id => priveeDe(id)?.user_id && !E.abonnes.has(id)) : [];
+      parts.push(`<p><b>Feuille de route v${f.version || 1}</b> : ${lus.length ? `lue par ${lus.map(id => `${nom(id)} <span class="compte">(${esc(quand(der.get(id).lue_le))})</span>`).join(', ')}` : 'lue par personne encore'}${nonLus.length ? ` · pas encore : ${nonLus.map(nom).join(', ')}` : ''}${sansCompte.length ? ` · <span class="manque">sans compte, ne la reçoit pas : ${sansCompte.map(nom).join(', ')}</span>` : ''}${sansTel.length ? ` · <span class="aide">pas de téléphone abonné : ${sansTel.map(nom).join(', ')}</span>` : ''}</p>`);
+    }
+    if (!sg.error && (sg.data || []).length) parts.push(`<h4>Signalé par l’équipe</h4><ul class="liste-simple">${sg.data.map(x => `<li><b>${x.personne_id ? nom(x.personne_id) : 'L’administration'}</b><span>${esc(x.texte)}</span><span class="compte">${esc(quand(x.cree_le))}${x.prevenus ? ` · ${x.prevenus} prévenu${x.prevenus > 1 ? 's' : ''}` : ''}</span></li>`).join('')}</ul>`);
+    if (!mo.error && (mo.data || []).length) parts.push(`<h4>Changé depuis l’espace de l’équipe</h4><ul class="liste-simple">${mo.data.map(x => `<li><b>${x.personne_id ? nom(x.personne_id) : 'L’administration'}</b><span>${esc(x.titre)}${x.texte ? ` : ${esc(x.texte)}` : ''}</span><span class="compte">${esc(quand(x.cree_le))}</span></li>`).join('')}</ul>`);
+    if (!parts.length) return;
+    el.innerHTML = `<h3>Côté équipe</h3>${parts.join('')}`;
+    el.hidden = false;
+  })();
+  zone.addEventListener('input', e => { if (e.target.id === 's-montant') { F.suivi.montant_cession = e.target.value; dessinerBudget(); } });
   if (d0 && typeof NOTES !== 'undefined') NOTES.bloc($('#d-notes', zone), 'crescite_dates', d0.id, { titre: 'Notes internes' });
   comboLieu(zone, 'd-lieu', F.lieu_id, idl => { F.lieu_id = idl; changer(); dessinerLieu(); });
   sousChamp($('#s-org', zone), v => (d0 ? mentionAppris('crescite_dates_suivi', d0.id, 'organisateur', v) : ''));
@@ -2478,6 +2585,7 @@ function editeurDate(id, depart = null) {
     else if (t.id === 'd-visible') F.visible = t.checked;
     else if (t.id === 'd-prec') F.precision = t.value;
     else if (t.id === 's-contrat') F.suivi.contrat = t.value;
+    else if (t.id === 's-montant') F.suivi.montant_cession = t.value;
     else if (t.id === 'd-libre') { $('#d-intitule-zone').hidden = !t.checked; if (t.checked) { F.intitule = $('#d-intitule').value; $('#d-intitule').focus(); } else F.intitule = null; }
     else return;
     changer();
@@ -2520,7 +2628,7 @@ function editeurDate(id, depart = null) {
       dessinerDetails(); changer(); return;
     }
     if (t.id === 'd-serie') return SERIES.serie(F, () => { dessinerReps(); changer(); });
-    if (t.id === 'd-dupliquer') { const G = clone(F); G.id = null; G.intitule = null; G.representations.forEach(r => delete r.id); remplacerAdresse('#/representations/nouvelle'); editeurDate(null, G); marquerSale(true); annoncer('Copie prête : changez les jours ou le lieu, puis enregistrez.'); return; }
+    if (t.id === 'd-dupliquer') { const G = clone(F); G.id = null; G.intitule = null; G.representations.forEach(r => delete r.id); G.suivi = suiviPourCopie(G.suivi); G.chiffres = Object.fromEntries(CHIFFRES.map(([k]) => [k, ''])); remplacerAdresse('#/representations/nouvelle'); editeurDate(null, G); marquerSale(true); annoncer('Copie prête : changez les jours ou le lieu, puis enregistrez.'); return; }
     if (t.id === 'd-suppr') return supprimerDate(d0);
     if (t.matches('[data-enregistrer]')) return enregistrerDate(F, d0, t);
   });
@@ -2558,9 +2666,21 @@ async function ecrireDate(F, d0, { libre } = {}) {
   const { data: id, error } = await sb.rpc('crescite_enregistrer_date', { d: chargeDate(F, d0, libre) });
   if (error) throw error;
   await ecrireChiffres(id, F);
+  await ecrireMontant(id, F);
   const equipeOk = await enregistrerEquipeDate(id, F);
   await rechargerDate(id);
   return { id, equipeOk };
+}
+// le montant de cession (le script « Compagnie Idéale ») : à côté de crescite_enregistrer_date, qui ne le connaît pas ;
+// seulement s'il a changé
+async function ecrireMontant(id, F) {
+  if (!E.ideale || !F.suivi || !('montant_cession' in F.suivi)) return;
+  const v = F.suivi.montant_cession === '' || F.suivi.montant_cession == null ? null : Math.round(Number(F.suivi.montant_cession) * 100) / 100;
+  if (v != null && !(Number.isFinite(v) && v >= 0)) return;
+  const avant = E.suivis.find(x => x.date_id === id)?.montant_cession ?? null;
+  if ((avant == null ? null : Number(avant)) === v) return;
+  const { error } = await sb.from('crescite_dates_suivi').upsert({ date_id: id, montant_cession: v }, { onConflict: 'date_id' });
+  if (error) erreur(error, 'La date est enregistrée, mais pas son montant');
 }
 async function enregistrerDate(F, d0, bouton) {
   const manque = manqueDate(F);
@@ -2573,6 +2693,11 @@ async function enregistrerDate(F, d0, bouton) {
   if (!equipeOk) { F.id = id; remplacerAdresse(`#/representations/${id}`); return; }
   E.sale = false;
   const mot = F.statut === 'option' || !F.visible ? 'Enregistré (non publié sur le site).' : 'Enregistré : le site est à jour.';
+  // créée depuis une piste de diffusion : la piste la retient
+  if (F.depuisPiste && !d0) {
+    const r = await sb.from('crescite_diffusion_prospects').update({ date_convertie_id: id }).eq('id', F.depuisPiste);
+    if (!r.error) { const p = (E.prospects || []).find(x => x.id === F.depuisPiste); if (p) p.date_convertie_id = id; } else erreur(r.error, 'La piste n’a pas retenu sa date');
+  }
   // créée depuis une proposition : elle se clôt, et l'annonce le dit
   const clos = F.depuis && !d0 && typeof DISPONIBILITES !== 'undefined' ? await DISPONIBILITES.apresDate(F.depuis, id) : null;
   annoncer(clos ? `${mot} ${clos.texte}` : mot, clos?.erreur ? { erreur: true, delai: 9000 } : clos ? { delai: 8000, libelle: 'Voir', action: () => { location.hash = `#/planning/proposition/${F.depuis.proposition}`; } } : {});
@@ -2777,6 +2902,10 @@ const TABLEUR = (() => {
     { k: 'contact', l: 'Contact', niveau: 'date', type: 'texte', val: x => suiviDe(x.d).contact || '', texte: x => suiviDe(x.d).contact || '', lire: t => String(t ?? '').trim(), vider: true, ecrire: (F, x, v) => { F.suivi.contact = v; } },
     { k: 'contrat', l: 'Contrat', niveau: 'date', type: 'choix', choix: () => [['', '—'], ...CONTRATS], val: x => suiviDe(x.d).contrat || '', texte: x => libelleDe(CONTRATS, suiviDe(x.d).contrat || ''),
       lire: t => (String(t ?? '').trim() ? lireChoix(CONTRATS)(t) : ''), vider: true, ecrire: (F, x, v) => { F.suivi.contrat = v; } },
+    { k: 'montant', l: 'Cession HT (€)', niveau: 'date', type: 'texte', nombre: true, si: () => !!E.ideale,
+      val: x => suiviDe(x.d).montant_cession ?? '', texte: x => { const v = suiviDe(x.d).montant_cession; return v == null || v === '' ? '' : nombreFr(v); },
+      lire: t => { const n = String(t ?? '').trim().replace(/\s|€/g, '').replace(',', '.'); if (!n) return ''; const v = Number(n); return Number.isFinite(v) && v >= 0 && v < 1e7 ? Math.round(v * 100) / 100 : undefined; },
+      vider: true, ecrire: (F, x, v) => { F.suivi.montant_cession = v; } },
     { k: 'notes', l: 'Notes', niveau: 'date', type: 'long', val: x => suiviDe(x.d).notes || '', texte: x => suiviDe(x.d).notes || '', lire: t => String(t ?? '').trim(), vider: true, ecrire: (F, x, v) => { F.suivi.notes = v; } },
     // les chiffres (le dixième script) : jamais publiés ; des nombres (« 12,5 » s'écrit aussi), vides quand on ne sait pas
     ...CHIFFRES.map(([k, l, pas, max]) => ({ k: `chiffre-${k}`, l: l.replace(' (places)', ''), niveau: 'date', type: 'texte', nombre: true, si: () => !!E.chiffresInstalles,
@@ -3296,7 +3425,7 @@ const TABLEUR = (() => {
   // ———— ajouter une séance : à la date du même spectacle au même lieu qui touche ce jour (le même, la veille ou le
   // lendemain), sinon à une nouvelle date. → { id (la date), nouvelle, texte } ; une erreur de la base est levée
   const ecartJours = (d, j) => (j < d.debut ? (Date.parse(d.debut) - Date.parse(j)) : j > (d.fin || d.debut) ? (Date.parse(j) - Date.parse(d.fin || d.debut)) : 0) / 864e5;
-  const dateVoisine = (sp, lieuId, jour) => E.dates.filter(d => d.spectacle_id === sp && (d.lieu_id ?? null) === (lieuId ?? null) && ecartJours(d, jour) <= 1).sort((a, b) => ecartJours(a, jour) - ecartJours(b, jour))[0] || null;
+  const dateVoisine = (sp, lieuId, jour) => E.dates.filter(d => d.spectacle_id === sp && d.statut !== 'annulee' && (d.lieu_id ?? null) === (lieuId ?? null) && ecartJours(d, jour) <= 1).sort((a, b) => ecartJours(a, jour) - ecartJours(b, jour))[0] || null;
   const ouDit = lieuId => { const l = lieu(lieuId); return l ? `${l.nom ? `${l.nom}, ` : ''}${l.commune}` : 'lieu à préciser'; };
   async function ajouterSeance({ jour, heure = '', fin = '', spectacle_id, lieu_id = null, seance = {}, date = {}, suivi = {}, equipe = null }) {
     const d = dateVoisine(spectacle_id, lieu_id, jour);
@@ -3309,7 +3438,9 @@ const TABLEUR = (() => {
       T.recents.set(d.id, Date.now());
       await ecrireDate(F, d, { libre: !!(d.intitule || '').trim() });
       const nouvelle = E.reps.find(r => r.date_id === d.id && !ids.has(r.id));
-      return { id: d.id, nouvelle: false, rep: nouvelle?.id, texte: `séance ajoutée à la date du ${jourCourt(d.debut)}${d.fin && d.fin !== d.debut ? ` au ${jourCourt(d.fin)}` : ''} (${ouDit(lieu_id)})` };
+      // (ce que la ligne disait de la date elle-même, son statut, son suivi, son équipe, ne remplace pas celle qui existe : on le dit)
+      const ignore = Object.keys(date).length || Object.values(suivi).some(v => v != null && v !== '') || (Array.isArray(equipe) && equipe.length);
+      return { id: d.id, nouvelle: false, rep: nouvelle?.id, texte: `séance ajoutée à la date du ${jourCourt(d.debut)}${d.fin && d.fin !== d.debut ? ` au ${jourCourt(d.fin)}` : ''} (${ouDit(lieu_id)})${ignore ? ' ; le statut, le suivi et l’équipe de la ligne ne sont pas repris : la date existait, ils se règlent dans sa fiche' : ''}` };
     }
     const F = Object.assign(nouvelleDate(), { spectacle_id, lieu_id, debut: jour, fin: jour, representations: [rep] }, date);
     F.suivi = { ...F.suivi, ...suivi };
@@ -3576,7 +3707,7 @@ const TABLEUR = (() => {
     ['lieu', /^(lieu|salle|theatre|structure|lieu de representation)$/], ['commune', /^(commune|ville|localite)$/], ['public', /^(public|type de public)$/], ['statut', /^(statut|etat)$/],
     ['nature', /^(nature|type)$/], ['distribution', /^(distribution|comediens|comediennes|equipe|artistes|interpretes)$/], ['billetterie', /^(billetterie|lien|reservation|reservations)$/],
     ['precisions', /^(precisions?|remarques?)$/], ['organisateur', /^(organisateur|organisatrice|programmateur|programmatrice)$/], ['contact', /^(contact|contacts)$/],
-    ['contrat', /^contrat$/], ['notes', /^(notes?|commentaires?)$/], ['annulee', /^(seance annulee|annulee|annule)$/], ['site', /^site$/]];
+    ['contrat', /^contrat$/], ['montant', /^(cession( ht)?|montant( de cession)?( ht)?|prix( de cession)?)( \(?(€|eur)\)?)?$/], ['notes', /^(notes?|commentaires?)$/], ['annulee', /^(seance annulee|annulee|annule)$/], ['site', /^site$/]];
   const ORDRE_EXPORT = COLONNES.map(c => c.k);
   function lireImport(texte) {
     const m = lireTsv(texte);
@@ -3611,7 +3742,8 @@ const TABLEUR = (() => {
         seance: { jour, heure: heure || '', fin: fin || '', spectacle_id: sp, lieu_id: lieuId,
           seance: { public: pub || 'tout_public', note: v.precisions || '', annulee: colonne('annulee').lire(v.annulee || '') === true },
           date: { ...(statut ? { statut } : {}), ...(nat ? { nature: nat } : {}), ...(v.billetterie && colonne('billetterie').lire(v.billetterie) ? { lien: colonne('billetterie').lire(v.billetterie) } : {}) },
-          suivi: { ...(v.organisateur ? { organisateur: v.organisateur } : {}), ...(v.contact ? { contact: v.contact } : {}), ...(contrat ? { contrat } : {}), ...(v.notes ? { notes: v.notes } : {}) },
+          suivi: { ...(v.organisateur ? { organisateur: v.organisateur } : {}), ...(v.contact ? { contact: v.contact } : {}), ...(contrat ? { contrat } : {}), ...(v.notes ? { notes: v.notes } : {}),
+            ...(v.montant && E.ideale && colonne('montant').lire(v.montant) !== undefined && colonne('montant').lire(v.montant) !== '' ? { montant_cession: colonne('montant').lire(v.montant) } : {}) },
           equipe: equipe || null } };
     });
     return { lignes, cles: cles.filter(Boolean), avecTete };
@@ -3744,7 +3876,7 @@ const SPEC_SPECTACLE = {
 function vueSpectacles(slug) {
   if (slug) return editeurSpectacle(slug);
   const pages = E.spectacles.filter(s => s.page).sort((a, b) => a.ordre - b.ordre), anciens = E.spectacles.filter(s => !s.page);
-  const avenir = id => E.dates.filter(d => d.spectacle_id === id && (d.fin || d.debut) >= AUJ && d.statut !== 'option').length;
+  const avenir = id => E.dates.filter(d => d.spectacle_id === id && (d.fin || d.debut) >= AUJ && d.statut === 'confirmee' && (d.nature || 'representations') === 'representations').length;
   const carte = (s, i, n) => { const c = s.univers?.couleurs || {}; return `<div><a class="carte-sp" href="#/spectacles/${s.slug}" style="--c:${couleurSp(s)};--fondU:${c.fond || '#333'}">
       <span class="img" style="${s.photo ? `background-image:url('${photoUrl(s.photo)}')` : ''}"></span>
       <span class="txt"><b>${esc(s.titre)}</b><span class="compte">${esc(s.creation || '')}</span>
@@ -3860,6 +3992,7 @@ function editeurSpectacle(slug) {
     if (!e.target.matches('[data-enregistrer]')) return;
     $$('.riche', zone).forEach(ed => ecrire(F, ed.dataset.chemin, valeur(ed)));
     $$('[data-legende]', zone).forEach(t => { F.photos[+t.dataset.legende].legende = t.value.trim() || null; });
+    $$('[data-ph-k]', zone).forEach(t => { const p = F.photos[+t.dataset.i]; if (!p) return; const v = t.value.trim(); if (v) p[t.dataset.phK] = v; else delete p[t.dataset.phK]; });
     if (F.video && !(F.video.url || '').trim()) F.video = null;
     if (F.avec && !texteSeul(F.avec.valeur).trim()) F.avec = null;
     if (F.tournee && !(F.tournee.titre || '').trim() && !(F.tournee.texte || '').trim()) F.tournee = null;
@@ -3876,14 +4009,33 @@ function editeurSpectacle(slug) {
     bravo();
   });
   zone.addEventListener('input', e => { if (e.target.dataset.legende !== undefined) { F.photos[+e.target.dataset.legende].legende = e.target.value; marquerSale(); } });
+  // les droits de chaque photo : son crédit, ce qu'on peut en faire, à quelles conditions
+  const droitsPhoto = e => {
+    const t = e.target; if (t.dataset.phK === undefined) return;
+    const p = F.photos[+t.dataset.i]; if (!p) return;
+    if (t.value.trim()) p[t.dataset.phK] = t.value; else delete p[t.dataset.phK];
+    if (t.dataset.phK === 'droits') { t.closest('.mini')?.classList.toggle('ph-interne', t.value === 'interne'); const n = $('#ph-a-verifier', zone); if (n) n.outerHTML = photosAVerifier(F); }
+    marquerSale();
+  };
+  zone.addEventListener('input', droitsPhoto);
+  zone.addEventListener('change', droitsPhoto);
+}
+// les photos de la page dont les droits ne sont pas encore écrits
+const DROITS_PHOTO = [['', 'Droits à vérifier'], ['accordes', 'Droits accordés : site et dossier'], ['interne', 'Usage interne : pas sur le site']];
+function photosAVerifier(F) {
+  const n = (F.photos || []).filter(p => !p.droits).length, k = (F.photos || []).filter(p => p.droits === 'interne').length;
+  return `<p class="aide" id="ph-a-verifier">${n ? `<span class="badge alerte">${n} photo${n > 1 ? 's' : ''} : droits à vérifier</span> ` : ''}${k ? `${k} en usage interne, hors du site. ` : ''}Le crédit d’une photo passe devant celui du spectacle (${esc(F.credit_photos || 'non écrit')}).</p>`;
 }
 function ongletPhotos(F) {
   F.photos = F.photos || [];
   return `<div class="bloc"><h3>Photo principale</h3><div class="miniatures"><div class="mini">${F.photo ? `<img src="${photoUrl(F.photo)}" alt="">` : '<div style="height:110px"></div>'}
       <div style="padding:8px"><label class="btn petit">Remplacer<input type="file" accept="image/*" data-photo="principale" hidden></label></div></div></div></div>
-    <div class="bloc"><h3>Photos de la page</h3><p class="aide">Dans l’ordre d’affichage. Les photos envoyées sont allégées (2 000 px, WebP) avant l’envoi.</p>
-      <div class="miniatures">${F.photos.map((p, i) => `<div class="mini"><img src="${photoUrl(p.fichier)}" alt="" loading="lazy">
+    <div class="bloc"><h3>Photos de la page</h3><p class="aide">Dans l’ordre d’affichage. Les photos envoyées sont allégées (2 000 px, WebP) avant l’envoi.</p>${F.photos.length ? photosAVerifier(F) : ''}
+      <div class="miniatures">${F.photos.map((p, i) => `<div class="mini${p.droits === 'interne' ? ' ph-interne' : ''}"><img src="${photoUrl(p.fichier)}" alt="" loading="lazy">
         <div style="padding:8px;display:grid;gap:6px"><textarea data-legende="${i}" rows="2" placeholder="Légende" aria-label="Légende">${esc(p.legende || '')}</textarea>
+        <input data-ph-k="credit" data-i="${i}" value="${esc(p.credit || '')}" placeholder="Crédit : © photographe" aria-label="Crédit de la photo">
+        <select data-ph-k="droits" data-i="${i}" aria-label="Droits de la photo">${DROITS_PHOTO.map(([v, l]) => `<option value="${v}"${(p.droits || '') === v ? ' selected' : ''}>${l}</option>`).join('')}</select>
+        <input data-ph-k="conditions" data-i="${i}" value="${esc(p.conditions || '')}" placeholder="Conditions : presse seulement, jusqu’en 2027…" aria-label="Conditions d’utilisation">
         <div style="display:flex;gap:4px;flex-wrap:wrap">${i > 0 ? `<button type="button" class="btn petit" data-ph="monter" data-i="${i}" title="Avancer">←</button>` : ''}${i < F.photos.length - 1 ? `<button type="button" class="btn petit" data-ph="descendre" data-i="${i}" title="Reculer">→</button>` : ''}
         <label class="btn petit">Remplacer<input type="file" accept="image/*" data-remplacer="${i}" hidden></label><button type="button" class="btn petit danger" data-ph="retirer" data-i="${i}" title="Retirer">✕</button></div></div></div>`).join('')}</div>
       <p style="margin-top:12px"><label class="btn">＋ Ajouter des photos<input type="file" accept="image/*" multiple hidden></label></p></div>`;
@@ -4029,7 +4181,7 @@ function vueLieux(param) {
     const q = norm(f.q).trim();
     const n = new Map(); E.dates.forEach(d => n.set(d.lieu_id, (n.get(d.lieu_id) || 0) + 1));
     const xs = E.lieux.filter(l => (!f.type || l.type === f.type) && (!q || norm(`${l.nom || ''} ${l.commune} ${l.departement}`).includes(q))).sort((a, b) => norm(a.commune).localeCompare(norm(b.commune)) || norm(a.nom).localeCompare(norm(b.nom)));
-    $('#li-compte').textContent = `${xs.length} lieu${xs.length > 1 ? 'x' : ''}`;
+    $('#li-compte').textContent = `${xs.length} lieu${xs.length > 1 ? 'x' : ''}${xs.length > 400 ? ' · les 400 premiers montrés : affinez la recherche' : ''}`;
     zone.innerHTML = xs.slice(0, 400).map(l => `<a class="ligne" style="grid-template-columns:1fr auto" href="#/lieux/${l.id}"${String(param) === String(l.id) ? ' aria-current="true"' : ''}><span class="corps"><span class="t">${esc(l.nom || l.commune)}</span><span class="ou">${esc(l.commune)} (${esc(l.departement)})${l.latitude == null ? ' · sans position sur la carte' : ''}</span></span><span class="badges"><span class="badge">${n.get(l.id) || 0} date${(n.get(l.id) || 0) > 1 ? 's' : ''}</span>${l.type === 'etablissement' ? '<span class="badge sco">Établissement</span>' : ''}</span></a>`).join('') || listeVide(!!(q || f.type), { rien: 'Aucun lieu ne correspond à ces filtres.', aucun: 'Aucun lieu pour l’instant.', ajouter: ['#/lieux/nouveau', '＋ Nouveau lieu'] });
   };
   zone.rafraichir();
@@ -4046,12 +4198,40 @@ const SPEC_LIEU = [
 ];
 const SPEC_LIEU_SUIVI = [{ k: 'contact', t: 'texte', l: 'Contact' }, { k: 'jauge', t: 'nombre', l: 'Jauge' }, { k: 'plateau', t: 'texte', l: 'Plateau' }, { k: 'notes', t: 'long', l: 'Notes' }];
 // les dates d'un lieu, à venir d'abord, puis les plus récentes, avec leur feuille de route
+// ce que la compagnie sait d'un lieu : son bilan (les représentations confirmées : combien, depuis quand, les spectateurs, le
+// remplissage, les recettes), ses saisons, ses organisateurs successifs, les pistes et les demandes de devis du même lieu ou
+// de la même commune, puis toutes ses dates (les douze premières, le reste se déplie)
+const jaugeDe = d => { const c = (E.chiffres || []).find(x => x.date_id === d.id); const j = c && c.jauge != null && c.jauge !== '' ? Number(c.jauge) : Number(E.lieuxSuivi.find(x => x.lieu_id === d.lieu_id)?.jauge) || null; return j || null; };
+const spectateursDe = d => { const v = (E.chiffres || []).find(x => x.date_id === d.id)?.spectateurs; return v == null || v === '' ? null : Number(v); };
+const cessionDe = d => { const v = E.suivis.find(x => x.date_id === d.id)?.montant_cession; return v == null || v === '' ? null : Number(v); };
+// remplissage d'un ensemble de dates : spectateurs ÷ jauge, sur celles qui ont les deux (null sinon)
+function remplissage(ds) {
+  const xs = ds.map(d => ({ s: spectateursDe(d), j: jaugeDe(d), n: Math.max(1, repsDe(d.id).filter(r => !r.annulee).length) })).filter(x => x.s != null && x.j);
+  if (!xs.length) return null;
+  return Math.round(100 * xs.reduce((t, x) => t + x.s, 0) / xs.reduce((t, x) => t + x.j * x.n, 0));
+}
+const eurosCourt = n => `${Math.round(Number(n) || 0).toLocaleString('fr-FR')} €`;
 function datesDuLieu(id) {
-  const xs = E.dates.filter(d => d.lieu_id === id), avenir = xs.filter(d => (d.fin || d.debut) >= AUJ).sort((a, b) => a.debut.localeCompare(b.debut));
-  const vues = [...avenir, ...xs.filter(d => (d.fin || d.debut) < AUJ).sort((a, b) => b.debut.localeCompare(a.debut))].slice(0, 12);
-  return `<div class="bloc"><h3>Ses dates <span class="compte">${xs.length || ''}</span></h3>${vues.length ? `<ul class="liste-simple">${vues.map(d => `<li><b class="eq-jour">${esc(jourCourt(d.debut))}</b><a href="#/representations/${d.id}">${esc(spectacle(d.spectacle_id)?.titre || '?')}</a>
-    ${d.statut === 'option' ? '<span class="badge option">Option</span>' : d.statut === 'annulee' ? '<span class="badge annulee">Annulée</span>' : ''}${E.equipeInstallee ? `<a href="#/feuilles/${d.id}" class="eq-feuille" data-viser="#fr-manques"><span class="sr">Feuille de route du ${esc(jourCourt(d.debut))} : </span>${badgeFeuille(d.id)}${resteFeuille(d.id)}</a>` : ''}</li>`).join('')}</ul>
-    ${xs.length > vues.length ? `<p class="aide">Et ${xs.length - vues.length} autres, dans Représentations.</p>` : ''}` : '<p class="aide">Aucune date dans ce lieu pour l’instant.</p>'}</div>`;
+  const l = lieu(id), xs = E.dates.filter(d => d.lieu_id === id), avenir = xs.filter(d => (d.fin || d.debut) >= AUJ).sort((a, b) => a.debut.localeCompare(b.debut));
+  const tri = [...avenir, ...xs.filter(d => (d.fin || d.debut) < AUJ).sort((a, b) => b.debut.localeCompare(a.debut))];
+  const ligne = d => `<li><b class="eq-jour">${esc(jourCourt(d.debut))}</b><a href="#/representations/${d.id}">${esc(spectacle(d.spectacle_id)?.titre || '?')}</a>
+    ${d.statut === 'option' ? '<span class="badge option">Option</span>' : d.statut === 'annulee' ? '<span class="badge annulee">Annulée</span>' : d.statut === 'reportee' ? '<span class="badge">Reportée</span>' : ''}${(d.nature || 'representations') !== 'representations' ? `<span class="badge">${d.nature === 'residence' ? 'Résidence' : 'Répétitions'}</span>` : ''}${E.equipeInstallee ? `<a href="#/feuilles/${d.id}" class="eq-feuille" data-viser="#fr-manques"><span class="sr">Feuille de route du ${esc(jourCourt(d.debut))} : </span>${badgeFeuille(d.id)}${resteFeuille(d.id)}</a>` : ''}</li>`;
+  // le bilan : les représentations confirmées, passées
+  const jouees = xs.filter(d => d.statut === 'confirmee' && (d.nature || 'representations') === 'representations' && (d.fin || d.debut) < AUJ);
+  const spect = jouees.reduce((t, d) => t + (spectateursDe(d) || 0), 0), recettes = jouees.reduce((t, d) => t + (cessionDe(d) || 0), 0), taux = remplissage(jouees);
+  const saisons = [...new Set(jouees.map(d => d.saison).filter(Boolean))].sort().reverse();
+  const orgs = [];
+  [...jouees].sort((a, b) => b.debut.localeCompare(a.debut)).forEach(d => { const o = (E.suivis.find(x => x.date_id === d.id)?.organisateur || '').trim(); if (o && !orgs.some(x => norm(x.o) === norm(o))) orgs.push({ o, an: d.debut.slice(0, 4) }); });
+  const pistes = (E.prospects || []).filter(p => p.lieu_id === id || (l && norm(p.commune || '') === norm(l.commune)));
+  const demandes = (E.devis || []).filter(q => q.lieu_id === id || (l && norm(q.commune || '') === norm(l.commune)));
+  const bilan = jouees.length ? `<p class="lieu-bilan"><b>${jouees.length} représentation${jouees.length > 1 ? 's' : ''}</b> depuis ${esc(jouees.map(d => d.debut).sort()[0].slice(0, 4))}${spect ? ` · <b>${spect.toLocaleString('fr-FR')}</b> spectateurs` : ''}${taux != null ? ` · remplissage <b>${taux} %</b>` : ''}${recettes ? ` · <b>${eurosCourt(recettes)}</b> HT de cessions` : ''}</p>` : '';
+  const parSaison = saisons.length > 1 ? `<table class="simple lieu-saisons"><thead><tr><th>Saison</th><th>Dates</th><th>Spectateurs</th><th>Remplissage</th><th>Cessions HT</th></tr></thead><tbody>${saisons.map(S => { const ds = jouees.filter(d => d.saison === S), sp = ds.reduce((t, d) => t + (spectateursDe(d) || 0), 0), r = ds.reduce((t, d) => t + (cessionDe(d) || 0), 0), tx = remplissage(ds);
+    return `<tr><td>${esc(S)}</td><td>${ds.length}</td><td>${sp ? sp.toLocaleString('fr-FR') : '—'}</td><td>${tx != null ? `${tx} %` : '—'}</td><td>${r ? eurosCourt(r) : '—'}</td></tr>`; }).join('')}</tbody></table>` : '';
+  const autour = [orgs.length ? `<p><span class="aide">Organisateurs :</span> ${orgs.map(x => `${esc(x.o)} <span class="compte">(${esc(x.an)})</span>`).join(', ')}</p>` : '',
+    pistes.length ? `<p><span class="aide">Pistes de diffusion :</span> ${pistes.map(p => `<a href="#/diffusion/piste/${p.id}">${esc(p.structure)}</a> <span class="compte">(${esc(etapeLib(p.etape))})</span>`).join(', ')}</p>` : '',
+    demandes.length ? `<p><span class="aide">Demandes de devis :</span> ${demandes.map(q => `<a href="#/diffusion/devis/${q.id}">${esc(q.structure_nom)}</a>`).join(', ')}</p>` : ''].join('');
+  return `<div class="bloc"><h3>Ses dates <span class="compte">${xs.length || ''}</span></h3>${bilan}${parSaison}${autour}${tri.length ? `<ul class="liste-simple">${tri.slice(0, 12).map(ligne).join('')}</ul>
+    ${tri.length > 12 ? `<details class="lieu-plus"><summary>Les ${tri.length - 12} autres</summary><ul class="liste-simple">${tri.slice(12).map(ligne).join('')}</ul></details>` : ''}` : '<p class="aide">Aucune date dans ce lieu pour l’instant.</p>'}</div>`;
 }
 function editeurLieu(id) {
   const l0 = id ? lieu(id) : null;
@@ -4064,11 +4244,12 @@ function editeurLieu(id) {
   zone.innerHTML = `<div class="titre-ed"><a class="btn petit" data-tt="retour" href="#/lieux">←</a><h2>${esc(l0 ? lieuTexte(l0) : 'Nouveau lieu')}</h2></div>
     <div class="bloc" id="li-f">${SPEC_LIEU.map(c => champ(c, F)).join('')}<p class="aide">Astuce : la commune se cherche avec « Trouver la commune » ; département et position suivent.</p><button type="button" class="btn petit" id="li-geo">Trouver la commune</button></div>
     <div class="bloc" id="li-s"><h3>Suivi interne <span class="aide" style="font-weight:400">— jamais publié</span></h3>${SPEC_LIEU_SUIVI.map(c => champ(c, G)).join('')}</div>
-    ${l0 ? datesDuLieu(id) : ''}${l0 && typeof NOTES !== 'undefined' ? '<div class="bloc" id="li-notes"></div>' : ''}
+    ${l0 && typeof CARNET !== 'undefined' ? '<div class="bloc" id="li-carnet"></div>' : ''}${l0 ? datesDuLieu(id) : ''}${l0 && typeof NOTES !== 'undefined' ? '<div class="bloc" id="li-notes"></div>' : ''}
     ${l0 ? `<div class="bloc"><h3>Fusionner</h3><p class="aide">Ce lieu fait doublon ? Ses ${nb} date${nb > 1 ? 's' : ''} et ses séances passent sur le lieu choisi, puis il disparaît.</p><div id="li-fusion"></div></div>` : ''}
     ${pied(l0 ? 'Tout est enregistré' : 'Nouveau lieu', l0 ? `<button type="button" class="btn danger" id="li-suppr"${nb ? ' disabled title="Ce lieu a des dates : fusionnez-le plutôt"' : ''}>Supprimer</button>` : '')}`;
   relier($('#li-f'), F, SPEC_LIEU); relier($('#li-s'), G, SPEC_LIEU_SUIVI);
   if (l0 && typeof NOTES !== 'undefined') NOTES.bloc($('#li-notes', zone), 'crescite_lieux', id, { titre: 'Notes internes' });
+  if (l0 && typeof CARNET !== 'undefined') CARNET.bloc($('#li-carnet', zone), id);
   const ch = k => $(`[data-chemin="${k}"]`, zone), appris = (table, k) => v => (l0 ? mentionAppris(table, id, k, v) : '');
   sousChamp(ch('adresse'), v => `${v.trim() ? `<a href="${esc(FEUILLE.itineraire({ ...F, adresse: v }))}" target="_blank" rel="noopener">Itinéraire ↗</a>` : ''}${appris('crescite_lieux', 'adresse')(v)}`);
   sousChamp(ch('site_web'), v => (/^https?:\/\/\S+$/.test(v.trim()) ? `<a href="${esc(v.trim())}" target="_blank" rel="noopener">Ouvrir le site ↗</a>` : ''));
@@ -4087,12 +4268,29 @@ function editeurLieu(id) {
   if (l0) comboLieu(zone, 'li-fusion', null, async cible => {
     if (cible === id) return;
     const c = lieu(cible);
-    if (!(await confirmerAction({ titre: `Fusionner « ${lieuTexte(l0)} » dans « ${lieuTexte(c)} » ?`, texte: `Ses dates et ses séances passent à « ${lieuTexte(c)} », puis « ${lieuTexte(l0)} » est supprimé.`, ok: 'Fusionner les lieux' }))) return;
+    if (!(await confirmerAction({ titre: `Fusionner « ${lieuTexte(l0)} » dans « ${lieuTexte(c)} » ?`, texte: `Ses dates, ses séances, son suivi (contact, jauge, plateau, notes : ce que « ${lieuTexte(c)} » n’a pas encore), son carnet et ses notes internes passent à « ${lieuTexte(c)} », puis « ${lieuTexte(l0)} » est supprimé.`, ok: 'Fusionner les lieux' }))) return;
+    // le suivi : chaque champ vide du lieu gardé prend celui du lieu absorbé ; deux notes se mettent bout à bout
+    const sa = E.lieuxSuivi.find(x => x.lieu_id === id), sc = E.lieuxSuivi.find(x => x.lieu_id === cible);
+    let suivi = null;
+    if (sa) {
+      suivi = { ...(sc || {}), lieu_id: cible };
+      Object.keys(sa).filter(k => !['lieu_id', 'modifie_le', 'modifie_par'].includes(k)).forEach(k => {
+        const a = sa[k], b = sc ? sc[k] : null, vide = v => v == null || String(v).trim() === '';
+        if (k === 'notes' && !vide(a) && !vide(b) && String(a).trim() !== String(b).trim()) suivi.notes = `${String(b).trim()}\n\n(${lieuTexte(l0)}) ${String(a).trim()}`;
+        else if (vide(b) && !vide(a)) suivi[k] = a;
+      });
+      delete suivi.modifie_le; delete suivi.modifie_par;
+    }
     const r1 = await sb.from('crescite_dates').update({ lieu_id: cible }).eq('lieu_id', id);
     const r2 = r1.error ? r1 : await sb.from('crescite_seances').update({ lieu_id: cible }).eq('lieu_id', id);
-    const r3 = r2.error ? r2 : await sb.from('crescite_lieux').delete().eq('id', id);
+    const r2b = r2.error || !suivi ? r2 : await sb.from('crescite_lieux_suivi').upsert(suivi, { onConflict: 'lieu_id' });
+    const r2c = r2b.error ? r2b : await sb.from('crescite_notes').update({ cible_id: cible }).eq('cible_table', 'crescite_lieux').eq('cible_id', id).then(r => (r.error && /crescite_notes/.test(r.error.message || '') ? { error: null } : r));
+    const r2d = r2c.error || !E.carnetInstalle ? r2c : await sb.from('crescite_contacts').update({ lieu_id: cible }).eq('lieu_id', id).then(r => (r.error ? r : sb.from('crescite_hebergements').update({ lieu_id: cible }).eq('lieu_id', id)));
+    const r3 = r2d.error ? r2d : await sb.from('crescite_lieux').delete().eq('id', id);
     if (r3.error) return erreur(r3.error, 'Fusion incomplète');
     E.dates.forEach(d => { if (d.lieu_id === id) d.lieu_id = cible; }); E.seances.forEach(s => { if (s.lieu_id === id) s.lieu_id = cible; }); E.lieux = E.lieux.filter(x => x.id !== id);
+    [...(E.contacts || []), ...(E.hebergements || [])].forEach(x => { if (x.lieu_id === id) x.lieu_id = cible; });
+    E.lieuxSuivi = E.lieuxSuivi.filter(x => x.lieu_id !== id && x.lieu_id !== cible).concat(suivi ? [suivi] : sc ? [sc] : []);
     E.sale = false; location.hash = `#/lieux/${cible}`; annoncer('Lieux fusionnés.');
   });
   $('#li-suppr')?.addEventListener('click', () => CORBEILLE.ligne({ table: 'crescite_lieux', ligne: l0, quoi: `Lieu supprimé : ${lieuTexte(l0)}.`, retabli: 'Lieu rétabli.',
@@ -4175,6 +4373,21 @@ const ETAPES_CRM = [
   ['contrat_signe', '4. Cession confirmée'],
   ['bilan', '5. Bilan / Clôturé']
 ];
+// une piste perdue (refus) sort du pipeline, dans la liste « Pistes perdues » sous le Kanban ; elle se rouvre
+const ETAPE_PERDUE = ['refus', 'Perdue'];
+const etapeLib = e => (ETAPES_CRM.find(x => x[0] === e) || (e === 'refus' ? ETAPE_PERDUE : null) || [e, e])[1];
+// la piste devient une date (« Cession confirmée ») : le formulaire d'une nouvelle date, pré-rempli (le spectacle, le
+// lieu, l'organisateur, le contact, la cession) ; enregistrée, la piste la retient (date_convertie_id)
+function creerDateDepuisPiste(p) {
+  const G = nouvelleDate();
+  if (p.spectacle_id != null && spectacle(p.spectacle_id)) G.spectacle_id = p.spectacle_id;
+  if (p.lieu_id != null && lieu(p.lieu_id)) G.lieu_id = p.lieu_id;
+  G.statut = 'confirmee';
+  G.suivi = { ...G.suivi, organisateur: p.structure || '', contact: [p.contact_nom, p.contact_tel, p.contact_email].filter(Boolean).join(', '), montant_cession: p.montant_estime ?? '' };
+  G.depuisPiste = p.id;
+  E.dateDepart = G;
+  location.hash = '#/representations/nouvelle';
+}
 
 // la Diffusion en trois parties : les pistes (#/diffusion, le pipeline), les demandes de devis déposées sur le site
 // (#/diffusion/devis, #/diffusion/devis/<id>), les alertes de tournée (#/diffusion/alertes : seulement quand la base a le
@@ -4240,6 +4453,9 @@ function vueDiffusion(partie, id) {
         `;
       }).join('')}
     </div>
+    ${(() => { const perdues = prospects.filter(p => p.etape === 'refus'); return perdues.length ? `<details class="bloc crm-perdues"><summary>Pistes perdues <span class="crm-badge-nb">${perdues.length}</span></summary>
+      <ul class="liste-simple">${perdues.map(p => `<li><b>${esc(p.structure)}</b><span class="compte">${esc([p.commune, spectacle(p.spectacle_id)?.titre, p.date_dernier_contact ? `dernier contact le ${jourCourt(p.date_dernier_contact)}` : ''].filter(Boolean).join(' · '))}</span>
+        <button type="button" class="btn petit" data-crm-rouvrir="${p.id}" style="margin-left:auto">Rouvrir</button></li>`).join('')}</ul></details>` : ''; })()}
     <div id="crm-modale-zone"></div>
   `;
 
@@ -4259,7 +4475,8 @@ function carteCrmHtml(p, auj) {
     <div class="crm-carte" data-prospect-id="${p.id}" draggable="true">
       ${sp ? `<div class="crm-carte-spectacle"><span class="pastille" style="--c:${esc(coul)}"></span><b>${esc(sp.titre)}</b></div>` : ''}
       <div class="crm-carte-structure">${esc(p.structure)}</div>
-      <div class="crm-carte-lieu">${esc(p.commune || '')} ${p.departement ? `(${esc(p.departement)})` : ''}</div>
+      <div class="crm-carte-lieu">${p.lieu_id && lieu(p.lieu_id) ? `<a href="#/lieux/${p.lieu_id}" title="La fiche du lieu">${esc(p.commune || lieu(p.lieu_id).commune)}</a>` : esc(p.commune || '')} ${p.departement ? `(${esc(p.departement)})` : ''}</div>
+      ${p.date_convertie_id && E.dates.some(d => d.id === p.date_convertie_id) ? `<div class="crm-carte-date"><a href="#/representations/${p.date_convertie_id}">Date du ${esc(jourCourt(E.dates.find(d => d.id === p.date_convertie_id).debut))}</a></div>` : ''}
       ${p.contact_nom || p.contact_email ? `<div class="crm-carte-contact">👤 ${esc(p.contact_nom || '')} ${p.contact_email ? `· <a href="mailto:${esc(p.contact_email)}" class="btn lien" style="padding:0;font-size:12px">${esc(p.contact_email)}</a>` : ''}</div>` : ''}
       ${montantTxt ? `<div class="crm-carte-cession">${montantTxt}</div>` : ''}
       <div class="crm-carte-pied">
@@ -4268,6 +4485,8 @@ function carteCrmHtml(p, auj) {
           ${etapeIdx > 0 ? `<button type="button" class="btn petit" data-crm-deplacer="-1" data-id="${p.id}" title="${esc(`Étape précédente : ${ETAPES_CRM[etapeIdx - 1][1]}`)}" aria-label="${esc(`Étape précédente : ${ETAPES_CRM[etapeIdx - 1][1]}`)}">◀</button>` : ''}
           ${etapeIdx < ETAPES_CRM.length - 1 ? `<button type="button" class="btn petit" data-crm-deplacer="1" data-id="${p.id}" title="${esc(`Étape suivante : ${ETAPES_CRM[etapeIdx + 1][1]}`)}" aria-label="${esc(`Étape suivante : ${ETAPES_CRM[etapeIdx + 1][1]}`)}">▶</button>` : ''}
           <button type="button" class="btn petit" data-crm-email="${p.id}" title="Générer un courriel de relance">✉</button>
+          ${p.etape === 'contrat_signe' && !p.date_convertie_id ? `<button type="button" class="btn petit" data-crm-date="${p.id}" title="Créer la date de cette cession">＋ Date</button>` : ''}
+          <button type="button" class="btn petit" data-crm-perdue="${p.id}" title="Marquer perdue : la piste sort du pipeline (elle se rouvre)">Perdue</button>
           <button type="button" class="btn petit" data-crm-editer="${p.id}" title="Modifier">✎</button>
           <button type="button" class="btn petit danger" data-crm-supprimer="${p.id}" title="Supprimer">✕</button>
         </div>
@@ -4279,13 +4498,14 @@ function carteCrmHtml(p, auj) {
 // une piste passe à une autre étape (ses flèches, son menu, la carte glissée d'une colonne à l'autre : menus.js) ; la carte
 // glisse jusqu'à sa nouvelle colonne
 async function deplacerProspect(id, etape) {
-  const p = (E.prospects || []).find(x => x.id === id), e = ETAPES_CRM.find(x => x[0] === etape);
+  const p = (E.prospects || []).find(x => x.id === id), e = ETAPES_CRM.find(x => x[0] === etape) || (etape === 'refus' ? ETAPE_PERDUE : null);
   if (!p || !e || p.etape === etape) return false;
   try {
     const { error } = await sb.from('crescite_diffusion_prospects').update({ etape, date_dernier_contact: aujourdhui() }).eq('id', id);
     if (error) throw error;
     p.etape = etape; p.date_dernier_contact = aujourdhui();
-    annoncer(`Opportunité déplacée vers « ${e[1]} ».`);
+    if (etape === 'contrat_signe' && !p.date_convertie_id) annoncer(`Cession confirmée : ${p.structure}.`, { libelle: 'Créer la date', delai: 12000, action: () => creerDateDepuisPiste(p) });
+    else annoncer(etape === 'refus' ? `Piste perdue : ${p.structure} (elle reste dans « Pistes perdues »).` : `Opportunité déplacée vers « ${e[1]} ».`);
     if (location.hash === '#/diffusion') { const places = reperer($('#kanban-zone') || document); vueDiffusion(); glisserVers(places, $('#kanban-zone')); } else rafraichirListes();
     return true;
   } catch (err) { erreur(err, 'Déplacement impossible'); return false; }
@@ -4310,6 +4530,10 @@ function brancherDiffusion() {
       if (!(await deplacerProspect(p.id, ETAPES_CRM[i][0]))) b.disabled = false;
     });
   });
+
+  $$('[data-crm-perdue]').forEach(b => b.addEventListener('click', async () => { b.disabled = true; if (!(await deplacerProspect(+b.dataset.crmPerdue, 'refus'))) b.disabled = false; }));
+  $$('[data-crm-rouvrir]').forEach(b => b.addEventListener('click', async () => { b.disabled = true; if (!(await deplacerProspect(+b.dataset.crmRouvrir, 'contact_pris'))) b.disabled = false; }));
+  $$('[data-crm-date]').forEach(b => b.addEventListener('click', () => { const p = E.prospects.find(x => x.id === +b.dataset.crmDate); if (p) creerDateDepuisPiste(p); }));
 
   $$('[data-crm-email]').forEach(b => {
     b.addEventListener('click', () => {
@@ -4370,7 +4594,7 @@ function ouvrirModaleProspect(p) {
             <div class="champ">
               <label for="crm-etape">Étape dans le pipeline</label>
               <select id="crm-etape">
-                ${ETAPES_CRM.map(([code, lib]) => `<option value="${code}"${p && p.etape === code ? ' selected' : ''}>${esc(lib)}</option>`).join('')}
+                ${[...ETAPES_CRM, ETAPE_PERDUE].map(([code, lib]) => `<option value="${code}"${p && p.etape === code ? ' selected' : ''}>${esc(lib)}</option>`).join('')}
               </select>
             </div>
           </div>
@@ -4385,6 +4609,16 @@ function ouvrirModaleProspect(p) {
             </div>
           </div>
           <div class="rangee">
+            ${E.diffusionReliee ? `<div class="champ">
+              <label for="crm-lieu">Lieu (sa fiche)</label>
+              <select id="crm-lieu"><option value="">— Pas encore de fiche —</option>${E.lieux.slice().sort((a, b) => norm(a.commune).localeCompare(norm(b.commune)) || norm(a.nom || '').localeCompare(norm(b.nom || ''))).map(l => `<option value="${l.id}"${p && p.lieu_id === l.id ? ' selected' : ''}>${esc(`${l.commune} — ${l.nom || 'lieu sans nom'}`)}</option>`).join('')}</select>
+            </div>` : ''}
+            <div class="champ">
+              <label for="crm-dernier">Dernier contact</label>
+              <input type="date" id="crm-dernier" value="${p?.date_dernier_contact || aujourdhui()}">
+            </div>
+          </div>
+          <div class="rangee">
             <div class="champ">
               <label for="crm-contact-nom">Nom du contact</label>
               <input type="text" id="crm-contact-nom" value="${esc(p?.contact_nom || '')}" placeholder="Prénom Nom">
@@ -4393,6 +4627,10 @@ function ouvrirModaleProspect(p) {
               <label for="crm-contact-email">Email du contact</label>
               <input type="email" id="crm-contact-email" value="${esc(p?.contact_email || '')}" placeholder="direction@theatre.fr">
             </div>
+          </div>
+          <div class="champ">
+            <label for="crm-contact-tel">Téléphone du contact</label>
+            <input type="tel" id="crm-contact-tel" value="${esc(p?.contact_tel || '')}" placeholder="02 35 00 00 00">
           </div>
           <div class="champ">
             <label for="crm-notes">Notes de suivi & échanges</label>
@@ -4436,8 +4674,11 @@ function ouvrirModaleProspect(p) {
       date_prochaine_relance: $('#crm-prochaine').value || null,
       contact_nom: ($('#crm-contact-nom').value || '').trim() || null,
       contact_email: ($('#crm-contact-email').value || '').trim() || null,
+      contact_tel: ($('#crm-contact-tel').value || '').trim() || null,
       notes: ($('#crm-notes').value || '').trim() || null,
-      date_dernier_contact: aujourdhui()
+      // (le dernier contact : ce que dit le champ ; corriger une faute ne le remet plus à aujourd'hui)
+      date_dernier_contact: $('#crm-dernier').value || aujourdhui(),
+      ...($('#crm-lieu') ? { lieu_id: $('#crm-lieu').value ? +$('#crm-lieu').value : null } : {})
     };
 
     try {
@@ -4451,7 +4692,9 @@ function ouvrirModaleProspect(p) {
         Object.assign(p, donnes);
       }
       zone.innerHTML = '';
-      annoncer('Opportunité enregistrée.');
+      const cible = nouveau ? E.prospects[E.prospects.length - 1] : p;
+      if (donnes.etape === 'contrat_signe' && (nouveau || p.etape !== 'contrat_signe') && cible && !cible.date_convertie_id) annoncer('Opportunité enregistrée : cession confirmée.', { libelle: 'Créer la date', delai: 12000, action: () => creerDateDepuisPiste(cible) });
+      else annoncer('Opportunité enregistrée.');
       vueDiffusion();
     } catch (err) {
       erreur(err, 'Enregistrement impossible');
@@ -4467,15 +4710,20 @@ function ouvrirModaleEmailRelance(p) {
   const sp = E.spectacles.find(s => s.id === p.spectacle_id);
   const titreSp = sp ? sp.titre : 'notre création';
   const prenomContact = (p.contact_nom || '').split(' ')[0] || 'Madame, Monsieur';
+  // signé par le contact diffusion de la compagnie (Textes du site → programmation) ; avec le lien personnel de l'invitation
+  // à l'espace pro reliée à la piste, quand il y en a une, encore valable
+  const pr = (E.textes.find(t => t.cle === 'programmation')?.valeur || {}).contact || {};
+  const inv = (E.acces || []).find(a => a.prospect_id === p.id && a.actif && a.expire_le >= aujourdhui());
+  const lien = inv && typeof lienPro === 'function' ? lienPro(inv) : `${new URL('../', location.href).href}#/espace-pro/programmer`;
   const objet = `Compagnie Crescite · Tournée « ${titreSp} »`;
   const corps = `Bonjour ${prenomContact},\n\n`
     + `Je me permets de revenir vers vous suite à nos échanges concernant la possible programmation de notre spectacle « ${titreSp} » au sein de ${p.structure}.\n\n`
     + `Nous finalisons actuellement notre calendrier de tournée et serions ravis de collaborer avec votre équipe sur cette saison.\n\n`
-    + `Vous pouvez consulter les extraits vidéos, la fiche technique et le dossier artistique sur notre espace professionnel dédié :\n`
-    + `${new URL('../', location.href).href}#/espace-pro/programmer\n\n`
+    + (inv ? `Les captations, la fiche technique et le dossier artistique vous attendent dans votre espace personnel :\n` : `Vous pouvez consulter les extraits vidéos, la fiche technique et le dossier artistique sur notre espace professionnel dédié :\n`)
+    + `${lien}\n\n`
     + `Seriez-vous disponible cette semaine pour un court point téléphonique afin de faire le point sur vos créneaux et contraintes d'accueil ?\n\n`
     + `Bien chaleureusement,\n\n`
-    + `L'équipe de diffusion\nCompagnie Crescite · Rouen\ncontact@crescite.fr`;
+    + `${pr.nom ? `${pr.nom}${pr.role ? `, ${pr.role}` : ''}` : 'L’équipe de diffusion'}\nCompagnie Crescite · Rouen\n${pr.email || 'contact@crescite.fr'}${pr.telephone ? ` · ${pr.telephone}` : ''}`;
 
   zone.innerHTML = `
     <div style="position:fixed;inset:0;z-index:90;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;padding:16px;">
@@ -4499,6 +4747,7 @@ function ouvrirModaleEmailRelance(p) {
         <div style="display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin-top:16px;">
           <button type="button" class="btn" id="b-copier-mel">📋 Copier le texte</button>
           ${p.contact_email ? `<a class="btn principal" id="b-mailto-mel" href="mailto:${encodeURIComponent(p.contact_email)}?subject=${encodeURIComponent(objet)}&body=${encodeURIComponent(corps)}" target="_blank" rel="noopener">✉ Ouvrir dans ma messagerie</a>` : ''}
+          <button type="button" class="btn" id="b-relance-faite" title="Dernier contact : aujourd’hui ; prochaine relance dans quinze jours">Relance faite</button>
           <button type="button" class="btn" id="b-fermer-mel">Fermer</button>
         </div>
       </div>
@@ -4508,6 +4757,13 @@ function ouvrirModaleEmailRelance(p) {
   const fermer = () => { zone.innerHTML = ''; };
   $('#b-fermer-mod-mel')?.addEventListener('click', fermer);
   $('#b-fermer-mel')?.addEventListener('click', fermer);
+  $('#b-relance-faite')?.addEventListener('click', async () => {
+    const maj = { date_dernier_contact: aujourdhui(), date_prochaine_relance: AGENDA.iso(new Date(Date.now() + 15 * 864e5)) };
+    const { error } = await sb.from('crescite_diffusion_prospects').update(maj).eq('id', p.id);
+    if (error) return erreur(error);
+    Object.assign(p, maj); fermer(); annoncer(`Relance notée : prochaine le ${jourCourt(maj.date_prochaine_relance)}.`);
+    if (location.hash === '#/diffusion') vueDiffusion();
+  });
   $('#b-copier-mel')?.addEventListener('click', () => {
     const texte = $('#mel-corps')?.value || '';
     navigator.clipboard.writeText(texte).then(() => {
@@ -4577,9 +4833,55 @@ function editeurDevis(id) {
       ${fiche('Période', esc(d0.periode_souhaitee || ''))}
       ${fiche('Contact', `${esc(d0.contact_nom)}<span class="sous-champ">${liensCoordonnees([d0.contact_email, d0.contact_tel].filter(Boolean).join(' '))}</span>`)}
     </dl>${d0.message ? `<p class="dv-message">${esc(d0.message)}</p>` : ''}</div>
+    <div class="bloc" id="dv-suite"></div>
+    ${typeof MODELES !== 'undefined' ? '<div class="bloc" id="dv-documents"></div>' : ''}
     <div class="bloc" id="dv-suivi"><h3>Le suivi <span class="aide" style="font-weight:400">— jamais montré au programmateur</span></h3>${SPEC.map(c => champ(c, F)).join('')}</div>
     ${pied('Tout est enregistré', '<button type="button" class="btn danger" id="dv-suppr">Supprimer</button>')}`;
   relier($('#dv-suivi', zone), F, SPEC);
+  // la suite d'une demande, d'un geste : la piste de diffusion qu'elle devient, la fiche de son lieu, le devis (modeles.js)
+  const piste = () => (d0.prospect_id ? (E.prospects || []).find(p => p.id === d0.prospect_id) : null);
+  const dessinerSuite = () => {
+    const p = piste(), l = d0.lieu_id != null ? lieu(d0.lieu_id) : null;
+    $('#dv-suite', zone).innerHTML = `<h3>Et ensuite</h3><div class="fm-boutons">
+      ${p ? `<a class="btn" href="#/diffusion/piste/${p.id}">La piste : ${esc(etapeLib(p.etape))}</a>` : `<button type="button" class="btn principal" data-dv="piste">Créer la piste de diffusion</button>`}
+      ${l ? `<a class="btn" href="#/lieux/${l.id}">Le lieu : ${esc(l.nom || l.commune)}</a>` : `<button type="button" class="btn" data-dv="lieu">Créer la fiche du lieu</button>`}</div>
+      <p class="aide">La piste reprend la structure, le contact, le spectacle et la demande ; le lieu, sa commune et son type. Le devis se génère ci-dessous, rempli depuis la demande.</p>`;
+  };
+  dessinerSuite();
+  if ($('#dv-documents', zone)) MODELES.bloc($('#dv-documents', zone), { demande: d0 });
+  $('#dv-suite', zone).addEventListener('click', async e => {
+    const b = e.target.closest('[data-dv]'); if (!b) return;
+    b.disabled = true;
+    try {
+      if (b.dataset.dv === 'piste') {
+        const ligne = { structure: d0.structure_nom, commune: d0.commune, departement: d0.departement || null, spectacle_id: d0.spectacle_id ?? null, contact_nom: d0.contact_nom || null,
+          contact_email: d0.contact_email || null, contact_tel: d0.contact_tel || null, etape: 'contact_pris', date_dernier_contact: aujourdhui(),
+          notes: [`Demande de devis du ${d0.cree_le ? jourCourt(String(d0.cree_le).slice(0, 10)) : 'site'}.`, d0.periode_souhaitee ? `Période : ${d0.periode_souhaitee}.` : '', d0.message || ''].filter(Boolean).join(' '),
+          ...(E.diffusionReliee && d0.lieu_id != null ? { lieu_id: d0.lieu_id } : {}) };
+        const { data: p, error } = await sb.from('crescite_diffusion_prospects').insert(ligne).select().single();
+        if (error) throw error;
+        E.prospects.push(p);
+        const maj = { ...(E.diffusionReliee ? { prospect_id: p.id } : {}), ...((d0.statut || 'nouveau') === 'nouveau' ? { statut: 'en_cours' } : {}) };
+        if (Object.keys(maj).length) { const r = await sb.from('crescite_devis_demandes').update(maj).eq('id', d0.id); if (r.error) throw r.error; Object.assign(d0, maj); F.statut = d0.statut; }
+        annoncer(`Piste créée : ${p.structure}.`, { libelle: 'Voir', action: () => { location.hash = `#/diffusion/piste/${p.id}`; } });
+      } else {
+        if (!(d0.departement || '').trim()) { annoncer('La demande ne dit pas le département : créez le lieu dans Lieux.', { erreur: true }); b.disabled = false; return; }
+        const type = { etablissement: 'etablissement', theatre: 'salle', polyvalente: 'salle', exterieur: 'autre', autre: 'autre' }[d0.type_lieu] || 'salle';
+        let l = E.lieux.find(x => norm(x.commune) === norm(d0.commune) && norm(x.nom || '') === norm(d0.structure_nom));
+        if (!l) {
+          const { data, error } = await sb.from('crescite_lieux').insert({ nom: d0.structure_nom, type, commune: d0.commune, departement: String(d0.departement).trim() }).select().single();
+          if (error) throw error;
+          l = data; E.lieux.push(l);
+        }
+        if (E.diffusionReliee) {
+          const r = await sb.from('crescite_devis_demandes').update({ lieu_id: l.id }).eq('id', d0.id); if (r.error) throw r.error; d0.lieu_id = l.id;
+          const p = piste(); if (p && p.lieu_id == null) { const r2 = await sb.from('crescite_diffusion_prospects').update({ lieu_id: l.id }).eq('id', p.id); if (!r2.error) p.lieu_id = l.id; }
+        }
+        annoncer(`Fiche du lieu : ${l.nom || l.commune}. Complétez son adresse et sa position.`, { libelle: 'Ouvrir', action: () => { location.hash = `#/lieux/${l.id}`; } });
+      }
+    } catch (err) { erreur(err); }
+    dessinerSuite();
+  });
   $('#dv-suppr', zone).addEventListener('click', () => CORBEILLE.ligne({ table: 'crescite_devis_demandes', ligne: d0, quoi: `Demande supprimée : ${d0.structure_nom}.`, retabli: 'Demande rétablie.',
     apres: () => { E.devis = E.devis.filter(x => x.id !== id); E.sale = false; quitterFiche('#/diffusion/devis'); }, apresRetour: x => { E.devis.push(x); location.hash = `#/diffusion/devis/${x.id}`; } }));
   $('[data-enregistrer]', zone).addEventListener('click', async e => {
@@ -4715,7 +5017,9 @@ const champsChanges = j => j.avant && j.apres ? Object.keys(j.apres).filter(k =>
 // session. « Lire plus ancien » ajoute 300 modifications ; quand une période remonte plus loin que ce qui est lu, le dit.
 const RUBRIQUES_JOURNAL = [['representations', 'Représentations', ['crescite_dates', 'crescite_representations', 'crescite_dates_suivi', 'crescite_dates_chiffres', 'crescite_equipes']],
   ['feuilles', 'Feuilles de route', ['crescite_feuilles']], ['spectacles', 'Spectacles', ['crescite_spectacles', 'crescite_distributions', 'crescite_documents']],
-  ['equipe', 'Équipe', ['crescite_personnes']], ['ateliers', 'Ateliers', ['crescite_ateliers', 'crescite_seances']], ['lieux', 'Lieux', ['crescite_lieux', 'crescite_lieux_suivi']],
+  ['equipe', 'Équipe', ['crescite_personnes']], ['ateliers', 'Ateliers', ['crescite_ateliers', 'crescite_seances']], ['lieux', 'Lieux', ['crescite_lieux', 'crescite_lieux_suivi', 'crescite_contacts', 'crescite_hebergements']],
+  ['diffusion', 'Diffusion', ['crescite_diffusion_prospects', 'crescite_devis_demandes', 'crescite_documents_generes', 'crescite_acces_pro']],
+  ['planning', 'Planning', ['crescite_propositions']], ['frais', 'Frais et matériel', ['crescite_notes_frais', 'crescite_materiel']], ['notes', 'Notes internes', ['crescite_notes']],
   ['textes', 'Textes du site', ['crescite_textes']]];
 const PERIODES_JOURNAL = [['', 'Toute la période'], ['jour', 'Aujourd’hui'], ['7', 'Les 7 derniers jours'], ['30', 'Les 30 derniers jours'], ['choisir', 'Choisir les dates…']];
 const OPS_JOURNAL = { INSERT: 'Ajout', UPDATE: 'Modification', DELETE: 'Suppression' };
@@ -4840,7 +5144,7 @@ async function vueJournal() {
 <script src="menus.js"></script>
 <!-- le niveau supérieur : la corbeille (supprimer sans confirmer, rétablir), les fiches en tiroir, la sélection multiple,
      le parcours d'une date, les garde-fous à la saisie, les séries et modèles de dates, les documents générés, les notes
-     internes, la carte de tournée, le téléphone -->
+     internes, le carnet des lieux, la carte de tournée, le téléphone -->
 <script src="corbeille.js"></script>
 <script src="tiroir.js"></script>
 <script src="selection.js"></script>
@@ -4849,6 +5153,7 @@ async function vueJournal() {
 <script src="series.js"></script>
 <script src="modeles.js"></script>
 <script src="notes.js"></script>
+<script src="carnet.js"></script>
 <script src="fond-carte.js"></script>
 <script src="tournee.js"></script>
 <script src="mobile.js"></script>

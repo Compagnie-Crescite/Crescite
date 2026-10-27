@@ -463,7 +463,9 @@ create policy lecture on public.crescite_representations for select to anon, aut
   using (exists (select 1 from public.crescite_dates d where d.id = date_id) or (select public.crescite_est_admin()));
 create policy lecture on public.crescite_ateliers for select to anon, authenticated
   using (publie or (select public.crescite_est_admin()));
-create policy lecture on public.crescite_textes for select to anon, authenticated using (true);
+-- (les textes du site sont publics ; les documents générés et les modèles de documents ou de dates ne le sont pas)
+create policy lecture on public.crescite_textes for select to anon, authenticated
+  using (not (cle like 'documents:%' or cle like 'modele:%' or cle like 'modele-date:%') or (select public.crescite_est_admin()));
 
 -- ce que seule l'administration lit
 create policy lecture on public.crescite_dates_suivi for select to authenticated using ((select public.crescite_est_admin()));
