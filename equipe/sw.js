@@ -133,7 +133,7 @@ async function base(req) {
 self.addEventListener('push', e => {
   let d = {};
   try { d = e.data ? e.data.json() : {}; } catch (err) { d = { texte: e.data ? e.data.text() : '' }; }
-  const titre = String(d.titre || d.title || 'Crescite');
+  const titre = String(d.titre || d.title || 'Compagnie Crescite');
   const texte = String(d.texte || d.body || '');
   const brut = d.lien || d.url || '';
   const lien = typeof brut === 'string' && LIENS_SURS.test(brut) ? brut : d.date_id ? `#/date/${d.date_id}` : '#/notifications';

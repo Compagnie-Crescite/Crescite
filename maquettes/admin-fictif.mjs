@@ -10,11 +10,16 @@ import { fileURLToPath } from 'node:url';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || '/opt/node22/lib/node_modules/playwright/index.mjs');
 
 const ICI = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.resolve(ICI, '..');
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.json': 'application/json', '.svg': 'image/svg+xml', '.ttf': 'font/ttf' };
-// admin/ tel qu'il est publié : ses fichiers, et les outils communs que build.py copie à côté (agenda.js, tentacules.js…)
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.json': 'application/json', '.svg': 'image/svg+xml', '.ttf': 'font/ttf', '.png': 'image/png' };
+// admin/ tel qu'il est publié : ses fichiers, et les outils communs que build.py copie à côté (agenda.js, tentacules.js…) ;
+// après le build, ce qu'il écrit lui-même vient de maquettes/dist/ : la page (les couleurs de la saison posées), le logo et
+// les icônes ; le reste, des sources
+const DIST = path.join(ICI, 'dist');
 const serveur = http.createServer((req, res) => {
-  const rel = decodeURIComponent(new URL(req.url, 'http://x').pathname).replace(/^\/admin\//, '');
-  const p = [path.join(ROOT, 'admin', rel), path.join(ICI, 'src', rel)].find(f => f.startsWith(ROOT) && fs.existsSync(f) && fs.statSync(f).isFile());
+  const chemin = decodeURIComponent(new URL(req.url, 'http://x').pathname), rel = chemin.replace(/^\/admin\//, '');
+  const ecrit = chemin.startsWith('/equipe/icones/') ? [path.join(DIST, chemin)] : ['index.html', 'logo.js'].includes(rel) ? [path.join(DIST, 'admin', rel)] : [];
+  const p = (chemin.startsWith('/equipe/') ? ecrit : [...ecrit, path.join(ROOT, 'admin', rel), path.join(ICI, 'src', rel)])
+    .find(f => f.startsWith(ROOT) && fs.existsSync(f) && fs.statSync(f).isFile());
   if (!p) { res.writeHead(404); return res.end(); }
   res.writeHead(200, { 'content-type': TYPES[path.extname(p)] || 'application/octet-stream', 'cache-control': 'no-store' });
   fs.createReadStream(p).pipe(res);

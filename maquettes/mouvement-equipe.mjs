@@ -124,7 +124,7 @@ fs.mkdirSync(CAPT, { recursive: true });
   await page.keyboard.press('Escape');
   await page.waitForTimeout(100);
   ok('« Installer » reste dans la barre au téléphone, ouvre la marche à suivre, Échap la ferme et rend le focus', inst.la && inst.largeur > 70 && /Installer/.test(inst.texte) && modale.la && /Installer l’application/.test(modale.titre) && modale.focus && await page.evaluate(() => !document.querySelector('#modale-installation') && document.activeElement === document.querySelector('[data-installer-barre]')), JSON.stringify({ inst, modale }));
-  // 5. l'accueil garde le magenta
+  // 5. l'accueil garde la couleur de la saison
   ok('5 · accueil : pas de teinte', await page.$eval('.appli', e => !e.hasAttribute('data-teinte')));
   // 6. la carte : bras et lieux portent leurs dates ; survoler un billet allume son bras
   await page.waitForSelector('.o-carte .carte-tournee svg .bras[data-dates]', { timeout: 5000 }).catch(() => {});

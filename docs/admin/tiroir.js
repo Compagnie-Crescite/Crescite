@@ -173,7 +173,7 @@ const TIROIR = (() => {
 html.tiroir-ouvert body { overflow: hidden; }
 .tiroir-etapes { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; padding: 0; list-style: none; counter-reset: etape; }
 .tiroir-etapes li.faite .btn { background: var(--ok-doux); border-color: transparent; color: var(--ok); }
-.tiroir-etapes li.courante .btn { background: var(--accent); border-color: var(--accent); color: #fff; }
+.tiroir-etapes li.courante .btn { background: var(--accent); border-color: var(--accent); color: var(--sur-accent, #fff); }
 .manque { color: var(--alerte); font-weight: 700; }
 @media (max-width: 640px) { .tiroir { width: 100vw; border-left: 0; } .tiroir-corps { padding: 12px 12px 20px; } .tiroir.la { transform: none; } }
 @media (prefers-reduced-motion: reduce) { .tiroir, .tiroir-voile { transition: none; } }`;
