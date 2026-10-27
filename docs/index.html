@@ -8650,11 +8650,49 @@ const PIEUVRE = (() => {
     // (collée : une fois déployée, la tentacule ne retourne plus à sa place du logo, à côté de la tête ; remontée, elle
     // s'enroule contre la tête, depuis son attache, comme un bras d'une vraie créature)
     // (gl : la part faite du glissement, 0 à sa place du logo, 1 sur son attache ; avancer la mène, avant le déroulement)
+    // (reliée, voir reliePose : la racine ne traverse pas la tête en ligne droite, elle remonte le lien, de sa place du logo
+    // jusqu'à son attache, par-dessous)
     racineEff() {
       const g = this.colle ? 1 : ease(Math.min(1, Math.max(0, this.gl || 0))), a = this.att;
       if (!a || g <= 0) return [this.RX[0], this.RY[0], 0];
       let d = a.dir - this.RS[0]; d = Math.atan2(Math.sin(d), Math.cos(d));
+      if (this.relie && !this.colle) { const L = this.lien(), [x, y] = L.en((1 - g) * L.L); return [x, y, d * g]; }
       return [lerp(this.RX[0], a.x, g), lerp(this.RY[0], a.y, g), d * g];
+    }
+    // le lien d'une tentacule dont la place du logo est loin de son attache (la queue, la spirale extérieure) : la courbe que
+    // prend son pied, de l'attache (u = 0 : dans le sens de l'attache, comme le prolongement de la jambe) à sa racine du logo
+    // (dans le sens où la tentacule y part), en unités du dessin ; en(l) : le point et l'angle à l arc de l'attache
+    lien() {
+      if (this.lien_) return this.lien_;
+      const a = this.att, x0 = a.x, y0 = a.y, x1 = this.RX[0], y1 = this.RY[0], c = Math.hypot(x1 - x0, y1 - y0) * 1.1;
+      const t0x = Math.cos(a.dir) * c, t0y = Math.sin(a.dir) * c, t1x = Math.cos(this.RS[0]) * c, t1y = Math.sin(this.RS[0]) * c;
+      const N = 96, xs = new Float64Array(N + 1), ys = new Float64Array(N + 1), ls = new Float64Array(N + 1);
+      for (let i = 0; i <= N; i++) {
+        const u = i / N, u2 = u * u, u3 = u2 * u, h00 = 2 * u3 - 3 * u2 + 1, h10 = u3 - 2 * u2 + u, h01 = -2 * u3 + 3 * u2, h11 = u3 - u2;
+        xs[i] = h00 * x0 + h10 * t0x + h01 * x1 + h11 * t1x; ys[i] = h00 * y0 + h10 * t0y + h01 * y1 + h11 * t1y;
+        ls[i] = i ? ls[i - 1] + Math.hypot(xs[i] - xs[i - 1], ys[i] - ys[i - 1]) : 0;
+      }
+      const L = ls[N];
+      const en = l => {
+        l = Math.min(L, Math.max(0, l));
+        let i = 0; while (i < N - 1 && ls[i + 1] < l) i++;
+        const f = (l - ls[i]) / Math.max(1e-9, ls[i + 1] - ls[i]);
+        return [lerp(xs[i], xs[i + 1], f), lerp(ys[i], ys[i + 1], f), Math.atan2(ys[i + 1] - ys[i], xs[i + 1] - xs[i])];
+      };
+      return this.lien_ = { L, en };
+    }
+    // reliée : la tentacule d'un seul tenant, de sa racine du moment, sur le lien, à sa place du logo, qu'elle n'a pas quittée :
+    // son pied s'allonge de la pièce du logo jusqu'à la tête (g : 0 au repos, 1 sur l'attache) ; R, sa pose de repos (avec
+    // son ondulation). Les segments, tous de même longueur, se partagent le lien parcouru, puis la pièce du logo telle quelle
+    reliePose(g, R) {
+      const L = this.lien(), M = this.M, lc = g * L.L, tot = lc + this.L0, h = tot / M;
+      const sg = new Float64Array(M), th = new Float64Array(M + 1), ln = new Float64Array(M).fill(h * this.s);
+      const sur = (A, x, n) => { x = Math.min(n, Math.max(0, x)); const j = Math.min(n - 1, Math.floor(x)); return lerp(A[j], A[j + 1], x - j); };
+      for (let k = 0; k < M; k++) { const l = (k + .5) * h; sg[k] = l < lc ? L.en(L.L - lc + l)[2] : sur(R.sg, (l - lc) / this.L0 * M - .5, M - 1); }
+      for (let k = 0; k <= M; k++) { const l = k * h; th[k] = l < lc ? L.en(L.L - lc + l)[2] : sur(R.th, (l - lc) / this.L0 * M, M); }
+      for (let k = 1; k < M; k++) sg[k] = sg[k - 1] + norm(sg[k] - sg[k - 1]);
+      for (let k = 1; k <= M; k++) th[k] = th[k - 1] + norm(th[k] - th[k - 1]);
+      return { sg, th, ln, mu: 0 };
     }
     racine() { const [rx, ry] = this.racineEff(); return { x: this.ox + rx * this.s, y: this.oy + ry * this.s }; }
     // la partie de la peau hors de la racine (le liseré ne coupe pas la tentacule de son corps), pour une racine de rac fois l'épine
@@ -8823,6 +8861,8 @@ const PIEUVRE = (() => {
       // (la racine de la dernière cible reste celle du liseré et de l'effilement, le temps qu'elle revienne au repos)
       if (cible) { this.derniere = cible; this.rac = cible.racine != null ? cible.racine : RAC; this.wmin = cible.epaisseur || 0; }
       if (!this.pose_ || (meme && this.pose)) return;   // la même cible (peut-être déplacée) : le trajet continue
+      // (reliée : elle part de son repos vers une cible, et sa place du logo est loin de son attache)
+      this.relie = !!(cible && this.att && !this.colle && (!this.pose || this.pose.mu < .01) && Math.hypot(this.att.x - this.RX[0], this.att.y - this.RY[0]) > 40);
       this.depuis = this.pose || this.reposPose();
       this.but = cible ? this.viseePose(cible, this.bob) : null;
       // qui s'allonge se déroule d'abord, puis s'étire ; qui raccourcit se rétracte d'abord, puis s'enroule
@@ -8831,6 +8871,9 @@ const PIEUVRE = (() => {
       this.q = duree > 0 ? 0 : 1; this.duree = duree;
     }
     mouvement() { return this.pose ? this.pose.mu : 0; }
+    // combien elle a quitté sa place du logo, pour ce qui s'efface quand elle part (une frange, un liseré du dessin) : dès le
+    // début de son trajet vers une cible (son premier douzième), sinon selon son mouvement (au retour, ils reviennent avec elle)
+    partie() { return Math.max(ease(this.mouvement()), this.cible && this.q < 1 ? lisse(0, .08, this.q) : 0); }
     // sa profondeur moyenne : 1 au premier plan, moins quand elle s'enfonce (pour la pâlir, et la dessiner derrière les autres)
     profondeur() {
       const z = this.pose && this.pose.z;
@@ -8860,6 +8903,7 @@ const PIEUVRE = (() => {
       else this.gl = this.cible || this.colle ? 1 : 0;
       const glisseR = this.racineEff()[2];
       const repos = this.reposPose(o.temps || 0, o.onde || 0, o.penche || 0, this.tourne + glisseR);
+      const repos0 = this.relie ? this.reposPose(o.temps || 0, o.onde || 0, o.penche || 0, this.tourne) : repos;   // (reliée : la pièce ne tourne pas)
       if (this.cible) this.but = this.viseePose(this.cible, bob);
       let bouge = false;
       if (this.q < 1) { this.q = Math.min(1, this.q + dt / Math.max(1, this.duree)); bouge = true; }
@@ -8896,7 +8940,9 @@ const PIEUVRE = (() => {
           // courbé, en grands arcs qui balaient. Celle qui a glissé part de sa forme du logo tournée dans le sens de son attache
           // (repos : elle s'y est tournée en glissant, enfoncée))
           const q2 = delai ? Math.max(0, (brut - delai) / (1 - delai)) : brut, OND = .82, A0 = A;
-          A = delai ? repos : A;
+          // (reliée : elle ne glisse pas, entière, à travers la tête : la pièce du logo reste à sa place, d'un seul tenant, son
+          // pied s'allonge jusqu'à l'attache par-dessous (reliePose), puis elle se déplie de là, opaque, au premier plan)
+          A = this.relie ? this.reliePose(ease(Math.min(1, Math.max(0, this.gl || 0))), repos0) : delai ? repos : A;
           const av = u => lisse(0, 1, (q2 - u * OND) / (1 - OND));
           const wS = new Float64Array(M), wP = new Float64Array(M + 1);
           for (let k = 0; k < M; k++) wS[k] = av((k + .5) / M);
@@ -8907,7 +8953,7 @@ const PIEUVRE = (() => {
           const Da = A === A0 ? D : deroule(A.sg, B.sg, M), DTa = A === A0 ? DT : deroule(A.th, B.th, M + 1);
           for (let k = 0; k < M; k++) { sg[k] = A.sg[k] + wS[k] * Da[k]; ln[k] = lerp(A.ln[k], B.ln[k], wS[k]); }
           for (let k = 0; k <= M; k++) th[k] = A.th[k] + wP[k] * DTa[k];
-          const recul = delai ? 1 - .62 * Math.sin(Math.PI * Math.min(1, Math.max(0, this.gl || 0))) : 1;
+          const recul = delai && !this.relie ? 1 - .62 * Math.sin(Math.PI * Math.min(1, Math.max(0, this.gl || 0))) : 1;
           const zP = new Float64Array(M + 1);
           for (let k = 0; k <= M; k++) { const w = wP[k]; zP[k] = lerp(A.z ? A.z[k] : 1, B.z ? B.z[k] : 1, w) * (1 + .56 * w * (1 - w)) * recul; }
           P = { sg, th, ln, z: zP, mu: lerp(A0.mu, B.mu, ease(q2)), prolonge: ens };
@@ -9398,7 +9444,7 @@ const PIEUVRE = (() => {
       // boucle, le coin où la tige rejoint sa boucle, se peignent avec la tête ; ils s'effacent à mesure que la tentacule s'en va)
       for (const { bras, poly } of this.REPOS) {
         let loin = 0;
-        for (const t of ts) if (bras.includes(t.cle)) loin = Math.max(loin, t.bordTete() || !t.att ? (t.colle ? 1 : Math.max(t.mouvement(), t.gl || 0)) : t.mouvement());
+        for (const t of ts) if (bras.includes(t.cle)) loin = Math.max(loin, t.bordTete() || !t.att ? (t.colle ? 1 : Math.max(t.mouvement(), t.gl || 0)) : t.partie());
         if (loin > .99) continue;
         g.save(); g.clip(decoupe([poly])); g.globalAlpha = 1 - loin; g.fillStyle = encre; g.fill('evenodd'); g.restore();
       }
@@ -9455,9 +9501,10 @@ const PIEUVRE = (() => {
     REPOS: (G && G.repos) || [],
 
     dessiner(g, t, o = {}) {
-      // (une frange s'efface à mesure que sa spirale se déploie : elle n'en reste pas un morceau qui flotte ; elle revient avec elle)
+      // (une frange s'efface dès que sa spirale part, au tout début de son trajet : elle n'en reste pas un morceau qui flotte, à
+      // demi transparent, à côté des huit tentacules ; elle revient avec elle)
       // (enfoncée, elle pâlit : elle passe derrière le corps)
-      const zm = t.profondeur(), al = (t.parent ? 1 - ease(t.parent.t.mouvement()) : 1) * (zm < 1 ? .3 + .7 * zm : 1);
+      const zm = t.profondeur(), al = (t.parent ? 1 - t.parent.t.partie() : 1) * (zm < 1 ? .3 + .7 * zm : 1);
       if (al < .02) return;
       const { xs, ys } = t.contour(), mu = t.mouvement();
       // le liseré : là où elle passe sur la pieuvre, un jour la sépare (comme les tentacules du logo entre elles) ; jamais plus
@@ -11761,7 +11808,7 @@ const CREATURE = (() => {
         for (const a of BRAS) {
           const d = relais.TS.find(x => x.cle === a.cle), T = d && d.cible && TIT.find(x => x.slug === d.cible.cle);
           if (!T) continue;
-          const t = a.t, cles = ['pose', 'depuis', 'but', 'q', 'duree', 'cible', 'derniere', 'etire', 'elastique', 'rac', 'wmin', 'tourne', 'colle'];
+          const t = a.t, cles = ['pose', 'depuis', 'but', 'q', 'duree', 'cible', 'derniere', 'etire', 'elastique', 'rac', 'wmin', 'tourne', 'colle', 'relie'];
           for (const k of cles) t[k] = d[k];
           t.libreRac = -1; t.poly = null;
           a.but = T; a.tenu = T; a.col = T.col; a.teinte = relais.teinte; repris++;
