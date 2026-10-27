@@ -1958,17 +1958,27 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
    légende ; ses prochaines dates et toutes ses dates (une ventouse à la couleur du spectacle, le jour en grand, le titre dans
    la police de son univers), à côté de sa carte, qui écrit sous elle la commune survolée. L'encre vive est la couleur de la
    saison (--saison-vive), le noir celui de la synthèse. */
-.s7-entete { padding: clamp(56px, 7vw, 96px) 0 clamp(18px, 2.5vw, 32px); background: radial-gradient(min(62rem, 150vw) min(34rem, 100vw) at 14% 0, color-mix(in srgb, var(--saison-vive) 13%, transparent), transparent 72%) no-repeat; }
-.s7-sur { margin: 0; font: 600 .875rem/1.3 var(--etiq); letter-spacing: .16em; text-transform: uppercase; color: var(--gris); }
-.s7-titre { margin: .9rem 0 0; font: 500 clamp(2.75rem, 1.5rem + 5.4vw, 6rem)/.98 var(--titre); letter-spacing: -.015em; text-wrap: balance; overflow-wrap: break-word; }
-.s7-rac { list-style: none; display: flex; flex-wrap: wrap; gap: 0 clamp(18px, 2.6vw, 36px); margin: clamp(14px, 2vw, 24px) 0 0; padding: 0; }
+.s7-entete { padding: clamp(20px, 3vw, 40px) 0 clamp(4px, 1vw, 12px); background: radial-gradient(min(62rem, 150vw) min(34rem, 100vw) at 14% 0, color-mix(in srgb, var(--saison-vive) 13%, transparent), transparent 72%) no-repeat; }
+/* (la tête sur deux lignes : le titre, puis les raccourcis et, au bout, la recherche ; au téléphone, la recherche monte à côté
+   du titre et les raccourcis passent dessous) */
+.s7-e { display: grid; grid-template-columns: minmax(0, 1fr) minmax(14rem, 20rem); grid-template-areas: "titre titre" "rac cherche"; align-items: center; gap: clamp(10px, 1.4vw, 18px) clamp(18px, 2.6vw, 36px); }
+.s7-titre { grid-area: titre; margin: 0; font: 500 clamp(2.5rem, 1.4rem + 3.6vw, 4.5rem)/.98 var(--titre); letter-spacing: -.015em; text-wrap: balance; overflow-wrap: break-word; }
+.s7-rac { grid-area: rac; list-style: none; display: flex; flex-wrap: wrap; gap: 0 clamp(18px, 2.6vw, 36px); margin: 0; padding: 0; }
+.s7-e .s7-cherche { grid-area: cherche; max-width: none; }
+@media (max-width: 759px) {
+  .s7-e { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "titre cherche" "rac rac"; align-items: end; gap: 6px 18px; }
+  .s7-titre { font-size: 2.5rem; }
+  .s7-titre .fleur { padding-bottom: 14px; }
+  .s7-e .s7-cherche { margin-bottom: 8px; }
+  .s7-rac { gap: 0 18px; }
+  .s7-rac button { font-size: .875rem; }
+}
 .s7-rac button { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 0; border: 0; background: none; color: color-mix(in srgb, var(--encre) 86%, transparent);
   font: 600 .95rem/1.2 var(--texte); text-align: left; cursor: pointer; }
 .s7-rac button:hover { color: var(--encre); }
 .s7-lampe { flex: none; width: 11px; height: 11px; border-radius: 50%; background: radial-gradient(circle, var(--saison-vive) 0 2px, var(--papier) 2.5px 3.3px, var(--saison-vive) 3.8px);
   transition: scale var(--k-survol) var(--k-souple); }
 .s7-rac button:is(:hover, :focus-visible) .s7-lampe { scale: 1.4; }
-.s7-outils { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.1rem; padding-top: clamp(4px, 1vw, 10px); padding-bottom: 2rem; }
 .s7-cherche { position: relative; display: block; max-width: 24rem; }
 .s7-cherche svg { position: absolute; left: 2px; top: 50%; width: 16px; height: 16px; transform: translateY(-50%); fill: none; stroke: var(--gris); stroke-width: 1.6; stroke-linecap: round; }
 .s7-cherche input { width: 100%; padding: .6rem .5rem .6rem 1.9rem; border: 0; border-bottom: 1px solid color-mix(in srgb, var(--encre) 34%, transparent); border-radius: 0; background: transparent;
@@ -1983,9 +1993,9 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 .s7-chip[aria-pressed="true"] { color: var(--encre); border-color: var(--c, var(--saison-vive)); background: color-mix(in srgb, var(--c, var(--saison-vive)) 12%, transparent); box-shadow: inset 0 0 0 1px var(--c, var(--saison-vive)); }
 .s7-chip .croix { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
 .s7-chip--lieu { --c: var(--saison-vive); }
-.s7 { padding: clamp(1.5rem, 3vw, 2.5rem) 0 clamp(3.5rem, 7vw, 6rem); }
-.s7-tete { display: flex; flex-wrap: wrap; align-items: baseline; gap: .75rem 1.5rem; padding-bottom: 1.1rem; border-bottom: 1px solid var(--saison-vive); }
-.s7-t { margin: 0; font: 500 clamp(2.25rem, 1.4rem + 3.4vw, 4.25rem)/1 var(--titre); letter-spacing: -.012em; }
+.s7 { padding: clamp(.75rem, 1.6vw, 1.5rem) 0 clamp(3.5rem, 7vw, 6rem); }
+.s7-tete { display: flex; flex-wrap: wrap; align-items: baseline; gap: .4rem 1.5rem; padding-bottom: clamp(.6rem, 1vw, .9rem); border-bottom: 1px solid var(--saison-vive); }
+.s7-t { margin: 0; font: 500 clamp(1.875rem, 1.2rem + 2.2vw, 3.25rem)/1 var(--titre); letter-spacing: -.012em; }
 .s7-k { display: flex; align-items: center; gap: .7rem; margin: 0; font: 600 .8125rem/1.3 var(--etiq); letter-spacing: .16em; text-transform: uppercase; color: var(--saison-texte); }
 .s7-gel { flex: none; width: 12px; height: 12px; border-radius: 50%; background: radial-gradient(circle, var(--saison-vive) 0 2.4px, var(--papier) 2.9px 3.9px, var(--saison-vive) 4.4px); }
 /* la saison d'un regard : la frise des mois et, à côté, la carte qui s'approche de la ville de la date (la loupe), puis les
@@ -2002,7 +2012,7 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
    Les saisons passées ont leur rangée, de leurs spectacles, à leur place (elle ne s'arrime pas : leur bande des saisons, si) */
 .s7, .p4 { position: relative; isolation: isolate; }
 .s7 { --sm7-h: 66px; }
-.sm7 { --sm-fond: var(--papier); position: sticky; top: calc(var(--haut) - 8px); z-index: 24; margin: 0 0 clamp(1rem, 2vw, 1.75rem); background: transparent; }
+.sm7 { --sm-fond: var(--papier); position: sticky; top: calc(var(--haut) - 8px); z-index: 24; margin: 0 0 clamp(.5rem, 1.2vw, 1.25rem); background: transparent; }
 .sm7.est-choisi { --sm-fond: color-mix(in srgb, var(--sc, var(--saison-vive)) 14%, var(--papier)); }
 .sm7.colle { background: var(--sm-fond); box-shadow: 0 1px 0 var(--filet), 0 0 0 100vmax var(--sm-fond); clip-path: inset(calc(-1 * var(--haut)) 0 -1px 0); }
 .sm7-in { display: flex; align-items: center; gap: 14px; min-height: var(--sm7-h); }
@@ -4959,14 +4969,13 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // (la rangée dans son cadre, avec ses deux flèches de défilement, pour la souris : le clavier va de vignette en vignette)
     const sousMenu = (xs, n) => `<div class="sm7-cadre"><div class="sm7-l" role="group" aria-label="${esc(L.spectacles)}">${xs.map(x => itemSp(x, n.get(x.cle))).join('')}</div>`
       + `<button type="button" class="sm7-f" data-sens="-1" tabindex="-1" aria-hidden="true">${GAUCHE}</button><button type="button" class="sm7-f" data-sens="1" tabindex="-1" aria-hidden="true">${DROITE}</button></div>`;
-    main.innerHTML = `<header class="s7-entete"><div class="wrap">
-        <p class="s7-sur"${ed('site.nom')}>${esc(S.nom)}</p>
+    // (la tête, resserrée pour que la saison en cours, sa rangée et le haut de sa frise tiennent dans le premier écran : le
+    // titre, puis sur une ligne ses raccourcis et la recherche ; au téléphone, la recherche à côté du titre)
+    main.innerHTML = `<header class="s7-entete"><div class="wrap s7-e">
         <h1 class="s7-titre" tabindex="-1"><span class="fleur">${esc(M0.texte)}</span></h1>
         <ul class="s7-rac">${[['v-saison', S0.titre], ['v-agenda', L.saisonsPassees], ['v-alerte', nAlerte]].map(([id, t]) => `<li><button type="button" data-va="${id}"><span class="s7-lampe" aria-hidden="true"></span>${esc(t)}</button></li>`).join('')}</ul>
+        <label class="s7-cherche s7-outils"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5"/><path d="M11 11l4 4"/></svg><input id="cherche" type="search" placeholder="${esc(L.rechercher)}" aria-label="${esc(L.rechercher)}" autocomplete="off" value="${esc(F.q)}"></label>
       </div></header>
-      <div class="wrap s7-outils">
-        <label class="s7-cherche"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5"/><path d="M11 11l4 4"/></svg><input id="cherche" type="search" placeholder="${esc(L.rechercher)}" aria-label="${esc(L.rechercher)}" autocomplete="off" value="${esc(F.q)}"></label>
-      </div>
       <section class="s7" id="v-saison" aria-labelledby="h-saison"><div class="sf7" aria-hidden="true"></div><div class="wrap">
         <header class="s7-tete"><h2 class="s7-t" id="h-saison" data-mv="monte">${esc(S0.titre)}</h2><p class="s7-k"><span class="s7-gel" aria-hidden="true"></span>${esc(L.saisonEnCours)}</p></header></div>
         ${spSaison.length ? `<nav class="sm7" id="sm7" aria-label="${esc(S0.titre)}"><div class="wrap sm7-in"><span class="sm7-nom" aria-hidden="true">${esc(S0.titre)}</span>${sousMenu(spSaison, nSaison)}</div></nav>` : ''}
