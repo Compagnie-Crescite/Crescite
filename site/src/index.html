@@ -3055,6 +3055,33 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   .case input { width: 24px; height: 24px; margin-top: 0; }
   .carte .cible, .carte.est-loupe .cible { r: calc(12.5px * var(--k, 1)); }
 }
+/* le mode contraste élevé (forced-colors : les couleurs du système remplacent celles du site, les fonds et les ombres
+   s'effacent). Ce que disaient un fond, une ombre ou la couleur d'un spectacle se dit autrement, dans les couleurs du
+   système : la rubrique courante du menu, en aplat (Highlight) et soulignée ; une puce pressée, une saison ouverte, une date
+   choisie, en aplat ; les puces, les pastilles de la frise, les cartes, d'un filet ; une date jouée, en tirets et grisée
+   (GrayText), sa coche à la couleur du texte ; une puce éteinte, grisée ; le focus, l'anneau du système */
+@media (forced-colors: active) {
+  .entrees a[aria-current="page"], .u-onglets a[aria-current="page"] { forced-color-adjust: none; background: Highlight; border-color: Highlight; color: HighlightText; }
+  .entrees a[aria-current="page"] *, .u-onglets a[aria-current="page"] * { color: HighlightText; }
+  :is(.entrees, .u-onglets, .pied-nav, .sp-som, .psom-l) :is([aria-current="page"], [aria-current="true"], [aria-current="location"]) { text-decoration: underline 2px; text-underline-offset: 5px; }
+  .entrees a[aria-current="true"] { border: 2px solid Highlight; }
+  .entrees.en-bas a[aria-current="page"] { background: Highlight; }
+  .entrees.en-bas a[aria-current="page"] .ic, .entrees.en-bas a[aria-current="page"] .ic * { background: HighlightText; color: Highlight; }
+  :is([aria-pressed="true"]:not(.sc-pause), .idx[aria-expanded="true"], .frise-point.est-choisi > .fm7-d) { forced-color-adjust: none; background: Highlight; border-color: Highlight; color: HighlightText; }
+  :is([aria-pressed="true"]:not(.sc-pause), .idx[aria-expanded="true"]) :is(span, small, b, time, i:not(.sm7-v)) { color: HighlightText; }
+  :is(.s7-chip, .sm7-b, .fm7-d, .fe7-m, .bf7-m, .idx, .rs-date, .puce, .tr6-p) { border: 1px solid ButtonText; }
+  :is(.s7-chip, .sm7-b, .fe7-m, .fm7-tete, .rs-date)[aria-disabled="true"] { border-color: GrayText; color: GrayText; }
+  .s7-chip i { forced-color-adjust: none; background: CanvasText; }
+  .fm7 .frise-point.est-passe .fm7-d { border: 1px dashed GrayText; color: GrayText; }
+  .fm7 .frise-point.est-passe:not(.est-residence) .fm7-d::before { forced-color-adjust: none; background: CanvasText; }
+  .fm7 .frise-point.est-residence .fm7-d { border-style: dotted; }
+  .fm7-axe, .fm7-auj { forced-color-adjust: none; background: CanvasText; }
+  .fr-legende i { forced-color-adjust: none; background: CanvasText; }
+  .fr-legende .fr-l-res i { background: Canvas; box-shadow: inset 0 0 0 2px CanvasText; }
+  :is(.fp, .ep-porte, .alerte-boite, .ct-prg, .rs-carte, .tdm-i, .pil-aff, .sai, .ep-acces li, .fe7-panneau, .cs-boite, .lc-cadre) { border: 1px solid CanvasText; }
+  :focus-visible:not([tabindex="-1"]) { outline: 3px solid Highlight !important; outline-offset: 2px; }
+  .lc-cadre:focus-visible::after { border-color: Highlight; }
+}
 @media print {
   @page { margin: 14mm 12mm; }
   html { color-scheme: light !important; --papier: #fff; --papier-2: #fff; --carte: #fff; --encre: #000; --gris: #333; --filet: #aaa; --nuit: #fff; }

@@ -236,6 +236,16 @@ const FRISE = (() => {
   /* (une bande, une saison : sa prise monte au-dessus de sa barre jusqu'à 44 px ; l'option anMin lui donne sa largeur) */
   :where(.frise[data-frise]) :where(.frise-bande) > :where(.frise-repere) { height: max(44px, var(--fr-bande-h)); margin-top: calc(-1 * max(44px, var(--fr-bande-h))); }
 }
+/* le contraste élevé (forced-colors) : les points, l'axe, les barres et le repère du jour, dessinés par des fonds, prennent les
+   couleurs du système (le texte ; une date passée, GrayText ; un repère allumé ou au focus, Highlight) */
+@media (forced-colors: active) {
+  :where(.frise[data-frise]) :where(.frise-point) > :where(.frise-repere)::before, :where(.frise[data-frise]) :where(.frise-axe, .frise-bande-barre, .frise-aujourdhui)::before,
+  :where(.frise[data-frise]) :where(.frise-axe, .frise-bande-barre), :where(.frise[data-frise]) :where(.frise-aujourdhui)::after { forced-color-adjust: none; background: CanvasText; box-shadow: none; }
+  :where(.frise[data-frise]) :where(.frise-point.est-passe) > :where(.frise-repere)::before { background: GrayText; opacity: 1; }
+  :where(.frise[data-frise]) :where(.frise-point.est-annule, .frise-point.est-residence:not(.est-duree), .frise-point.est-duree.est-scolaire) > :where(.frise-repere)::before { background: Canvas; box-shadow: inset 0 0 0 2px CanvasText; }
+  :where(.frise[data-frise]) :where(.frise-point.est-allume, .frise-point.est-focus) > :where(.frise-repere)::before, :where(.frise[data-frise]) :where(.frise-bande.est-allume) :where(.frise-bande-barre) { background: Highlight; }
+  :where(.frise[data-frise]) :where(.frise-grappe) > span { forced-color-adjust: none; background: Canvas; color: CanvasText; box-shadow: inset 0 0 0 2px CanvasText; }
+}
 @media (prefers-reduced-motion: reduce) { :where(.frise[data-frise]) *, :where(.frise[data-frise]) *::before, :where(.frise[data-frise]) *::after { animation: none !important; transition: none !important; } }`;
   function styles() {
     if (document.getElementById('frise-style')) return;
