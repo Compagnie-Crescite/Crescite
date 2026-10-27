@@ -38,7 +38,8 @@
                                séances, les séances (chacune un lien avec son heure, ou un repère sans lien), puis UN bouton
                                principal .rs-reserver « Réserver » (nouvel onglet ; « sur le site du lieu » et le nom du lieu),
                                ou .rs-aupres « Réservation auprès du lieu » et son nom ; puis, en retrait, .rs-agenda
-                               « Ajouter à mon agenda » (libelles.ajouterAgenda), qui télécharge RESERVER.ics(d)
+                               « Ajouter à mon agenda » (libelles.ajouterAgenda), qui télécharge RESERVER.ics(d), puis
+                               le dit un instant à la place de son libellé, et au lecteur d'écran (.rs-agenda-msg, role status, libelles.agendaTelecharge)
    RESERVER.ics(d)             le texte du fichier iCalendar de la date (ses séances tout public à leur heure, sinon une
                                journée ; le lieu et sa commune ; ses précisions et le lien de réservation) ; null pour une
                                date au mois près
@@ -201,7 +202,7 @@ const RESERVER = (() => {
       + `<p class="rs-action">${href
         ? `<a class="rs-reserver" href="${esc(href)}" target="_blank" rel="noopener"><span class="rs-r"><span class="rs-r1">${esc(Lb.reserver)}</span><span class="rs-r2"><span>${esc(Lb.surLeSiteDuLieu)}</span>${ou ? `<span class="rs-sep"> · </span><span>${esc(ou)}</span>` : ''}</span></span>${FLECHE}${DEHORS()}</a>`
         : `<span class="rs-aupres"><span>${esc(Lb.reservationAupresDuLieu)}</span>${ou ? `<span class="rs-sep"> · </span><b>${esc(ou)}</b>` : ''}</span>`}</p>`
-      + (Lb.ajouterAgenda && agendaPermis(d) ? `<p class="rs-plus"><button type="button" class="rs-agenda" data-reserver-ics="${esc(cle(d))}">${AGENDA_ICONE}<span>${esc(Lb.ajouterAgenda)}</span></button></p>` : '')
+      + (Lb.ajouterAgenda && agendaPermis(d) ? `<p class="rs-plus"><button type="button" class="rs-agenda" data-reserver-ics="${esc(cle(d))}">${AGENDA_ICONE}<span>${esc(Lb.ajouterAgenda)}</span></button><span class="rs-agenda-msg rs-masque" role="status"></span></p>` : '')
       + '</div>';
   }
 
@@ -380,7 +381,8 @@ const RESERVER = (() => {
 :where(.rs-reserver) { display: inline-flex; align-items: center; gap: 12px; background: var(--rs-accent, #000); color: var(--rs-sur-accent, #fff); text-decoration: none; }
 :where(.rs-r) { display: flex; flex-direction: column; align-items: flex-start; }
 :where(.rs-fleche) { width: 1.2em; height: 1.2em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
-:where(.rs-agenda) { display: inline-flex; align-items: center; gap: 8px; font: inherit; color: inherit; cursor: pointer; }`;
+:where(.rs-agenda) { display: inline-flex; align-items: center; gap: 8px; font: inherit; color: inherit; cursor: pointer; }
+`;
   (function styles() {
     if (typeof document === 'undefined' || document.getElementById('reserver-style') || !document.head) return;
     const s = document.createElement('style');
@@ -390,7 +392,14 @@ const RESERVER = (() => {
     // « Ajouter à mon agenda », où que soit la carte (sous la bande, sous une ligne) : un seul écouteur, délégué
     document.addEventListener('click', e => {
       const b = e.target.closest && e.target.closest('[data-reserver-ics]'); if (!b) return;
-      const d = trouver(b.getAttribute('data-reserver-ics')); if (d) telecharger(d);
+      const d = trouver(b.getAttribute('data-reserver-ics')); if (!d || !telecharger(d)) return;
+      // (le fichier part sans rien montrer, le navigateur le range parfois en silence : le bouton le dit un instant, à la place
+      // de son libellé (rien ne bouge autour), et le lecteur d'écran l'entend, role status ; libelles.agendaTelecharge)
+      const m = b.parentElement && b.parentElement.querySelector('.rs-agenda-msg'), x = b.querySelector('span'), t = L().agendaTelecharge;
+      if (!m || !x || !t) return;
+      if (!b.__lib) b.__lib = x.textContent;
+      m.textContent = t; x.textContent = t; clearTimeout(m.__t);
+      m.__t = setTimeout(() => { m.textContent = ''; if (x.isConnected) x.textContent = b.__lib; }, 3200);
     });
   })();
 

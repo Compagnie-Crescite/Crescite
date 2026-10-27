@@ -629,6 +629,6 @@ const CREATURE = (() => {
   }
   const habite = el => !!(tete && tete.vivant && hote && el && (el === hote || hote.contains(el) || el.contains(hote)));
 
-  return { actif, habiter, habite, suspendre: (ms = 40) => { repit = performance.now() + ms; }, creer: o => (actif ? new Creature(o) : null), reagir: (genre, vers) => { if (tete) tete.reagir(genre, vers); },
+  return { actif, habiter, habite, suspendre: (ms = 40) => { repit = Math.max(repit, performance.now() + ms); }, creer: o => (actif ? new Creature(o) : null), reagir: (genre, vers) => { if (tete) tete.reagir(genre, vers); },
     vers: (el, o) => (tete ? tete.vers(el, o) : Promise.resolve(false)), revenir: () => { if (tete) tete.revenir(); }, sortie: () => (tete ? tete.sortie() : 0), arreter: () => { if (tete) tete.arreter(); } };
 })();

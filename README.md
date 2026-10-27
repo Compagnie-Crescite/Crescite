@@ -31,6 +31,8 @@ node site/onglets.mjs /tmp/x index # parcourt les vues du site et signale les an
 node site/mouvement-equipe.mjs     # les dix effets de l'espace de l'équipe, dans Chromium, hors ligne (après le build)
 node site/mouvement-admin.mjs      # le mouvement de l'administration, dans Chromium, sur une base fictive (après le build)
                                    # le vocabulaire de ce mouvement : site/MOUVEMENT.md
+node site/reactivite.mjs /tmp/x index --strict  # les budgets de réactivité du site, au bureau et au téléphone ralenti ×4
+AXE=<axe.min.js> node site/passe-site.mjs       # la passe finale : axe, 360 px, erreurs, nuit, sur chaque route
 python3 data/site_crescite.py      # relève de nouveau le texte de l'ancien crescite.fr (data/site-crescite.json)
 ```
 
@@ -974,6 +976,19 @@ texte reste au journal. Il harmonise aussi les textes courts (`RETOUCHES` : « �
 leur public) et donne au pied le lien de la page Facebook de la compagnie (`FACEBOOK`, celui de sa fiche à l'ODIA
 Normandie). Tant qu'il n'est pas lancé, le site montre les textes de la base, donc les anciens. 15 essais
 (`node textes.mjs` : le premier script, les textes de l'import, puis lui, deux fois).
+
+**Le code d'accès des salles (pas encore lancé).** Le dix-neuvième script,
+`supabase/migrations/20261107_crescite_pro_code.sql`, se lance dans le projet de la compagnie et peut être relancé ; puis
+redéployer la fonction `crescite-pro`, qui accepte désormais un code de dix caractères à côté du jeton. Chaque invitation
+de l'espace des salles reçoit un code court (dix caractères sans I, L, O, 0 ni 1, montré « K7QM4-TZPXW »), unique,
+qu'on lit, qu'on dicte et qu'on tape : le programmateur le saisit dans « Code d'accès » de `pro/` (minuscules, tiret et
+espaces admis) ; le lien `…/pro/#<jeton>` marche toujours. Dans l'administration (Espace pro, une invitation), le code
+est écrit en grand, avec « Copier le code », « Copier le message » (le code, l'adresse de l'espace, le lien, la date de
+fin), « Partager… » là où le navigateur partage et « Par SMS » au téléphone ; le courriel de « Écrire » le donne. Les
+codes essayés en vain sont comptés : au-delà de 60 en dix minutes, plus aucun code ne s'ouvre pendant ce temps (le lien
+si). Relancer le quatrième script après lui rend aux salles le seul jeton : relancer alors le dix-neuvième. 18 essais
+(`node pro-code.mjs`), et `node site/code-salles.mjs` (22 vérifications, administration fictive) et
+`site/salles-reponse.mjs` (le code tapé) dans Chromium.
 
 **Écrire dans la base.** `python3 supabase/ecrire.py` est le seul outil par lequel Claude modifie la base quand on le lui
 demande : les tables `crescite_` et les stockages de la compagnie seulement (les tables d'adrienvada.fr restent hors
