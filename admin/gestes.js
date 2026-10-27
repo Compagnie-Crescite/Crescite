@@ -37,7 +37,9 @@ const GESTES = (() => {
   // gestes qui mènent ailleurs (← →, le balayage) dorment ; ils ne changeraient pas la page derrière, en fermant la boîte
   const modaleOuverte = () => !!document.querySelector('[aria-modal="true"]');
   const ico = d => `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
-  const ICO = {
+  // les icônes : celles de la bibliothèque (admin/icones.js) quand elle est chargée ; l'espace de l'équipe ne la charge pas et garde
+  // ses tracés d'ici (le cercle aux huit rayons pour les réglages, entre autres)
+  const ICO = (typeof ICONES !== 'undefined' && ICONES.ICO) || {
     haut: ico('<path d="m6 15 6-6 6 6"/>'), bas: ico('<path d="m6 9 6 6 6-6"/>'), gauche: ico('<path d="m15 6-6 6 6 6"/>'), droite: ico('<path d="m9 6 6 6-6 6"/>'),
     points: ico('<circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/>'),
     ouvrir: ico('<path d="M5 12h14M13 6l6 6-6 6"/>'), externe: ico('<path d="M14 4h6v6M20 4l-9 9M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/>'),
@@ -656,5 +658,5 @@ html.gf-ouvert { overflow: hidden; }
 @media (hover: hover) and (pointer: fine) { .gps-touche { display: inline-block; } }
 </style>`);
 
-  return { menu, ouvrir, fermer, fleches, glisser, precSuiv, clavierPrecSuiv, formulaire, fermerFormulaire, garder, saisie, quitter, confirmer, aide, toucheAide, oublier, vibrer, reduit, tactile, etroit, ICO, ouvert: () => !!ouvert, question: () => !!question };
+  return { menu, ouvrir, fermer, fleches, glisser, precSuiv, clavierPrecSuiv, formulaire, fermerFormulaire, garder, saisie, quitter, confirmer, aide, toucheAide, oublier, vibrer, reduit, tactile, etroit, ICO, dansChamp, modaleOuverte, ouvert: () => !!ouvert, question: () => !!question };
 })();

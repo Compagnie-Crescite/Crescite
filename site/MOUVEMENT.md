@@ -57,8 +57,8 @@ captures vont dans `site/dist/shots-equipe/` et `site/dist/shots-admin/`. Un ban
 manque.
 
 `bash site/bancs-admin.sh` enchaîne aussi `prefs.mjs` (où chaque réglage est gardé : avec le compte ou sur l'appareil) et
-`tableur.mjs` (le tableur des représentations). Le second ne mesure aucune durée : il ne touche pas à ce vocabulaire, il
-veille à ce qu'une refonte ne casse rien.
+`tableur.mjs` (le tableur des représentations) et `icones.mjs` (la bibliothèque d'icônes). Les deux derniers ne mesurent
+aucune durée : ils ne touchent pas à ce vocabulaire, ils veillent à ce qu'une refonte ne casse rien.
 
 ## Ce qui a été écarté
 

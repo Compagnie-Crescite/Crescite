@@ -67,13 +67,14 @@ const TABLEAU = (() => {
   const bilanDe = p => { const n = { oui: 0, non: 0, peut_etre: 0, attente: 0 }; for (const j of p.jours || []) for (const d of p.destinataires || []) n[reponseDe(j, d.personne_id)]++; return n; };
   const bilanHtml = n => [['oui', '✓', 'disponible'], ['non', '✗', 'pas disponible'], ['peut_etre', '?', 'peut-être'], ['attente', '…', 'en attente']]
     .filter(([k]) => n[k]).map(([k, s, t]) => `<span class="dp-r ${k === 'peut_etre' ? 'pe' : k}"><span aria-hidden="true">${s}</span> ${n[k]}<span class="sr"> ${t}</span></span>`).join(' ') || '<span class="compte">personne à prévenir</span>';
+  // l'engrenage, l'éclair et l'entonnoir sont ceux de la bibliothèque (admin/icones.js) ; chevron, poignée et croix, des svg 12 × 12 et 12 × 18, restent ici, hors bibliothèque
   const SVG = {
-    reglages: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+    reglages: ICONES.svg('engrenage', { taille: 16 }),
+    eclair: ICONES.svg('eclair', { taille: 16 }),
+    entonnoir: ICONES.svg('entonnoir', { taille: 14 }),
     chevron: '<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     poignee: '<svg viewBox="0 0 12 18" width="10" height="15" fill="currentColor" aria-hidden="true"><circle cx="3.5" cy="3" r="1.6"/><circle cx="8.5" cy="3" r="1.6"/><circle cx="3.5" cy="9" r="1.6"/><circle cx="8.5" cy="9" r="1.6"/><circle cx="3.5" cy="15" r="1.6"/><circle cx="8.5" cy="15" r="1.6"/></svg>',
     croix: '<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
-    eclair: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>',
-    entonnoir: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg>',
   };
 
   // ===================================================================================================== les tuiles
@@ -515,7 +516,7 @@ const TABLEAU = (() => {
   // ===================================================================================================== le bandeau du jour
   /* En haut du tableau : bonjour, le jour, ce qui attend une décision et la prochaine date, trois chiffres (à traiter, les
      dates sous sept jours, qui part sous quatorze), et une tentacule en filigrane. */
-  const ORNEMENT = '<svg class="tb-salut-orne" viewBox="0 0 260 160" aria-hidden="true" focusable="false"><path d="M-10 150 C 40 150, 70 60, 130 50 C 185 41, 230 70, 232 110 C 234 140, 205 150, 195 132 C 186 116, 206 104, 214 118" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round"/><g fill="currentColor"><circle cx="48" cy="118" r="5"/><circle cx="72" cy="88" r="5"/><circle cx="100" cy="64" r="5"/><circle cx="135" cy="54" r="5"/><circle cx="170" cy="56" r="5"/><circle cx="203" cy="72" r="5"/><circle cx="224" cy="97" r="4.5"/><circle cx="222" cy="128" r="4"/></g></svg>';
+  const ORNEMENT = ICONES.ornement;
   function bandeau(jour) {
     const h = new Date().getHours(), salut = h < 5 || h >= 18 ? 'Bonsoir' : 'Bonjour';
     const nom = (E.admins || []).find(a => a.user_id === uid())?.nom || '', prenom = String(nom).trim().split(/\s+/)[0] || '';
@@ -530,15 +531,10 @@ const TABLEAU = (() => {
       <ul class="tb-salut-chiffres"><li><b>${total}</b><span>à traiter</span></li><li><b>${semaine.length}</b><span>${semaine.length > 1 ? 'dates' : 'date'} sous 7 jours</span></li>${E.equipeInstallee ? `<li><b>${partent.size}</b><span>${partent.size > 1 ? 'partent' : 'part'} sous 14 jours</span></li>` : ''}</ul>${ORNEMENT}</section>`;
   }
   // l'icône de chaque tuile (dans son en-tête)
-  const ic = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
-  const ICONES_TUILE = {
-    actions: ic('<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>'), urgent: ic('<path d="M3 13h5l2 3h4l2-3h5"/><path d="M5 5h14l2 8v6H3v-6z"/>'),
-    avant: ic('<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V2h6v2"/><path d="m9 13 2 2 4-4"/>'), prochaines: ic('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'),
-    chiffres: ic('<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'), equipe: ic('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.5"/><path d="M15.5 14.5a5 5 0 0 1 6 5"/>'),
-    diffusion: ic('<path d="M3 10v4h3l7 4V6l-7 4z"/><path d="M17 9a4 4 0 0 1 0 6"/>'), propositions: ic('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M10.5 14.5a1.7 1.7 0 1 1 2.3 1.6c-.6.3-.8.6-.8 1.2M12 19.5h.01"/>'),
-    ateliers: ic('<path d="M4 4h7a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H4z"/><path d="M20 4h-7a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h8z"/>'), journal: ic('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
-    spectacles: ic('<path d="M4 5h7v6a3.5 3.5 0 0 1-7 0z"/><path d="M13 9h7v6a3.5 3.5 0 0 1-7 0z"/><path d="M6 8h1M9 8h1M15 12h1M18 12h1"/>'), memo: ic('<path d="m4 20 4-1L19 8l-3-3L5 16z"/><path d="m14 7 3 3"/>'),
-  };
+  const ICONES_TUILE = Object.fromEntries(Object.entries({
+    actions: 'eclair', urgent: 'bannette', avant: 'presse-papiers', prochaines: 'calendrier', chiffres: 'histogramme', equipe: 'equipe', diffusion: 'diffusion',
+    propositions: 'calendrier-question', ateliers: 'ateliers', journal: 'horloge', spectacles: 'spectacles', memo: 'crayon',
+  }).map(([tuile, nom]) => [tuile, ICONES.svg(nom)]));   // sans taille : .tb-ico-t svg la donne (habillage.js)
 
   // ===================================================================================================== la vue
   function vue() {

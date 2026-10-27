@@ -8,22 +8,15 @@
    sur cinq). Le témoin de la connexion y reste, réduit à sa pastille sur l'icône qui relit la base. « Plus » mène aussi
    aux gestes et raccourcis (l'aide de menus.js), et à l'installation de l'administration sur l'écran d'accueil
    (manifest.webmanifest, sw.js, enregistré ici : l'invite du navigateur, ou la marche à suivre sur l'iPhone ; l'ordinateur
-   peut l'installer aussi, depuis son navigateur). Rien d'autre ne change à l'ordinateur. Chargé après tiroir.js et corbeille.js.
+   peut l'installer aussi, depuis son navigateur). Rien d'autre ne change à l'ordinateur. Ses icônes viennent de la
+   bibliothèque (admin/icones.js, ICONES.svg). Chargé après tiroir.js et corbeille.js.
    MOBILE.feuille(titre, items)   MOBILE.actif() */
 const MOBILE = (() => {
   const MQ = '(max-width: 640px)';
   const actif = () => typeof matchMedia === 'function' && matchMedia(MQ).matches;
-  const ico = d => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
-  const ICONES = {
-    tableau: ico('<rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="5" rx="2"/><rect x="13" y="10" width="8" height="11" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/>'),
-    dates: ico('<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>'),
-    planning: ico('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
-    equipe: ico('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.5"/><path d="M15.5 14.5a5 5 0 0 1 6 5"/>'),
-    plus: ico('<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>'),
-    ajouter: ico('<path d="M12 5v14M5 12h14"/>'),
-    installer: ico('<rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M12 7v7M9 11l3 3 3-3"/>'),
-  };
-  const ONGLETS = [['accueil', 'Tableau', 'tableau'], ['representations', 'Dates', 'dates'], ['planning', 'Planning', 'planning'], ['equipe', 'Équipe', 'equipe']];
+  // les icônes de la barre et du bouton : celles de la bibliothèque (admin/icones.js), 22 px au trait de 1,9
+  const icone = nom => ICONES.svg(nom, { taille: 22, trait: 1.9 });
+  const ONGLETS = [['accueil', 'Tableau', 'tableau-de-bord'], ['representations', 'Dates', 'dates'], ['planning', 'Planning', 'planning'], ['equipe', 'Équipe', 'equipe']];
   const rubrique = () => (location.hash.match(/^#\/([a-z]+)/) || [])[1] || 'accueil';
   // l'installation : l'invite du navigateur (Chrome, Edge, Android) quand il en donne une, sinon, sur l'iPhone, Safari
   const mq = q => (typeof matchMedia === 'function' ? matchMedia(q) : { matches: false });
@@ -41,10 +34,10 @@ const MOBILE = (() => {
     document.documentElement.classList.add('ob-actif');
     if (!barre) {
       barre = document.createElement('nav'); barre.className = 'ob-barre'; barre.setAttribute('aria-label', 'Rubriques');
-      barre.innerHTML = `${ONGLETS.map(([k, l, i]) => `<a href="#/${k}" data-ob="${k}">${ICONES[i]}<span>${l}</span></a>`).join('')}<button type="button" data-ob="plus" aria-haspopup="dialog">${ICONES.plus}<span>Plus</span></button>`;
+      barre.innerHTML = `${ONGLETS.map(([k, l, i]) => `<a href="#/${k}" data-ob="${k}">${icone(i)}<span>${l}</span></a>`).join('')}<button type="button" data-ob="plus" aria-haspopup="dialog">${icone('points')}<span>Plus</span></button>`;
       barre.addEventListener('click', e => { const b = e.target.closest('[data-ob="plus"]'); if (b) { e.preventDefault(); feuillePlus(); } });
       document.body.append(barre);
-      bouton = document.createElement('button'); bouton.type = 'button'; bouton.className = 'ob-plus'; bouton.setAttribute('aria-label', 'Créer'); bouton.title = 'Créer…'; bouton.innerHTML = ICONES.ajouter;
+      bouton = document.createElement('button'); bouton.type = 'button'; bouton.className = 'ob-plus'; bouton.setAttribute('aria-label', 'Créer'); bouton.title = 'Créer…'; bouton.innerHTML = icone('plus');
       bouton.addEventListener('click', feuilleCreer);
       document.body.append(bouton);
     }
@@ -88,7 +81,7 @@ const MOBILE = (() => {
     if ($('#b-sortir')) items.push({ groupe: 'Compte' }, { libelle: 'Voir le site', href: SITE, nouvel: true, demi: true }, { libelle: 'Modifier sur le site', href: `${SITE}?edition`, nouvel: true, demi: true },
       { libelle: 'Mot de passe', demi: true, faire: () => $('#b-mdp')?.click() }, { libelle: 'Se déconnecter', demi: true, faire: () => $('#b-sortir')?.click() });
     // l'installation, à droite du titre (la feuille tient dans l'écran sans défiler, même à 360 × 800)
-    feuille('Les autres rubriques', items, installee() ? null : { libelle: 'Installer', icone: ICONES.installer, faire: installer });
+    feuille('Les autres rubriques', items, installee() ? null : { libelle: 'Installer', icone: icone('installer'), faire: installer });
   }
   async function installer() {
     if (invite) {

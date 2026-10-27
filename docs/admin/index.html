@@ -52,6 +52,13 @@ body { background: var(--fond); color: var(--encre); font: 15px/1.5 var(--police
 a { color: var(--accent); }
 button, input, select, textarea { font: inherit; color: inherit; }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+/* une icône de la bibliothèque (ICONES.svg, admin/icones.js) : 16 px, ou la taille donnée par --ico ; une règle plus précise (.tb-ico-t svg…) l'emporte */
+.ico { width: var(--ico, 16px); height: var(--ico, 16px); flex: none; }
+#b-mdp svg { vertical-align: -3px; }
+/* la petite vue d'essai des icônes (#/essai/icones) : toutes celles de la bibliothèque, en grille, le nom sous chacune */
+.essai-icones { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+.essai-icones li { display: grid; justify-items: center; gap: 8px; padding: 14px 6px 10px; border: 1px solid var(--trait); border-radius: var(--rayon); background: var(--carte); color: var(--encre); }
+.essai-icones code { max-width: 100%; overflow-wrap: anywhere; text-align: center; font-size: 12px; color: var(--gris); }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 /* le lien d'évitement, comme sur le site et dans l'équipe : hors de l'écran, il paraît au premier Tab */
 .evitement { position: absolute; left: 8px; top: -80px; z-index: 90; padding: 10px 14px; border-radius: 10px; background: var(--encre); color: var(--carte); font-weight: 600; text-decoration: none; }
@@ -737,6 +744,8 @@ html.still *, html.still *::before, html.still *::after { animation: none !impor
 <script src="agenda.js"></script>
 <script src="logo.js"></script>
 <script src="tentacules.js"></script>
+<!-- les icônes, dessinées une seule fois (ICONES.svg) : avant gestes.js, qui reprend ICONES.ICO, et avant le script principal, qui lit LOUPE et ICONE_ACTUALISER à son évaluation -->
+<script src="icones.js"></script>
 <!-- les gestes communs (clic droit, appui long, flèches, balayage, précédent/suivant) : GESTES -->
 <script src="gestes.js"></script>
 <script>
@@ -934,7 +943,7 @@ function annoncer(msg, { erreur = false, action = null, libelle = 'Annuler', del
   const el = document.createElement('div');
   el.className = 'annonce' + (erreur ? ' erreur' : '');
   el.setAttribute('role', erreur ? 'alert' : 'status');
-  el.innerHTML = `<span>${esc(msg)}</span>${action ? `<button type="button" data-tt="retour">${esc(libelle)}</button>` : ''}<button type="button" class="annonce-fermer" aria-label="Fermer l’annonce" title="Fermer"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>`;
+  el.innerHTML = `<span>${esc(msg)}</span>${action ? `<button type="button" data-tt="retour">${esc(libelle)}</button>` : ''}<button type="button" class="annonce-fermer" aria-label="Fermer l’annonce" title="Fermer">${ICONES.svg('croix', { taille: 16, trait: 2.4 })}</button>`;
   let partie = false, tenue = false, reste = erreur ? 9000 : delai, depuis = Date.now(), minuteur = null;
   const partir = (dx = 0, dy = 0) => {
     if (partie) return; partie = true; clearTimeout(minuteur);
@@ -1283,7 +1292,7 @@ function ecouter() {
    et l'icône seules, le mot quand il y a lieu de s'inquiéter. Le passage hors ligne et le retour s'entendent (une région
    polie, hors de #app, que cadre() ne refait pas). Au retour du réseau ou du direct, la base se relit d'elle-même : ce qui
    a changé pendant la coupure ne passe pas par le temps réel. */
-const ICONE_ACTUALISER = '<svg class="temoin-ic" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4.5v4.5H15"/></svg>';
+const ICONE_ACTUALISER = ICONES.svg('actualiser', { taille: 16, trait: 2.2, classe: 'temoin-ic' });
 const heureCourteAd = t => { const d = new Date(t); return `${d.getHours()} h ${String(d.getMinutes()).padStart(2, '0')}`; };
 // « à l'instant », « il y a 12 min », « il y a 3 h », « hier à 18 h 05 », « le 25 oct. »
 function depuisTexte(t) {
@@ -1388,7 +1397,7 @@ function barreHtml(rubrique, attente = false) {
     <nav class="nav" aria-label="Rubriques">${rubriquesVisibles().map(([k, l]) => `<a href="#/${k}"${k === rubrique ? ' aria-current="page"' : ''}>${l}</a>`).join('')}<button type="button" class="nav-plus" aria-expanded="false" aria-controls="nav-autres" hidden>Plus<svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></nav><div class="nav-autres" id="nav-autres" role="group" aria-label="Autres rubriques et compte"></div>
     <div class="qui">${temoinHtml()}
     <a href="${SITE}" target="_blank" rel="noopener">Voir le site ↗</a><a href="${SITE}?edition" target="_blank" rel="noopener" title="Écrire les textes et les dates dans la page elle-même">Modifier<span class="long"> sur le site</span> ↗</a><span class="moi">${esc(E.session.user.email)}</span>
-    <button class="btn petit" type="button" id="b-mdp" aria-label="Mot de passe" title="Changer mon mot de passe"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3M16.5 6.5l3 3M14.5 8.5l2 2"/></svg><span class="long"> Mot de passe</span></button><button class="btn petit aide-b" type="button" id="b-aide" data-aide aria-label="Raccourcis clavier" aria-keyshortcuts="?" title="Raccourcis clavier (?)">?</button><button class="btn petit" type="button" id="b-sortir">Se déconnecter</button></div></header>`;
+    <button class="btn petit" type="button" id="b-mdp" aria-label="Mot de passe" title="Changer mon mot de passe">${ICONES.svg('cle', { taille: 15 })}<span class="long"> Mot de passe</span></button><button class="btn petit aide-b" type="button" id="b-aide" data-aide aria-label="Raccourcis clavier" aria-keyshortcuts="?" title="Raccourcis clavier (?)">?</button><button class="btn petit" type="button" id="b-sortir">Se déconnecter</button></div></header>`;
 }
 function cadre(rubrique, contenu) {
   $('#app').innerHTML = `<a class="evitement" href="#vue">Aller au contenu</a>${barreHtml(rubrique)}<main id="vue" tabindex="-1"${ouvertureMuette || CALME_ADMIN() ? '' : ' class="entree"'}>${contenu}</main>${PIED}`;
@@ -1498,6 +1507,13 @@ document.addEventListener('focusin', e => { if (!e.target.closest?.('#nav-autres
 function rangerBientot() { if (!rangerBientot.image) rangerBientot.image = requestAnimationFrame(() => { rangerBientot.image = 0; rangerBarre(); poserHautBarre(false); }); }
 window.addEventListener('resize', rangerBientot);
 document.fonts?.addEventListener?.('loadingdone', rangerBientot);
+// la petite vue d'essai des icônes (#/essai/icones) : ICONES.NOMS en grille, le nom sous chaque icône ; hors du menu et de la
+// recherche, sans garde (l'administration est derrière la connexion, et le site publié a le même chemin que le banc,
+// site/icones.mjs, qui la photographie)
+function vueEssaiIcones() {
+  cadre('', `<div class="tete"><h1>Les icônes</h1><span class="compte">${ICONES.NOMS.length} dessins, ceux de admin/icones.js</span></div>
+    <ul class="essai-icones" aria-label="Les icônes de la bibliothèque">${ICONES.NOMS.map(n => `<li>${ICONES.svg(n, { taille: 28 })}<code>${n}</code></li>`).join('')}</ul>`);
+}
 const ROUTES = [
   [/^#\/accueil$/, () => vueTableau()],
   [/^#\/representations(?:\/(nouvelle|tableur|carte|\d+))?$/, m => vueDates(m[1])],
@@ -1511,6 +1527,7 @@ const ROUTES = [
   [/^#\/lieux(?:\/(nouveau|\d+))?$/, m => vueLieux(m[1])],
   [/^#\/textes(?:\/(.+))?$/, m => vueTextes(m[1] && decodeURIComponent(m[1]))],
   [/^#\/journal$/, () => vueJournal()],
+  [/^#\/essai\/icones$/, () => vueEssaiIcones()],
 ];
 const APRES_VUE = [ecrireFiltres];   // ce qui se pose une fois la vue dessinée (ses filtres dans l'adresse ; menus.js : précédent / suivant dans les fiches)
 // une fiche ouverte ailleurs qu'à sa place (depuis le tableau de bord, le Kanban, le planning…) s'ouvre dans un tiroir
@@ -1580,7 +1597,7 @@ function nomFil(h, tete) {
   if ((m = h.match(/^#\/spectacles\/([a-z0-9-]+)$/))) { const sp = E.spectacles.find(x => x.slug === m[1]); if (sp) return sp.titre; }
   return ($('h1, h2', tete)?.textContent || '').replace(/\s+/g, ' ').trim();
 }
-const CHEVRON_FIL = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg>';
+const CHEVRON_FIL = ICONES.svg('gauche', { taille: 18, trait: 2.2 });
 function poserFil() {
   const vue = $('#vue'); if (!vue || !E.pret) return;
   const retour = $('.titre-ed > a[data-tt="retour"][href], .tete > a[data-tt="retour"][href]', vue), ancien = $('.fil-ariane', vue);
@@ -1740,7 +1757,7 @@ document.addEventListener('keydown', e => {
    contact), le passage qui le contient s'ajoute dessous, souligné lui aussi : on voit pourquoi la fiche est là. */
 const SUR_MAC = /mac|iphone|ipad|ipod/i.test(navigator.userAgentData?.platform || navigator.platform || '');
 const RACCOURCI_RCH = SUR_MAC ? '⌘K' : 'Ctrl K';
-const LOUPE = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>';
+const LOUPE = ICONES.svg('loupe', { taille: 18, trait: 2.2 });
 const JOURS_RCH = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
 const TYPES_RCH = [['Action', 'Action'], ['À traiter', 'À traiter'], ['Rubrique', 'Rubrique'], ['Spectacle', 'Spectacle'], ['Personne', 'Personne'], ['Lieu', 'Lieu'], ['Date', 'Date'], ['Feuille de route', 'Feuille'],
   ['Vue', 'Vue'], ['Note de frais', 'Frais'], ['Devis', 'Devis'], ['Diffusion', 'Diffusion'], ['Proposition', 'Proposition'], ['Séance', 'Séance'],

@@ -35,6 +35,7 @@ node site/tableau.mjs              # le tableau de bord et l'en-tête de l'admin
 node site/niveau.mjs               # les dix idées de l'administration, dans Chromium, sur la même base fictive
 node site/adresses-admin.mjs       # les adresses et les garde-fous de l'administration, sur la même base fictive
 node site/tableur.mjs              # le tableur des représentations, dans Chromium, sur la même base fictive (après le build)
+node site/icones.mjs               # la bibliothèque d'icônes de l'administration et ses consommateurs, dans Chromium (après le build)
 bash site/bancs-admin.sh           # le build, puis tous les bancs de l'administration l'un après l'autre ; --tout y joint
                                    # ceux de l'espace de l'équipe (sinon, seulement si gestes.js, planning.js ou feuille.js changent)
 node site/reactivite.mjs /tmp/x index --strict  # les budgets de réactivité du site, au bureau et au téléphone ralenti ×4
@@ -348,7 +349,10 @@ compte du projet inscrit dans `crescite_admins`.
   pour les chiffres, prune pour l'équipe, ciel pour la diffusion), un bandeau du jour en tête du tableau (bonjour, le
   prénom, ce qui attend, la prochaine date, trois chiffres, une tentacule en filigrane), les jours des listes en petits
   calendriers, les colonnes du Kanban colorées ; la nuit par défaut, le jour sous `data-theme="jour"`. `site/tableau.mjs` en garde des captures de chaque
-  page (`habillage-*.png`).
+  page (`habillage-*.png`). Les icônes n'y sont dessinées qu'une fois : `admin/icones.js` (chargé avant les gestes) est la
+  bibliothèque, un nom par dessin (`ICONES.svg('calendrier', { taille: 22 })`), que l'en-tête, la barre du téléphone, les
+  tuiles, les menus et le planning de l'administration reprennent ; l'espace de l'équipe garde ses tracés. La page
+  `#/essai/icones` les montre toutes en grille, le nom sous chacune (hors du menu et de la recherche).
 - **Le niveau supérieur** (dix modules chargés après les menus, chacun dans son fichier) :
   - **Les fiches en tiroir** (`admin/tiroir.js`) : une date, un lieu, une personne, une demande de devis ou une piste de
     diffusion s'ouvrent dans un panneau qui glisse à droite, depuis n'importe où (le tableau de bord, le Kanban, le
@@ -441,6 +445,12 @@ compte du projet inscrit dans `crescite_admins`.
     ses séances, les deux lignes se marquent), le collage d'un texte de tableur et Ctrl+C, Ctrl+Z, la fenêtre de la
     distribution et « Étendre à… » (son aperçu, son application, leur annulation), l'import, l'export CSV et Excel :
     86 vérifications, des captures dans `site/dist/shots-tableur/` (`tableur-1600.png`, `tableur-1280.png`).
+  - `node site/icones.mjs` garde la bibliothèque d'icônes (`admin/icones.js`) et ce qui la lit : aucun doublon de tracé,
+    les 26 noms de l'ancien GESTES.ICO, chaque svg de la bibliothèque en 24 × 24 et `aria-hidden` sur l'accueil, Représentations
+    et le planning, la barre du téléphone (22 px, trait 1,9) et la tuile Équipe qui partagent un dessin, les dessins du
+    téléphone et du planning comparés à un tableau en dur, les tailles d'avant (le fil d'Ariane 18 px, les tuiles 15 px,
+    le témoin), l'espace de l'équipe qui garde ses tracés, la vue d'essai `#/essai/icones` : 45 vérifications, une capture
+    dans `site/dist/shots-icones/` (`icones.png`).
 - **Les gestes** (`admin/gestes.js`, commun avec l'espace de l'équipe ; `admin/menus.js` pour ce que l'administration en
   fait) : un **clic droit**, un **appui long** (au doigt, avec une courte vibration) ou **Maj+F10** sur une ligne, une
   carte ou une tuile ouvrent ce qu'on peut en faire sans ouvrir la fiche, près du pointeur à l'ordinateur, en feuille

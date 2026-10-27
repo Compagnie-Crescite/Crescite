@@ -586,7 +586,7 @@ details.pl-alerte p { margin: 8px 0 0; }
   }
 
   // ================================================================================================ les icônes
-  const IC = {
+  const IC_LOCAL = {
     avant: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>',
     apres: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>',
     ici: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><circle cx="12" cy="15" r="1.6" fill="currentColor" stroke="none"/></svg>',
@@ -594,6 +594,12 @@ details.pl-alerte p { margin: 8px 0 0; }
     masquer: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.6 5.1A9.9 9.9 0 0 1 12 5c5.4 0 8.8 4.6 9.8 6.4a1.3 1.3 0 0 1 0 1.2 15.5 15.5 0 0 1-2.4 3.2M6.6 6.6C4.4 8 2.9 10.2 2.2 11.4a1.3 1.3 0 0 0 0 1.2C3.2 14.4 6.6 19 12 19a9.6 9.6 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="M3 3l18 18"/></svg>',
     gens: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4.5-6 8-6s7 2 8 6"/></svg>',
   };
+  // dans l'administration, les icônes de la bibliothèque (admin/icones.js, au trait d'avant) ; l'espace de l'équipe ne la charge
+  // pas et garde les tracés d'ici. Pas de taille : les règles .pl-btn svg… la donnent
+  const IC = typeof ICONES !== 'undefined' ? {
+    avant: ICONES.svg('gauche', { trait: 2.2 }), apres: ICONES.svg('droite', { trait: 2.2 }), ici: ICONES.svg('aujourdhui', { trait: 2.2 }),
+    fermer: ICONES.svg('croix', { trait: 2.2 }), masquer: ICONES.svg('oeil-barre'), gens: ICONES.svg('personne', { trait: 2.4 }),
+  } : IC_LOCAL;
 
   // ================================================================================================ le planning
   function monter(racine, options = {}) {
