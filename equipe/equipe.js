@@ -255,6 +255,8 @@
     doc: ic('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>'),
     lien: ic('<path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/>'),
     pdf: ic('<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5"/><path d="M5 19.5h14"/>'),
+    garde: ic('<path d="M7 18.5h10.5a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.6 9.6 4.5 4.5 0 0 0 7 18.5z"/><path d="m9.4 13.9 2 2 3.7-3.8"/>'),
+    reseau: ic('<path d="M7 18.5h10.5M20.6 15.3a4 4 0 0 0-2.5-4.75 6 6 0 0 0-8.4-4.1M6.6 9.6A4.5 4.5 0 0 0 7 18.5"/><path d="m3.5 3.5 17 17"/>'),
     lire: ic('<path d="M4 5.5h6a2 2 0 0 1 2 2V20a1.5 1.5 0 0 0-1.5-1.5H4zM20 5.5h-6a2 2 0 0 0-2 2V20a1.5 1.5 0 0 1 1.5-1.5H20z"/>'),
     feuille: ic('<path d="M9 4.5 3.5 6.5v13l5.5-2 6 2 5.5-2v-13l-5.5 2z"/><path d="M9 4.5v13M15 6.5v13"/>'),
     dossier: ic('<path d="M3.5 7.5a2 2 0 0 1 2-2h3.8l2 2.2h7.2a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/>'),
@@ -627,6 +629,7 @@
       if (m) {
         if (!(E.pret && E.uid === g.user.id)) { reinitialiser(); appliquer(m); Object.assign(E, { uid: g.user.id, pret: true }); coquille(); router({ arrivee: true }); }
         Object.assign(E, { horsLigne: E.horsLigne || m.quand || 1, sansSession: true, provisoire: false });
+        sonderPdf();
         return bandeauEtat();
       }
       reinitialiser(); return ecranConnexion();
@@ -660,7 +663,8 @@
     Object.assign(E, { ouverture: false, pret: true, provisoire: false, sansSession: false });
     if (garde) await redessiner(); else { coquille(); router({ arrivee: true }); }
     majCoquille();
-    if (!E.horsLigne) ecouter();
+    sonderPdf();
+    if (!E.horsLigne) { ecouter(); setTimeout(() => garderOutilsPdf().catch(() => {}), 4000); }
     if (E.aMarquer != null) { const id = E.aMarquer; E.aMarquer = null; marquerLue(id); }
     if (E.versEspace) { E.versEspace = false; requestAnimationFrame(() => tt('page', couleurRoute(location.hash))); }
   }
@@ -852,7 +856,7 @@
   function coquille() {
     if ($('#app > .appli')) return false;
     const badge = k => k === 'notifications' || k === 'planning';
-    const onglet = (k, icone, court, long = court) => `<a class="nav-item" href="#/${k}" data-onglet="${k}"><span class="nav-icone">${icone}${badge(k) ? '<span class="pastille-nb" data-n="0" aria-hidden="true"></span>' : ''}</span><span class="nav-lib">${court === long ? esc(court) : `<span class="nav-lib-court">${esc(court)}</span><span class="nav-lib-long">${esc(long)}</span>`}</span>${badge(k) ? '<span class="sr nb-sr"></span>' : ''}</a>`;
+    const onglet = (k, icone, court, long = court) => `<a class="nav-item" href="#/${k}" data-onglet="${k}"><span class="nav-icone">${icone}${badge(k) ? '<span class="pastille-nb" data-n="0" aria-hidden="true"></span>' : ''}${k === 'planning' ? marqueReseau({ court: true }) : ''}</span><span class="nav-lib">${court === long ? esc(court) : `<span class="nav-lib-court">${esc(court)}</span><span class="nav-lib-long">${esc(long)}</span>`}</span>${badge(k) ? '<span class="sr nb-sr"></span>' : ''}</a>`;
     $('#app').innerHTML = `<div class="appli">
       <nav class="nav-appli" aria-label="Rubriques">
         <div class="nav-marque" aria-hidden="true"><span class="pieuvre" data-pieuvre></span><span class="nav-marque-texte"><span class="marque-nom">Compagnie Crescite</span><small>Équipe</small></span></div>
@@ -989,7 +993,7 @@
   function bandeauEtat() {
     const el = $('#bandeau-etat');
     if (!el) return;
-    const html = E.provisoire && !E.horsLigne ? '<p class="attente" role="status">Mise à jour en cours…</p>' : E.horsLigne ? `<p class="message horsligne" role="status"><span>Hors ligne : voici votre espace tel qu’il était ${esc(momentTexte(E.horsLigne))}. La fiche et les documents demandent le réseau${E.sansSession ? ' ; la connexion se renouvellera dès son retour' : ''}.</span>
+    const html = E.provisoire && !E.horsLigne ? '<p class="attente" role="status">Mise à jour en cours…</p>' : E.horsLigne ? `<p class="message horsligne" role="status"><span>Hors ligne : voici votre espace tel qu’il était ${esc(momentTexte(E.horsLigne))}. Le planning, la fiche et les documents demandent le réseau${E.sansSession ? ' ; la connexion se renouvellera dès son retour' : ''}.</span>
       <button type="button" class="lien-btn" data-reessayer>Réessayer</button></p>` : '';
     majTemoin();
     if (el.dataset.h === html) return;                     // le bandeau ne se redessine (et n'entre) que s'il change
@@ -1019,9 +1023,50 @@
     if (lu && Date.now() - lu < 120000) return { k: 'ajour', mot: 'À jour', detail: '', long: `À jour : lu à ${heureCourte(lu)}.` };
     return { k: 'lu', mot: lu ? `Lu ${depuisTexte(lu)}` : 'Actualiser', detail: '', long: lu ? `Lu à ${heureCourte(lu)}.` : '' };
   }
+  // ---- ce qui se lit hors ligne. La mémoire (garder) tient la saison, ses dates, les feuilles de route publiées des dates à
+  // venir (et celles déjà lues), les spectacles et les notifications : ce qui en vient porte « Disponible hors ligne »
+  // (marqueGarde), en ligne comme sans réseau, pour qu'on le sache avant de partir. Ce qui demande le réseau (le planning,
+  // les documents, l'itinéraire ; le PDF tant que son outil n'est pas gardé sur l'appareil) porte « Réseau nécessaire »
+  // (marqueReseau) : posé d'avance dans la page, la feuille de style ne le montre que hors ligne (html[data-reseau="non"],
+  // tenu par majTemoin), avant qu'on l'ouvre ; touché hors ligne, il le redit (reseauNecessaire) au lieu d'échouer.
+  // Court : l'icône seule, son nom pour les lecteurs d'écran et au survol. Rien de plus n'est gardé que ce que garder()
+  // gardait déjà.
+  const marqueGarde = (court = false) => `<span class="hl-garde${court ? ' court' : ''}"${court ? ' title="Disponible hors ligne"' : ''}>${ICONES.garde}<span${court ? ' class="sr"' : ''}>${court ? ' (disponible hors ligne)' : 'Disponible hors ligne'}</span></span>`;
+  const marqueReseau = ({ court = false, pour = '' } = {}) => `<span class="hl-reseau${court ? ' court' : ''}"${pour ? ` data-pour="${pour}"` : ''}${court ? ' title="Réseau nécessaire"' : ''}>${ICONES.reseau}<span${court ? ' class="sr"' : ''}>${court ? ' (réseau nécessaire)' : 'Réseau nécessaire'}</span></span>`;
+  const horsReseau = () => document.documentElement.dataset.reseau === 'non';
+  // le PDF d'une feuille de route se fait sur l'appareil, avec pdfmake et ses polices (../admin/vendor/) : sans réseau, s'ils
+  // sont déjà dans la page ou gardés par le service de l'application (son cache des outils). En ligne, quand une feuille de
+  // route des quatorze prochains jours est publiée, le service les garde d'avance (une fois, sauf en mode économie de
+  // données) : le PDF se fera aussi dans le train.
+  const VENDOR_PDF = ['pdfmake.min.js', 'vfs_fonts.js', 'fdr-sans-regular.ttf', 'fdr-sans-bold.ttf', 'fdr-sans-italic.ttf', 'fdr-sans-bolditalic.ttf'];
+  const urlVendor = f => new URL(`${(outilFeuille() && outilFeuille().vendor) || '../admin/vendor/'}${f}`, location.href).href;
+  let pdfSonde = null;
+  function sonderPdf() {
+    if (pdfSonde) return pdfSonde;
+    pdfSonde = (async () => {
+      let garde = typeof pdfMake !== 'undefined' && !!pdfMake.vfs;
+      if (!garde && 'caches' in window) { try { garde = (await Promise.all(VENDOR_PDF.slice(0, 2).map(f => caches.match(urlVendor(f), { ignoreSearch: true })))).every(Boolean); } catch (e) { garde = false; } }
+      document.documentElement.dataset.outilPdf = garde ? 'garde' : 'reseau';
+      pdfSonde = null;
+      return garde;
+    })();
+    return pdfSonde;
+  }
+  async function garderOutilsPdf() {
+    if (horsReseau() || !navigator.serviceWorker || !navigator.serviceWorker.controller || (navigator.connection && navigator.connection.saveData)) return;
+    const auj = aujourdhui(), lim = new Date(); lim.setDate(lim.getDate() + 14);
+    const bientot = E.dates.some(d => d.feuille && finDe(d) >= auj && d.debut <= iso(lim));
+    if (!bientot || await sonderPdf()) return;
+    await Promise.allSettled(VENDOR_PDF.map(f => fetch(urlVendor(f), { credentials: 'same-origin' }).then(r => r.blob())));
+    setTimeout(sonderPdf, 1500);                               // (le service range sa copie juste après la réponse)
+  }
+  function reseauNecessaire(quoi) {
+    annoncer(`Hors ligne : ${quoi} demande le réseau.`);
+  }
   let etatAnnonce = null;
   function majTemoin() {
     const x = etatConnexion();
+    document.documentElement.dataset.reseau = x.k === 'horsligne' || x.k === 'reconnexion' ? 'non' : 'oui';
     $$('[data-temoin]').forEach(b => {
       b.dataset.etat = x.k;
       $('.temoin-mot', b).textContent = x.mot;
@@ -1228,7 +1273,7 @@
       <button type="button" class="btn" id="b-agenda"${evs.length ? '' : ' disabled'}>Ajouter à mon agenda</button></section>`);
     cote.push(`<div class="o-install" data-zone-installation="accueil">${zoneInstallation('accueil')}</div>`);
     if (!PREF.pushFermee && E.notifsEtat !== 'absent') cote.push(`<div class="o-push" data-zone-push="accueil"${E.push.etat !== 'inconnu' ? ` data-etat="${E.push.etat}"` : ''}>${E.push.etat !== 'inconnu' ? cartePush(E.push.etat, 'accueil') : ''}</div>`);
-    const html = `<div class="titre-vue"><h1>${esc(salut())}${prenom ? ` ${esc(prenom)}` : ''}</h1><p class="sous">${esc(resume)}</p></div>
+    const html = `<div class="titre-vue"><h1>${esc(salut())}${prenom ? ` ${esc(prenom)}` : ''}</h1><p class="sous">${esc(resume)} ${marqueGarde()}</p></div>
       <div class="accueil"><div class="col-principale">${principal.join('')}</div><div class="col-cote">${cote.join('')}</div></div>${piedVue()}`;
     afficher(r, TITRES.saison, html, { focus, large: true });
     majCartePush();
@@ -1637,8 +1682,8 @@
     const f = E.feuilles.get(d.id);
     let html = heros(d, { page: true });
     const gestes = [];
-    if (l && itineraire(l)) gestes.push(`<a class="geste" href="${esc(itineraire(l))}" target="_blank" rel="noopener">${ICONES.route}<span>Itinéraire</span><span class="sr"> jusqu’à ${esc(l.nom || l.commune || '')}, sur une carte, dans un nouvel onglet</span></a>`);
-    if (d.feuille && outilFeuille()) gestes.push(`<a class="geste" href="#/feuille/${d.id}">${ICONES.feuille}<span>Feuille de route</span></a>`, `<button type="button" class="geste" data-pdf="${d.id}">${ICONES.pdf}<span>PDF</span><span class="sr"> de la feuille de route</span></button>`);
+    if (l && itineraire(l)) gestes.push(`<a class="geste" href="${esc(itineraire(l))}" target="_blank" rel="noopener">${ICONES.route}<span>Itinéraire</span><span class="sr"> jusqu’à ${esc(l.nom || l.commune || '')}, sur une carte, dans un nouvel onglet</span>${marqueReseau({ court: true })}</a>`);
+    if (d.feuille && outilFeuille()) gestes.push(`<a class="geste" href="#/feuille/${d.id}">${ICONES.feuille}<span>Feuille de route</span>${E.feuilles.has(d.id) ? marqueGarde(true) : marqueReseau({ court: true })}</a>`, `<button type="button" class="geste" data-pdf="${d.id}">${ICONES.pdf}<span>PDF</span><span class="sr"> de la feuille de route</span>${marqueReseau({ court: true, pour: 'pdf' })}</button>`);
     if (!passee && vive && evenementsAVenir(d.id).length) gestes.push(`<button type="button" class="geste" data-agenda="${d.id}">${ICONES.agenda}<span>Agenda</span><span class="sr"> : ajouter cette date à mon agenda</span></button>`);
     if (!passee && vive) {
       // seulement quand la base a leurs scripts (le neuvième, le quatorzième, le septième : voir sonder)
@@ -1815,8 +1860,8 @@
     const f = d.feuille, titre = d.spectacle?.titre || '', jour = quandTexte(d);
     const lib = `<span class="f-lib">Feuille de route</span> <span class="f-version" title="${esc(`publiée ${momentTexte(f.publiee_le)}`)}">v${f.version || 1}</span>`;
     if (!outilFeuille()) return `<span class="f-court">${lib} <span class="aide">L’outil qui l’affiche n’a pas pu être chargé : rechargez la page.</span></span>`;
-    return `<span class="f-court">${lib} <a class="btn petit principal" href="#/feuille/${d.id}">${ICONES.lire}Lire<span class="sr"> la feuille de route de ${esc(titre)}, ${esc(jour)}</span></a>
-      <button type="button" class="btn petit" data-pdf="${d.id}">${ICONES.pdf}PDF<span class="sr"> de la feuille de route de ${esc(titre)}, ${esc(jour)}</span></button></span>`;
+    return `<span class="f-court">${lib} <a class="btn petit principal" href="#/feuille/${d.id}">${ICONES.lire}Lire<span class="sr"> la feuille de route de ${esc(titre)}, ${esc(jour)}</span>${E.feuilles.has(d.id) ? marqueGarde(true) : marqueReseau({ court: true })}</a>
+      <button type="button" class="btn petit" data-pdf="${d.id}">${ICONES.pdf}PDF<span class="sr"> de la feuille de route de ${esc(titre)}, ${esc(jour)}</span>${marqueReseau({ court: true, pour: 'pdf' })}</button></span>`;
   }
   // les étiquettes d'une date : la nature (répétitions…), l'état, « mise à jour », le décompte
   function etiquettes(d, decompteTexte = '') {
@@ -1857,7 +1902,7 @@
     const xs = documentsDe(d.spectacle?.id), sp = d.spectacle || {};
     if (!xs.length) return '';
     const libelle = x => (TYPES[x.type] && xs.filter(y => y.type === x.type).length === 1 ? TYPES[x.type] : x.titre);
-    return `<section class="bloc"${attrU(sp)} aria-labelledby="b-docs"><h2 id="b-docs">${ICONES.dossier}Documents</h2><ul class="puces-docs">${xs.map(x => `<li data-doc="${x.id}">${lienDocument(x, `${x.url && !x.fichier ? ICONES.lien : ICONES.doc}<span>${esc(libelle(x))}</span>`, 'puce-doc', libelle(x) !== x.titre ? x.titre : '')}${x.type === 'fiche_technique' ? ` <button type="button" class="puce-doc partage" data-partager="${x.id}">${ICONES.partager}<span>Partager</span><span class="sr"> : ${esc(x.titre)}</span></button>` : ''}</li>`).join('')}</ul></section>`;
+    return `<section class="bloc"${attrU(sp)} aria-labelledby="b-docs"><h2 id="b-docs">${ICONES.dossier}Documents</h2><ul class="puces-docs">${xs.map(x => `<li data-doc="${x.id}">${lienDocument(x, `${x.url && !x.fichier ? ICONES.lien : ICONES.doc}<span>${esc(libelle(x))}</span>${marqueReseau({ court: true })}`, 'puce-doc', libelle(x) !== x.titre ? x.titre : '')}${x.type === 'fiche_technique' ? ` <button type="button" class="puce-doc partage" data-partager="${x.id}">${ICONES.partager}<span>Partager</span><span class="sr"> : ${esc(x.titre)}</span></button>` : ''}</li>`).join('')}</ul></section>`;
   }
   // un document : un lien signé (fichier du stockage privé), un lien direct (public), ou un bouton qui demande le lien au clic
   function lienDocument(x, interieur, cls, titre = '') {
@@ -1898,8 +1943,8 @@
       <span class="ic-rond" aria-hidden="true">${ICONES.feuille}</span>
       <a class="lien-etendu fi-texte" href="#/feuille/${d.id}"><b>${esc(sp.titre || 'Spectacle')}${jourj ? ' <span class="jourj-badge">aujourd’hui</span>' : ''}</b>
         <span>${esc(majuscule(quandTexte(d)))}${l ? ` · ${esc(l.commune || l.nom)}` : ''}</span>
-        <span class="fi-version">Version ${f.version || 1}${f.publiee_le ? `, publiée ${esc(momentTexte(f.publiee_le))}` : ''}</span></a>
-      <button type="button" class="btn petit" data-pdf="${d.id}">${ICONES.pdf}PDF<span class="sr"> de la feuille de route de ${esc(sp.titre || '')}, ${esc(quandTexte(d))}</span></button></li>`;
+        <span class="fi-version">Version ${f.version || 1}${f.publiee_le ? `, publiée ${esc(momentTexte(f.publiee_le))}` : ''}</span>${E.feuilles.has(d.id) ? marqueGarde() : marqueReseau()}</a>
+      <button type="button" class="btn petit" data-pdf="${d.id}">${ICONES.pdf}PDF<span class="sr"> de la feuille de route de ${esc(sp.titre || '')}, ${esc(quandTexte(d))}</span>${marqueReseau({ court: true, pour: 'pdf' })}</button></li>`;
   }
 
   // le contexte d'une feuille (FEUILLE.html, FEUILLE.pdf) : la date telle que la tournée la donne, la personne connectée
@@ -1916,7 +1961,7 @@
     if (E.feuilles.has(id)) return E.feuilles.get(id);
     const { data, error } = await vite(sb.from('crescite_feuilles').select('id, date_id, titre, contenu, statut, version, publiee_le').eq('date_id', id).eq('statut', 'publiee').maybeSingle());
     if (error) throw error;
-    if (data) E.feuilles.set(id, data);
+    if (data) { E.feuilles.set(id, data); if (E.pret && !E.provisoire && !E.horsLigne && !E.sansSession) garder(); }
     return data;
   }
   // la feuille de route, lue dans l'application : FEUILLE.html donne la feuille entière (son en-tête compris) ; la page y
@@ -1955,7 +2000,7 @@
   }
   function poserFeuille(r, d, f, corps, { focus, tete, version }) {
     E.feuilleVue = { id: d.id, version: f.version, publiee_le: f.publiee_le };
-    const barre = `<div class="barre-feuille"><button type="button" class="btn principal" data-pdf="${d.id}">${ICONES.pdf}Télécharger le PDF</button><p class="f-version">${esc(version)}</p></div>`;
+    const barre = `<div class="barre-feuille"><button type="button" class="btn principal" data-pdf="${d.id}">${ICONES.pdf}Télécharger le PDF${marqueReseau({ court: true, pour: 'pdf' })}</button><p class="f-version">${esc(version)}${E.feuilles.has(d.id) ? ` ${marqueGarde()}` : ''}</p></div>`;
     if (!corps) return afficher(r, 'Feuille de route', `${tete}${barre}<p class="message erreur" role="alert">La feuille de route n’a pas pu être mise en page ici. Le PDF reste à votre disposition.</p>`, { focus });
     // la feuille porte d'ordinaire son titre (h1) ; sinon, la page en donne un, pour les lecteurs d'écran
     const titrePage = /<h1[\s>]/i.test(corps) ? '' : `<h1 class="sr">Feuille de route : ${esc(d.spectacle?.titre || '')}, ${esc(quandTexte(d))}</h1>`;
@@ -1976,6 +2021,7 @@
         await F.telecharger(f, contexte(d, { pdf: true }));
       });
       annoncer('La feuille de route est téléchargée en PDF.');
+      sonderPdf();
     } catch (e) {
       console.error(e);
       annoncer(`Le PDF n’a pas pu être préparé : ${motsErreur(e)}.`, { erreur: true });
@@ -1989,7 +2035,7 @@
     if (x.fichier) source = /^[A-Z0-9]{2,4}$/.test(ext) ? ext : 'Fichier';
     else { try { source = new URL(x.url).hostname.replace(/^www\./, '') + ' ↗'; } catch (e) { source = 'Lien'; } }
     return lienDocument(x, `${x.url && !x.fichier ? ICONES.lien : ICONES.doc}<span class="doc-texte"><span class="doc-type">${esc(TYPES_COURTS[x.type] || 'Document')}${POUR[x.pour] ? ` · ${POUR[x.pour]}` : ''}</span>
-      <span class="doc-titre">${esc(x.titre)}</span></span> <span class="doc-src">${esc(source)}</span>`, 'doc');
+      <span class="doc-titre">${esc(x.titre)}</span>${marqueReseau()}</span> <span class="doc-src">${esc(source)}</span>`, 'doc');
   }
   async function copier(url, duree = '', message = '') {
     let ok = false;
@@ -5214,7 +5260,7 @@
   }
   // le réseau tombe : l'espace le dit tout de suite (le bandeau, le témoin), sans attendre qu'une lecture échoue ; il revient :
   // « Reconnexion… », l'espace se relit, puis « À jour »
-  window.addEventListener('offline', () => { if (E.pret && !E.horsLigne) { E.horsLigne = E.chargeLe || Date.now(); bandeauEtat(); } else majTemoin(); });
+  window.addEventListener('offline', () => { if (E.pret && !E.horsLigne) { E.horsLigne = E.chargeLe || Date.now(); bandeauEtat(); } else majTemoin(); sonderPdf(); });
   window.addEventListener('online', async () => {
     if (!E.horsLigne && !E.sansSession) return majTemoin();
     E.reconnexion = true; majTemoin();
@@ -5238,6 +5284,7 @@
     if (inter && !e.target.closest('button')) { $('[data-push]', inter)?.click(); return; }
     const t = e.target.closest('button, a, summary');
     if (!t) return;
+    if (horsReseau() && t.matches('.doc, .puce-doc:not(.partage), .geste[target="_blank"]')) { e.preventDefault(); return reseauNecessaire(t.matches('.geste') ? 'l’itinéraire' : 'ce document'); }
     if (t.matches('.evitement')) { e.preventDefault(); const h = $('#contenu h1') || $('#contenu'); if (h) { h.setAttribute('tabindex', '-1'); h.focus(); } return; }
     if (t.matches('.nav-item')) {
       vibrer(6);
@@ -5275,7 +5322,7 @@
     if (t.matches('[data-phase-camion]')) return changerPhaseCamion(t.dataset.phaseCamion, Number(t.dataset.dateId));
     if (t.id === 'b-agenda') return telechargerAgenda();
     if (t.matches('[data-agenda]')) return telechargerAgenda(Number(t.dataset.agenda));
-    if (t.matches('[data-pdf]')) return telechargerPdf(t);
+    if (t.matches('[data-pdf]')) { if (horsReseau() && document.documentElement.dataset.outilPdf !== 'garde') return reseauNecessaire('le PDF'); return telechargerPdf(t); }
     if (t.matches('[data-partager]')) return partager(t);
     if (t.matches('[data-tout-lu]')) return toutMarquerLu(t);
     if (t.matches('[data-effacer-lues]')) return effacerLues(t);

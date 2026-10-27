@@ -192,6 +192,24 @@ main.large { max-width: 1180px; }
 .titre-vue { margin: 6px 0 18px; }
 .titre-vue h1 { font: 600 clamp(1.8rem, 7.4vw, 2.4rem)/1.08 var(--serif); letter-spacing: -.01em; }
 .titre-vue .sous { margin: 6px 0 0; color: var(--gris); }
+/* ce qui se lit hors ligne (marqueGarde : toujours, pour le savoir avant de partir) et ce qui demande le réseau
+   (marqueReseau : montré hors ligne seulement, html[data-reseau="non"], tenu par majTemoin ; le PDF, tant que son outil
+   n'est pas gardé sur l'appareil, html[data-outil-pdf]) ; court : l'icône seule, son nom au survol et pour les lecteurs d'écran */
+.hl-garde, .hl-reseau { display: inline-flex; align-items: center; gap: 4px; font: 600 .78rem/1.2 var(--etiq); letter-spacing: .02em; color: var(--gris); white-space: nowrap; vertical-align: middle; }
+.hl-garde .ic, .hl-reseau .ic { width: 15px; height: 15px; flex: none; }
+.hl-garde .ic { color: var(--ok); }
+.hl-reseau { display: none; color: var(--option); }
+html[data-reseau="non"] .hl-reseau { display: inline-flex; }
+html[data-outil-pdf="garde"] .hl-reseau[data-pour="pdf"] { display: none; }
+.hl-garde.court, .hl-reseau.court { gap: 0; margin-left: 4px; }
+.fi-texte .hl-garde, .fi-texte .hl-reseau, .doc-texte .hl-reseau { justify-self: start; margin-top: 2px; }
+.geste { position: relative; }
+.geste .hl-garde.court, .geste .hl-reseau.court { position: absolute; top: 7px; right: 7px; margin: 0; }
+.geste .hl-garde .ic, .geste .hl-reseau .ic { width: 14px; height: 14px; color: inherit; }
+.geste .hl-garde { color: var(--ok); }
+/* l'onglet du planning, hors ligne : le nuage barré au coin de son icône (à l'opposé de la pastille des propositions) */
+.nav-icone .hl-reseau.court { position: absolute; bottom: -4px; left: calc(50% + 4px); margin: 0; padding: 1px; border-radius: 50%; background: var(--surface); }
+@media (min-width: 760px) and (min-height: 501px) { .nav-icone .hl-reseau.court { left: 28px; bottom: auto; top: calc(50% + 1px); } }
 .titre-section { display: flex; align-items: center; gap: 10px; margin: 24px 0 12px; font: 700 .76rem/1.2 var(--etiq); letter-spacing: .12em; text-transform: uppercase; color: var(--gris); }
 .titre-section::after { content: ""; flex: 1; height: 1px; background: var(--filet); }
 .mois { position: sticky; top: calc(var(--haut) + var(--hs)); z-index: 2; margin: 14px 0 8px; padding: 6px 4px; font: 700 .92rem/1.2 var(--sans); color: var(--encre); text-transform: capitalize;
