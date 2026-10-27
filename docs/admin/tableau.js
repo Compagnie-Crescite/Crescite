@@ -631,7 +631,7 @@ const TABLEAU = (() => {
         if (t.dataset.tbAction === 'recherche') ouvrirRecherche();
         else if (t.dataset.tbAction === 'prospect') { window.addEventListener('hashchange', () => requestAnimationFrame(() => $('#b-nouveau-prospect')?.click()), { once: true }); location.hash = '#/diffusion'; }
       } else if (t.matches('[data-tb-sp]')) {
-        session.dates = Object.assign({ spectacle: '', public: '', statut: '', q: '', ouvertes: [] }, session.dates || {}, { spectacle: t.dataset.tbSp }); garderFiltres(); location.hash = '#/representations';
+        session.dates = Object.assign({ spectacle: '', public: '', statut: '', q: '' }, session.dates || {}, { spectacle: t.dataset.tbSp }); garderFiltres(); location.hash = '#/representations';
       } else if (t.matches('.tb-tel')) {
         e.preventDefault(); location.href = t.dataset.tel;
       }

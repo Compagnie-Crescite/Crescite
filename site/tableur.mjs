@@ -65,17 +65,17 @@ const jjmmaaaa = iso => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4
   ok('1 · aucune erreur de script (rendu)', erreurs.length === 0, erreurs.join(' / '));
 
   // ================================================================================ 2 · les filtres et le tri
-  await page.fill('#tab-q', 'volcan');
+  await page.fill('#f-q', 'volcan');
   await attendre(page, () => document.querySelectorAll('#tab-corps tr[data-l]').length === 1);
   ok('2 · chercher « volcan » ne laisse que la séance du Havre, le compte suit', (await lignes(page)) === 1 && /^1 séance · 1 date/.test(await texte(page, '#tab-compte')) && (await cases(page, 0, 'lieu')) === 'Le Volcan');
-  await page.fill('#tab-q', 'zzzz');
+  await page.fill('#f-q', 'zzzz');
   await attendre(page, () => document.querySelector('#tab-corps .tab-vide'));
   ok('2 · rien ne correspond : la grille le dit et propose d’effacer les filtres', /Aucune séance ne correspond/.test(await texte(page, '#tab-corps')) && (await compte(page, '#tab-corps [data-effacer-filtres]')) === 1);
-  await page.fill('#tab-q', '');
-  await page.click('[data-tab-periode="passees"]');
+  await page.fill('#f-q', '');
+  await page.click('[data-f-periode="passees"]');
   await attendre(page, () => document.querySelectorAll('#tab-corps tr[data-l]').length === 1);
-  ok('2 · « Passées » ne montre que la date d’il y a quarante jours (104), le bouton est enfoncé (aria-pressed)', (await lignes(page)) === 1 && (await page.$eval('[data-tab-periode="passees"]', b => b.getAttribute('aria-pressed'))) === 'true' && (await cases(page, 0, 'spectacle')) === 'La Folle Idée');
-  await page.click('[data-tab-periode="avenir"]');
+  ok('2 · « Passées » ne montre que la date d’il y a quarante jours (104), le bouton est enfoncé (aria-pressed)', (await lignes(page)) === 1 && (await page.$eval('[data-f-periode="passees"]', b => b.getAttribute('aria-pressed'))) === 'true' && (await cases(page, 0, 'spectacle')) === 'La Folle Idée');
+  await page.click('[data-f-periode="avenir"]');
   await attendre(page, () => document.querySelectorAll('#tab-corps tr[data-l]').length === 7);
   await page.click('#tab-tri');
   await attendre(page, () => document.querySelector('#tab-tete th.c-jour')?.getAttribute('aria-sort') === 'descending');

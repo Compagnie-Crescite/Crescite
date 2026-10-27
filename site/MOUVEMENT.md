@@ -16,7 +16,12 @@ Quatre durées, trois courbes, et rien qui bouge sans raison.
 | Suivre le doigt (le retour, une notification, tirer pour rafraîchir) | le temps du geste, puis 180 à 300 ms | linéaire sous le doigt, le doux pour revenir | `brancherRetour`, `brancherGlisserNotif`, `brancherTirer` |
 | Passer d'une vue à l'autre | 220 à 300 ms | le doux, par les View Transitions | `changerVue`, `changerVueAdmin` |
 | Replier le menu latéral (la colonne passe de 240 à 64 px, ou l'inverse) | 220 ms ; les libellés en 120 ms d'opacité | le doux, par la propriété déclarée `--large-menu` (`@property`) : la grille et l'aside la lisent, le contenu suit | `--large-menu` (`html`) |
+| Viser une ligne (le champ qu'un lien vise, la ligne que « Voir dans le tableur » ouvre) | 1,6 s | `ease-out` | `visee`, `visee-ligne` |
 | Respirer (une lueur, une lampe, une photo qui dérive) | 1,6 à 26 s, en continu | ease-in-out | `respire`, `lampe`, `derive`, `bn-temps` |
+
+Entre la liste, le tableur et la carte de Représentations (une même page, trois vues : même rubrique, même profondeur) le
+passage est un fondu, jamais un glissement (`sensVue`) ; le sélecteur de vues (la pilule) ne glisse pas, il est redessiné
+avec la vue ; sous `prefers-reduced-motion` ou `?anim=0` rien ne bouge, la ligne visée est seulement marquée un instant (un cadre et un fond fixes, 1,8 s).
 
 Ce qui bouge en continu ne touche que `transform` et `opacity` (le compositeur) ; une boîte qui change de taille
 s'anime par l'API, jamais par une transition de hauteur en continu (seule exception : le repli du menu latéral, un geste
@@ -64,12 +69,14 @@ coupées), au téléphone et à l'ordinateur, à une heure figée, puis avec le 
 captures vont dans `site/dist/shots-equipe/` et `site/dist/shots-admin/`. Un banc sort en erreur dès qu'une vérification
 manque.
 
-`bash site/bancs-admin.sh` enchaîne aussi `prefs.mjs` (où chaque réglage est gardé : avec le compte ou sur l'appareil) et
+`bash site/bancs-admin.sh` enchaîne aussi `prefs.mjs` (où chaque réglage est gardé : avec le compte ou sur l'appareil),
 `tableur.mjs` (le tableur des représentations), `icones.mjs` (la bibliothèque d'icônes), `cadre.mjs` (la coque, le menu
-latéral, ses raccourcis et ses badges) et `champs.mjs` (la fiche d'une date : le schéma de ses champs, la jauge, le
-bandeau « Modifiée ailleurs », qui paraît en `ad-arrive`). Ils ne touchent presque pas à ce vocabulaire : `cadre.mjs`
-mesure seulement que le repli anime la colonne une fois, et rien sous « moins d'animations », et que le compte des
-badges ne tient jamais la page plus de 200 ms à `CPU=4` ; pour le reste, ils veillent à ce qu'une refonte ne casse rien.
+latéral, ses raccourcis et ses badges), `champs.mjs` (la fiche d'une date : le schéma de ses champs, la jauge, le
+bandeau « Modifiée ailleurs », qui paraît en `ad-arrive`) et `vues-dates.mjs` (les trois vues de Représentations : la
+pilule, les filtres communs, le fondu, le focus, la ligne visée). Ils ne touchent presque pas à ce vocabulaire :
+`cadre.mjs` mesure seulement que le repli anime la colonne une fois, et rien sous « moins d'animations », et que le
+compte des badges ne tient jamais la page plus de 200 ms à `CPU=4` ; `vues-dates.mjs`, que le passage entre les trois vues
+est un fondu ; pour le reste, ils veillent à ce qu'une refonte ne casse rien.
 
 ## Ce qui a été écarté
 

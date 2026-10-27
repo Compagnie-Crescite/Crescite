@@ -118,7 +118,7 @@ table.simple th, table.reps th { font-size: 11px; }
 /* ===================================================================================================== les boutons, les badges, les champs */
 .btn { border-radius: 10px; border-color: var(--trait); background: var(--carte); font-weight: 600; transition: transform .12s, box-shadow .12s, border-color .12s, background .12s, filter .12s; }
 .btn:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--trait)); background: color-mix(in srgb, var(--accent-doux) 55%, var(--carte)); }
-.btn.principal, .gf-btn.principal, .seg button[aria-pressed="true"], .seg a[aria-current="page"], .puce[aria-pressed="true"]:not([style*="--c"]) { background: var(--principal); border-color: transparent; color: #fff; }
+.btn.principal, .gf-btn.principal, .seg button[aria-pressed="true"], .vues a[aria-current="page"], .puce[aria-pressed="true"]:not([style*="--c"]) { background: var(--principal); border-color: transparent; color: #fff; }
 .btn.principal { box-shadow: 0 8px 18px -10px color-mix(in srgb, var(--accent) 80%, transparent); }
 .btn.principal:hover, .gf-btn.principal:hover { background: var(--principal); filter: brightness(1.08); transform: translateY(-1px); color: #fff; }
 .btn.danger:hover { border-color: var(--alerte); background: var(--alerte-doux); color: var(--alerte); }
@@ -267,7 +267,7 @@ dialog.recherche, dialog.tab-dialogue, dialog.tb-brief { border-radius: var(--ra
   #vue :not(.fdr, .fdr *, .pl, .pl *) { color: #000 !important; background-color: transparent !important; background-image: none !important; box-shadow: none !important; text-shadow: none !important; border-color: #999 !important; }
   #vue a { text-decoration: none !important; }
   /* ce qui sert à l'écran seulement : les gestes, les filtres (dits en tête), l'en-tête de la vue (son titre aussi, en tête) */
-  #vue :is(.tete, .btn, .filtres, .journal-filtres, .tab-filtres, #avant, .fil-ariane, .gps, .sel-bouton, .pied-ed, .doc-boutons, .nt-form, .eq-ajouter,
+  #vue :is(.tete, .btn, .filtres, .journal-filtres, #avant, .fil-ariane, .gps, .sel-bouton, .pied-ed, .doc-boutons, .nt-form, .eq-ajouter,
     .ad-squelette, .liste-vide .btn, .crm-carte button, .pl-nav button, .pl-vues, .pl-filtres, .pl-masquer, .pl-btn, .pl-detail, [data-tiroir-fermer], .a4-outils) { display: none !important; }
   #vue .titre-ed { margin-bottom: 8pt; }
   #vue .titre-ed h2 { font-size: 13pt; }

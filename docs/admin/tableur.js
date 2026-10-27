@@ -7,7 +7,9 @@
    reste, ce qui a changé clignote). Une case « de la date » (spectacle, lieu, statut, nature, distribution, billetterie,
    suivi) vaut pour toutes les séances de la date : les autres lignes de la date la répètent en gris et s'éclairent avec
    elle. Ce qui est vide reste vide ; une colonne vide sur toute la vue se replie (« Colonnes vides » la montre). Filtres :
-   saison, spectacle, à venir / passées / toutes, recherche ; tri par date.
+   ceux de la barre commune aux trois vues de Représentations (la recherche, à venir / passées / toutes, la saison, les
+   spectacles, le statut, le public, et sous « Plus de filtres » la nature, le département, le contrat, du … au : le script
+   principal les dessine, filtresDates, et les lit, dateRetenue) ; tri par date.
    La distribution : l'équipe de la date (la distribution « en tournée » par défaut ; une équipe explicite ne s'écrit que
    si on la change), en pastilles ; « Étendre à… » la pose sur les dates du même spectacle (la saison, l'année civile, ou
    les lignes choisies), après un aperçu qui signale les remplaçants posés à la main. « ＋ Séance » : une date du même
@@ -27,15 +29,15 @@
 
    Après quoi il se charge : ce module est un script classique, chargé après tableau.js et avant menus.js (admin/index.html),
    donc après le script principal et après agenda.js, gestes.js, feuille.js, equipe.js et planning.js. Il ne lit rien de ce
-   qui se déclare plus bas (menus.js et la suite : tiroir.js, tournee.js…), sauf TOURNEE, sous typeof et au seul appel de
-   choixVue. Au chargement, il n'évalue que son état T, ses constantes, COLONNES (qui lit CHIFFRES, un const du script
-   principal : déjà là) et COLONNES.forEach ; natif() n'est que déclarée. Aucune ligne de code n'a changé en quittant
-   admin/index.html : le banc site/tableur.mjs le garde.
+   qui se déclare plus bas (menus.js et la suite : tiroir.js, tournee.js…). Au chargement, il n'évalue que son état T, ses
+   constantes, COLONNES (qui lit CHIFFRES, un const du script principal : déjà là) et COLONNES.forEach ; natif() n'est que
+   déclarée. Le banc site/tableur.mjs le garde.
 
    Son API (la globale TABLEUR) :
-     TABLEUR.vue()            la vue #/representations/tableur (lue par le routage du script principal)
-     TABLEUR.choixVue(v)      les trois liens « Liste · Tableur · Carte » en tête de Représentations ; v : 'liste',
-                              'tableur' ou 'carte' (lue aussi par tournee.js)
+     TABLEUR.vue(f)           la vue #/representations/tableur (lue par le routage du script principal) ; f : les filtres
+                              communs, session.dates. Si f.cible porte l'identifiant d'une date (« Voir dans le tableur »),
+                              la vue arrive sur sa ligne : case active, en vue, cerclée un instant (visee sur chaque case) ;
+                              la cible est oubliée aussitôt. Le tri et les colonnes vides vivent dans session.vues.tableur.
      TABLEUR.lireJour(t, ref) un jour tapé ou collé (« 5/11 », « jeu. 5 nov. 2026 ») → 'AAAA-MM-JJ', ou undefined
      TABLEUR.lireHeure(t)     une heure tapée (« 20h30 », « 2030 ») → 'HH:MM', '' si vide, ou undefined
      TABLEUR.lireTsv(texte)   un texte de tableur (tabulations, guillemets d'Excel) → des lignes de cases
@@ -49,20 +51,21 @@
 
    Ce qu'il lit du script principal (admin/index.html), relevé par grep croisé avec les déclarations :
      E, $, $$, esc, clone, norm, AUJ, h5, jourCourt, lieu, spectacle, lieuTexte, repsDe, couleurSp (l'état et les petits
-     outils) ; session (il écrit session.tableur : les filtres de la vue), garderFiltres ; annoncer, erreur, cadre,
-     partirSansPerdre ; cleRch, motsRch (la recherche) ; choixSpectacles, comboLieu (les champs de la fiche) ;
+     outils) ; session (session.dates, les filtres communs aux trois vues ; session.vues.tableur par etatVue : le tri
+     et les colonnes vides), garderFiltres, dateRetenue, dansPeriode, filtresActifs, filtresDates, brancherFiltresDates,
+     choixVueDates (les filtres et le sélecteur de vues) ; annoncer, erreur, cadre, partirSansPerdre ; cleRch, motsRch
+     (la recherche) ; choixSpectacles, comboLieu (les champs de la fiche) ;
      nouvelleDate, dateVersForm, chiffresVersForm, nombreFr, CHIFFRES, NATURES_DATE, PUBLIABLE, manqueDate (le formulaire
      d'une date) ; ecrireDate, effacerDate (l'écriture, par le chemin de la fiche) ;
      AGENDA.heureTexte, AGENDA.MOIS (admin/agenda.js).
    D'admin/equipe.js : personne, nomDe, distributionDe, fonctionDistribution, equipeDate, equipeDeLaDate, ecartsDate,
      enregistrerEquipeDate, listeEt.
-   Sous typeof (le module marche sans eux) : GESTES (gestes.js : garder et saisie, pour la fenêtre d'import) et TOURNEE
-     (tournee.js : le lien « Carte » de choixVue, absent sans elle).
+   Sous typeof (le module marche sans eux) : GESTES (gestes.js : garder et saisie, pour la fenêtre d'import).
    Il ne lit ni sb ni CALME_ADMIN : il n'écrit rien lui-même dans la base, tout passe par ecrireDate et
    enregistrerEquipeDate. Le CSS du tableur (.tableur, .tab-…) et l'animation tab-ok restent dans admin/index.html. */
 const TABLEUR = (() => {
   // ==================== l'état de la vue et les petits outils
-  const T = { f: null, cols: [], lignes: [], actif: { l: 0, c: 0 }, ancre: null, edition: null, pop: null, pile: [],
+  const T = { f: null, v: null, cols: [], lignes: [], actif: { l: 0, c: 0 }, ancre: null, edition: null, pop: null, pile: [],
     file: Promise.resolve(), recents: new Map(), textes: null, aRafraichir: false, attente: 0 };
   const natif = () => typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
   const PUBLICS = [['tout_public', 'Tout public'], ['scolaire', 'Scolaire'], ['autre', 'Autre']];
@@ -226,10 +229,8 @@ const TABLEUR = (() => {
     const f = T.f, mots = motsRch(f.q);
     const texte = d => { const s = spectacle(d.spectacle_id), l = lieu(d.lieu_id), su = suiviDe(d);
       return cleRch(`${s?.titre || ''} ${l ? `${l.nom || ''} ${l.commune} ${l.departement || ''}` : ''} ${d.intitule || ''} ${su.organisateur || ''} ${su.contact || ''} ${su.notes || ''} ${repsDe(d.id).map(r => r.note || '').join(' ')} ${libelleDe(STATUTS, d.statut)} ${libelleDe(NATURES_DATE, nature(d))} ${equipeIds(d).map(id => nomDe(personne(id))).join(' ')}`); };
-    const ds = E.dates.filter(d => (!f.spectacle || String(d.spectacle_id) === f.spectacle) && (!f.saison || d.saison === f.saison)
-      && (f.periode === 'toutes' || (f.periode === 'passees' ? (d.fin || d.debut) < AUJ : (d.fin || d.debut) >= AUJ))
-      && (!mots.length || (t => mots.every(m => t.includes(m)))(texte(d))))
-      .sort((a, b) => (a.debut < b.debut ? -1 : a.debut > b.debut ? 1 : a.id - b.id) * (f.tri === 'desc' ? -1 : 1));
+    const ds = E.dates.filter(d => dateRetenue(d, f) && dansPeriode(d, f.periode) && (!mots.length || (t => mots.every(m => t.includes(m)))(texte(d))))
+      .sort((a, b) => (a.debut < b.debut ? -1 : a.debut > b.debut ? 1 : a.id - b.id) * (T.v.tri === 'desc' ? -1 : 1));
     const out = [];
     ds.forEach((d, n) => {
       const reps = repsDe(d.id);
@@ -239,25 +240,19 @@ const TABLEUR = (() => {
   }
   // les colonnes montrées : celles qui ont quelque chose dans la vue (ou toutes, « Colonnes vides »)
   const possibles = () => COLONNES.filter(c => !c.si || c.si());
-  const colonnes = xs => possibles().filter(c => T.f.vides || c.toujours || xs.some(x => c.texte(x) !== ''));
+  const colonnes = xs => possibles().filter(c => T.v.vides || c.toujours || xs.some(x => c.texte(x) !== ''));
 
   // ———— la vue
-  function vue() {
-    T.f = session.tableur = Object.assign({ q: '', saison: '', spectacle: '', periode: 'avenir', tri: 'asc', vides: false }, session.tableur || {});
-    const f = T.f, saisons = [...new Set(E.dates.map(d => d.saison).filter(Boolean))].sort().reverse();
-    cadre('representations', `<div class="tete"><h1>Représentations</h1>${choixVue('tableur')}
+  function vue(f = session.dates) {
+    T.f = f; T.v = etatVue('tableur');
+    const cible = f.cible; delete f.cible;   // « Voir dans le tableur » : la date à viser, une seule fois
+    cadre('representations', `<div class="tete"><h1>Représentations</h1>${choixVueDates('tableur')}
       <span class="tab-actions"><button type="button" class="btn principal" id="tab-plus" aria-expanded="false" aria-controls="tab-ajout">＋ Séance</button>
       <button type="button" class="btn" id="tab-importer">Importer</button>
       <span class="tab-menu"><button type="button" class="btn" id="tab-exporter" aria-haspopup="true" aria-expanded="false" aria-controls="tab-export">Exporter</button>
         <span class="tab-export" id="tab-export" role="group" aria-label="Exporter" hidden><button type="button" class="btn" data-export="xlsx">Excel (.xlsx)</button><button type="button" class="btn" data-export="sheets">Google Sheets</button><button type="button" class="btn" data-export="csv">CSV</button>
         <span class="aide">Google Sheets : le tableau est copié, une feuille vierge s’ouvre (sheets.new) ; collez-le (Ctrl+V). Ou importez-y le fichier Excel.</span></span></span></span></div>
-    <div class="filtres tab-filtres" role="search" aria-label="Filtrer le tableur">
-      <input type="search" id="tab-q" placeholder="Chercher : un lieu, une commune, une personne, un mot des notes…" value="${esc(f.q)}" aria-label="Chercher dans le tableur">
-      <div class="tab-choix"><select id="tab-saison" aria-label="Saison"><option value="">Toutes les saisons</option>${saisons.map(s => `<option value="${esc(s)}"${f.saison === s ? ' selected' : ''}>Saison ${esc(s)}</option>`).join('')}</select>
-        <select id="tab-sp" aria-label="Spectacle"><option value="">Tous les spectacles</option>${E.spectacles.slice().sort((a, b) => (b.page - a.page) || a.ordre - b.ordre).map(s => `<option value="${s.id}"${String(f.spectacle) === String(s.id) ? ' selected' : ''}>${esc(s.titre)}</option>`).join('')}</select>
-        <span class="seg" role="group" aria-label="Période">${[['avenir', 'À venir'], ['passees', 'Passées'], ['toutes', 'Toutes']].map(([k, l]) => `<button type="button" data-tab-periode="${k}" aria-pressed="${f.periode === k}">${l}</button>`).join('')}</span>
-        <label class="case tab-vides"><input type="checkbox" id="tab-vides"${f.vides ? ' checked' : ''}> Colonnes vides</label></div>
-    </div>
+    ${filtresDates(f, { vue: 'tableur', aDroite: `<label class="case tab-vides"><input type="checkbox" id="tab-vides"${T.v.vides ? ' checked' : ''}> Colonnes vides</label>` })}
     <form class="bloc tab-ajout" id="tab-ajout" hidden></form>
     <p class="tab-ligne-etat"><span class="compte" id="tab-compte"></span><span class="tab-etat" id="tab-etat" aria-live="polite"></span>
       <button type="button" class="btn lien petit tab-suppr" id="tab-suppr" aria-keyshortcuts="Control+Delete" title="Dans le tableau : Ctrl+Suppr">Supprimer la séance…</button></p>
@@ -267,11 +262,21 @@ const TABLEUR = (() => {
     const corps = $('#tab-corps');
     corps.rafraichir = () => { if (T.edition || T.pop) { T.aRafraichir = true; return; } dessiner({ garder: true }); };
     T.actif = { l: 0, c: 0 }; T.ancre = null; T.textes = null;
+    if (cible != null && !lignes().some(x => x.d.id === cible)) montrerAjouts([cible]);   // la ligne visée ne se cache pas derrière un filtre
     dessiner();
     brancher();
+    if (cible != null) viserDate(cible);
   }
-  // la liste ou le tableur (en tête de Représentations)
-  const choixVue = v => `<span class="seg tab-vue" role="group" aria-label="Vue"><a href="#/representations" aria-current="${v === 'liste' ? 'page' : 'false'}">Liste</a><a href="#/representations/tableur" aria-current="${v === 'tableur' ? 'page' : 'false'}">Tableur</a>${typeof TOURNEE !== 'undefined' ? `<a href="#/representations/carte" aria-current="${v === 'carte' ? 'page' : 'false'}">Carte</a>` : ''}</span>`;
+  // « Voir dans le tableur » : la ligne de la date devient la case active (elle vient en vue) et se cerne un instant : visee sur
+  // chacune de ses cases (un box-shadow sur un <tr> ne se peint pas en border-collapse: separate)
+  function viserDate(id) {
+    const l = T.lignes.findIndex(x => x.d.id === id);
+    if (l < 0) return;
+    activer(l, 0);
+    const cases = $$(`#tab-corps tr[data-l="${l}"] td`);
+    cases.forEach(td => td.classList.add('visee'));
+    setTimeout(() => cases.forEach(td => td.classList.remove('visee')), 1800);
+  }
 
   // ———— dessiner (et redessiner : la case active, le défilement et ce qui a changé ailleurs)
   const cleCase = (x, c) => `${x.cle}|${c.k}`;
@@ -284,15 +289,15 @@ const TABLEUR = (() => {
     const plie = possibles().filter(c => !T.cols.includes(c));
     $('#tab').setAttribute('aria-rowcount', String(T.lignes.length + 1));
     $('#tab').setAttribute('aria-colcount', String(T.cols.length));
-    tete.innerHTML = `<tr role="row" aria-rowindex="1">${T.cols.map((c, j) => `<th role="columnheader" scope="col" class="c-${c.k}${c.niveau !== 'seance' ? ' de-date' : ''}" aria-colindex="${j + 1}"${c.k === 'jour' ? ` aria-sort="${T.f.tri === 'desc' ? 'descending' : 'ascending'}"` : ''} title="${c.niveau === 'date' ? 'Vaut pour toutes les séances de la date' : c.niveau === 'lieu' ? 'Vient de la fiche du lieu' : 'Propre à chaque séance'}">${c.k === 'jour' ? `<button type="button" class="tab-tri" id="tab-tri">Jour <span aria-hidden="true">${T.f.tri === 'desc' ? '↓' : '↑'}</span><span class="sr">, trier ${T.f.tri === 'desc' ? 'du plus ancien' : 'du plus récent'} d’abord</span></button>` : esc(c.l)}</th>`).join('')}</tr>`;
+    tete.innerHTML = `<tr role="row" aria-rowindex="1">${T.cols.map((c, j) => `<th role="columnheader" scope="col" class="c-${c.k}${c.niveau !== 'seance' ? ' de-date' : ''}" aria-colindex="${j + 1}"${c.k === 'jour' ? ` aria-sort="${T.v.tri === 'desc' ? 'descending' : 'ascending'}"` : ''} title="${c.niveau === 'date' ? 'Vaut pour toutes les séances de la date' : c.niveau === 'lieu' ? 'Vient de la fiche du lieu' : 'Propre à chaque séance'}">${c.k === 'jour' ? `<button type="button" class="tab-tri" id="tab-tri">Jour <span aria-hidden="true">${T.v.tri === 'desc' ? '↓' : '↑'}</span><span class="sr">, trier ${T.v.tri === 'desc' ? 'du plus ancien' : 'du plus récent'} d’abord</span></button>` : esc(c.l)}</th>`).join('')}</tr>`;
     T.textes = new Map();
     corps.innerHTML = T.lignes.map((x, i) => `<tr role="row" aria-rowindex="${i + 2}" data-l="${i}" class="b${x.bande}${x.premier ? ' premier' : ''}${x.d.statut === 'annulee' || x.r?.annulee ? ' barree' : ''}">${T.cols.map((c, j) => {
       const t = c.texte(x); T.textes.set(cleCase(x, c), t);
       const lecture = c.type === 'lecture' || c.fige?.(x);
       return `<td role="gridcell" aria-colindex="${j + 1}" data-c="${j}" class="c-${c.k}${c.niveau !== 'seance' && !x.premier ? ' repete' : ''}" tabindex="-1"${lecture ? ' aria-readonly="true"' : ''}${t.length > 16 ? ` title="${esc(t)}"` : ''}>${c.html ? c.html(x) : esc(t)}</td>`;
-    }).join('')}</tr>`).join('') || `<tr role="row"><td role="gridcell" colspan="${T.cols.length}" class="tab-vide">${E.dates.length ? `Aucune séance ne correspond.${T.f.q || T.f.saison || T.f.spectacle || T.f.periode !== 'avenir' ? '<br><button type="button" class="btn" data-effacer-filtres>Effacer les filtres</button>' : ''}` : 'Aucune date pour l’instant : « ＋ Séance » en ajoute une.'}</td></tr>`;
+    }).join('')}</tr>`).join('') || `<tr role="row"><td role="gridcell" colspan="${T.cols.length}" class="tab-vide">${E.dates.length ? `Aucune séance ne correspond.${filtresActifs(T.f) ? '<br><button type="button" class="btn" data-effacer-filtres>Effacer les filtres</button>' : ''}` : 'Aucune date pour l’instant : « ＋ Séance » en ajoute une.'}</td></tr>`;
     const n = T.lignes.length, nd = new Set(T.lignes.map(x => x.d.id)).size;
-    $('#tab-compte').textContent = `${pl(n, 'séance')} · ${pl(nd, 'date')}${plie.length && !T.f.vides ? ` · colonnes vides repliées : ${plie.map(c => c.l.toLowerCase()).join(', ')}` : ''}`;
+    $('#tab-compte').textContent = `${pl(n, 'séance')} · ${pl(nd, 'date')}${plie.length && !T.v.vides ? ` · colonnes vides repliées : ${plie.map(c => c.l.toLowerCase()).join(', ')}` : ''}`;
     // la case active : la même qu'avant (par sa ligne et sa colonne), sinon la plus proche
     if (avant) {
       const l = T.lignes.findIndex(x => x.cle === avant.ligne), c = T.cols.findIndex(y => y.k === avant.col);
@@ -365,13 +370,9 @@ const TABLEUR = (() => {
 
   // ———— les gestes
   function brancher() {
-    const f = T.f, maj = () => { garderFiltres(); T.actif = { l: 0, c: 0 }; T.ancre = null; dessiner(); };
-    $('#tab-q').addEventListener('input', e => { f.q = e.target.value; maj(); });
-    $('#tab-saison').addEventListener('change', e => { f.saison = e.target.value; maj(); });
-    $('#tab-sp').addEventListener('change', e => { f.spectacle = e.target.value; maj(); });
-    $$('[data-tab-periode]').forEach(b => b.addEventListener('click', () => { f.periode = b.dataset.tabPeriode; $$('[data-tab-periode]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); maj(); }));
-    $('#tab-vides').addEventListener('change', e => { f.vides = e.target.checked; garderFiltres(); dessiner({ garder: true }); });
-    $('#tab-tete').addEventListener('click', e => { if (e.target.closest('#tab-tri')) { f.tri = f.tri === 'desc' ? 'asc' : 'desc'; garderFiltres(); dessiner({ garder: true }); $('#tab-tri')?.focus(); } });
+    brancherFiltresDates(T.f, () => { garderFiltres(); T.actif = { l: 0, c: 0 }; T.ancre = null; dessiner(); });
+    $('#tab-vides').addEventListener('change', e => { T.v.vides = e.target.checked; garderFiltres(); dessiner({ garder: true }); });
+    $('#tab-tete').addEventListener('click', e => { if (e.target.closest('#tab-tri')) { T.v.tri = T.v.tri === 'desc' ? 'asc' : 'desc'; garderFiltres(); dessiner({ garder: true }); $('#tab-tri')?.focus(); } });
     $('#tab-etat').addEventListener('click', e => { if (e.target.closest('#tab-annuler')) annuler(); });
     $('#tab-plus').addEventListener('click', () => formAjout());
     $('#tab-importer').addEventListener('click', () => importer());
@@ -752,13 +753,12 @@ const TABLEUR = (() => {
   }
   // ce qu'on vient d'ajouter doit se voir : les filtres qui le cachent (eux seuls) se relâchent, et leurs boutons le montrent
   function montrerAjouts(ids) {
-    const neutres = { periode: 'toutes', spectacle: '', saison: '', q: '' }, f0 = { ...T.f };
+    const neutres = { periode: 'toutes', spectacle: '', saison: '', q: '', statut: '', public: '', nature: '', dep: '', contrat: '', du: '', au: '' }, f0 = { ...T.f };
     const vus = f => { Object.assign(T.f, f); const xs = lignes(); return ids.every(id => xs.some(x => x.d.id === id)); };
     const cachent = Object.keys(neutres).filter(k => !vus({ ...neutres, [k]: f0[k] }));
     Object.assign(T.f, f0, ...cachent.map(k => ({ [k]: neutres[k] })));
     garderFiltres();
-    $('#tab-q').value = T.f.q; $('#tab-saison').value = T.f.saison; $('#tab-sp').value = T.f.spectacle;
-    $$('[data-tab-periode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.tabPeriode === T.f.periode)));
+    filtresDates.refleter(T.f);
   }
   // défaire un ajout : la date créée s'efface, ou la séance ajoutée part
   async function defaireAjout(a) {
@@ -1101,5 +1101,5 @@ const TABLEUR = (() => {
     $('#tab-im-texte', dlg).focus();
   }
 
-  return { vue, choixVue, lireJour, lireHeure, lireTsv, xlsx, lireImport, lecteurs: { choix: lireChoix, spectacle: trouverSpectacle, lieu: trouverLieu, personnes: lirePersonnes } };
+  return { vue, lireJour, lireHeure, lireTsv, xlsx, lireImport, lecteurs: { choix: lireChoix, spectacle: trouverSpectacle, lieu: trouverLieu, personnes: lirePersonnes } };
 })();

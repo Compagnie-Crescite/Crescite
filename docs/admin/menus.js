@@ -64,7 +64,7 @@
     if (l) xs.push({ libelle: 'Fiche du lieu', detail: l.nom || l.commune, href: `#/lieux/${l.id}` });
     if (typeof MODELES !== 'undefined') xs.push({ libelle: 'Devis, contrat…', detail: 'un document à imprimer', faire: () => MODELES.generer({ date: d, type: 'devis' }), icone: ICO.feuille });
     xs.push({ separateur: true }, { libelle: 'Dupliquer', detail: 'une copie à enregistrer', faire: () => allerEtCliquer(href, '#d-dupliquer'), icone: ICO.dupliquer },
-      { libelle: 'Voir dans le tableur', href: '#/representations/tableur' });
+      { libelle: 'Voir dans le tableur', faire: () => { if (location.hash === '#/representations/tableur') return; (session.dates = session.dates || {}).cible = d.id; location.hash = '#/representations/tableur'; } });   // (la cible, posée sur l'objet des filtres sans le remplacer : le tableur arrive sur la ligne de cette date, cerclée un instant, puis l'oublie ; déjà sur le tableur, rien à poser, personne ne la lirait)
     xs.push(...liens(href));
     xs.push({ separateur: true }, { libelle: 'Supprimer la date', detail: 'avec « Annuler »', danger: true, icone: ICO.poubelle, faire: () => supprimerDate(d) });
     return xs.filter(Boolean);
@@ -147,7 +147,7 @@
     const n = E.dates.filter(d => d.spectacle_id === s.id && aVenirDate(d) && d.statut !== 'annulee').length;
     const bouton = sens => $(`[data-ordre="${s.id}"][data-sens="${sens}"]`);
     return [location.hash === `#/spectacles/${s.slug}` ? null : ouvrirA(`#/spectacles/${s.slug}`, 'Ouvrir la fiche'),
-      { libelle: 'Ses dates', detail: `${n} à venir`, icone: ICO.agenda, faire: () => { session.dates = Object.assign({ spectacle: '', public: '', statut: '', q: '', ouvertes: [] }, session.dates || {}, { spectacle: String(s.id) }); garderFiltres(); location.hash = '#/representations'; } },
+      { libelle: 'Ses dates', detail: `${n} à venir`, icone: ICO.agenda, faire: () => { session.dates = Object.assign({ spectacle: '', public: '', statut: '', q: '' }, session.dates || {}, { spectacle: String(s.id) }); garderFiltres(); location.hash = '#/representations'; } },
       { libelle: 'Nouvelle date', faire: () => { E.dateDepart = Object.assign(nouvelleDate(), { spectacle_id: s.id }); location.hash = '#/representations/nouvelle'; }, icone: ICO.plus },
       bouton(-1) ? { libelle: 'Avancer dans l’ordre', faire: () => bouton(-1).click(), icone: ICO.gauche } : null, bouton(1) ? { libelle: 'Reculer dans l’ordre', faire: () => bouton(1).click(), icone: ICO.droite } : null,
       ...liens(`#/spectacles/${s.slug}`)];

@@ -3,11 +3,16 @@
    de France du site (le même fond, la même projection : fond-carte.js), une pastille par lieu avec le nombre de dates,
    le trajet des dates enchaînées dans l'ordre, et, à côté, la tournée étape par étape avec la distance à vol d'oiseau
    entre deux dates qui se suivent et le nombre de jours entre elles : un enchaînement serré (plus de 300 km d'un jour à
-   l'autre, ou plus de 150 km le même jour) se signale. Filtres : la saison, le spectacle, à venir seulement ; « Autour
-   des dates » resserre le cadre. Une pastille ouvre le lieu en tiroir, une étape ouvre la date (tiroir.js). Les lieux
-   sans position (latitude, longitude) sont listés : « Trouver la commune » dans leur fiche les place. Chargé après
-   fond-carte.js et tiroir.js.
-   TOURNEE.vue()   TOURNEE.projeter(lieu)   TOURNEE.etapes(dates)   TOURNEE.km(a, b) */
+   l'autre, ou plus de 150 km le même jour) se signale. Filtres : ceux des trois vues de Représentations, communs (la
+   barre du script principal, filtresDates : recherche, période, saison, spectacle, statut, public, et sous « Plus de
+   filtres » nature, département, contrat, du … au ; le prédicat dateRetenue) : changer de vue les garde. D'office, toutes
+   les saisons, à venir. La carte garde ce qui lui est propre : les répétitions n'y sont pas (sauf au choix de la nature
+   « Répétitions »), les dates annulées ou reportées non plus (sauf au choix du statut « Annulées » ou « Reportées »), et
+   « Autour des dates » resserre le cadre (session.vues.carte.serre, hors de l'adresse). Une pastille ouvre le lieu en
+   tiroir, une étape ouvre la date (tiroir.js). Les lieux sans position (latitude, longitude) sont listés : « Trouver la
+   commune » dans leur fiche les place. Chargé après fond-carte.js et tiroir.js.
+   TOURNEE.vue(f)   TOURNEE.projeter(lieu)   TOURNEE.etapes(dates)   TOURNEE.km(a, b)
+   (f : les filtres communs, session.dates ; sans f, ceux de la session) */
 const TOURNEE = (() => {
   const F = typeof FOND_CARTE !== 'undefined' ? FOND_CARTE : null;
   const SERRE_JOUR = 150, SERRE_VEILLE = 300;
@@ -38,33 +43,28 @@ const TOURNEE = (() => {
     return out;
   }
   const quandTexte = j => j < 0 ? 'en même temps' : j === 0 ? 'le même jour' : j === 1 ? 'le lendemain' : j < 14 ? `${j} jours après` : j < 60 ? `${Math.round(j / 7)} semaines après` : `${Math.round(j / 30)} mois après`;
-  function vue() {
-    if (!F) { cadre('representations', `<div class="tete"><h1>Représentations</h1>${TABLEUR.choixVue('carte')}</div><div class="vide bloc">Le fond de carte manque (admin/fond-carte.js : site/build.py l’écrit).</div>`); return; }
-    const saisonCourante = AGENDA.saisonDe(AUJ);
-    const f = session.tournee = Object.assign({ saison: saisonCourante, spectacle: '', avenir: false, serre: false }, session.tournee || {});
-    const saisons = [...new Set(E.dates.map(d => d.saison))].sort().reverse();
-    if (f.saison && f.saison !== 'toutes' && !saisons.includes(f.saison)) f.saison = saisons.includes(saisonCourante) ? saisonCourante : 'toutes';
-    cadre('representations', `<div class="tete"><h1>Représentations</h1>${TABLEUR.choixVue('carte')}<a class="btn principal" href="#/representations/nouvelle">＋ Nouvelle date</a></div>
-      <div class="filtres tn-filtres"><div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-        <select id="tn-saison" aria-label="Saison"><option value="toutes"${f.saison === 'toutes' ? ' selected' : ''}>Toutes les saisons</option>${saisons.map(s => `<option value="${s}"${f.saison === s ? ' selected' : ''}>Saison ${s}</option>`).join('')}</select>
-        <div class="puces" role="group" aria-label="Spectacle">${E.spectacles.filter(s => s.page || E.dates.some(d => d.spectacle_id === s.id)).map(s => `<button type="button" class="puce" data-tn-sp="${s.id}" style="--c:${couleurSp(s)}" aria-pressed="${String(f.spectacle) === String(s.id)}"><span class="pastille"></span>${esc(s.titre.split(' – ')[0])}</button>`).join('')}</div>
-        <label class="case" style="font-size:13.5px"><input type="checkbox" id="tn-avenir"${f.avenir ? ' checked' : ''}> À venir seulement</label>
-        <label class="case" style="font-size:13.5px"><input type="checkbox" id="tn-serre"${f.serre ? ' checked' : ''}> Autour des dates</label>
-        <span class="compte" id="tn-compte"></span></div></div>
+  function vue(f = session.dates) {
+    if (!F) { cadre('representations', `<div class="tete"><h1>Représentations</h1>${choixVueDates('carte')}</div><div class="vide bloc">Le fond de carte manque (admin/fond-carte.js : site/build.py l’écrit).</div>`); return; }
+    const v = etatVue('carte');
+    cadre('representations', `<div class="tete"><h1>Représentations</h1>${choixVueDates('carte')}<a class="btn principal" href="#/representations/nouvelle">＋ Nouvelle date</a></div>
+      ${filtresDates(f, { vue: 'carte', aDroite: `<label class="case" style="font-size:13.5px"><input type="checkbox" id="tn-serre"${v.serre ? ' checked' : ''}> Autour des dates</label>` })}
       <div class="tn-deux"><div class="bloc tn-carte" id="tn-carte"></div><div class="tn-cote"><div class="bloc" id="tn-resume"></div><div class="bloc" data-liste id="tn-etapes"></div></div></div>`);
     const zone = $('#tn-etapes');
     const dessiner = () => {
-      const ds = E.dates.filter(d => !['annulee', 'reportee'].includes(d.statut) && ['representations', 'residence'].includes(d.nature || 'representations') && (f.saison === 'toutes' || d.saison === f.saison) && (!f.spectacle || String(d.spectacle_id) === String(f.spectacle)) && (!f.avenir || (d.fin || d.debut) >= AUJ)).sort(parDebut);
+      const q = norm(f.q).trim();
+      const ds = E.dates.filter(d => dateRetenue(d, f) && dansPeriode(d, f.periode) && (!q || dateCherchee(d, q))
+        && (['representations', 'residence'].includes(d.nature || 'representations') || f.nature === 'repetitions')   // (les répétitions : hors carte, sauf si on les demande)
+        && (!['annulee', 'reportee'].includes(d.statut) || d.statut === f.statut)).sort(parDebut);   // (les annulées et les reportées : de même)
       const xs = etapes(ds);
       // les lieux : une pastille par lieu, avec ses dates
       const lieux = new Map();
       ds.forEach(d => { const l = lieu(d.lieu_id); if (!l) return; if (!lieux.has(l.id)) lieux.set(l.id, { l, dates: [], xy: projeter(l) }); lieux.get(l.id).dates.push(d); });
       const places = [...lieux.values()].filter(x => x.xy && dansCadre(x.xy)), sans = [...lieux.values()].filter(x => !x.xy), hors = [...lieux.values()].filter(x => x.xy && !dansCadre(x.xy));
       const trajets = xs.filter(x => x.trajet && x.km != null), total = trajets.reduce((s, x) => s + x.km, 0), serres = trajets.filter(x => x.serre).length;
-      $('#tn-compte').textContent = `${ds.length} date${ds.length > 1 ? 's' : ''} · ${lieux.size} lieu${lieux.size > 1 ? 'x' : ''}`;
+      $('#f-compte').textContent = `${ds.length} date${ds.length > 1 ? 's' : ''} · ${lieux.size} lieu${lieux.size > 1 ? 'x' : ''}`;
       // le cadre : la France, ou serré autour des pastilles
       let vb = F.viewBox;
-      if (f.serre && places.length) { const xsP = places.map(p => p.xy[0]), ysP = places.map(p => p.xy[1]); const x0 = Math.min(...xsP, F.rouen[0]), x1 = Math.max(...xsP, F.rouen[0]), y0 = Math.min(...ysP, F.rouen[1]), y1 = Math.max(...ysP, F.rouen[1]); const m = Math.max(60, (x1 - x0) * .18, (y1 - y0) * .18), w = Math.max(x1 - x0 + 2 * m, 220), h = Math.max(y1 - y0 + 2 * m, 220); vb = `${(x0 + x1) / 2 - w / 2} ${(y0 + y1) / 2 - h / 2} ${w} ${h}`; }
+      if (v.serre && places.length) { const xsP = places.map(p => p.xy[0]), ysP = places.map(p => p.xy[1]); const x0 = Math.min(...xsP, F.rouen[0]), x1 = Math.max(...xsP, F.rouen[0]), y0 = Math.min(...ysP, F.rouen[1]), y1 = Math.max(...ysP, F.rouen[1]); const m = Math.max(60, (x1 - x0) * .18, (y1 - y0) * .18), w = Math.max(x1 - x0 + 2 * m, 220), h = Math.max(y1 - y0 + 2 * m, 220); vb = `${(x0 + x1) / 2 - w / 2} ${(y0 + y1) / 2 - h / 2} ${w} ${h}`; }
       const echelle = Math.sqrt(vb.split(/\s+/).map(Number)[2] / 800);
       const chemin = ds.map(d => lieux.get(d.lieu_id)).filter(x => x && x.xy && dansCadre(x.xy)).map(x => x.xy);
       const couleur = x => { const sps = [...new Set(x.dates.map(d => d.spectacle_id))]; return sps.length === 1 ? couleurSp(spectacle(sps[0])) : 'var(--accent)'; };
@@ -81,15 +81,15 @@ const TOURNEE = (() => {
         ${sans.length ? `<p class="aide">Sans position sur la carte : ${sans.map(x => `<a href="#/lieux/${x.l.id}" data-viser="latitude">${esc(x.l.nom || x.l.commune)}</a>`).join(', ')} — « Trouver la commune » dans la fiche du lieu.</p>` : ''}
         ${hors.length ? `<p class="aide">Hors du cadre : ${hors.map(x => `<a href="#/lieux/${x.l.id}">${esc(x.l.commune)}</a>`).join(', ')}.</p>` : ''}`;
       zone.innerHTML = xs.length ? `<h3>Étape par étape</h3><ol class="tn-etapes">${xs.map(x => x.trajet ? `<li class="tn-trajet-l${x.serre ? ' serre' : ''}"><span class="tn-fleche" aria-hidden="true">↓</span>${x.km != null ? `<b>${x.km} km</b> · ` : ''}${esc(quandTexte(x.jours))}${x.serre ? ' · <span class="badge annulee">serré</span>' : ''}</li>`
-        : (d => { const s = spectacle(d.spectacle_id), l = lieu(d.lieu_id); return `<li><a class="ligne tn-date" href="#/representations/${d.id}" style="--c:${couleurSp(s)}"><span class="jj"><b>${+d.debut.slice(8, 10)}</b>${MC[+d.debut.slice(5, 7) - 1]}</span><span class="corps"><span class="t">${esc(s?.titre || '?')}</span><span class="ou">${esc(l ? lieuTexte(l) : 'Lieu à préciser')}</span></span><span class="badges">${d.statut === 'option' ? '<span class="badge option">Option</span>' : ''}${(d.fin || d.debut) < AUJ ? '<span class="badge">passée</span>' : ''}</span></a></li>`; })(x.date)).join('')}</ol>` : '<p class="vide">Aucune date avec ces filtres.</p>';
+        : (d => { const s = spectacle(d.spectacle_id), l = lieu(d.lieu_id); return `<li><a class="ligne tn-date" href="#/representations/${d.id}" style="--c:${couleurSp(s)}"><span class="jj"><b>${+d.debut.slice(8, 10)}</b>${MC[+d.debut.slice(5, 7) - 1]}</span><span class="corps"><span class="t">${esc(s?.titre || '?')}</span><span class="ou">${esc(l ? lieuTexte(l) : 'Lieu à préciser')}</span></span><span class="badges">${d.statut === 'option' ? '<span class="badge option">Option</span>' : ''}${d.statut === 'annulee' ? '<span class="badge annulee">Annulée</span>' : ''}${d.statut === 'reportee' ? '<span class="badge option">Reportée</span>' : ''}${(d.fin || d.debut) < AUJ ? '<span class="badge">passée</span>' : ''}</span></a></li>`; })(x.date)).join('')}</ol>`
+        : `<div class="vide liste-vide"><p>${filtresActifs(f) ? 'Aucune date ne correspond à ces filtres.' : 'Aucune date à venir sur la carte.'}</p>${filtresActifs(f) ? '<button type="button" class="btn" data-effacer-filtres>Effacer les filtres</button>' : '<button type="button" class="btn" data-tn-toutes>Toutes les périodes</button>'}</div>`;
     };
     zone.rafraichir = dessiner;
     dessiner();
     const maj = () => { garderFiltres(); dessiner(); };
-    $('#tn-saison').addEventListener('change', e => { f.saison = e.target.value; maj(); });
-    $('#tn-avenir').addEventListener('change', e => { f.avenir = e.target.checked; maj(); });
-    $('#tn-serre').addEventListener('change', e => { f.serre = e.target.checked; maj(); });
-    $$('[data-tn-sp]').forEach(b => b.addEventListener('click', () => { f.spectacle = String(f.spectacle) === b.dataset.tnSp ? '' : b.dataset.tnSp; $$('[data-tn-sp]').forEach(x => x.setAttribute('aria-pressed', String(f.spectacle) === x.dataset.tnSp)); maj(); }));
+    brancherFiltresDates(f, maj);
+    zone.addEventListener('click', e => { if (e.target.closest('[data-tn-toutes]')) { f.periode = 'toutes'; filtresDates.refleter(f); maj(); $('#f-q')?.focus(); } });   // (le vide : « Toutes les périodes »)
+    $('#tn-serre').addEventListener('change', e => { v.serre = e.target.checked; maj(); });
     const ouvrirLieu = g => { const href = `#/lieux/${g.dataset.tnLieu}`; if (typeof TIROIR !== 'undefined' && TIROIR.peut(href)) TIROIR.ouvrir(href, { depuis: g }); else location.hash = href; };
     $('#tn-carte').addEventListener('click', e => { const g = e.target.closest('[data-tn-lieu]'); if (g) ouvrirLieu(g); });
     $('#tn-carte').addEventListener('keydown', e => { const g = e.target.closest('[data-tn-lieu]'); if (g && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); ouvrirLieu(g); } });

@@ -38,6 +38,7 @@ node site/tableur.mjs              # le tableur des représentations, dans Chrom
 node site/icones.mjs               # la bibliothèque d'icônes de l'administration et ses consommateurs, dans Chromium (après le build)
 node site/cadre.mjs                # la coque, le menu latéral, ses raccourcis et ses badges, dans Chromium, sur la même base fictive (après le build)
 node site/champs.mjs               # la fiche d'une date : le schéma de ses champs, le rail d'écriture, les puces, la jauge (après le build)
+node site/vues-dates.mjs           # les trois vues de Représentations (pilule, filtres communs, ligne visée), dans Chromium (après le build)
 bash site/bancs-admin.sh           # le build, puis tous les bancs de l'administration l'un après l'autre ; --tout y joint
                                    # ceux de l'espace de l'équipe (sinon, seulement si gestes.js, planning.js ou feuille.js changent)
 node site/reactivite.mjs /tmp/x index --strict  # les budgets de réactivité du site, au bureau et au téléphone ralenti ×4
@@ -437,10 +438,13 @@ compte du projet inscrit dans `crescite_admins`.
     un contrat signé pour une option, une option déjà passée ; dans la fenêtre d'une piste : une cession confirmée sans
     montant, une relance passée, un doublon. Rien ne bloque ; chaque alerte mène où il faut.
   - **La carte de tournée** (`#/representations/carte`, `admin/tournee.js`, le fond et la projection du site dans
-    `admin/fond-carte.js`, écrit par `site/build.py`) : les lieux de la saison (ou d'un spectacle, ou à venir) sur la
+    `admin/fond-carte.js`, écrit par `site/build.py`) : les lieux des dates à venir (toutes saisons : la période, la
+    saison, le spectacle et les autres filtres sont ceux des trois vues de Représentations, communs, voir plus bas) sur la
     carte de France, une pastille par lieu avec ses dates, le trajet dans l'ordre, et la tournée étape par étape avec la
     distance à vol d'oiseau et le délai entre deux dates ; les enchaînements serrés se signalent ; « Autour des dates »
-    resserre le cadre ; une pastille ouvre le lieu en tiroir ; les lieux sans position sont listés.
+    resserre le cadre ; une pastille ouvre le lieu en tiroir ; les lieux sans position sont listés. Les répétitions n'y
+    sont pas (sauf si on choisit la nature « Répétitions »), les dates annulées ou reportées non plus (sauf si on choisit
+    ce statut). Sans date à venir, la carte le dit et propose « Toutes les périodes ».
   - **Les documents générés** (`admin/modeles.js`) : un devis, un contrat de cession, une facture, une fiche technique
     d'accueil, depuis une date (ses séances, son lieu, son équipe en tournée) ou une piste (sa structure, son contact), à
     partir des modèles de la compagnie (Textes du site → « Modèle : devis »…, créés avec un texte de départ à la première
@@ -504,6 +508,13 @@ compte du projet inscrit dans `crescite_admins`.
     téléphone et du planning comparés à un tableau en dur, les tailles d'avant (le fil d'Ariane 18 px, les tuiles 15 px,
     le témoin), l'espace de l'équipe qui garde ses tracés, la vue d'essai `#/essai/icones` : 45 vérifications, une capture
     dans `site/dist/shots-icones/` (`icones.png`).
+  - `node site/vues-dates.mjs` garde les trois vues de Représentations : la pilule (trois liens à icônes, le nom masqué
+    sous 1 100 px sans quitter le lien, 44 px), la barre commune (les mêmes identifiants et un compte par vue), les filtres
+    qui suivent d'une vue à l'autre et que l'adresse porte (aussi nature, département, contrat, du … au), la période de la
+    liste, les annulées et les reportées sur la carte, « Effacer les filtres », l'ancien `?tri=desc` et les anciens états
+    du tableur et de la carte, le fondu entre les vues, le focus et l'annonce après un changement de vue, « Voir dans le
+    tableur » qui arrive sur sa ligne : 81 vérifications, des captures dans `site/dist/shots-vues-dates/` (`vue-liste.png`,
+    `vue-tableur.png`, `vue-carte.png`, `selecteur-1000.png`).
 - **Le cadre et le menu latéral** (`admin/cadre.js` ; la coque elle-même, `poserCoque` et `cadre`, est dans
   `admin/index.html`) : l'en-tête tient sur une ligne, à toutes les largeurs ; ce qui n'y tient pas se replie, dans cet
   ordre (l'adresse du compte, le mot « Rechercher », les mots longs, les liens du compte, qui passent alors dans « Plus »,
@@ -583,8 +594,27 @@ compte du projet inscrit dans `crescite_admins`.
   gris. Chaque ligne mène là où on le complète, le curseur dans le champ (la fiche, le lieu, la feuille sur sa liste
   « À compléter ») ; la liste se vide à mesure.
 - **Représentations**, présentée comme l'agenda du site : les prochaines dates en haut, puis les saisons passées,
-  fermées sauf la saison en cours (« Aller à une saison… »), avec les filtres par spectacle, public et statut. On y
-  ajoute une date, on y modifie une date passée. Une date porte autant de représentations qu'il en faut, le même
+  fermées sauf la saison en cours (« Aller à une saison… »). Trois vues, une pilule à trois icônes à côté du titre
+  (Liste, Tableur, Carte ; la vue ouverte en dégradé de la saison ; sous 1 100 px l'icône seule, le nom en infobulle) :
+  ce sont des liens, donc Ctrl+clic, le précédent et l'adresse marchent ; après un changement de vue, le focus reste sur
+  le lien de la vue ouverte et les lecteurs d'écran l'entendent (« Vue tableur »). **Les trois vues ont les mêmes
+  filtres**, dans une même barre : la recherche, À venir / Passées / Toutes (À venir d'office : le bloc des dates à
+  venir puis les saisons passées fermées ; Passées : les saisons passées seules ; Toutes : tout ouvert), la saison, le
+  statut, le public, les puces colorées des spectacles (elles servent aussi de légende), et, sous « Plus de filtres »,
+  la nature, le département, le contrat et du … au ; le compte dit ce que la vue montre. La recherche n'est pas la
+  même partout, et son texte d'aide le dit : la liste et la carte cherchent le lieu, la commune, le spectacle,
+  l'intitulé, l'organisateur et le contact ; le tableur cherche aussi les notes, le statut et l'équipe. À droite, ce
+  qui est propre à la vue : « Aller à une saison… » (la liste), « Colonnes vides » (le tableur), « Autour des dates »
+  (la carte) ; le tri du tableur reste dans l'en-tête de sa colonne « Jour ». Changer de vue garde les filtres ;
+  l'adresse les porte (`?q=caen&periode=toutes` : seul ce qui diffère de la valeur d'office s'y écrit), donc un
+  rechargement, le précédent du navigateur et un lien partagé rouvrent la même chose ; « Effacer les filtres » remet
+  tout d'office et rend le focus à la recherche. Le tri du tableur, ses colonnes vides, « Autour des dates » et les
+  saisons ouvertes de la liste ne vont pas dans l'adresse (un ancien lien `?tri=desc` est encore lu). « Voir dans le
+  tableur » (le menu d'une date : clic droit, Maj+F10) ouvre le tableur sur la ligne de cette date : case active, en
+  vue, cerclée un instant (si un filtre la cachait, il est relâché ; si l'appareil demande moins d'animations, la ligne
+  est marquée sans mouvement, le temps qu'on la repère). Les trois vues lisent les filtres de la même façon ; passer de
+  l'une à l'autre est un fondu.
+  On y ajoute une date, on y modifie une date passée. Une date porte autant de représentations qu'il en faut, le même
   jour ou non, chacune avec son heure, son public et sa billetterie. L'aperçu montre la ligne telle que le site
   l'affichera. Sous son lieu, la date montre ce que la fiche du lieu en sait (adresse et itinéraire, contact, jauge,
   plateau, ou ce qui manque) et mène à elle ; son équipe donne le téléphone de chacun (« téléphone ? » mène à la fiche).
@@ -595,7 +625,7 @@ compte du projet inscrit dans `crescite_admins`.
   séance, comme le tableur où la compagnie récapitule ses représentations ; les séances d'une même date se suivent, en bande. Colonnes : jour, spectacle, heure et fin, lieu,
   commune, public, statut, nature, distribution, billetterie, précisions, organisateur, contact, contrat, notes, séance
   annulée, site. Ce qui est vide reste vide, et une colonne vide sur toute la vue se replie (« Colonnes vides » la
-  montre). Filtres : saison, spectacle, à venir ou passées, recherche ; tri par date.
+  montre). Filtres : ceux de la barre commune des trois vues (voir Représentations) ; tri par date.
   - Branché sur la base dans les deux sens. Écrire dans une case enregistre aussitôt, par le même chemin que la fiche
     d'une date (`crescite_enregistrer_date` ; avec le vingt-quatrième script, les chiffres et l'équipe dans le même appel,
     sinon l'équipe ensuite : les mêmes déclencheurs, notifications et journal) ; l'état

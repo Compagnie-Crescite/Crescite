@@ -575,16 +575,35 @@ table.simple tr.cliquable:hover td { background: var(--doux); }
 /* le tableur des représentations : un cadre qui défile dans les deux sens, l'en-tête collé en haut, le jour et le
    spectacle collés à gauche ; une bande par date ; la case active encadrée, la plage choisie teintée, la même case de la
    date éclairée sur ses autres séances ; ce qui arrive d'ailleurs clignote */
-.seg a { display: inline-flex; align-items: center; padding: 6px 11px; font-weight: 600; color: var(--gris); text-decoration: none; }
-.seg a[aria-current="page"] { background: var(--accent); color: var(--sur-accent, #fff); }
+/* le sélecteur de vues de Représentations (choixVueDates) : une pilule, calquée sur celle du planning (.pl-vues) ; sous
+   1 100 px l'icône seule, le nom passe en .sr (il reste dans le lien) ; le focus est un anneau à l'intérieur */
+.tete .vues { margin-right: auto; }
+.tete h1:has(+ .vues) { margin-right: 0; }
+.seg.vues { padding: 3px; gap: 2px; border-radius: 999px; background: color-mix(in srgb, var(--encre) 6%, var(--carte)); overflow: visible; }
+.vues a { display: inline-flex; align-items: center; gap: 7px; min-height: 38px; padding: 0 14px; border-radius: 999px; font-weight: 600; font-size: .92rem; color: var(--gris); text-decoration: none; transition: background .2s, color .2s; }
+.vues a:hover { color: var(--encre); }
+.vues a[aria-current="page"] { background: var(--accent); color: var(--sur-accent, #fff); }
+.vues a:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; }
+.vues a[aria-current="page"]:focus-visible { outline-color: var(--sur-accent, #fff); }
+@media (max-width: 1100px) { .vues .mot { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } .vues a { padding: 0 13px; } }
+@media (pointer: coarse) { .vues a { min-height: 44px; } }
+/* la barre de filtres commune à la liste, au tableur et à la carte (filtresDates) */
+.filtres-dates { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.filtres-dates #f-q { flex: 1 1 240px; width: auto; min-width: 0; }
+.filtres-dates select { width: auto; flex: 0 1 auto; min-width: 0; max-width: 100%; }
+.filtres-dates .seg button { min-height: 36px; }
+.filtres-dates .compte { margin-left: 2px; }
+.filtres-dates .f-propre { margin-left: auto; display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.f-plus > summary { cursor: pointer; font-size: 13.5px; font-weight: 600; color: var(--gris); padding: 4px 2px; border-radius: 8px; }
+.f-plus > summary .badge { margin-left: 4px; }
+.f-plus[open] { flex: 1 1 100%; }
+.f-plus-corps { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 8px 0 2px; }
 .tab-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .tab-menu { position: relative; }
 .tab-export { position: absolute; right: 0; top: calc(100% + 6px); z-index: 25; display: grid; gap: 4px; width: min(290px, calc(100vw - 24px)); padding: 8px; background: var(--carte); border: 1px solid var(--trait); border-radius: 12px; box-shadow: 0 10px 30px rgba(20, 10, 20, .22); }
 .tab-export[hidden] { display: none; }
 .tab-export .btn { justify-content: flex-start; }
 .tab-export .aide { margin: 4px 2px 0; font-size: 12px; color: var(--gris); white-space: normal; }
-.tab-filtres .tab-choix { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.tab-filtres select { width: auto; flex: 1 1 170px; min-width: 0; }
 .tab-vides { font-weight: 600; font-size: 13.5px; white-space: nowrap; }
 .tab-ligne-etat { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; min-height: 30px; margin: 0 2px 6px; }
 .tab-etat { font-size: 13px; color: var(--gris); }
@@ -620,6 +639,8 @@ table.tableur { border-collapse: separate; border-spacing: 0; width: max-content
 .tableur td.vient-d-ailleurs { animation: tab-ailleurs 2s ease-out; }
 @keyframes tab-ailleurs { 0%, 30% { background: color-mix(in srgb, var(--ok) 32%, var(--carte)); } }
 @media (prefers-reduced-motion: reduce) { .tableur td.vient-d-ailleurs { animation: none; box-shadow: inset 0 0 0 2px var(--ok); } }
+@media (prefers-reduced-motion: reduce) { .tableur td.visee { animation: none; background-color: var(--accent-doux); box-shadow: inset 0 2px 0 var(--accent), inset 0 -2px 0 var(--accent); } }   /* la ligne que « Voir dans le tableur » vise : sans mouvement, marquée fixe (la classe part après 1,8 s) */
+html.still .tableur td.visee { background-color: var(--accent-doux); box-shadow: inset 0 2px 0 var(--accent), inset 0 -2px 0 var(--accent); }   /* (?anim=0 : même marque) */
 .tableur tr.barree td.c-jour, .tableur tr.barree td.c-heure { text-decoration: line-through; }
 .tableur .pastille { margin-right: 6px; vertical-align: 1px; }
 .tableur .badge { font-size: 11px; }
@@ -793,6 +814,8 @@ html.still *, html.still *::before, html.still *::after { animation: none !impor
   @keyframes ad-fait { from { background: var(--ok); color: #fff; } }
   .visee { animation: visee 1.6s ease-out; }
   @keyframes visee { 0%, 35% { box-shadow: 0 0 0 4px var(--accent-doux), 0 0 0 6px var(--accent); } }
+  .tableur td.visee { animation-name: visee-ligne; }   /* la ligne que « Voir dans le tableur » vise : chaque case en cadre intérieur (le halo extérieur serait recouvert par les cases voisines) */
+  @keyframes visee-ligne { 0%, 35% { background-color: var(--accent-doux); box-shadow: inset 0 2px 0 var(--accent), inset 0 -2px 0 var(--accent); } }
   .ad-neuf, .ailleurs { animation: ad-arrive .3s cubic-bezier(.2, .8, .2, 1) both; }
   .btn.sonne { transform-origin: 50% 0; animation: sonne .8s ease-in-out; }
   .suggestions, .tab-export:not([hidden]), .pied-ed.a-plus.replie .pied-autres.ouvert { animation: ad-arrive .15s ease-out both; }   /* les menus se posent */
@@ -919,7 +942,7 @@ function nomAdmin(id) {
 }
 let session = {};
 try { session = JSON.parse(sessionStorage.getItem('crescite-admin-filtres') || '{}'); } catch { session = {}; }
-const garderFiltres = () => { try { sessionStorage.setItem('crescite-admin-filtres', JSON.stringify(session)); } catch { /* navigation privée */ } ecrireFiltres(); };
+const garderFiltres = () => { try { sessionStorage.setItem('crescite-admin-filtres', JSON.stringify(session, (k, v) => (k === 'cible' ? undefined : v))); } catch { /* navigation privée */ } ecrireFiltres(); };   // (la cible d'« Voir dans le tableur » ne se garde pas : elle ne sert qu'une fois)
 // Les listes gardent leur état, et le portent dans leur adresse : la recherche, les filtres et le tri en cours d'une liste
 // s'écrivent dans la partie ?… de l'adresse à mesure (?statut=option&q=caen#/representations, sans nouveau pas dans
 // l'historique, seulement ce qui diffère de la valeur d'office) et la suivent dans ses fiches (#/lieux/5 garde ?type=salle) :
@@ -928,8 +951,7 @@ const garderFiltres = () => { try { sessionStorage.setItem('crescite-admin-filtr
 // dans l'adresse ; une autre rubrique retire ces filtres de l'adresse. ?tiroir=… (tiroir.js) et ?anim=0 n'y sont pas touchés.
 // [l'adresse de la liste et de ses fiches, sa clé dans session, ce qui va dans l'adresse avec sa valeur d'office]
 const LISTES_ADRESSE = [
-  [/^#\/representations\/tableur$/, 'tableur', { q: '', saison: '', spectacle: '', periode: 'avenir', tri: 'asc' }],
-  [/^#\/representations(?:\/(?:nouvelle|\d+))?$/, 'dates', { q: '', spectacle: '', public: '', statut: '' }],
+  [/^#\/representations(?:\/(?:tableur|carte|nouvelle|\d+))?$/, 'dates', { q: '', saison: '', spectacle: '', periode: 'avenir', statut: '', public: '', nature: '', dep: '', contrat: '', du: '', au: '' }],
   [/^#\/feuilles(?:\/\d+)?$/, 'feuilles', { q: '', etat: '' }],
   [/^#\/equipe(?:\/(?:nouvelle|\d+))?$/, 'equipe', { q: '', categorie: '' }],
   [/^#\/lieux(?:\/(?:nouveau|\d+))?$/, 'lieux', { q: '', type: '' }],
@@ -940,7 +962,11 @@ const LISTES_ADRESSE = [
   [/^#\/ateliers(?:\/seances(?:\/(?:nouvelle|\d+))?)?$/, 'seances', { periode: 'avenir', saison: '' }],
   [/^#\/journal$/, 'journal', { q: '', quoi: '', qui: '', periode: '', du: '', au: '' }],
 ];
-const CLES_FILTRES = [...new Set(LISTES_ADRESSE.flatMap(x => Object.keys(x[2])))];
+// Représentations : la liste, le tableur et la carte ont les mêmes filtres (l'état session.dates, une seule entrée) ; tri, vides,
+// serre et ouvertes (session.vues.<vue>) et cible (« Voir dans le tableur ») ne vont jamais dans l'adresse. Seule clé lue et
+// jamais réécrite : ?tri= (le tableur l'écrivait avant les filtres communs) ; elle sort de l'adresse à la première vue dessinée.
+const CLES_LUES_SEULEMENT = ['tri'];
+const CLES_FILTRES = [...new Set([...LISTES_ADRESSE.flatMap(x => Object.keys(x[2])), ...CLES_LUES_SEULEMENT])];
 const listeDeHash = h => LISTES_ADRESSE.find(([re]) => re.test(h || '')) || null;
 // la liste ouverte écrit ses filtres dans l'adresse (à chaque changement, et après chaque vue) ; ailleurs, ils s'en vont
 function ecrireFiltres() {
@@ -958,6 +984,8 @@ function ecrireFiltres() {
 function lireFiltres() {
   const l = listeDeHash(location.hash); if (!l) return;
   const [, cle, defauts] = l, q = new URLSearchParams(location.search);
+  // un vieux lien du tableur (?tri=desc) : le tri est lu, pour le tableur seulement ; ecrireFiltres l'ôte de l'adresse
+  if (cle === 'dates' && q.has('tri')) { etatVue('tableur').tri = q.get('tri') === 'desc' ? 'desc' : 'asc'; if (!Object.keys(defauts).some(k => q.has(k))) { garderFiltres(); return; } }
   if (!Object.keys(defauts).some(k => q.has(k))) return;
   session[cle] = { ...(session[cle] || {}), ...Object.fromEntries(Object.entries(defauts).map(([k, d]) => [k, q.has(k) ? q.get(k) : d])) };
   try { sessionStorage.setItem('crescite-admin-filtres', JSON.stringify(session)); } catch { /* navigation privée */ }
@@ -975,6 +1003,7 @@ function listeVide(filtree, { rien, aucun, ajouter = null, balise = 'div' }) {
 function effacerFiltres() {
   const vue = $('#vue');
   if (!vue) return;
+  if (listeDeHash(location.hash)?.[1] === 'dates' && effacerFiltresDates()) return;   // Représentations : une barre commune aux trois vues, qui se remet seule (sans passer par le routage)
   const changer = (el, v) => { el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); };
   $$('.filtres', vue).forEach(f => {
     $$('input[type="search"], input[type="date"]', f).forEach(i => { if (i.value) changer(i, ''); });
@@ -997,7 +1026,7 @@ function teteImpression() {
   const net = s => String(s || '').replace(/\s+/g, ' ').trim();
   const rubrique = net($('.tete h1', vue)?.innerText) || net($('.menu .nav [aria-current="page"] .menu-l')?.textContent);
   const fiche = $('.deux.edition .editeur h2, .titre-ed h2', vue);
-  const zones = $$('.filtres, .journal-filtres, .tab-filtres, .pl-vues, .pl-filtres', vue).filter(z => !(fiche && z.closest('.liste')));
+  const zones = $$('.filtres, .journal-filtres, .pl-vues, .pl-filtres', vue).filter(z => !(fiche && z.closest('.liste')));
   const mots = [];
   zones.forEach(z => {
     $$('input[type="search"], input[type="text"]', z).forEach(i => { if (net(i.value)) mots.push(`« ${net(i.value)} »`); });
@@ -1765,6 +1794,8 @@ function sensVue(h) {
   if (!avant) return 'fondu';                              // le premier rendu paraît (après le squelette)
   const rub = x => (x.match(/^#\/([a-z]+)/) || [])[1] || '', prof = x => x.split('/').length;
   if (rub(avant) !== rub(h)) return 'fondu';
+  const troisVues = x => /^#\/representations(?:\/(?:tableur|carte))?$/.test(x);   // la liste, le tableur, la carte : trois vues d'une même page
+  if (troisVues(avant) && troisVues(h)) return 'fondu';
   return prof(h) > prof(avant) ? 'avant' : prof(h) < prof(avant) ? 'arriere' : 'fondu';
 }
 let transitionVue = null;
@@ -2442,41 +2473,162 @@ function formNouveauLieu(zone, texte, etablissement, fini) {
 }
 
 // ===================================================================================================== représentations
-function vueDates(param) {
-  if (param === 'tableur') return TABLEUR.vue();   // le tableur : une ligne par séance, branché sur la base
-  if (param === 'carte') { if (typeof TOURNEE !== 'undefined') return TOURNEE.vue(); location.replace('#/representations'); return; }   // la carte de tournée (tournee.js)
-  const f = session.dates = Object.assign({ spectacle: '', public: '', statut: '', nature: '', dep: '', contrat: '', du: '', au: '', q: '', ouvertes: [] }, session.dates || {});
+/* La liste, le tableur (admin/tableur.js) et la carte de tournée (admin/tournee.js) sont les trois vues d'une même page,
+   et partagent leurs filtres : un seul état, session.dates (la recherche, la période, la saison, le spectacle, le statut,
+   le public, et nature, département, contrat, du, au), un seul prédicat (dateRetenue), une seule barre (filtresDates).
+   Changer de vue les garde ; l'adresse les porte (LISTES_ADRESSE : ce qui diffère de la valeur d'office). Ce qui est propre
+   à une vue reste dans session.vues.<vue>, hors de l'adresse (la liste : ses saisons ouvertes ; le tableur : le tri et les
+   colonnes vides ; la carte : « Autour des dates »). Les trois vues partagent aussi le sélecteur de vues (choixVueDates :
+   une pilule de trois liens à icônes). */
+const DEFAUTS_DATES = { q: '', saison: '', spectacle: '', periode: 'avenir', statut: '', public: '', nature: '', dep: '', contrat: '', du: '', au: '' };
+const DEFAUTS_VUES = { liste: { ouvertes: [] }, tableur: { tri: 'asc', vides: false }, carte: { serre: false } };
+const FILTRES_PLUS = ['nature', 'dep', 'contrat', 'du', 'au'];   // ceux que la barre range sous « Plus de filtres »
+// l'état propre à une vue (session.vues.<vue>), complété de ses valeurs d'office ; le même objet à chaque appel
+function etatVue(nom) {
+  const vues = session.vues = session.vues && typeof session.vues === 'object' ? session.vues : {};
+  if (!vues[nom] || typeof vues[nom] !== 'object') vues[nom] = {};
+  Object.entries(DEFAUTS_VUES[nom] || {}).forEach(([k, d]) => { if (vues[nom][k] === undefined) vues[nom][k] = Array.isArray(d) ? [...d] : d; });
+  return vues[nom];
+}
+// l'état commun des filtres (session.dates), complété de ses valeurs d'office. Migration douce, une fois : ce que le tableur
+// (session.tableur) et la carte (session.tournee) gardaient chacun passe dans l'état commun ou dans leur vue, puis s'efface ;
+// ce que l'adresse ou la liste avaient déjà écrit l'emporte
+function etatDates() {
+  const avant = session.dates && typeof session.dates === 'object' ? session.dates : {}, f = session.dates = Object.assign({}, DEFAUTS_DATES, avant);
+  const pris = new Set(Object.keys(avant)), prendre = (k, v) => { if (!pris.has(k)) { f[k] = v; pris.add(k); } };
+  const t = session.tableur, c = session.tournee;
+  delete session.tableur; delete session.tournee;
+  if (t && typeof t === 'object') {
+    if (typeof t.saison === 'string') prendre('saison', t.saison);
+    if (['avenir', 'passees', 'toutes'].includes(t.periode)) prendre('periode', t.periode);
+    if (t.tri === 'desc') etatVue('tableur').tri = 'desc';
+    if (t.vides === true) etatVue('tableur').vides = true;
+  }
+  if (c && typeof c === 'object') {
+    if (typeof c.saison === 'string') prendre('saison', c.saison === 'toutes' ? '' : c.saison);
+    if (typeof c.avenir === 'boolean') prendre('periode', c.avenir ? 'avenir' : 'toutes');
+    if (c.serre === true) etatVue('carte').serre = true;
+  }
+  if (Array.isArray(f.ouvertes)) { const v = etatVue('liste'); v.ouvertes = [...new Set([...v.ouvertes, ...f.ouvertes])]; }   // (avant : les saisons ouvertes allaient dans l'état commun)
+  delete f.ouvertes;
+  if (!['avenir', 'passees', 'toutes'].includes(f.periode)) f.periode = DEFAUTS_DATES.periode;
+  return f;
+}
+// ce qu'une date doit à ces filtres : le seul endroit où se lisent leurs sens (masquee = !visible, mixte passe toujours le
+// filtre du public…), pour la liste, le tableur et la carte. Ni la recherche (chaque vue cherche dans ce qu'elle montre) ni la
+// période (la liste la lit autrement : un bloc « à venir » et des saisons passées) n'y sont
+function dateRetenue(d, f) {
+  if (f.spectacle && String(d.spectacle_id) !== String(f.spectacle)) return false;
+  if (f.saison && d.saison !== f.saison) return false;
+  if (f.nature && (d.nature || 'representations') !== f.nature) return false;
+  if (f.dep && lieu(d.lieu_id)?.departement !== f.dep) return false;
+  if (f.contrat) { const c = (E.suivis.find(x => x.date_id === d.id)?.contrat || '').trim(); if (f.contrat === 'aucun' ? c : c !== f.contrat) return false; }
+  if (f.du && (d.fin || d.debut) < f.du) return false;
+  if (f.au && d.debut > f.au) return false;
+  if (f.public && !(d.public === f.public || (d.public === 'mixte'))) return false;
+  if (f.statut === 'masquee' ? d.visible : f.statut && d.statut !== f.statut) return false;
+  return true;
+}
+// la période « à venir / passées / toutes » du tableur et de la carte
+const dansPeriode = (d, periode) => periode === 'toutes' || (periode === 'passees' ? (d.fin || d.debut) < AUJ : (d.fin || d.debut) >= AUJ);
+// la recherche de la liste et de la carte (q : déjà passé par norm()) ; le tableur cherche plus large (notes, équipe…)
+function dateCherchee(d, q) { const s = spectacle(d.spectacle_id), l = lieu(d.lieu_id), su = E.suivis.find(x => x.date_id === d.id) || {}; return norm(`${s?.titre} ${l?.nom} ${l?.commune} ${d.intitule || ''} ${su.organisateur || ''} ${su.contact || ''}`).includes(q); }
+const filtresActifs = f => Object.entries(DEFAUTS_DATES).some(([k, d]) => String(f[k] ?? d) !== String(d));
+const resumePlus = f => { const n = FILTRES_PLUS.filter(k => f[k]).length; return `Plus de filtres${n ? ` <span class="badge">${n}</span>` : ''}`; };
+// la barre de filtres des trois vues : la recherche, la période, la saison, le statut, le public, les puces des spectacles
+// (elles servent de légende), « Plus de filtres » (nature, département, contrat, du … au), le compte (#f-compte : chaque vue y
+// écrit le sien ; le tableur garde le sien dans sa ligne d'état), et, à droite, ce qui est propre à la vue (aDroite : du HTML).
+// La recherche n'est pas la même partout, et le texte d'aide le dit : la liste et la carte cherchent le lieu, la commune, le
+// spectacle, l'intitulé, l'organisateur et le contact ; le tableur cherche aussi les notes, le statut et l'équipe
+function filtresDates(f, { vue = 'liste', aDroite = '' } = {}) {
+  const saisons = [...new Set([...E.dates.map(d => d.saison), f.saison].filter(Boolean))].sort().reverse();
   const deps = [...new Set(E.dates.map(d => lieu(d.lieu_id)?.departement).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), 'fr', { numeric: true }));
-  const saisons = [...new Set(E.dates.map(d => d.saison))].sort().reverse();
-  cadre('representations', `<div class="tete"><h1>Représentations</h1>${TABLEUR.choixVue('liste')}<a class="btn principal" href="#/representations/nouvelle">＋ Nouvelle date</a></div>
-    <div class="deux${param ? ' edition' : ''}"><div class="liste"><div id="avant"></div><div class="filtres">
-      <input type="search" id="f-q" placeholder="Chercher un lieu, une commune, un spectacle" value="${esc(f.q)}" aria-label="Chercher">
-      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center"><select id="f-saison" aria-label="Aller à la saison"><option value="">Aller à une saison…</option>${saisons.map(s => `<option value="${s}">Saison ${s}</option>`).join('')}</select>
-      <select id="f-public" aria-label="Public"><option value="">Tous publics</option><option value="tout_public"${f.public === 'tout_public' ? ' selected' : ''}>Tout public</option><option value="scolaire"${f.public === 'scolaire' ? ' selected' : ''}>Scolaire</option></select>
-      <select id="f-nature" aria-label="Nature"><option value="">Toutes natures</option>${[['representations', 'Représentations'], ['repetitions', 'Répétitions'], ['residence', 'Résidences']].map(([k, l]) => `<option value="${k}"${f.nature === k ? ' selected' : ''}>${l}</option>`).join('')}</select>
-      <select id="f-dep" aria-label="Département"><option value="">Tous départements</option>${deps.map(k => `<option value="${esc(k)}"${f.dep === k ? ' selected' : ''}>${esc(k)}</option>`).join('')}</select>
-      <select id="f-contrat" aria-label="Contrat"><option value="">Tous contrats</option>${[['aucun', 'Sans contrat'], ['à envoyer', 'À envoyer'], ['envoyé', 'Envoyé'], ['signé', 'Signé']].map(([k, l]) => `<option value="${k}"${f.contrat === k ? ' selected' : ''}>${l}</option>`).join('')}</select>
-      <span class="f-periode"><label>du <input type="date" id="f-du" value="${esc(f.du)}"></label><label>au <input type="date" id="f-au" value="${esc(f.au)}"></label></span>
-      <select id="f-statut" aria-label="Statut"><option value="">Tous statuts</option>${[['option', 'Options'], ['confirmee', 'Confirmées'], ['annulee', 'Annulées'], ['reportee', 'Reportées'], ['masquee', 'Masquées']].map(([k, l]) => `<option value="${k}"${f.statut === k ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
-      <div class="puces" role="group" aria-label="Spectacle">${E.spectacles.filter(s => s.page).map(s => `<button type="button" class="puce" data-sp="${s.id}" style="--c:${couleurSp(s)}" aria-pressed="${String(f.spectacle) === String(s.id)}"><span class="pastille"></span>${esc(s.titre.split(' – ')[0])}</button>`).join('')}</div>
-      <span class="compte" id="f-compte"></span></div><div data-liste id="l-dates"></div></div>
+  const opt = (xs, v) => xs.map(([k, l]) => `<option value="${esc(k)}"${v === k ? ' selected' : ''}>${esc(l)}</option>`).join('');
+  return `<div class="filtres filtres-dates" role="search" aria-label="Filtrer les représentations">
+    <input type="search" id="f-q" placeholder="${vue === 'tableur' ? 'Chercher un lieu, une personne, une note' : 'Chercher un lieu, une commune, un spectacle'}" value="${esc(f.q)}" aria-label="Chercher">
+    <span class="seg" role="group" aria-label="Période">${[['avenir', 'À venir'], ['passees', 'Passées'], ['toutes', 'Toutes']].map(([k, l]) => `<button type="button" data-f-periode="${k}" aria-pressed="${f.periode === k}">${l}</button>`).join('')}</span>
+    <select id="f-saison" aria-label="Saison"><option value="">Toutes les saisons</option>${opt(saisons.map(s => [s, `Saison ${s}`]), f.saison)}</select>
+    <select id="f-statut" aria-label="Statut"><option value="">Tous statuts</option>${opt([['option', 'Options'], ['confirmee', 'Confirmées'], ['annulee', 'Annulées'], ['reportee', 'Reportées'], ['masquee', 'Masquées']], f.statut)}</select>
+    <select id="f-public" aria-label="Public"><option value="">Tous publics</option>${opt([['tout_public', 'Tout public'], ['scolaire', 'Scolaire']], f.public)}</select>
+    <div class="puces" role="group" aria-label="Spectacle">${E.spectacles.filter(s => s.page || E.dates.some(d => d.spectacle_id === s.id)).map(s => `<button type="button" class="puce" data-sp="${s.id}" style="--c:${couleurSp(s)}" aria-pressed="${String(f.spectacle) === String(s.id)}"><span class="pastille"></span>${esc(s.titre.split(' – ')[0])}</button>`).join('')}</div>
+    <details class="f-plus"${FILTRES_PLUS.some(k => f[k]) ? ' open' : ''}><summary>${resumePlus(f)}</summary><div class="f-plus-corps">
+      <select id="f-nature" aria-label="Nature"><option value="">Toutes natures</option>${opt([['representations', 'Représentations'], ['repetitions', 'Répétitions'], ['residence', 'Résidences']], f.nature)}</select>
+      <select id="f-dep" aria-label="Département"><option value="">Tous départements</option>${opt(deps.map(k => [k, k]), f.dep)}</select>
+      <select id="f-contrat" aria-label="Contrat"><option value="">Tous contrats</option>${opt([['aucun', 'Sans contrat'], ['à envoyer', 'À envoyer'], ['envoyé', 'Envoyé'], ['signé', 'Signé']], f.contrat)}</select>
+      <span class="f-periode"><label>du <input type="date" id="f-du" value="${esc(f.du)}"></label><label>au <input type="date" id="f-au" value="${esc(f.au)}"></label></span></div></details>
+    <span class="compte" id="f-compte"${vue === 'tableur' ? ' hidden' : ''}></span>
+    ${aDroite ? `<span class="f-propre">${aDroite}</span>` : ''}</div>`;
+}
+// les contrôles reprennent ce que dit f (« Effacer les filtres », un filtre relâché pour montrer une ligne, un ajout du tableur)
+filtresDates.refleter = f => {
+  const barre = $('.filtres-dates'); if (!barre) return;
+  ['q', 'saison', 'statut', 'public', 'nature', 'dep', 'contrat', 'du', 'au'].forEach(k => { const el = $(`#f-${k}`, barre); if (el) el.value = f[k] ?? ''; });
+  $$('[data-f-periode]', barre).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.fPeriode === f.periode)));
+  $$('[data-sp]', barre).forEach(b => b.setAttribute('aria-pressed', String(String(f.spectacle) === b.dataset.sp)));
+  const r = $('.f-plus summary', barre); if (r) r.innerHTML = resumePlus(f);
+};
+// relie les contrôles de la barre, une fois par vue dessinée : maj redessine la vue (et garde les filtres : garderFiltres)
+let BARRE_DATES = null;
+function brancherFiltresDates(f, maj) {
+  const barre = $('.filtres-dates'); if (!barre) return;
+  BARRE_DATES = { f, maj };
+  $('#f-q', barre).addEventListener('input', e => { f.q = e.target.value; maj(); });
+  ['saison', 'statut', 'public', 'nature', 'dep', 'contrat', 'du', 'au'].forEach(k => $(`#f-${k}`, barre).addEventListener('change', e => { f[k] = e.target.value; if (FILTRES_PLUS.includes(k)) filtresDates.refleter(f); maj(); }));
+  $$('[data-f-periode]', barre).forEach(b => b.addEventListener('click', () => { f.periode = b.dataset.fPeriode; filtresDates.refleter(f); maj(); }));
+  $$('[data-sp]', barre).forEach(b => b.addEventListener('click', () => { f.spectacle = String(f.spectacle) === b.dataset.sp ? '' : b.dataset.sp; filtresDates.refleter(f); maj(); }));
+}
+// « Effacer les filtres » (effacerFiltres) dans Représentations : chaque filtre reprend sa valeur d'office, la vue se redessine
+// à sa place (sans routage : pas de transition de vue), le focus va à la recherche. Faux quand aucune barre n'est là.
+function effacerFiltresDates() {
+  const b = BARRE_DATES, barre = $('#vue .filtres-dates');
+  if (!b || !barre || !$('#f-q', barre)) return false;
+  Object.assign(b.f, DEFAUTS_DATES);
+  filtresDates.refleter(b.f);
+  b.maj();
+  requestAnimationFrame(() => { $('#f-q')?.focus(); annoncer('Filtres effacés.'); });
+  return true;
+}
+// Le sélecteur de vues : une pilule de trois liens (Liste, Tableur, Carte) à icônes, la vue ouverte en dégradé de la saison.
+// Des liens, pas des boutons : Ctrl+clic, le précédent, l'adresse. Sous 1 100 px le nom passe en .sr (le texte du lien reste
+// son nom ; l'infobulle le redit avec la touche, « V puis T »). #vues-annonce dit « Vue tableur » aux lecteurs d'écran,
+// sans le toast d'annoncer().
+function choixVueDates(v) {
+  const vues = [['liste', 'Liste', '#/representations'], ['tableur', 'Tableur', '#/representations/tableur'], ...(typeof TOURNEE !== 'undefined' ? [['carte', 'Carte', '#/representations/carte']] : [])];
+  return `<nav class="seg tab-vue vues" aria-label="Vue">${vues.map(([k, nom, href]) => `<a href="${href}" data-vue="${k}" aria-current="${k === v ? 'page' : 'false'}" title="Vue ${nom.toLowerCase()} (V puis ${nom[0]})">${ICONES.svg(`vue-${k}`)}<span class="mot">${nom}</span></a>`).join('')}</nav><p class="sr" aria-live="polite" id="vues-annonce"></p>`;
+}
+// un clic (ou Entrée) sur un autre lien de la pilule : le focus reviendra sur le lien actif de la vue qui vient (apresVue)
+document.addEventListener('click', e => {
+  const a = e.target.closest?.('.vues a[data-vue]');
+  if (a && !e.button && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey && a.getAttribute('aria-current') !== 'page') E.versVue = Date.now();
+});
+APRES_VUE.push(() => {
+  const actif = $('#vue .vues a[aria-current="page"]'), vue = actif?.dataset.vue || '';
+  if (actif && E.versVue && Date.now() - E.versVue < 3000) actif.focus({ preventScroll: true });
+  E.versVue = 0;
+  if (vue && E.vueDatesAvant && E.vueDatesAvant !== vue) requestAnimationFrame(() => { const p = $('#vues-annonce'); if (p) p.textContent = `Vue ${actif.textContent.trim().toLowerCase()}`; });
+  E.vueDatesAvant = vue;
+});
+
+function vueDates(param) {
+  const f = etatDates();
+  if (param === 'tableur') return TABLEUR.vue(f);   // le tableur : une ligne par séance, branché sur la base
+  if (param === 'carte') { if (typeof TOURNEE !== 'undefined') return TOURNEE.vue(f); location.replace('#/representations'); return; }   // la carte de tournée (tournee.js)
+  const v = etatVue('liste'), saisons = [...new Set(E.dates.map(d => d.saison))].sort().reverse();
+  cadre('representations', `<div class="tete"><h1>Représentations</h1>${choixVueDates('liste')}<a class="btn principal" href="#/representations/nouvelle">＋ Nouvelle date</a></div>
+    <div class="deux${param ? ' edition' : ''}"><div class="liste"><div id="avant"></div>${filtresDates(f, { vue: 'liste', aDroite: `<select id="f-saut" aria-label="Aller à la saison"><option value="">Aller à une saison…</option>${saisons.map(s => `<option value="${s}">Saison ${s}</option>`).join('')}</select>` })}<div data-liste id="l-dates"></div></div>
       <section class="editeur" id="ed-date">${param ? '' : '<div class="vide bloc">Choisissez une date dans la liste, ou créez-en une.</div>'}</section></div>`);
   const zone = $('#l-dates');
   zone.rafraichir = () => { listeDates(zone, param); dessinerAvant($('#avant')); };
   zone.rafraichir();
   relierAvant($('#avant'));
   const maj = () => { garderFiltres(); zone.rafraichir(); };
-  $('#f-q').addEventListener('input', e => { f.q = e.target.value; maj(); });
-  $('#f-saison').addEventListener('change', e => {
+  brancherFiltresDates(f, maj);
+  $('#f-saut').addEventListener('change', e => {
     const s = e.target.value; e.target.value = ''; if (!s) return;
-    if (!f.ouvertes.includes(s)) f.ouvertes.push(s);
+    if (!v.ouvertes.includes(s)) v.ouvertes.push(s);
     maj();
     $(`#saison-${s}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
-  $('#f-public').addEventListener('change', e => { f.public = e.target.value; maj(); });
-  $('#f-statut').addEventListener('change', e => { f.statut = e.target.value; maj(); });
-  [['f-nature', 'nature'], ['f-dep', 'dep'], ['f-contrat', 'contrat'], ['f-du', 'du'], ['f-au', 'au']].forEach(([i, k]) => $(`#${i}`)?.addEventListener('change', e => { f[k] = e.target.value; maj(); }));
-  $$('[data-sp]').forEach(b => b.addEventListener('click', () => { f.spectacle = String(f.spectacle) === b.dataset.sp ? '' : b.dataset.sp; $$('[data-sp]').forEach(x => x.setAttribute('aria-pressed', String(f.spectacle) === x.dataset.sp)); maj(); }));
   // une nouvelle date pré-remplie ailleurs (« Créer la date » d'une proposition : E.dateDepart) : à enregistrer
   const depart = param === 'nouvelle' ? E.dateDepart || null : null;
   E.dateDepart = null;
@@ -2570,23 +2722,15 @@ function relierAvant(el) {
   el.addEventListener('toggle', e => { if (e.target.matches('details.avant') && e.target.open !== reglagesAvant().ouvert) garderAvant({ ...reglagesAvant(), ouvert: e.target.open }); }, true);   // (le navigateur dit « toggle » aussi au premier dessin d'un panneau ouvert : rien à garder)
   el.addEventListener('change', e => { if (e.target.id !== 'avant-jours') return; garderAvant({ ...reglagesAvant(), jours: +e.target.value }); dessinerAvant(el); $('#avant-jours', el)?.focus(); });
 }
+// la liste : la période se lit ici autrement que dans le tableur et la carte — « à venir » (d'office) le bloc des dates à venir
+// puis les saisons passées, repliées sauf la saison en cours ; « passées » les saisons passées seules ; « toutes » tout ouvert
 function listeDates(zone, actif) {
-  const f = session.dates, q = norm(f.q).trim(), cherche = !!(q || f.spectacle || f.public || f.statut || f.nature || f.dep || f.contrat || f.du || f.au);
-  const xs = E.dates.filter(d => {
-    if (f.spectacle && String(d.spectacle_id) !== String(f.spectacle)) return false;
-    if (f.nature && (d.nature || 'representations') !== f.nature) return false;
-    if (f.dep && lieu(d.lieu_id)?.departement !== f.dep) return false;
-    if (f.contrat) { const c = (E.suivis.find(x => x.date_id === d.id)?.contrat || '').trim(); if (f.contrat === 'aucun' ? c : c !== f.contrat) return false; }
-    if (f.du && (d.fin || d.debut) < f.du) return false;
-    if (f.au && d.debut > f.au) return false;
-    if (f.public && !(d.public === f.public || (d.public === 'mixte'))) return false;
-    if (f.statut === 'masquee' ? d.visible : f.statut && d.statut !== f.statut) return false;
-    if (q) { const s = spectacle(d.spectacle_id), l = lieu(d.lieu_id), su = E.suivis.find(x => x.date_id === d.id) || {}; if (!norm(`${s?.titre} ${l?.nom} ${l?.commune} ${d.intitule || ''} ${su.organisateur || ''} ${su.contact || ''}`).includes(q)) return false; }
-    return true;
-  });
-  const avenir = xs.filter(d => (d.fin || d.debut) >= AUJ).sort((a, b) => a.debut < b.debut ? -1 : a.debut > b.debut ? 1 : a.id - b.id);
+  const f = session.dates, q = norm(f.q).trim(), v = etatVue('liste'), cherche = !!(q || f.spectacle || f.public || f.statut || f.nature || f.dep || f.contrat || f.du || f.au || f.saison);
+  const xs = E.dates.filter(d => dateRetenue(d, f) && (!q || dateCherchee(d, q)));
+  const aVenir = xs.filter(d => (d.fin || d.debut) >= AUJ).sort((a, b) => a.debut < b.debut ? -1 : a.debut > b.debut ? 1 : a.id - b.id);
   const passees = xs.filter(d => (d.fin || d.debut) < AUJ).sort((a, b) => a.debut < b.debut ? 1 : a.debut > b.debut ? -1 : b.id - a.id);
-  $('#f-compte').textContent = `${avenir.length} à venir · ${passees.length} passée${passees.length > 1 ? 's' : ''}`;
+  const avenir = f.periode === 'passees' ? [] : aVenir;
+  $('#f-compte').textContent = f.periode === 'passees' ? `${passees.length} passée${passees.length > 1 ? 's' : ''}` : `${aVenir.length} à venir · ${passees.length} passée${passees.length > 1 ? 's' : ''}`;
   const ligne = d => {
     const s = spectacle(d.spectacle_id), l = lieu(d.lieu_id), reps = repsDe(d.id);
     const badges = [d.statut === 'option' && '<span class="badge option">Option</span>', d.statut === 'annulee' && '<span class="badge annulee">Annulée</span>',
@@ -2603,17 +2747,17 @@ function listeDates(zone, actif) {
   const parMois = ds => { let m = '', h = ''; ds.forEach(d => { const k = d.debut.slice(0, 7); if (k !== m) { m = k; h += `<div class="mois">${AGENDA.MOIS[+k.slice(5) - 1]} ${k.slice(0, 4)}</div>`; } h += ligne(d); }); return h; };
   const saisonEnCours = AGENDA.saisonDe(AUJ);
   const saisons = [...new Set(passees.map(d => d.saison))].sort().reverse();
-  if (!xs.length) { zone.innerHTML = listeVide(cherche, { rien: 'Aucune date ne correspond à ces filtres.', aucun: 'Aucune date pour l’instant.', ajouter: ['#/representations/nouvelle', '＋ Nouvelle date'] }); return; }
-  zone.innerHTML = `<h2 class="mois" style="font-size:13px;color:var(--accent)">À venir</h2>${avenir.length ? parMois(avenir) : '<p class="vide">Aucune date à venir.</p>'}
-    <h2 class="mois" style="font-size:13px;color:var(--accent);margin-top:24px">Dates passées</h2>
-    ${saisons.map(sa => { const ouverte = cherche || sa === saisonEnCours || f.ouvertes.includes(sa) || passees.some(d => String(d.id) === String(actif) && d.saison === sa);
+  if (!xs.length) { zone.innerHTML = listeVide(cherche || f.periode !== 'avenir', { rien: 'Aucune date ne correspond à ces filtres.', aucun: 'Aucune date pour l’instant.', ajouter: ['#/representations/nouvelle', '＋ Nouvelle date'] }); return; }
+  zone.innerHTML = `${f.periode === 'passees' ? '' : `<h2 class="mois" style="font-size:13px;color:var(--accent)">À venir</h2>${avenir.length ? parMois(avenir) : '<p class="vide">Aucune date à venir.</p>'}`}
+    <h2 class="mois" style="font-size:13px;color:var(--accent);margin-top:${f.periode === 'passees' ? 0 : 24}px">Dates passées</h2>
+    ${saisons.map(sa => { const ouverte = cherche || f.periode === 'toutes' || sa === saisonEnCours || v.ouvertes.includes(sa) || passees.some(d => String(d.id) === String(actif) && d.saison === sa);
       return `<details class="saison-ad" id="saison-${sa}" data-saison="${sa}"${ouverte ? ' open' : ''}><summary class="ligne" style="grid-template-columns:1fr auto;cursor:pointer;border-left-color:var(--trait)"><span class="t">Saison ${sa}</span><span class="badge">${passees.filter(d => d.saison === sa).length}</span></summary><div class="contenu-saison"></div></details>`; }).join('') || '<p class="vide">Aucune date passée.</p>'}`;
   const remplir = det => { const c = $('.contenu-saison', det); if (det.open && !c.innerHTML) c.innerHTML = parMois(passees.filter(d => d.saison === det.dataset.saison)); };
   $$('details.saison-ad', zone).forEach(det => {
     remplir(det);
     det.addEventListener('toggle', () => {
       const sa = det.dataset.saison;
-      f.ouvertes = det.open ? [...new Set([...f.ouvertes, sa])] : f.ouvertes.filter(x => x !== sa);
+      v.ouvertes = det.open ? [...new Set([...v.ouvertes, sa])] : v.ouvertes.filter(x => x !== sa);
       garderFiltres(); remplir(det);
     });
   });
