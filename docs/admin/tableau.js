@@ -415,7 +415,8 @@ const TABLEAU = (() => {
     else garderLocal(c);
     if (typeof CADRE !== 'undefined') CADRE.perimer();      // (un report, un épinglage, un réglage de la tuile : le badge du menu suit)
   }
-  const depart = () => `#/${conf().depart === 'representations' ? 'representations' : 'accueil'}`;
+  // (Représentations s'ouvre sur la vue retenue : la liste, le tableur ou la carte, adresseDates() du script principal)
+  const depart = () => (conf().depart === 'representations' ? (typeof adresseDates === 'function' ? adresseDates() : '#/representations') : '#/accueil');
 
   // ===================================================================================================== lire plus
   // le journal : ses dernières lignes, relues au plus toutes les cinq secondes (le temps réel ne porte pas le journal,

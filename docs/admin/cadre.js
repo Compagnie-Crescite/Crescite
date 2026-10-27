@@ -9,6 +9,8 @@
      et la place d'un badge (.menu-badge, dont le chiffre est dans data-n) ; puis le bouton « Replier » (.menu-replier : aria-expanded, aria-controls,
      aria-keyshortcuts="Alt+M") et, sous lui, un <div class="menu-reglages"> vide, que les réglages d'interface rempliront (marquer n'y
      touche pas). ↑ ↓ passent d'une rubrique à l'autre (GESTES.fleches).
+   - Le lien « Représentations » rouvre la dernière vue de la rubrique (la préférence `representations.vue`, écrite par le script principal
+     à chaque route de la rubrique, à l'ordinateur seulement) : son href est #/representations, /tableur ou /carte, relu à chaque vue.
    - CADRE.marquer(rubrique) pose aria-current="page" sur la rubrique de la vue (aucune pour une page hors rubriques), et
      redessine la nav quand la liste des rubriques visibles a changé (la Diffusion paraît quand la base a ses tables, E.ideale),
      et fait suivre les badges.
@@ -65,7 +67,9 @@ const CADRE = (() => {
   // (l'infobulle dit le nom, que le menu replié cache, et la séquence qui y mène : « Représentations (G puis D) » ; elle n'est pas
   // dans aria-keyshortcuts, qui ne sait pas dire une suite de touches)
   const titreLien = (k, nom) => { const s = typeof RACCOURCIS !== 'undefined' ? RACCOURCIS.libelle(`rubrique.${k}`) : ''; return s ? `${nom} (${s})` : nom; };
-  const lien = courante => ([k, nom]) => `<a href="#/${k}"${k === courante ? ' aria-current="page"' : ''} title="${esc(titreLien(k, nom))}">${ICONES.svg(ICONE[k] || 'points', { taille: 20 })}<span class="menu-l">${esc(nom)}</span><span class="menu-badge" aria-hidden="true"></span></a>`;
+  // (le lien « Représentations » rouvre la vue retenue, adresseDates() du script principal : la liste, le tableur ou la carte)
+  const adresseDe = k => (k === 'representations' && typeof adresseDates === 'function' ? adresseDates() : `#/${k}`);
+  const lien = courante => ([k, nom]) => `<a href="${adresseDe(k)}" data-rubrique="${k}"${k === courante ? ' aria-current="page"' : ''} title="${esc(titreLien(k, nom))}">${ICONES.svg(ICONE[k] || 'points', { taille: 20 })}<span class="menu-l">${esc(nom)}</span><span class="menu-badge" aria-hidden="true"></span></a>`;
   function dessinerNav(m, courante) {
     const nav = $('.nav', m), rub = typeof rubriquesVisibles === 'function' ? rubriquesVisibles() : [];
     nav.innerHTML = rub.map(lien(courante)).join('');
@@ -100,8 +104,15 @@ const CADRE = (() => {
     const m = menu();
     if (!m || !m.dataset.pose) return;
     if (m.dataset.rubriques !== cleRubriques()) dessinerNav(m, rubrique);
-    $$('.nav a', m).forEach(a => { if (a.getAttribute('href') === `#/${rubrique}`) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    $$('.nav a', m).forEach(a => { if (a.dataset.rubrique === rubrique) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    suivreVueRetenue();
     badges();
+  }
+  // le lien « Représentations » porte l'adresse de la vue retenue : relu à chaque vue, et quand un autre onglet ou un autre
+  // appareil en retient une autre
+  function suivreVueRetenue() {
+    const a = menu() && $('.nav a[data-rubrique="representations"]', menu()), h = adresseDe('representations');
+    if (a && a.getAttribute('href') !== h) a.setAttribute('href', h);
   }
 
   // ===================================================================================================== les badges
@@ -132,7 +143,7 @@ const CADRE = (() => {
     const m = menu();
     if (!m || !memo) return;
     for (const [k, dire] of aux) {
-      const a = $(`.nav a[href="#/${k}"]`, m), b = a && $('.menu-badge', a);
+      const a = $(`.nav a[data-rubrique="${k}"]`, m), b = a && $('.menu-badge', a);
       if (!b) continue;
       const n = memo[k] || 0, texte = n ? (n > 99 ? '99+' : String(n)) : '';
       if (texte) { if (b.dataset.n !== texte) b.dataset.n = texte; } else delete b.dataset.n;
@@ -191,6 +202,7 @@ const CADRE = (() => {
     majBouton();
   }
   if (typeof PREFS !== 'undefined') PREFS.surChangement(CLE, appliquer);
+  if (typeof PREFS !== 'undefined') PREFS.surChangement('representations.vue', suivreVueRetenue);
   // la fenêtre qui passe la limite des 1 340 px : au-dessus, le choix du compte reprend la main ; en dessous, le dépli de l'onglet
   if (typeof matchMedia === 'function') matchMedia(PETIT).addEventListener('change', () => {
     if (!petit()) { if (typeof PREFS !== 'undefined') appliquer(PREFS.lire(CLE)); } else if (depliSession()) poserClasses(false); else html.classList.remove('menu-deplie');

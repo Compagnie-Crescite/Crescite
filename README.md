@@ -509,12 +509,15 @@ compte du projet inscrit dans `crescite_admins`.
     le témoin), l'espace de l'équipe qui garde ses tracés, la vue d'essai `#/essai/icones` : 45 vérifications, une capture
     dans `site/dist/shots-icones/` (`icones.png`).
   - `node site/vues-dates.mjs` garde les trois vues de Représentations : la pilule (trois liens à icônes, le nom masqué
-    sous 1 100 px sans quitter le lien, 44 px), la barre commune (les mêmes identifiants et un compte par vue), les filtres
-    qui suivent d'une vue à l'autre et que l'adresse porte (aussi nature, département, contrat, du … au), la période de la
-    liste, les annulées et les reportées sur la carte, « Effacer les filtres », l'ancien `?tri=desc` et les anciens états
-    du tableur et de la carte, le fondu entre les vues, le focus et l'annonce après un changement de vue, « Voir dans le
-    tableur » qui arrive sur sa ligne : 81 vérifications, des captures dans `site/dist/shots-vues-dates/` (`vue-liste.png`,
-    `vue-tableur.png`, `vue-carte.png`, `selecteur-1000.png`).
+    sous 1 100 px sans quitter le lien, 44 px), la barre commune (les mêmes identifiants et un compte par vue), les
+    filtres qui suivent d'une vue à l'autre et que l'adresse porte (aussi nature, département, contrat, du … au), la
+    période de la liste, les annulées et les reportées sur la carte, « Effacer les filtres », l'ancien `?tri=desc` et
+    les anciens états du tableur et de la carte, le fondu entre les vues, le focus et l'annonce après un changement de
+    vue, « Voir dans le tableur » qui arrive sur sa ligne, la vue retenue (écrite à l'ordinateur, jamais au téléphone ;
+    lue par le lien du menu et par la page d'ouverture ; l'adresse nue reste la liste ; une fiche ouverte depuis la
+    carte ne la change pas) et les touches V puis L / T / C (y compris leur silence dans un champ et dans la grille du
+    tableur) : 111 vérifications, des captures dans `site/dist/shots-vues-dates/` (`vue-liste.png`, `vue-tableur.png`,
+    `vue-carte.png`, `selecteur-1000.png`).
 - **Le cadre et le menu latéral** (`admin/cadre.js` ; la coque elle-même, `poserCoque` et `cadre`, est dans
   `admin/index.html`) : l'en-tête tient sur une ligne, à toutes les largeurs ; ce qui n'y tient pas se replie, dans cet
   ordre (l'adresse du compte, le mot « Rechercher », les mots longs, les liens du compte, qui passent alors dans « Plus »,
@@ -537,7 +540,8 @@ compte du projet inscrit dans `crescite_admins`.
     principal d'`admin/index.html`) qu'un seul écouteur du clavier lit ; l'aide (`admin/menus.js`) en tire ses lignes, et un
     module qui veut un raccourci le déclare là (`RACCOURCIS.declarer({ id, touches, groupe, d, quand, faire })`) au lieu
     d'écouter le clavier de son côté. Seul le bouton de repli porte `aria-keyshortcuts="Alt+M"` : une suite de touches n'est
-    pas un raccourci de rechange pour les lecteurs d'écran, la séquence va dans l'infobulle et dans l'aide.
+    pas un raccourci de rechange pour les lecteurs d'écran, la séquence va dans l'infobulle et dans l'aide. Dans la
+    rubrique Représentations, **V puis L / T / C** choisit la liste, le tableur ou la carte (voir Représentations).
   - **Les badges.** Trois rubriques disent ce qui attend, par une pastille corail (un point sur l'icône quand le menu est
     replié) : le **Tableau de bord** (le nombre de lignes « à traiter » de la tuile, hors reportées : le même que la tuile),
     la **Diffusion** (les demandes de devis nouvelles) et l'**Équipe** (les notes de frais en attente). La Diffusion et
@@ -613,7 +617,16 @@ compte du projet inscrit dans `crescite_admins`.
   tableur » (le menu d'une date : clic droit, Maj+F10) ouvre le tableur sur la ligne de cette date : case active, en
   vue, cerclée un instant (si un filtre la cachait, il est relâché ; si l'appareil demande moins d'animations, la ligne
   est marquée sans mouvement, le temps qu'on la repère). Les trois vues lisent les filtres de la même façon ; passer de
-  l'une à l'autre est un fondu.
+  l'une à l'autre est un fondu. **La dernière vue est retenue** : à l'ordinateur, chaque fois qu'on ouvre la liste, le
+  tableur ou la carte, elle est gardée avec le compte (`representations.vue`, sur tous les appareils), et le lien
+  « Représentations » du menu latéral, comme la page d'ouverture si c'est elle qui est choisie, rouvre cette vue-là. Une
+  adresse écrite dit toujours sa vue : `#/representations` nu reste la liste, et un lien partagé ne change pas. Au
+  téléphone, rien n'est retenu ni appliqué : l'onglet Dates mène à la liste. Au clavier, **V puis L**, **V puis T** ou
+  **V puis C** ouvre la liste, le tableur ou la carte (tant qu'on est dans la rubrique, hors d'un champ et hors d'une boîte
+  ouverte ; l'aide « ? » les montre sous « Les représentations », l'infobulle de la pilule aussi). Dans la grille du
+  tableur, une lettre ouvre la case : « V » n'y change donc pas de vue, on sort de la grille en cliquant ailleurs (le
+  titre, un espace vide), ou l'on clique la pilule. Ouvrir une fiche ou « ＋ Nouvelle date » depuis la carte
+  ou le tableur ne change pas la vue retenue : « Représentations » y rouvre celle où l'on travaillait.
   On y ajoute une date, on y modifie une date passée. Une date porte autant de représentations qu'il en faut, le même
   jour ou non, chacune avec son heure, son public et sa billetterie. L'aperçu montre la ligne telle que le site
   l'affichera. Sous son lieu, la date montre ce que la fiche du lieu en sait (adresse et itinéraire, contact, jauge,
@@ -1001,11 +1014,13 @@ fait de même quand le compte connecté administre. Trois fonctions, à déploye
 **Les préférences.** Le sixième script, `supabase/migrations/20261025_crescite_preferences.sql`, s'exécute après les cinq
 autres, de la même façon, et peut être relancé. Il ajoute `crescite_preferences` : ce que chacun règle une fois et
 retrouve sur tous ses appareils, une valeur par compte et par clé. Chacun ne lit et n'écrit que les siennes,
-l'administration comprise ; le public n'y a aucun droit. Quatre clés servent aujourd'hui : `accueil.tableau` (la
+l'administration comprise ; le public n'y a aucun droit. Cinq clés servent aujourd'hui : `accueil.tableau` (la
 disposition du tableau de bord), `planning.masques` (les personnes masquées du planning, en liste brute, que lit aussi
 l'espace de l'équipe), `representations.avant` (le panneau « À compléter avant la tournée » : ouvert ou fermé, 30, 60
 ou 90 jours) et `menu.replie` (le menu latéral de l'administration, replié ou déplié : vrai ou faux, absente tant qu'on
-ne l'a pas choisi ; elle ne se garde que sur un grand écran, voir « Le cadre et le menu latéral »). Une clé nouvelle se nomme `rubrique.reglage`, en minuscules, et sa valeur garde la même forme d'une
+ne l'a pas choisi ; elle ne se garde que sur un grand écran, voir « Le cadre et le menu latéral ») ; `representations.vue`
+(la dernière vue de Représentations, `liste`, `tableur` ou `carte` : écrite à l'ordinateur seulement, voir
+Représentations). Une clé nouvelle se nomme `rubrique.reglage`, en minuscules, et sa valeur garde la même forme d'une
 version à l'autre. Tous les modules passent par un seul outil, `admin/prefs.js` (`PREFS`), qui lit le compte en une
 requête à l'ouverture, répond ensuite sans attendre, et écrit sans faire attendre : le réglage est gardé sur l'appareil
 tout de suite (sous `crescite-prefs:<compte>` : une copie par compte, rien ne se mélange sur un ordinateur partagé),

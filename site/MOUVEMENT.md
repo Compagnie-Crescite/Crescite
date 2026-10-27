@@ -71,12 +71,12 @@ manque.
 
 `bash site/bancs-admin.sh` enchaîne aussi `prefs.mjs` (où chaque réglage est gardé : avec le compte ou sur l'appareil),
 `tableur.mjs` (le tableur des représentations), `icones.mjs` (la bibliothèque d'icônes), `cadre.mjs` (la coque, le menu
-latéral, ses raccourcis et ses badges), `champs.mjs` (la fiche d'une date : le schéma de ses champs, la jauge, le
-bandeau « Modifiée ailleurs », qui paraît en `ad-arrive`) et `vues-dates.mjs` (les trois vues de Représentations : la
-pilule, les filtres communs, le fondu, le focus, la ligne visée). Ils ne touchent presque pas à ce vocabulaire :
-`cadre.mjs` mesure seulement que le repli anime la colonne une fois, et rien sous « moins d'animations », et que le
-compte des badges ne tient jamais la page plus de 200 ms à `CPU=4` ; `vues-dates.mjs`, que le passage entre les trois vues
-est un fondu ; pour le reste, ils veillent à ce qu'une refonte ne casse rien.
+latéral, ses raccourcis et ses badges), `champs.mjs` (la fiche d'une date : le schéma de ses champs, la jauge, le bandeau
+« Modifiée ailleurs », qui paraît en `ad-arrive`) et `vues-dates.mjs` (les trois vues de Représentations : la pilule, les
+filtres communs, le fondu, le focus, la ligne visée, la vue retenue et les touches V puis L / T / C). Ils ne touchent
+presque pas à ce vocabulaire : `cadre.mjs` mesure seulement que le repli anime la colonne une fois, et rien sous « moins
+d'animations », et que le compte des badges ne tient jamais la page plus de 200 ms à `CPU=4` ; `vues-dates.mjs`, que le
+passage entre les trois vues est un fondu ; pour le reste, ils veillent à ce qu'une refonte ne casse rien.
 
 ## Ce qui a été écarté
 

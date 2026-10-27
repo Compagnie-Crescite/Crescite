@@ -23,6 +23,10 @@
 --   menu.replie             true ou false : le menu latéral de l'administration (admin/cadre.js) replié ou déplié, choisi sur un
 --                           écran de 1 340 px et plus (absente tant qu'on n'a pas choisi : le menu suit la largeur). Avant ce script,
 --                           sur l'appareil, comme les autres.
+--   representations.vue     'liste', 'tableur' ou 'carte' : la dernière vue de la rubrique Représentations, retenue à chaque
+--                           route à l'ordinateur seulement (jamais au téléphone) ; lue par le lien « Représentations » du menu
+--                           latéral et par la page d'ouverture (admin/index.html). Absente tant qu'on n'a pas ouvert le tableur
+--                           ou la carte : l'adresse nue #/representations reste la liste. Avant ce script, sur l'appareil.
 -- Rien à migrer dans la base : les clés sont des lignes, pas des colonnes.
 
 begin;

@@ -9,10 +9,12 @@
 // les cinq filtres de plus : nature, département, contrat, du, au) ; les annulées et les reportées sur la carte quand on
 // les demande ; « Effacer les filtres » ; l'ancien lien ?tri=desc et les anciens états du tableur et de la carte ; le
 // fondu d'une vue à l'autre ; le focus et l'annonce après un changement de vue ; « Voir dans le tableur » qui arrive sur
-// la ligne. Les captures vont dans site/dist/shots-vues-dates/. Sort en erreur si une vérification manque.
+// la ligne ; la vue retenue (la clé representations.vue, écrite à chaque route à l'ordinateur et jamais au téléphone, lue par
+// le lien « Représentations » du menu et par la page d'ouverture, sans toucher à l'adresse nue) et les touches V puis L / T / C.
+// Les captures vont dans site/dist/shots-vues-dates/. Sort en erreur si une vérification manque.
 import fs from 'node:fs';
 import path from 'node:path';
-import { chromium, ICI, URL0, plus, saisonDe, DB, ok, calme, ouvrir, texte, compte, bilan } from './admin-fictif.mjs';
+import { chromium, ICI, URL0, UID, plus, saisonDe, DB, ECRITURES, ok, calme, ouvrir, texte, compte, bilan } from './admin-fictif.mjs';
 
 const CAPT = path.join(ICI, 'dist', 'shots-vues-dates');
 const navigateur = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined });
@@ -342,6 +344,163 @@ for (const v of ['tableur', 'carte']) {
   ok('9 · … et la marque part seule (un instant)', (await compte(page, '#tab-corps td.visee')) === 0);
   ok('9 · aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();
+}
+
+// ================================================================================ 10 · la vue retenue ; les touches V puis L / T / C
+const ecritesVue = () => ECRITURES.filter(e => e.cle === 'representations.vue').map(e => e.valeur);
+const lienMenu = page => page.getAttribute('.nav a[title^="Représentations"]', 'href');
+const repartir = () => { DB.crescite_preferences = []; ECRITURES.length = 0; };
+const attendreEcriture = async (n, ms = 4000) => { const t0 = Date.now(); while (ecritesVue().length < n && Date.now() - t0 < ms) await new Promise(r => setTimeout(r, 50)); };
+const hashEst = (page, h) => attendre(page, x => location.hash === x, h);
+// (les touches partent du focus où l'on est : un champ ou la grille du tableur les garde, c'est ce qu'on vérifie ; hors(page) retire le focus
+// quand une vérification veut partir « hors d'un champ »)
+const touches = async (page, ...ts) => { for (const t of ts) await page.keyboard.press(t); };
+const hors = page => page.evaluate(() => document.activeElement?.blur?.());
+{
+  repartir();
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1440, hauteur: 900, hash: '#/representations' });
+  await page.waitForSelector('#l-dates a.ligne', { timeout: 15000 });
+  ok('10 · ouvrir la liste n’écrit rien (c’est la vue d’office) et le lien « Représentations » du menu va à #/representations', ecritesVue().length === 0 && await lienMenu(page) === '#/representations', JSON.stringify({ ecrites: ecritesVue(), lien: await lienMenu(page) }));
+  await page.click('nav.vues a[data-vue="tableur"]');
+  await page.waitForSelector('#tab-corps tr[data-l]', { timeout: 8000 });
+  await attendreEcriture(1);
+  ok('10 · le tableur ouvert, la vue est écrite aussitôt dans le compte (representations.vue = tableur) et le lien du menu la suit', ecritesVue().join(',') === 'tableur' && await lienMenu(page) === '#/representations/tableur' && ECRITURES.at(-1).user_id === UID, JSON.stringify({ ecrites: ecritesVue(), lien: await lienMenu(page) }));
+  ok('10 · le lien du menu garde aria-current sur la rubrique ouverte', await page.$eval('.nav a[title^="Représentations"]', a => a.getAttribute('aria-current') === 'page'));
+  // V puis C, V puis L, V puis T
+  await touches(page, 'v', 'c');
+  await hashEst(page, '#/representations/carte');
+  await page.waitForSelector('.tn-svg', { timeout: 8000 });
+  await attendreEcriture(2);
+  ok('10 · « V » puis « C » ouvre la carte (la vue retenue devient la carte, le menu la suit)', await adresse(page) === '#/representations/carte' && ecritesVue().join(',') === 'tableur,carte' && await lienMenu(page) === '#/representations/carte', JSON.stringify({ adresse: await adresse(page), ecrites: ecritesVue(), lien: await lienMenu(page) }));
+  await calme(page);
+  await page.screenshot({ path: `${CAPT}/vue-carte.png`, fullPage: false });
+  // une fiche ou « Nouvelle date » ouverte depuis la carte ne change pas la vue retenue : le lien du menu rouvre la carte
+  await page.click('.tete a.btn.principal[href="#/representations/nouvelle"]');
+  await page.waitForSelector('#ed-date input', { timeout: 8000 });
+  await page.waitForTimeout(300);
+  ok('10 · « ＋ Nouvelle date » depuis la carte ouvre la fiche sans changer la vue retenue (toujours la carte : la clé, et le lien du menu)', await adresse(page) === '#/representations/nouvelle' && ecritesVue().join(',') === 'tableur,carte' && DB.crescite_preferences.find(r => r.cle === 'representations.vue')?.valeur === 'carte' && await lienMenu(page) === '#/representations/carte', JSON.stringify({ adresse: await adresse(page), ecrites: ecritesVue(), lien: await lienMenu(page) }));
+  await page.evaluate(() => { location.hash = '#/representations/101'; });
+  await page.waitForSelector('#ed-date input', { timeout: 8000 });
+  await page.waitForTimeout(300);
+  ok('10 · … et une fiche (#/representations/101) de même : le lien du menu garde la carte', ecritesVue().join(',') === 'tableur,carte' && await lienMenu(page) === '#/representations/carte', JSON.stringify({ ecrites: ecritesVue(), lien: await lienMenu(page) }));
+  await page.evaluate(() => { location.hash = '#/representations/carte'; });
+  await page.waitForSelector('.tn-svg', { timeout: 8000 });
+  await hors(page);
+  await touches(page, 'v', 'l');
+  await hashEst(page, '#/representations');
+  await page.waitForSelector('#l-dates a.ligne', { timeout: 8000 });
+  await attendreEcriture(3);
+  ok('10 · « V » puis « L » rouvre la liste', await adresse(page) === '#/representations' && ecritesVue().join(',') === 'tableur,carte,liste' && await lienMenu(page) === '#/representations', JSON.stringify({ adresse: await adresse(page), ecrites: ecritesVue() }));
+  await touches(page, 'v', 't');
+  await hashEst(page, '#/representations/tableur');
+  await page.waitForSelector('#tab-corps tr[data-l]', { timeout: 8000 });
+  ok('10 · « V » puis « T » ouvre le tableur', await adresse(page) === '#/representations/tableur', await adresse(page));
+  await calme(page);
+  await page.screenshot({ path: `${CAPT}/vue-tableur.png`, fullPage: false });
+  // dans la grille du tableur, une lettre ouvre la case : « V » n'y est pas une touche de vue (on en sort en cliquant hors de la grille)
+  await page.click('#tab-corps td.c-spectacle');
+  const avant = await page.$eval('#tab-corps td.c-spectacle', td => td.textContent);
+  await touches(page, 'v', 'l');
+  await page.waitForTimeout(250);
+  const grille = await page.evaluate(() => ({ hash: location.hash, temoin: document.getElementById('rac-temoin')?.textContent || '', edition: !!document.querySelector('#tab-corps .tab-ed') }));
+  await touches(page, 'Escape');
+  await page.waitForTimeout(150);
+  ok('10 · depuis une case du tableur, « V » puis « L » ne change pas de vue : la lettre ouvre la case (l’adresse reste le tableur, le témoin « V… » ne paraît pas, Échap rend la case intacte)', grille.hash === '#/representations/tableur' && grille.temoin === '' && grille.edition && await page.$eval('#tab-corps td.c-spectacle', td => td.textContent) === avant, JSON.stringify({ ...grille, avant }));
+  await page.click('.tete h1');
+  await touches(page, 'v', 'l');
+  await hashEst(page, '#/representations');
+  await page.waitForSelector('#l-dates a.ligne', { timeout: 8000 });
+  ok('10 · … et en cliquant hors de la grille (le titre), « V » puis « L » rouvre la liste', await adresse(page) === '#/representations', await adresse(page));
+  await touches(page, 'v', 't');
+  await hashEst(page, '#/representations/tableur');
+  await page.waitForSelector('#tab-corps tr[data-l]', { timeout: 8000 });
+  // les filtres restent : V puis C depuis la liste filtrée
+  await page.evaluate(() => { location.hash = '#/representations'; });
+  await page.waitForSelector('#l-dates a.ligne', { timeout: 8000 });
+  await page.fill('#f-q', 'caen');
+  await attendre(page, () => /q=caen/.test(location.search));
+  await hors(page);
+  await touches(page, 'v', 'c');
+  await page.waitForSelector('.tn-svg', { timeout: 8000 });
+  ok('10 · … et change de vue en gardant les filtres (la recherche « caen » suit dans l’adresse)', /q=caen/.test(await adresse(page)) && /#\/representations\/carte$/.test(await adresse(page)), await adresse(page));
+  // dans un champ, les lettres sont des lettres
+  await page.evaluate(() => { location.hash = '#/representations'; });
+  await page.waitForSelector('#f-q', { timeout: 8000 });
+  await page.fill('#f-q', '');
+  await page.focus('#f-q');
+  await page.keyboard.press('v'); await page.keyboard.press('t');
+  await page.waitForTimeout(150);
+  const champ = await page.evaluate(() => ({ valeur: document.querySelector('#f-q').value, hash: location.hash, temoin: document.getElementById('rac-temoin')?.textContent || '' }));
+  ok('10 · « V » tapé dans un champ ne fait rien : le champ reçoit « vt », l’adresse ne bouge pas, le témoin reste vide', champ.valeur === 'vt' && champ.hash === '#/representations' && champ.temoin === '', JSON.stringify(champ));
+  await page.fill('#f-q', '');
+  // hors de la rubrique, V ne fait rien
+  await page.evaluate(() => { location.hash = '#/lieux'; });
+  await page.waitForSelector('#vue h1', { timeout: 8000 });
+  await page.waitForTimeout(300);
+  await hors(page);
+  await touches(page, 'v', 't');
+  await page.waitForTimeout(250);
+  ok('10 · hors de Représentations, « V » puis « T » ne fait rien (les Lieux restent ouverts)', await page.evaluate(() => location.hash) === '#/lieux');
+  // le lien du menu, depuis une autre rubrique, rouvre la vue retenue : la carte (la dernière vue vue)
+  await page.evaluate(() => { location.hash = '#/representations/carte'; });
+  await page.waitForSelector('.tn-svg', { timeout: 8000 });
+  await page.evaluate(() => { location.hash = '#/lieux'; });
+  await page.waitForSelector('#vue h1', { timeout: 8000 });
+  ok('10 · depuis une autre rubrique, le lien « Représentations » du menu a l’adresse de la carte', await lienMenu(page) === '#/representations/carte', await lienMenu(page));
+  await page.click('.nav a[title^="Représentations"]');
+  await page.waitForSelector('.tn-svg', { timeout: 8000 });
+  ok('10 · … et rouvre la carte', await adresse(page) === '#/representations/carte', await adresse(page));
+  // l'adresse nue reste la liste, quelle que soit la vue retenue
+  await page.evaluate(() => { location.hash = '#/lieux'; });
+  await page.waitForSelector('#vue h1', { timeout: 8000 });
+  await page.evaluate(() => { location.hash = '#/representations'; });
+  await page.waitForSelector('#l-dates a.ligne', { timeout: 8000 });
+  ok('10 · #/representations nu ouvre toujours la liste (#f-statut, les dates), même quand la carte était la vue retenue', await page.evaluate(() => !!document.querySelector('#f-statut') && !!document.querySelector('nav.vues a[data-vue="liste"][aria-current="page"]') && !document.querySelector('.tn-svg')) && await adresse(page) === '#/representations');
+  // l'aide « ? » les montre
+  await page.focus('#b-aide');
+  await page.keyboard.press('?');
+  await attendre(page, () => !!document.querySelector('dialog.gq-aide[open]'), null, 3000);
+  const aide = await page.evaluate(() => { const g = [...document.querySelectorAll('dialog.gq-aide[open] section')].find(x => /Les représentations/.test(x.querySelector('h3')?.textContent || '')); return g && { titre: g.querySelector('h3').textContent, texte: g.textContent.replace(/\s+/g, ' ') }; });
+  ok('10 · l’aide « ? » montre un groupe « Les représentations » : V puis L, V puis T, V puis C', aide && ['V puis L', 'V puis T', 'V puis C'].every(k => aide.texte.includes(k)), JSON.stringify(aide));
+  await page.keyboard.press('Escape');
+  ok('10 · aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+{
+  // la page d'ouverture « Représentations » ouvre la vue retenue ; au téléphone, toujours la liste
+  repartir();
+  DB.crescite_preferences.push({ user_id: UID, cle: 'accueil.tableau', valeur: { depart: 'representations' } }, { user_id: UID, cle: 'representations.vue', valeur: 'carte' });
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1440, hauteur: 900 });
+  await page.waitForSelector('.tn-svg', { timeout: 15000 });
+  ok('10 · la page d’ouverture choisie est Représentations : elle ouvre la vue retenue (la carte), TABLEAU.depart() la rend', await adresse(page) === '#/representations/carte' && await page.evaluate(() => TABLEAU.depart()) === '#/representations/carte', await adresse(page));
+  ok('10 · aucune erreur de script (ouverture)', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+  const tel = await ouvrir(navigateur, { largeur: 390, hauteur: 800 });
+  await attendre(tel.page, () => location.hash.startsWith('#/representations'), null, 15000);
+  await tel.page.waitForSelector('#l-dates', { timeout: 15000 });
+  ok('10 · au téléphone la vue retenue n’est pas appliquée : l’ouverture est la liste, TABLEAU.depart() aussi', await adresse(tel.page) === '#/representations' && await tel.page.evaluate(() => TABLEAU.depart()) === '#/representations', await adresse(tel.page));
+  ECRITURES.length = 0;
+  await tel.page.evaluate(() => { location.hash = '#/representations/tableur'; });
+  await tel.page.waitForSelector('#tab-corps tr[data-l]', { timeout: 8000 });
+  await tel.page.waitForTimeout(300);
+  ok('10 · … et ouvrir le tableur au téléphone n’écrit rien (la vue retenue du compte est celle de l’ordinateur)', ecritesVue().length === 0 && DB.crescite_preferences.find(r => r.cle === 'representations.vue')?.valeur === 'carte', JSON.stringify(ecritesVue()));
+  ok('10 · aucune erreur de script (téléphone)', tel.erreurs.length === 0, tel.erreurs.join(' / '));
+  await tel.ctx.close();
+}
+{
+  // une base sans la table des préférences : rien n'est hérité d'un autre contexte, rien n'est envoyé à la base
+  repartir();
+  DB.crescite_preferences.push({ user_id: 'autre-compte', cle: 'representations.vue', valeur: 'carte' });
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1440, hauteur: 900, hash: '#/accueil', prefsAbsentes: true });
+  await page.waitForSelector('.nav a[title^="Représentations"]', { timeout: 15000 });
+  ok('10 · sans la table des préférences, le lien « Représentations » va à la liste (la vue d’un autre contexte n’est pas prise)', await lienMenu(page) === '#/representations', await lienMenu(page));
+  await page.evaluate(() => { location.hash = '#/representations/tableur'; });
+  await page.waitForSelector('#tab-corps tr[data-l]', { timeout: 8000 });
+  await page.waitForTimeout(300);
+  ok('10 · … et ouvrir le tableur n’envoie rien à la base (ECRITURES reste vide) ; le menu suit sur cet appareil', ecritesVue().length === 0 && await lienMenu(page) === '#/representations/tableur', JSON.stringify({ ecrites: ecritesVue(), lien: await lienMenu(page) }));
+  ok('10 · aucune erreur de script (sans préférences)', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+  repartir();
 }
 
 bilan(CAPT);

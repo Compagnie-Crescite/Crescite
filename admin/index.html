@@ -1984,6 +1984,10 @@ const TOUCHES_RUBRIQUES = { accueil: 'T', representations: 'D', planning: 'P', f
 RUBRIQUES.forEach(([k, nom]) => TOUCHES_RUBRIQUES[k] && RACCOURCIS.declarer({ id: `rubrique.${k}`, touches: ['G', TOUCHES_RUBRIQUES[k]], groupe: 'Aller à une rubrique', d: nom, quand: () => rubriquesVisibles().some(r => r[0] === k), faire: () => { location.hash = `#/${k}`; } }));
 // replier ou déplier le menu latéral (cadre.js) : seulement quand on le voit (pas au téléphone)
 RACCOURCIS.declarer({ id: 'menu.replier', touches: ['Alt+M'], groupe: 'Partout', d: 'Replier ou déplier le menu', quand: () => typeof CADRE !== 'undefined' && !!document.getElementById('menu')?.getClientRects().length, faire: () => CADRE.basculer() });
+// les trois vues de Représentations : « V » puis L (la liste), T (le tableur), C (la carte), tant qu'on est dans la rubrique ;
+// l'infobulle des liens de la pilule (choixVueDates) en écrit la suite
+[['liste', 'L', 'la liste', '#/representations'], ['tableur', 'T', 'le tableur', '#/representations/tableur'], ['carte', 'C', 'la carte de tournée', '#/representations/carte']].forEach(([k, lettre, nom, adresse]) =>
+  RACCOURCIS.declarer({ id: `vue.${k}`, touches: ['V', lettre], groupe: 'Les représentations', d: `Voir ${nom}`, quand: () => location.hash.startsWith('#/representations') && (k !== 'carte' || typeof TOURNEE !== 'undefined'), faire: () => { location.hash = adresse; } }));
 
 document.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { const b = $('[data-enregistrer]', racineActive()); if (b) { e.preventDefault(); b.click(); } }
@@ -2609,7 +2613,28 @@ APRES_VUE.push(() => {
   E.vueDatesAvant = vue;
 });
 
+// La vue retenue de Représentations (la préférence du compte `representations.vue` : 'liste', 'tableur' ou 'carte'). Elle est
+// écrite aussitôt à chaque route de la rubrique, à l'ordinateur seulement (jamais au téléphone, sous 641 px : l'onglet Dates y
+// mène toujours à la liste), et lue en deux endroits seulement : le lien « Représentations » du menu latéral (cadre.js) et la
+// page d'ouverture de l'administration (TABLEAU.depart). Une adresse écrite, elle, dit toujours sa vue : `#/representations` nu
+// reste la liste, quelle que soit la vue retenue. adresseDates() rend l'adresse de la vue retenue.
+const ORDINATEUR = '(min-width: 641px)';
+const surOrdinateur = () => typeof matchMedia === 'function' && matchMedia(ORDINATEUR).matches;
+function vueRetenueDates() {
+  if (typeof PREFS === 'undefined' || !surOrdinateur()) return 'liste';
+  const v = PREFS.lire('representations.vue', 'liste');
+  return v === 'tableur' || (v === 'carte' && typeof TOURNEE !== 'undefined') ? v : 'liste';
+}
+function adresseDates() { const v = vueRetenueDates(); return v === 'liste' ? '#/representations' : `#/representations/${v}`; }
+function retenirVueDates(v) {
+  if (typeof PREFS === 'undefined' || !surOrdinateur() || vueRetenueDates() === v) return;
+  PREFS.ecrire('representations.vue', v, { aussitot: true, muet: true });      // (muet : changer de vue n'est pas un réglage qu'on annonce)
+}
+
 function vueDates(param) {
+  // (avant cadre() : le lien du menu se dessine avec la vue qui vient ; une fiche ou « Nouvelle date » ne change pas la vue retenue,
+  // elle s'ouvre depuis la liste, le tableur ou la carte, et « Représentations » doit y rouvrir celle où l'on travaillait)
+  if (!param || param === 'tableur' || param === 'carte') retenirVueDates(param === 'tableur' || (param === 'carte' && typeof TOURNEE !== 'undefined') ? param : 'liste');
   const f = etatDates();
   if (param === 'tableur') return TABLEUR.vue(f);   // le tableur : une ligne par séance, branché sur la base
   if (param === 'carte') { if (typeof TOURNEE !== 'undefined') return TOURNEE.vue(f); location.replace('#/representations'); return; }   // la carte de tournée (tournee.js)
