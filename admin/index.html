@@ -98,33 +98,48 @@ main.ad-chargement { padding: 0; max-width: none; }
 @media (max-width: 860px) { .temoin-detail { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } .temoin { padding: 4px 8px; } .temoin:is([data-etat="horsligne"], [data-etat="reconnexion"]) .temoin-ic { display: none; } }
 /* l'aide (« ? ») : un bouton discret dans l'en-tête, à l'ordinateur */
 .barre .aide-b { min-width: 32px; padding-left: 0; padding-right: 0; font-weight: 800; }
-/* dix rubriques et la recherche : sous 2 080 px l'adresse du compte se retire ; sous 1 940 px les rubriques passent sur
-   une seconde ligne ; entre 861 et 1 099 px, elles s'y rangent sur deux rangs ; au téléphone, elles défilent (la rubrique
-   courante en vue) */
-@media (max-width: 2079px) { .qui .moi { display: none; } }
-@media (max-width: 1939px) { .barre { flex-wrap: wrap; row-gap: 6px; } .nav { order: 3; flex-basis: 100%; } .qui { margin-left: auto; } .qui .moi { display: inline; } }
-@media (min-width: 861px) and (max-width: 1099px) { .nav { flex-wrap: wrap; row-gap: 2px; overflow: visible; } }
-/* onze rubriques (la Diffusion, quand la base a ses tables) : une seule ligne à partir de 2 080 px, l'adresse du compte à
-   partir de 2 220 px, et les rubriques sur deux rangs jusqu'à 1 219 px */
-@media (min-width: 1100px) and (max-width: 1219px) { .barre.onze .nav { flex-wrap: wrap; row-gap: 2px; overflow: visible; } }
-@media (min-width: 1940px) and (max-width: 2079px) { .barre.onze { flex-wrap: wrap; row-gap: 6px; } .barre.onze .nav { order: 3; flex-basis: 100%; } .barre.onze .qui { margin-left: auto; } .barre.onze .qui .moi, .barre.onze .chercher .mot { display: inline; } }
-@media (min-width: 2080px) and (max-width: 2219px) { .barre.onze .qui .moi { display: none; } }
-/* douze rubriques (le tableau de bord et la Diffusion) : une seule ligne à partir de 2 220 px, l'adresse du compte à partir
-   de 2 360 px, et les rubriques sur deux rangs jusqu'à 1 339 px */
-@media (min-width: 1220px) and (max-width: 1339px) { .barre.douze .nav { flex-wrap: wrap; row-gap: 2px; overflow: visible; } }
-@media (min-width: 2080px) and (max-width: 2219px) { .barre.douze { flex-wrap: wrap; row-gap: 6px; } .barre.douze .nav { order: 3; flex-basis: 100%; } .barre.douze .qui { margin-left: auto; } .barre.douze .qui .moi, .barre.douze .chercher .mot { display: inline; } }
-@media (min-width: 2220px) and (max-width: 2359px) { .barre.douze .qui .moi { display: none; } }
-/* une tablette couchée, un petit portable (1 101 à 1 339 px) : sans l'adresse du compte, le compte tient sur la ligne de la
-   marque, l'en-tête perd une ligne (168 px de haut sur 820, 130 sans elle) */
-@media (min-width: 1101px) and (max-width: 1339px) { .qui .moi { display: none; } }
-/* un écran bas au doigt (un téléphone couché : 390 px de haut) : l'en-tête, sur trois lignes, en aurait pris plus du
-   tiers ; il défile avec la page au lieu d'y rester arrimé (la barre du bas du téléphone en portrait n'est pas touchée) */
-@media (max-height: 500px) and (pointer: coarse) { html:not(.ob-actif) .barre { position: relative; } }
-@media (max-width: 860px) { .qui .moi { display: none; } .barre { flex-wrap: wrap; gap: 8px 14px; padding: 8px 12px; } .nav { order: 3; flex-basis: 100%; padding-right: 28px; -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); } }
+/* L'en-tête tient sur une ligne, ou sur deux, à toutes les largeurs (rangerBarre le mesure, à chaque rendu et quand la
+   fenêtre change) : la marque, la recherche, les rubriques, le compte. Quand tout ne tient pas sur une ligne, les rubriques
+   passent sur la seconde (.deux-lignes). Ce qui ne tient pas encore se replie, dans cet ordre : l'adresse du compte
+   (.r-moi), le mot « Rechercher » (.r-mot), les mots longs (.r-long), les liens du compte, qui passent dans « Plus »
+   (.r-compte), « Administration » sous le nom (.r-marque), la loupe seule (.r-loupe) ; les rubriques qui ne tiennent pas
+   sur leur ligne passent dans « Plus », comme au téléphone, la rubrique courante restant en vue. Un écran bas (500 px de
+   haut au plus : un téléphone couché) garde une seule ligne, arrimée si elle tient dans 64 px (sinon .defile : elle défile
+   avec la page). Au téléphone en portrait (mobile.js), les rubriques sont dans la barre du bas. */
+/* (les rubriques ne débordent jamais : overflow coupe au cas où ; un peu d'air autour garde l'ombre de la rubrique
+   courante et l'anneau du focus, sans changer la hauteur) */
+.barre .nav { flex: 1 1 auto; min-width: 0; overflow: hidden; align-items: center; padding: 6px 4px 12px; margin: -6px -4px -12px; }
+.barre .qui { margin-left: auto; }
+.barre.deux-lignes { flex-wrap: wrap; row-gap: 6px; }
+.barre.deux-lignes .nav { order: 3; flex-basis: 100%; }
+.barre.defile { position: relative; }
+.barre.r-moi .qui .moi, .barre.r-mot .chercher .mot, .barre.r-long .long, .barre.r-loupe .chercher kbd { display: none; }
+.barre.r-compte .qui > :not(.direct) { display: none; }
+.barre.r-marque .marque { display: grid; grid-template-columns: auto auto; align-items: center; column-gap: 8px; row-gap: 2px; line-height: 1.1; }
+.barre.r-marque .marque .pieuvre { grid-row: span 2; }
+.barre.r-marque .marque small { font-size: 10.5px; }
+.barre.r-loupe .chercher { width: 40px; height: 40px; padding: 0; justify-content: center; border-radius: 50%; }
+/* au doigt (une tablette, un téléphone couché), chaque rubrique et « Plus » sont des cibles de 44 px */
+@media (pointer: coarse) { .barre .nav a, .barre .nav-plus { display: inline-flex; align-items: center; min-height: 44px; } .barre.r-loupe .chercher { width: 44px; height: 44px; } }
+/* « Plus » : au bout des rubriques, il ouvre sous lui les rubriques qui n'ont pas tenu, puis le compte (.r-compte) */
+.nav-plus { display: inline-flex; align-items: center; gap: 6px; flex: none; margin-left: 2px; padding: 7px 12px; border: 0; border-radius: 999px; background: none; color: inherit; font: inherit; font-weight: 600; white-space: nowrap; cursor: pointer; }
+.barre .nav > [hidden] { display: none !important; }
+.nav-plus svg { transition: transform .15s; }
+.nav-plus[aria-expanded="true"] svg { transform: rotate(180deg); }
+.nav-autres { position: absolute; z-index: 40; display: none; flex-direction: column; gap: 2px; width: max-content; min-width: 230px; max-width: calc(100vw - 16px); overflow: auto; overscroll-behavior: contain; padding: 6px; background: var(--carte); color: var(--encre); border: 1px solid var(--trait); border-radius: 12px; box-shadow: 0 14px 40px rgba(10, 5, 10, .35); text-transform: none; letter-spacing: 0; }
+.nav-autres.ouvert { display: flex; }
+.nav-autres .na-titre { margin: 6px 12px 2px; }
+.nav-autres .na-item + .na-titre { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--trait); }
+.nav-autres .na-titre { font: 700 11px/1.2 var(--etiq, inherit); letter-spacing: .12em; text-transform: uppercase; color: var(--gris); }
+.nav-autres .na-moi { margin: 0 12px 4px; font-size: 12.5px; color: var(--gris); overflow-wrap: anywhere; }
+.nav-autres .na-item { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 12px; border: 0; border-radius: 9px; background: none; color: var(--encre); font: inherit; font-weight: 650; text-align: left; text-decoration: none; cursor: pointer; }
+.nav-autres .na-item:hover, .nav-autres .na-item:focus-visible { background: var(--doux); }
+.nav-autres .na-item[aria-current="page"] { background: var(--accent-doux); color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+@media (max-width: 860px) { .barre { gap: 8px 14px; padding: 8px 12px; } }
 @media (max-width: 520px) { .qui { gap: 10px; font-size: 12.5px; } .qui .long, .direct .mot { display: none; } }
 /* la recherche rapide : le bouton de l'en-tête (la loupe, « Rechercher », le raccourci Ctrl K ou ⌘K) et sa fenêtre.
-   La loupe et le raccourci ; le mot en plus quand l'en-tête tient sur deux lignes (de 1 200 à 1 939 px) ; au téléphone,
-   la loupe seule, au bout de la ligne de la marque (les liens du compte passent dessous quand la place manque) */
+   La loupe, le mot et le raccourci, tant qu'ils tiennent (rangerBarre : .r-mot, .r-loupe) ; au téléphone, la loupe seule,
+   au bout de la ligne de la marque */
 .chercher { display: inline-flex; align-items: center; gap: 8px; flex: none; min-height: 34px; padding: 4px 6px 4px 10px; border: 1px solid var(--trait); border-radius: 9px; background: var(--doux); color: var(--gris); font-weight: 600; font-size: 13.5px; cursor: pointer; }
 .chercher:hover { border-color: var(--gris); color: var(--encre); }
 .chercher svg { flex: none; }
@@ -132,8 +147,6 @@ main.ad-chargement { padding: 0; max-width: none; }
 /* le raccourci s'écrit par la feuille de style : ce que montre le bouton reste dans son nom (« Rechercher ») */
 .chercher kbd[data-touche]::before { content: attr(data-touche); }
 kbd { font: 650 11.5px/1 var(--police); padding: 3px 5px 2px; border: 1px solid var(--trait); border-bottom-width: 2px; border-radius: 5px; background: var(--carte); color: var(--gris); white-space: nowrap; }
-@media (max-width: 1199px), (min-width: 1940px) { .chercher .mot { display: none; } }
-@media (max-width: 860px) { .chercher { margin-left: auto; width: 40px; height: 40px; padding: 0; justify-content: center; border-radius: 50%; } .chercher .mot, .chercher kbd { display: none; } .barre .qui { margin-left: 0; } }
 dialog.recherche { width: min(640px, calc(100% - 24px)); max-width: none; max-height: min(580px, calc(100dvh - 24px)); margin: max(12px, 9vh) auto auto; padding: 0; border: 1px solid var(--trait); border-radius: 14px; background: var(--carte); color: var(--encre); box-shadow: 0 18px 60px rgba(20, 10, 20, .3); overflow: hidden; }
 dialog.recherche[open] { display: flex; }
 dialog.recherche::backdrop { background: rgba(23, 15, 26, .4); }
@@ -1121,6 +1134,7 @@ function majTemoin() {
     b.title = `${x.long} Actualiser.`;
     b.setAttribute('aria-busy', String(x.k === 'lecture'));
   });
+  if ($('.barre .nav-plus')) rangerBientot();     // (« Hors ligne · lu il y a 3 min » prend plus de place que « À jour »)
   // les lecteurs d'écran : le passage hors ligne, puis le retour (pas l'état d'ouverture, que l'écran dit déjà)
   const hors = x.k === 'horsligne';
   if (etatAnnonce !== null && hors !== etatAnnonce) {
@@ -1183,39 +1197,125 @@ const RUBRIQUES = [['accueil', 'Tableau de bord'], ['representations', 'Représe
 // la Diffusion n'est là que quand la base a ses tables (le script 20261026_crescite_ideale.sql) : sinon elle se masque
 const rubriquesVisibles = () => RUBRIQUES.filter(([k]) => k !== 'diffusion' || E.ideale);
 const idealeAbsente = titre => `<div class="bloc"><h3>${titre}</h3><p>Exécutez <code>supabase/migrations/20261026_crescite_ideale.sql</code> dans Supabase (SQL Editor → New query → coller le fichier → Run), puis rechargez cette page.</p><p class="aide">Le reste de l’administration marche comme avant.</p></div>`;
-function cadre(rubrique, contenu) {
+// l'en-tête : celui de la page, et celui du squelette du chargement (attente : le même, inerte, pour que rien ne bouge
+// quand la page arrive)
+function barreHtml(rubrique, attente = false) {
   const nRub = rubriquesVisibles().length;
-  $('#app').innerHTML = `<a class="evitement" href="#vue">Aller au contenu</a><header class="barre${nRub > 11 ? ' onze douze' : nRub > 10 ? ' onze' : ''}"><a class="marque" href="#/accueil" title="Tableau de bord"><span class="pieuvre" data-pieuvre aria-hidden="true"></span>Compagnie Crescite <small>Administration</small></a>
+  return `<header class="barre${nRub > 11 ? ' onze douze' : nRub > 10 ? ' onze' : ''}${attente ? ' attente" inert aria-hidden="true' : ''}"><a class="marque" href="#/accueil" title="Tableau de bord"><span class="pieuvre" data-pieuvre aria-hidden="true"></span>Compagnie Crescite <small>Administration</small></a>
     <button type="button" class="chercher" id="b-chercher" aria-label="Rechercher" aria-haspopup="dialog" aria-keyshortcuts="${SUR_MAC ? 'Meta+K' : 'Control+K'}" title="Rechercher une date, une personne, un lieu… (${RACCOURCI_RCH})">${LOUPE}<span class="mot" aria-hidden="true">Rechercher</span><kbd aria-hidden="true" data-touche="${RACCOURCI_RCH}"></kbd></button>
-    <nav class="nav" aria-label="Rubriques">${rubriquesVisibles().map(([k, l]) => `<a href="#/${k}"${k === rubrique ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>
+    <nav class="nav" aria-label="Rubriques">${rubriquesVisibles().map(([k, l]) => `<a href="#/${k}"${k === rubrique ? ' aria-current="page"' : ''}>${l}</a>`).join('')}<button type="button" class="nav-plus" aria-expanded="false" aria-controls="nav-autres" hidden>Plus<svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></nav><div class="nav-autres" id="nav-autres" role="group" aria-label="Autres rubriques et compte"></div>
     <div class="qui">${temoinHtml()}
     <a href="${SITE}" target="_blank" rel="noopener">Voir le site ↗</a><a href="${SITE}?edition" target="_blank" rel="noopener" title="Écrire les textes et les dates dans la page elle-même">Modifier<span class="long"> sur le site</span> ↗</a><span class="moi">${esc(E.session.user.email)}</span>
-    <button class="btn petit" type="button" id="b-mdp" aria-label="Mot de passe" title="Changer mon mot de passe"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3M16.5 6.5l3 3M14.5 8.5l2 2"/></svg><span class="long"> Mot de passe</span></button><button class="btn petit aide-b" type="button" id="b-aide" data-aide aria-label="Raccourcis clavier" aria-keyshortcuts="?" title="Raccourcis clavier (?)">?</button><button class="btn petit" type="button" id="b-sortir">Se déconnecter</button></div></header><main id="vue" tabindex="-1"${ouvertureMuette || CALME_ADMIN() ? '' : ' class="entree"'}>${contenu}</main>${PIED}`;
+    <button class="btn petit" type="button" id="b-mdp" aria-label="Mot de passe" title="Changer mon mot de passe"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3M16.5 6.5l3 3M14.5 8.5l2 2"/></svg><span class="long"> Mot de passe</span></button><button class="btn petit aide-b" type="button" id="b-aide" data-aide aria-label="Raccourcis clavier" aria-keyshortcuts="?" title="Raccourcis clavier (?)">?</button><button class="btn petit" type="button" id="b-sortir">Se déconnecter</button></div></header>`;
+}
+function cadre(rubrique, contenu) {
+  $('#app').innerHTML = `<a class="evitement" href="#vue">Aller au contenu</a>${barreHtml(rubrique)}<main id="vue" tabindex="-1"${ouvertureMuette || CALME_ADMIN() ? '' : ' class="entree"'}>${contenu}</main>${PIED}`;
   majTemoin();
+  rangerBarre();
   poserHautBarre();
   setTimeout(() => $('#vue')?.classList.remove('entree'), 900);
   $('#b-sortir').addEventListener('click', async () => { if (await partirSansPerdre({ titre: 'Se déconnecter sans enregistrer ?', ok: 'Se déconnecter' })) await sb.auth.signOut(); });
   $('#b-mdp').addEventListener('click', async () => { if (await partirSansPerdre({ titre: 'Changer de mot de passe sans enregistrer ?', ok: 'Continuer' })) ecranMotDePasse(true); });
   $('#b-chercher').addEventListener('click', ouvrirRecherche);
-  // au téléphone, les rubriques défilent : la rubrique courante est amenée en vue (hors du fondu de droite)
-  const nav = $('.nav'), courante = $('.nav a[aria-current="page"]');
-  if (nav && courante && nav.scrollWidth > nav.clientWidth) {
-    const n = nav.getBoundingClientRect(), r = courante.getBoundingClientRect();
-    if (r.right > n.right - 36) nav.scrollLeft += r.right - (n.right - 40);
-    else if (r.left < n.left) nav.scrollLeft -= n.left - r.left + 4;
-  }
   tt('pieuvre');
 }
-// la hauteur de l'en-tête arrimé (une, deux ou trois lignes selon la largeur ; 56 px au téléphone) : --haut-barre, sous
-// lequel collent les en-têtes des listes qui défilent avec la page (le mois, le jour) et la barre d'outils d'une feuille
+// la hauteur de l'en-tête arrimé (une ou deux lignes selon la largeur ; 56 px au téléphone) : --haut-barre, sous lequel
+// collent les en-têtes des listes qui défilent avec la page (le mois, le jour) et la barre d'outils d'une feuille
 const RO_BARRE = typeof ResizeObserver === 'function' ? new ResizeObserver(() => poserHautBarre(false)) : null;
 function poserHautBarre(observer = true) {
   const b = $('.barre'), arrime = b && getComputedStyle(b).position === 'sticky';     // (un écran bas : l'en-tête défile, rien ne colle dessous)
   document.documentElement.style.setProperty('--haut-barre', `${arrime ? Math.round(b.getBoundingClientRect().height) : 0}px`);
   if (observer && RO_BARRE && b) { RO_BARRE.disconnect(); RO_BARRE.observe(b); }
 }
-// (le téléphone qu'on tourne : l'en-tête s'arrime ou défile sans changer de taille)
-if (typeof matchMedia === 'function') matchMedia('(max-height: 500px) and (pointer: coarse)').addEventListener?.('change', () => poserHautBarre(false));
+// l'en-tête sur une ligne ou deux (la feuille de style dit l'ordre des replis) : on part de tout déplié, on essaie une
+// ligne, puis deux, en repliant une chose de plus tant que ça ne tient pas ; puis les rubriques en trop passent dans
+// « Plus », de la dernière à la première, la rubrique courante gardée. Tout se mesure dans le même tour, avant que la page
+// se peigne : rien ne saute. Un écran bas (500 px de haut au plus) garde une seule ligne, et ne s'arrime que dans 64 px.
+const REPLIS_BARRE = ['r-moi', 'r-mot', 'r-long', 'r-compte', 'r-marque', 'r-loupe'];
+// (la hauteur se lit par une requête média : au téléphone, innerHeight grandit le temps qu'un essai déborde de l'écran)
+const BARRE_BASSE = '(max-height: 500px)', BARRE_ARRIMEE = 64;
+function rangerBarre() {
+  const b = $('.barre'), nav = b && $('.nav', b), plus = nav && $('.nav-plus', nav);
+  if (!plus) return;
+  fermerNavPlus();
+  const liens = $$(':scope > a', nav), tel = typeof MOBILE !== 'undefined' && MOBILE.actif(), bas = typeof matchMedia === 'function' && matchMedia(BARRE_BASSE).matches;
+  b.classList.remove('deux-lignes', 'defile', ...REPLIS_BARRE);
+  liens.forEach(a => { a.hidden = false; });
+  plus.hidden = true;
+  // le téléphone en portrait : les rubriques et le compte sont dans la barre du bas (mobile.js), l'en-tête n'a plus que la
+  // marque, le témoin et la loupe
+  if (tel) { b.classList.add(...REPLIS_BARRE); MOBILE.poser(); return; }
+  const large = () => b.scrollWidth <= b.clientWidth + 1, deborde = () => nav.scrollWidth > nav.clientWidth + 1;
+  const marque = $('.marque', b), qui = $('.qui', b);
+  // tout sur une ligne (rien n'y déborde) ; deux lignes : le compte reste sur la ligne de la marque
+  const tient = deux => large() && (deux ? qui.getBoundingClientRect().top < marque.getBoundingClientRect().bottom : !deborde());
+  const replier = deux => { for (const r of REPLIS_BARRE) { if (tient(deux)) return; b.classList.add(r); } };
+  if (bas) replier(false);              // une ligne, coûte que coûte : le compte, la marque et la loupe se replient avant les rubriques
+  else if (!tient(false)) { b.classList.add('deux-lignes'); replier(true); }
+  if (deborde() || b.classList.contains('r-compte')) {
+    plus.hidden = false;
+    const courante = liens.find(a => a.hasAttribute('aria-current'));
+    for (let i = liens.length - 1; i >= 0 && deborde(); i--) if (liens[i] !== courante) liens[i].hidden = true;
+    if (deborde() && courante) courante.hidden = true;
+  }
+  if (bas && b.getBoundingClientRect().height > BARRE_ARRIMEE) b.classList.add('defile');
+}
+// « Plus » : ce qui n'a pas tenu (les rubriques, dans leur ordre ; le compte), sous le bouton. Il s'ouvre au clic, à Entrée
+// ou à l'espace (le focus sur la première ligne) ; ↑ ↓ Début Fin entre les lignes ; Échap le ferme et rend le focus au
+// bouton ; un choix, un clic à côté, le focus ailleurs ou la fenêtre qui change le ferment aussi
+const navAutres = () => $('#nav-autres');
+function ouvrirNavPlus() {
+  const b = $('.barre'), plus = $('.nav-plus', b), m = navAutres();
+  if (!plus || !m) return;
+  const caches = $$('.nav > a[hidden]', b), compte = b.classList.contains('r-compte');
+  m.innerHTML = `${caches.length ? `<p class="na-titre" aria-hidden="true">Rubriques</p>${caches.map(a => `<a class="na-item" href="${esc(a.getAttribute('href'))}"${a.hasAttribute('aria-current') ? ' aria-current="page"' : ''}>${esc(a.textContent)}</a>`).join('')}` : ''}${compte ? `<p class="na-titre" aria-hidden="true">Compte</p><p class="na-moi">${esc(E.session?.user?.email || '')}</p>
+    <a class="na-item" href="${SITE}" target="_blank" rel="noopener">Voir le site ↗</a><a class="na-item" href="${SITE}?edition" target="_blank" rel="noopener">Modifier sur le site ↗</a>
+    <button type="button" class="na-item" data-na="mdp">Mot de passe</button><button type="button" class="na-item" data-na="aide">Raccourcis clavier</button><button type="button" class="na-item" data-na="sortir">Se déconnecter</button>` : ''}`;
+  const rb = b.getBoundingClientRect(), rp = plus.getBoundingClientRect(), haut = Math.round(rp.bottom - rb.top + 6);
+  m.style.top = `${haut}px`;
+  m.style.maxHeight = `${Math.max(160, innerHeight - Math.max(0, rb.top) - haut - 10)}px`;
+  m.classList.add('ouvert');
+  // sous le bouton, aligné sur son bord droit, sans sortir de l'écran à gauche
+  const droite = Math.max(8, Math.round(rb.right - rp.right)), l = m.getBoundingClientRect().width;
+  m.style.right = `${Math.min(droite, Math.max(8, Math.round(rb.width - l - 8)))}px`;
+  plus.setAttribute('aria-expanded', 'true');
+  $('.na-item', m)?.focus();
+}
+function fermerNavPlus(rendre = false) {
+  const m = navAutres();
+  if (!m || !m.classList.contains('ouvert')) return;
+  m.classList.remove('ouvert');
+  const plus = $('.nav-plus');
+  plus?.setAttribute('aria-expanded', 'false');
+  if (rendre) plus?.focus();
+}
+document.addEventListener('click', e => {
+  const plus = e.target.closest?.('.nav-plus'), m = navAutres();
+  if (plus) { if (m?.classList.contains('ouvert')) fermerNavPlus(); else ouvrirNavPlus(); return; }
+  if (!m || !m.classList.contains('ouvert')) return;
+  const x = e.target.closest('.na-item');
+  if (m.contains(e.target) && !x) return;
+  fermerNavPlus(!!x && !!x.dataset.na);
+  const quoi = x?.dataset.na;
+  if (quoi === 'mdp') $('#b-mdp')?.click();
+  else if (quoi === 'sortir') $('#b-sortir')?.click();
+  else if (quoi === 'aide' && typeof ouvrirAide === 'function') ouvrirAide($('.nav-plus'));
+});
+document.addEventListener('keydown', e => {
+  const m = navAutres();
+  if (!m || !m.classList.contains('ouvert')) return;
+  if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); fermerNavPlus(true); return; }
+  const xs = $$('.na-item', m), i = xs.indexOf(document.activeElement);
+  if (i < 0) return;
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); xs[(i + (e.key === 'ArrowDown' ? 1 : -1) + xs.length) % xs.length].focus(); }
+  else if (e.key === 'Home' || e.key === 'End') { e.preventDefault(); xs[e.key === 'Home' ? 0 : xs.length - 1].focus(); }
+}, true);
+document.addEventListener('focusin', e => { if (!e.target.closest?.('#nav-autres, .nav-plus')) fermerNavPlus(); });
+// la fenêtre qui change (de largeur, de hauteur : le téléphone qu'on tourne), les polices qui arrivent : l'en-tête se range
+// de nouveau, une fois par image
+function rangerBientot() { if (!rangerBientot.image) rangerBientot.image = requestAnimationFrame(() => { rangerBientot.image = 0; rangerBarre(); poserHautBarre(false); }); }
+window.addEventListener('resize', rangerBientot);
+document.fonts?.addEventListener?.('loadingdone', rangerBientot);
 const ROUTES = [
   [/^#\/accueil$/, () => vueTableau()],
   [/^#\/representations(?:\/(nouvelle|tableur|carte|\d+))?$/, m => vueDates(m[1])],

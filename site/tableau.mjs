@@ -521,6 +521,39 @@ fs.mkdirSync(CAPT, { recursive: true });
   await ctx.close();
 }
 
+// ================================================================================ l'en-tête sur une ou deux lignes (rangerBarre)
+// de 641 à 1 440 px : jamais plus de deux lignes, rien ne déborde ; ce qui ne tient pas est dans « Plus » (les rubriques,
+// le compte), qui s'ouvre au clavier et se referme par Échap ; au téléphone couché, une ligne arrimée de 64 px au plus
+for (const [largeur, hauteur, tactile] of [[700, 900, false], [1000, 900, false], [1120, 820, false], [1366, 768, false], [1440, 900, false], [844, 390, true], [667, 375, true]]) {
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur, hauteur, hash: '#/accueil', tactile });
+  await page.waitForTimeout(300);
+  const t = await page.evaluate(() => {
+    const b = document.querySelector('.barre'), m = b.querySelector('.marque').getBoundingClientRect(), nav = b.querySelector('.nav');
+    // les lignes : les milieux des éléments visibles, regroupés quand ils sont à moins de 14 px l'un de l'autre
+    const milieux = [...b.querySelectorAll('.marque, .chercher, .qui > *, .nav > :not([hidden])')].filter(e => e.getBoundingClientRect().width > 0).map(e => { const r = e.getBoundingClientRect(); return (r.top + r.bottom) / 2; }).sort((x, y) => x - y);
+    const lignes = milieux.filter((y, i) => !i || y - milieux[i - 1] > 14).length;
+    return { h: Math.round(b.getBoundingClientRect().height), lignes, position: getComputedStyle(b).position, deborde: document.documentElement.scrollWidth > innerWidth || nav.scrollWidth > nav.clientWidth + 1,
+      caches: nav.querySelectorAll(':scope > a[hidden]').length, plus: !b.querySelector('.nav-plus').hidden, courante: !!nav.querySelector('a[aria-current="page"]:not([hidden])'), compte: b.classList.contains('r-compte'), haut: m.top };
+  });
+  const bas = hauteur <= 500;
+  ok(`en-tête (${largeur}×${hauteur}) : ${bas ? 'une ligne arrimée, 64 px au plus' : 'une ou deux lignes'}, rien ne déborde, la rubrique courante en vue, « Plus » dès qu’une chose n’y tient pas`,
+    t.lignes <= (bas ? 1 : 2) && !t.deborde && t.courante && (!bas || (t.h <= 64 && t.position === 'sticky')) && t.plus === (t.caches > 0 || t.compte), JSON.stringify(t));
+  if (t.plus) {
+    await page.focus('.nav-plus'); await page.keyboard.press('Enter'); await page.waitForTimeout(150);
+    const m = await page.evaluate(() => { const x = document.querySelector('#nav-autres'), r = x.getBoundingClientRect(), it = [...x.querySelectorAll('.na-item')];
+      return { ouvert: x.classList.contains('ouvert'), n: it.length, rub: it.filter(a => a.matches('a[href^="#/"]')).length, focus: document.activeElement?.classList.contains('na-item'), dedans: r.left >= 0 && r.right <= innerWidth + 1, cible: Math.min(...it.map(a => a.getBoundingClientRect().height)) }; });
+    await page.keyboard.press('ArrowDown');
+    const second = await page.evaluate(() => document.activeElement === document.querySelectorAll('#nav-autres .na-item')[1]);
+    await page.keyboard.press('Escape');
+    const ferme = await page.evaluate(() => !document.querySelector('#nav-autres').classList.contains('ouvert') && document.activeElement?.classList.contains('nav-plus'));
+    ok(`en-tête (${largeur}×${hauteur}) : « Plus » s’ouvre au clavier sur ce qui n’a pas tenu (${t.caches} rubrique${t.caches > 1 ? 's' : ''}${t.compte ? ', le compte' : ''}), cibles de 44 px, ↓ puis Échap rend le focus`,
+      m.ouvert && m.rub === t.caches && m.focus && m.dedans && m.cible >= 44 && second && ferme, JSON.stringify({ m, second, ferme }));
+    if (largeur === 1120 || largeur === 844) { await page.click('.nav-plus'); await page.waitForTimeout(250); await page.screenshot({ path: `${CAPT}/entete-plus-${largeur}.png` }); await page.keyboard.press('Escape'); }
+  }
+  ok(`en-tête (${largeur}×${hauteur}) : aucune erreur de script`, erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+
 // ================================================================================ les repères (axe-core : landmark-one-main, region)
 // l'en-tête, le menu des rubriques (nommé, la rubrique ouverte marquée), le contenu, le pied ; « Aller au contenu » en
 // premier arrêt du clavier, qui pose le focus sur le titre sans changer l'adresse ; la porte a aussi son repère principal
