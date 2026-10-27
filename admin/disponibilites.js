@@ -272,7 +272,7 @@ const DISPONIBILITES = (() => {
   }
   function accueilPropositions() {
     const nonConf = E.propositions.some(p => p.destinataires.some(d => d.courriel_statut === 'non_configure'));
-    return `<div class="bloc"><h3>Proposer des dates à l’équipe</h3>
+    return `<div class="bloc"><h3 aria-level="2">Proposer des dates à l’équipe</h3>
         <p>Des jours (une journée, une période ou quelques heures) proposés à quelques personnes : chacune est prévenue dans son espace et par courriel, et répond jour par jour, « disponible », « pas disponible » ou « peut-être », avec un mot si elle veut.</p>
         <p class="dp-p"><a class="btn principal" href="#/planning/proposer">＋ Proposer des dates</a></p>
         ${nonConf ? '<p class="aide">Le service de courriel n’est pas configuré (fonction crescite-courriel et sa clé d’envoi) : les personnes voient la proposition dans leur espace, et le suivi vous donne un courriel tout prêt pour les prévenir vous-même.</p>' : ''}</div>`;

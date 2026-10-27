@@ -231,6 +231,7 @@ html[data-outil-pdf="garde"] .hl-reseau[data-pour="pdf"] { display: none; }
 .btn.principal:hover { background: var(--magenta-fonce); border-color: var(--magenta-fonce); color: var(--sur-action); }
 .btn.petit { min-height: 38px; padding: 6px 14px; font-size: .92rem; gap: 6px; }
 .btn.petit .ic { width: 18px; height: 18px; }
+@media (pointer: coarse) { .btn.petit { min-height: 44px; } }   /* au doigt, un petit bouton reste une cible de 44 px */
 .btn.large { width: 100%; }
 .btn[disabled] { opacity: .5; cursor: default; transform: none; }
 .lien-btn { display: inline; min-height: 0; padding: 4px 2px; border: 0; background: none; color: var(--magenta); font-weight: 600; text-decoration: underline; text-underline-offset: .18em; cursor: pointer; }
@@ -249,6 +250,7 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 .mdp input { padding-right: 96px; }
 .mdp .voir { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); min-height: 36px; padding: 4px 12px; border: 0; border-radius: 999px; background: none; color: var(--magenta); font-weight: 600; font-size: .92rem; cursor: pointer; }
 .mdp .voir:hover { background: var(--magenta-doux); }
+@media (pointer: coarse) { .mdp .voir { min-height: 44px; } }
 .message { margin: 0 0 18px; padding: 12px 14px; border-radius: var(--rayon-s); border: 1px solid; font-weight: 500; }
 .message.erreur { background: var(--alerte-doux); border-color: color-mix(in srgb, var(--alerte) 35%, transparent); color: var(--alerte); }
 .message.info { background: var(--ok-doux); border-color: color-mix(in srgb, var(--ok) 30%, transparent); color: var(--ok); }
@@ -346,7 +348,7 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 .frise { position: relative; list-style: none; margin: 0 0 6px; padding: 0; }
 .frise::before { content: ""; position: absolute; left: 66px; top: 8px; bottom: 8px; width: 2px; border-radius: 2px; background: var(--filet); }
 .frise li { position: relative; display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 0 26px; padding: 5px 0 11px; }
-.frise li::before { content: ""; position: absolute; left: 61px; top: 10px; width: 12px; height: 12px; border-radius: 50%; background: var(--surface); border: 2px solid var(--filet); }
+.frise li::before { content: ""; position: absolute; left: 61px; top: 10px; width: 12px; height: 12px; border-radius: 50%; background: var(--surface); border: 2px solid var(--bord-champ); }
 .frise .h { font: 700 1rem/1.4 var(--sans); font-variant-numeric: tabular-nums; text-align: right; }
 .frise .t { font-weight: 600; line-height: 1.35; }
 .frise .s { display: block; color: var(--gris); font-size: .9rem; font-weight: 400; }
@@ -628,6 +630,7 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 .roles { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .roles li { display: inline-flex; align-items: center; gap: 7px; padding: 4px 11px; border-radius: 999px; background: var(--surface-2); font-size: .92rem; }
 .roles b { font-weight: 600; }
+.roles .pastille { background: var(--u-texte, var(--magenta)); }   /* (la couleur du spectacle ajustée : 3:1 au moins sur la puce) */
 .compte-mel { display: grid; gap: 2px; margin: 12px 0 8px; padding: 12px 14px; border-radius: var(--rayon-s); background: var(--surface-2); }
 .compte-mel dt { font-weight: 600; font-size: .88rem; color: var(--gris); }
 .compte-mel dd { margin: 0; font-weight: 600; word-break: break-all; }
@@ -1011,7 +1014,7 @@ html.modale-ouverte { overflow: hidden; }
 /* ———————————————— checklist camion */
 .camion-phases { display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 8px; margin-bottom: 12px; border-bottom: 1px solid var(--filet); }
 .camion-phase-btn { padding: 6px 14px; border-radius: 999px; border: 1.5px solid var(--filet); background: var(--surface); color: var(--gris); font: 600 0.86rem/1.2 var(--sans); cursor: pointer; white-space: nowrap; transition: background .15s, color .15s; }
-.camion-phase-btn.actif { background: var(--magenta); border-color: var(--magenta); color: #fff; }
+.camion-phase-btn.actif { background: var(--action); border-color: var(--action); color: var(--sur-action); }
 .camion-jauge { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 0.88rem; font-weight: 600; color: var(--gris); }
 .camion-barre { flex: 1; height: 8px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
 .camion-barre-fond { height: 100%; background: var(--ok); transition: width 0.3s ease; }

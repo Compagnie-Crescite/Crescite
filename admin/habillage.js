@@ -198,6 +198,25 @@ dialog.recherche, dialog.tab-dialogue, dialog.tb-brief { border-radius: var(--ra
 .connexion .marque small { color: var(--gris); }
 .connexion .marque .pieuvre { color: var(--accent); }
 @media (prefers-reduced-motion: reduce) { .ligne, .tb-l, .btn, .tb-tuile { transition: none; } .ligne:hover, .tb-l:hover, .btn.principal:hover { transform: none; } }
+/* le « Rouge » de la barre de la feuille de route, la nuit : le rouge de la feuille (sur le papier blanc) ne se lit pas sur
+   la carte de nuit ; l'étiquette prend le rouge clair des alertes (la feuille elle-même ne change pas) */
+:root:not([data-theme="jour"]) .a4-b .a4-rouge { color: var(--alerte); }
+/* la porte à 360 px : la marque passe à la ligne plutôt que d'élargir la carte */
+.connexion { grid-template-columns: minmax(0, 1fr); }
+.connexion .marque { flex-wrap: wrap; row-gap: 2px; white-space: normal; }
+/* Au doigt (un téléphone, une tablette) : chaque commande est une cible de 44 px. Les boutons, les commandes segmentées, les
+   puces, les onglets d'une fiche, les outils (mise en forme, feuille de route, tableau de bord), les listes déroulantes ;
+   les liens posés seuls sur leur ligne (une personne ou un lieu à compléter, un téléphone, une feuille de route, un
+   spectacle d'une fiche) prennent la hauteur d'un doigt. Les liens dans une phrase restent dans leur phrase. */
+@media (pointer: coarse) {
+  .btn, .seg > button, .puce, .onglets-ed button, .outils-riche button, .tb-ico, .tb-traiter, .a4-b, .a4-vues button, .tab-tri, select, .avant > summary { min-height: 44px; }
+  .btn.petit, .outils-riche button, .tb-ico, .tb-traiter, .a4-b, .tb-lien { min-width: 44px; }
+  .tb-lien { justify-content: center; }
+  .avant-fenetre select { min-height: 44px; min-width: 64px; }
+  .btn.petit, .tb-ico, .tb-traiter { display: inline-flex; align-items: center; justify-content: center; }
+  .tb-lien, .tb-cat a, .avant-corps a, a.coord, a.manque-tel, a.eq-feuille, .liste-simple a, .sous-champ a, .lieu-resume a, .eq-date a, .acces a { display: inline-flex; align-items: center; min-height: 44px; }
+  .doc-boutons, .crm-carte-actions { gap: 8px; }
+}
 
 /* ===================================================================================================== l'impression
    Une liste (Représentations, Lieux, Équipe, Diffusion…), une fiche ou le planning, sur papier : en blanc et noir, sans

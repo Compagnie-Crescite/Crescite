@@ -4317,7 +4317,7 @@
     if (i < 0 || xs.length < 2) return '';
     const v = x => (x ? { href: `#/${genre}/${x.id}`, titre: [jourCourt(x.debut), x.lieu ? x.lieu.commune || x.lieu.nom : ''].filter(Boolean).join(' · '), spectacle: x.spectacle?.titre || '' } : null);
     const quoi = genre === 'date' ? { prec: 'Date précédente', suiv: 'Date suivante', aucun: 'aucune' } : { prec: 'Feuille précédente', suiv: 'Feuille suivante', aucun: 'aucune' };
-    return `<nav class="nav-dates${ou === 'bas' ? ' nav-dates-bas' : ''}" aria-label="${genre === 'date' ? 'D’une date à l’autre' : 'D’une feuille à l’autre'}">${GESTES.precSuiv({ prec: v(xs[i - 1]), suiv: v(xs[i + 1]), libelle: x => x.titre, long: x => [x.titre, x.spectacle].filter(Boolean).join(', '), quoi, classe: 'btn petit', axe: 'horizontal', texte: true, nom: genre === 'date' ? 'Date précédente, date suivante' : 'Feuille précédente, feuille suivante' })}</nav>`;
+    return `<nav class="nav-dates${ou === 'bas' ? ' nav-dates-bas' : ''}" aria-label="${genre === 'date' ? 'D’une date à l’autre' : 'D’une feuille à l’autre'}${ou === 'bas' ? ', en bas de page' : ''}">${GESTES.precSuiv({ prec: v(xs[i - 1]), suiv: v(xs[i + 1]), libelle: x => x.titre, long: x => [x.titre, x.spectacle].filter(Boolean).join(', '), quoi, classe: 'btn petit', axe: 'horizontal', texte: true, nom: genre === 'date' ? 'Date précédente, date suivante' : 'Feuille précédente, feuille suivante' })}</nav>`;
   }
   // les gestes (../admin/gestes.js) : un appui long ou un clic droit sur un billet, une notification, un document, une
   // proposition ouvre ce qu'on peut en faire ; ← → et le balayage passent à la date (ou la feuille) d'avant, d'après
