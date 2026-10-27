@@ -4,7 +4,8 @@
    build.py l'ajoute après les données D ; chaque maquette l'habille dans son univers.
 
    INTRO.ouvrir({ fond, degrade, image, encre, tache, mot, sortie, classe, apres, vivante, cibles })
-     à appeler une fois, au chargement ; l'ouverture ne s'affiche que si l'adresse est celle de l'accueil
+     à appeler une fois, au chargement ; l'ouverture ne s'affiche que si l'adresse est celle de l'accueil : à chaque lancement
+     du site à sa racine (un rechargement aussi), jamais en y revenant depuis une autre page du site
      fond    : la couleur du fond (par défaut #14070f)
      degrade : un dégradé radial à la place du fond : [[0, '#3a1030'], [1, '#0d0710']] (du centre vers les bords)
      image   : une image (data URL) sous le logo, en couverture, par exemple une photo assombrie
@@ -36,7 +37,6 @@
      apres   : appelée quand le site est révélé (le focus va ensuite au titre h1 de la page)
    INTRO.ouverte()  vrai tant que l'ouverture est affichée ; l'évènement « intro:fin » est émis sur window à la fin
    ?intro=0 dans l'adresse : pas d'ouverture (captures, tests). Changer d'adresse ferme l'ouverture sans animation.
-   L'ouverture ne joue qu'une fois par session (sessionStorage) : à la première arrivée sur l'accueil.
 
    Le jeu (avec mouvement ; la lampe toujours, le reste avec la pieuvre vivante) : pendant l'ouverture, la pieuvre répond au
    pointeur, souris, doigt ou stylet. Elle le regarde : sa tête se tourne vers lui, ses tentacules s'y penchent. Il s'arrête
@@ -56,7 +56,6 @@ const INTRO = (() => {
   let el = null, etat = 'ferme', opts = {}, raf = 0, inertes = [], jeu = null;
   const COEUR = [771, 640];                          // le cœur de la pieuvre (comme la scène et la créature)
   let vie = null;                                    // la pieuvre vivante : { cv, ctx, TS, t, tPrec, dpr }
-  const VUE = 'crescite-intro-vue';                  // (sessionStorage : l'ouverture a déjà été vue dans cette session)
 
   function css() {
     if (document.getElementById('intro-style')) return;
@@ -105,9 +104,6 @@ const INTRO = (() => {
     if (el || etat !== 'ferme') return;
     const route = location.hash.replace(/^#\/?/, '').split('?')[0];
     if (route || new URLSearchParams(location.search).get('intro') === '0') return;
-    // une fois par session : la première arrivée sur l'accueil l'ouvre, les suivantes (un rechargement, un retour depuis un
-    // autre site) arrivent sur la page ; sans stockage (navigation privée stricte), elle s'ouvre comme avant
-    try { if (sessionStorage.getItem(VUE)) return; sessionStorage.setItem(VUE, '1'); } catch (e) { /* stockage indisponible : elle s'ouvre */ }
     opts = o;
     css();
     const encre = o.encre || '#fff', fond = o.fond || '#14070f';

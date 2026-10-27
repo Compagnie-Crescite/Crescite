@@ -2258,7 +2258,7 @@ html { view-transition-name: none; }
 /* l'encre d'un spectacle (Encre) : une toile fixe au-dessus de tout ; tant qu'elle couvre l'écran, c'est elle qu'on touche */
 .encre-page { position: fixed; inset: 0; z-index: 90; width: 100%; height: 100%; pointer-events: none; }
 .encre-page.couvre { pointer-events: auto; }
-/* le rideau (Rideau) : à chaque page qu'on ouvre par le menu, un court noir où la pieuvre nage (la créature, ses vraies
+/* le rideau (Rideau) : à chaque page qu'on ouvre par le menu depuis une autre (jamais vers l'accueil), un court noir où la pieuvre nage (la créature, ses vraies
    tentacules), puis le rideau s'ouvre en deux, comme au théâtre, et la pieuvre remonte à sa place dans le menu ; la page,
    déjà là dessous, se compose alors ligne à ligne (composer). Au-dessus de tout, sauf le menu (le haut, et au téléphone la
    barre du bas, qu'il porte), qui reste là, à sa place, tant qu'il est fermé (html.rideau-ferme) ; sous la pieuvre */
@@ -3482,7 +3482,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   });
 
   /* ---------- le rideau : le premier moment d'une page ----------
-     Ouvrir une page par le menu (ou arriver sur le site ailleurs que sur l'ouverture de l'accueil) : un court noir, le
+     Passer d'une partie du menu à une autre (jamais vers l'accueil, ni à l'arrivée sur le site) : un court noir, le
      rideau, où la pieuvre nage au milieu (la créature, ses vraies tentacules, à la couleur de la saison) ; puis le rideau
      s'ouvre en deux, comme au théâtre, la pieuvre remonte à sa place dans le menu, et la page, déjà là dessous (son titre a
      le focus), se compose ligne à ligne (composer). Le noir dure 420 ms, l'ouverture 480 : rien n'attend le rideau, il ne fait
@@ -8897,12 +8897,13 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     document.documentElement.classList.remove(vers0);
     cadre();
     relecture = !!relue;
-    // (le rideau : une page ouverte par le menu, ou la première hors de l'ouverture de l'accueil ; pas d'un onglet à l'autre
+    // (le rideau : seulement entre les parties du menu, une page ouverte depuis une autre ; jamais vers l'accueil, que la
+    // pieuvre de la scène ouvre (au lancement, l'ouverture sur le logo), ni à l'arrivée sur le site ; pas d'un onglet à l'autre
     // d'un spectacle ni en entrant dans un spectacle, que l'encre de son univers ouvre)
     // (fermé avant que la page se fasse : ses changements et ceux de la page se calculent ensemble, à l'image suivante) ; il
     // couvre la page neuve, déjà posée ; il s'ouvre et elle se compose (ses titres, ses filets, ce qui paraît au défilement ne
     // partent qu'alors)
-    const avecRideau = motionOK() && !INTRO.ouverte() && (premiere || type === 'page' || type === 'quitter') && !(avant && avant.chemin === a.chemin)
+    const avecRideau = motionOK() && !INTRO.ouverte() && !premiere && a.chemin !== '' && (type === 'page' || type === 'quitter') && avant.chemin !== a.chemin
       && Rideau.fermer(vite => {
         if (courant !== a) return;
         if (MV) MV.reveler(main, { immediat: false });
