@@ -6,7 +6,12 @@
 <title>Compagnie Crescite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,400;0,500;0,700;1,500&family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Raleway:wght@600;700&family=Space+Grotesk:wght@500;600&family=Cormorant+Garamond:wght@500;600&family=Bodoni+Moda:wght@700&family=Anton&family=Grenze+Gotisch:wght@600&family=IM+Fell+English:ital@0;1&family=IM+Fell+French+Canon:ital@0;1&display=swap">
+<!-- les polices (Google Fonts, font-display: swap) : leur feuille ne retient plus le premier rendu (media="print", puis
+     "all" une fois chargée ; sans script, la feuille ordinaire). Elles ne sont pas demandées plus tôt que le texte qui
+     les emploie : en 4G lente, la police des titres préchargée prenait sa bande passante à la page elle-même (le HTML
+     fini 150 ms plus tard, le plus grand rendu 250 à 550 ms plus tard) -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,400;0,500;0,700;1,500&family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Raleway:wght@600;700&family=Space+Grotesk:wght@500;600&family=Cormorant+Garamond:wght@500;600&family=Bodoni+Moda:wght@700&family=Anton&family=Grenze+Gotisch:wght@600&family=IM+Fell+English:ital@0;1&family=IM+Fell+French+Canon:ital@0;1&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,400;0,500;0,700;1,500&family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Raleway:wght@600;700&family=Space+Grotesk:wght@500;600&family=Cormorant+Garamond:wght@500;600&family=Bodoni+Moda:wght@700&family=Anton&family=Grenze+Gotisch:wght@600&family=IM+Fell+English:ital@0;1&family=IM+Fell+French+Canon:ital@0;1&display=swap"></noscript>
 <style>
 /* La synthèse : l'accueil et les cartes de la 06 (la tentacule comme thème), l'agenda de la 03 relié à la carte, les
    trois entrées nées des portes de la 04, et pour chaque spectacle un univers de compagnie (le dossier scolaire de
@@ -3150,6 +3155,19 @@ html.still .sc-image { transition: opacity .35s ease !important; }
 <footer><div class="wrap pied" id="pied"></div></footer>
 <script>const D = /*__DATA__*/null;</script>
 <script>
+/* la photo principale de la vue, demandée avant le script de la page : celle d'en-tête d'un spectacle (sa plus grande
+   image, celle du premier écran) part dès que D est lu, en priorité, au lieu d'attendre que la page soit dessinée (une
+   seconde et demie plus tard au téléphone, en 4G lente, et alors en concurrence avec les photos de la suite). Le site
+   construit pour l'essai, ses photos dans la page (data:), n'en a pas besoin */
+(() => { try {
+  const m = /^#\/spectacle\/([\w-]+)/.exec(location.hash), u = m && typeof D !== 'undefined' && D && D.photos && D.photos[m[1]];
+  if (!u || /^data:/.test(u)) return;
+  const l = document.createElement('link');
+  l.rel = 'preload'; l.as = 'image'; l.href = u; l.setAttribute('fetchpriority', 'high');
+  document.head.appendChild(l);
+} catch (e) { /* rien : la photo viendra avec la page */ } })();
+</script>
+<script>
 (() => {
   /* Mouvement : l'organique, rangé (la 10). Une seule langue, celle de la pieuvre et de son encre, dans sa version calme : peu
      de choses bougent, et toujours de la même façon. Deux courbes : douce (DOUX, --k-doux) pour ce qui se pose, souple (SOUPLE,
@@ -4301,8 +4319,10 @@ html.still .sc-image { transition: opacity .35s ease !important; }
      Entrée y mène tout de suite). Survoler un titre, ou sa tentacule, tire un peu dessus (sa pointe se déroule). Sinon les
      photos des spectacles s'enchaînent en fondu. Le
      bouton de pause arrête tout ce qui bouge de lui-même ; moins d'animations : rien ne bouge, les photos changent d'un
-     fondu bref. La scène est faite une fois et replacée dans l'accueil à chaque rendu : quand D change, rien ne se rejoue. */
-  const Scene = (() => {
+     fondu bref. La scène est faite une fois et replacée dans l'accueil à chaque rendu : quand D change, rien ne se rejoue.
+     Elle n'est faite qu'à sa première montée (faireScene) : ses huit tentacules (PIEUVRE.creer) coûtaient 140 ms au téléphone
+     ralenti avant le premier rendu de toute page, même sans accueil ; d'ici là, la façade (Scene) répond pour elle */
+  const faireScene = () => {
     const el = document.createElement('section');
     el.className = 'scene'; el.id = 'scene'; el.setAttribute('aria-labelledby', 'scene-h');
     el.innerHTML = `<div class="sc-diapo" aria-hidden="true"><div class="sc-cadre"></div></div><canvas class="sc-toile" aria-hidden="true"></canvas>
@@ -4847,7 +4867,21 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       // un geste : la pieuvre lui laisse la main (ms)
       suspendre(ms = 600) { repit = performance.now() + ms; },
     };
-  })();
+  };
+  // (la façade : ce qui ne fait que regarder ou retenir la scène, avant qu'elle existe, rend ce qu'elle rendrait cachée ; le
+  // reste la fait d'abord)
+  let sceneFaite = null;
+  const laScene = () => sceneFaite || (sceneFaite = faireScene());
+  const Scene = {
+    monter: (place, surPlace) => laScene().monter(place, surPlace),
+    montrer: oui => { if (oui || sceneFaite) laScene().montrer(oui); else Menu.enHaut(); },
+    eveiller: relais => laScene().eveiller(relais),
+    cible: () => (sceneFaite ? sceneFaite.cible() : null),
+    bras: () => laScene().bras(),
+    cibles: () => (sceneFaite ? sceneFaite.cibles() : []),
+    coeur: () => laScene().coeur(),
+    suspendre: ms => { if (sceneFaite) sceneFaite.suspendre(ms); },
+  };
   window.Scene = Scene;   // (pour les contrôles : l'état des tentacules se lit depuis l'extérieur)
 
   /* ---------- l'accueil, 2 : le menu (règle 21) est le menu flottant, posé sous la pieuvre (Menu, Scene) ---------- */
@@ -7118,7 +7152,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         ${prochaine ? `<p class="une-date">${esc(prochaine.ligne)}</p>` : ''}<p class="u-cta">${cta}</p>`;
     }
     return `<section class="sp-une sp-une${entree ? 7 : 10}${ouvDeja ? ' deja' : ''}" id="c-une" data-scrolly data-fx="une">
-      <div class="une-ph"${edP(s, 'photo')}><img src="${D.photos[s.slug]}" alt="" style="object-position:${foc}% 38%" decoding="async"></div>
+      <div class="une-ph"${edP(s, 'photo')}><img src="${D.photos[s.slug]}" alt="" style="object-position:${foc}% 38%" fetchpriority="high" decoding="async"></div>
       <div class="une-ombre" aria-hidden="true"></div><div class="une-lueur" aria-hidden="true"></div>
       <div class="une-motif" aria-hidden="true">${motifG(m)}</div>
       <div class="wrap une-corps"><div class="une-texte">${texte}</div></div>
