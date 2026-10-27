@@ -118,6 +118,19 @@ tentacule attrape le médaillon du métier qu'on lit, qui s'anime. Choisir quelq
 sa fiche s'ouvre par-dessus sa photo (plus bas) ; la pieuvre sursaute, puis ses tentacules, lumineuses, vont tenir la
 fiche et ses autres places (`c.tenir`), à la place des fils des liens.
 
+**Le rideau et la page qui se compose.** Ouvrir une page par le menu (ou arriver sur le site ailleurs que par l'ouverture
+de l'accueil) fait tomber un court noir, le rideau (`Rideau`, dans `index.html`) : la pieuvre y nage au milieu, une
+créature aux vraies tentacules, à la couleur de la saison. Après 420 ms, le rideau s'ouvre en deux comme au théâtre
+(480 ms), la pieuvre remonte à sa place dans le menu, et la page, déjà là dessous (son titre a le focus), se compose
+(`composer`) : un trait de lumière descend l'écran et chaque ligne s'écrit quand il l'atteint, de gauche à droite (un
+paragraphe se découvre de haut en bas, ligne à ligne), les cadres se posent juste avant leur texte,
+les photos sortent du flou. Seulement ce qui est à l'écran ; ce qui a déjà son propre mouvement (le titre qui fleurit, ce
+qui paraît au défilement) le garde, et ne part qu'à l'ouverture du rideau. Ni rideau en entrant dans un spectacle (l'encre
+de son univers l'ouvre) ni d'un onglet à l'autre d'un spectacle. Un geste (un clic, une touche, la molette, le doigt)
+ouvre le rideau aussitôt, et la page est alors là sans se composer ; de même sur un appareil trop lent pour la composer
+en douceur (le rideau compte ses images pendant le noir : moins de vingt-cinq par seconde, pas de composition). Moins d'animations, ou `?anim=0` : ni l'un ni l'autre.
+Ces animations portent l'id `rideau` ou `compose` : `onglets.mjs` les finit avant de lire une page.
+
 `onglets.mjs` compare chaque texte affiché aux sources et signale tout texte qui n'en vient pas ; il vérifie aussi
 le menu (à portée sur chaque vue, un seul élément marqué comme courant), les redirections des anciennes adresses,
 la page de l'espace pro, la présence des contenus attendus de chaque vue et l'ordre de l'agenda
