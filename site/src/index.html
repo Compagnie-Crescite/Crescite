@@ -2252,6 +2252,10 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 .s7-chip:hover { color: var(--encre); border-color: var(--c, var(--saison-vive)); }
 .s7-chip[aria-pressed="true"] { color: var(--encre); border-color: var(--c, var(--saison-vive)); background: color-mix(in srgb, var(--c, var(--saison-vive)) 12%, transparent); box-shadow: inset 0 0 0 1px var(--c, var(--saison-vive)); }
 .s7-chip .croix { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+/* (une puce qui ne garderait rien, ajoutée aux filtres en cours, est éteinte : estompée, son nombre à 0, ni survol ni pression) */
+:is(.s7-chip, .sm7-b)[aria-disabled="true"] { opacity: .42; cursor: not-allowed; }
+:is(.s7-chip, .sm7-b)[aria-disabled="true"]:is(:hover, .mv-presse) { scale: none; color: color-mix(in srgb, var(--encre) 86%, transparent); border-color: color-mix(in srgb, var(--encre) 30%, transparent); background: transparent; }
+.sm7 .sm7-b[aria-disabled="true"] .sm7-v { scale: none; filter: grayscale(1); }
 .s7-chip--lieu { --c: var(--saison-vive); }
 /* (une puce ne dépasse jamais sa rangée : un titre trop long, « Mon Royaume pour un cheval – Romeo & Juliet » au téléphone,
    s'abrège d'une ellipse ; le texte entier reste dans la page, pour les lecteurs d'écran) */
@@ -2317,6 +2321,7 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 .sm7-b:is(:hover, :focus-visible) .sm7-v { scale: 1.06; }
 .sm7-b[aria-pressed="true"] { background: color-mix(in srgb, var(--c) 24%, transparent); color: var(--encre); }
 .sm7-b[aria-pressed="true"] .sm7-v { box-shadow: 0 0 0 2px var(--sm-fond), 0 0 0 5px var(--c); }
+.sm7-b small:empty, .s7-chip small:empty { display: none; }
 .sm7-b small, .s7-chip small { flex: none; min-width: 1.45em; padding: 0 .35em; border-radius: 999px; background: color-mix(in srgb, var(--c, var(--gris)) 24%, transparent); color: var(--encre);
   font: 700 .7rem/1.5 var(--texte); text-align: center; font-variant-numeric: tabular-nums; }
 .sm7--passe { position: static; margin: 0 0 1.4rem; background: none; }
@@ -5594,8 +5599,23 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       vis.forEach(({ s }) => { if (F.ouv.has(s.k)) lierSaison($(`#sai-${s.k}`, racine), s); });
       dessineIndex(vis);
     }
+    // (une puce de spectacle ou de commune qui, ajoutée aux filtres en cours, ne garderait rien s'éteint, eteindre : dans la
+    // saison en cours, ce qu'elle garderait de la saison (les mêmes repères que la frise, le mois choisi compris ; une date
+    // choisie, elle, cède la place au spectacle qu'on choisit) ; dans les saisons passées, ce qu'elle garderait d'elles)
+    const gardeAvec = (slug, l) => r => (!slug || r.cle === slug) && (l === null || r.l === l || (r.d && r.d.l === l)) && (!terme() || r.txt.includes(terme()));
+    const nSaisonAvec = (slug, l) => ptsSaison(gardeAvec(slug, l)).filter(([, p]) => !F.mois || dansMois(borne(p.jour), borne(p.fin || p.jour), F.mois)).length;
+    // (le nombre des saisons passées compte ses dates jouées, comme leur rangée ; une ligne qu'il ne compte pas, une date qui ne
+    // dit que son année, n'éteint pas la puce)
+    const nPassesAvec = (slug, l) => { const g = gardeAvec(slug, l), rs = passe.flatMap(sa => sa.rows.filter(g)); return [rs.filter(r => !r.suite && jouee(r)).length, !rs.length]; };
+    function eteindreSaison(dans) {
+      if (!dans) return;
+      $$('[data-s]', dans).forEach(b => { const on = b.dataset.s === F.slug;
+        if (b.closest('.sm7--passe, [data-passe]')) { const [n, rien] = nPassesAvec(b.dataset.s, F.l); eteindre(b, n, on, rien); } else eteindre(b, nSaisonAvec(b.dataset.s, F.l), on); });
+      $$('[data-l]', dans).forEach(b => { if (b.tagName === 'BUTTON') eteindre(b, nSaisonAvec(F.slug, +b.dataset.l), +b.dataset.l === F.l); });
+    }
     function majOutils() {
       $$('[data-s]', main).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.s === F.slug)));
+      eteindreSaison($('#sm7', main)); eteindreSaison($('.sm7--passe', main));
       if ($('#cherche').value !== F.q) $('#cherche').value = F.q;
       majFiltres();
       fond();
@@ -5746,7 +5766,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // (une étiquette de spectacle : pressée à l'instant, dans l'image du geste ; les listes suivent à l'image d'après, la
     // dernière demandée l'emporte)
     let jFiltre = 0;
-    $$('[data-s]', main).forEach(b => b.addEventListener('click', () => { F.slug = F.slug === b.dataset.s ? null : b.dataset.s;
+    $$('[data-s]', main).forEach(b => b.addEventListener('click', () => { if (b.getAttribute('aria-disabled') === 'true') return; F.slug = F.slug === b.dataset.s ? null : b.dataset.s;
       $$('[data-s]', main).forEach(x => x.setAttribute('aria-pressed', String(x.dataset.s === F.slug)));
       const j = ++jFiltre; ensuite(() => { if (j === jFiltre && racine.isConnected) dessine(true); }); }));
     let tempo = 0;
@@ -6000,7 +6020,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
             <div class="s7-cherche-c"><label class="s7-cherche"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5"/><path d="M11 11l4 4"/></svg><input type="search" id="fe7-q" placeholder="${esc(L.rechercher)}" aria-label="${esc(L.rechercher)}" autocomplete="off" value="${esc(F.q)}"></label></div>
             <section aria-labelledby="fe7-hm"><h3 class="fe7-h" id="fe7-hm">${esc(S0.titre)}</h3><div class="fe7-mois">${moisSaison.map(x => `<button type="button" class="fe7-m" data-mois="${x.k}" aria-pressed="false" aria-label="${esc(`${MOIS_NOMS[x.m]} ${x.a}`)}"><b>${esc(MC[x.m] || MOIS_NOMS[x.m])}</b><small></small></button>`).join('')}</div></section>
             ${spSaison.length ? `<section aria-labelledby="fe7-hs"><h3 class="fe7-h" id="fe7-hs">${esc(L.spectacles)}</h3><div class="fe7-puces fe7-lg">${spSaison.map(x => puceSp(x, nSaison.get(x.cle))).join('')}</div></section>` : ''}
-            ${spPasses.some(x => !nSaison.has(x.cle)) ? `<section aria-labelledby="fe7-hp"><h3 class="fe7-h" id="fe7-hp">${esc(L.saisonsPassees)}</h3><div class="fe7-puces">${spPasses.filter(x => !nSaison.has(x.cle)).map(x => puceSp(x)).join('')}</div></section>` : ''}
+            ${spPasses.some(x => !nSaison.has(x.cle)) ? `<section aria-labelledby="fe7-hp"><h3 class="fe7-h" id="fe7-hp">${esc(L.saisonsPassees)}</h3><div class="fe7-puces" data-passe>${spPasses.filter(x => !nSaison.has(x.cle)).map(x => puceSp(x)).join('')}</div></section>` : ''}
             ${L.communes ? `<section aria-labelledby="fe7-hl"><h3 class="fe7-h" id="fe7-hl">${esc(L.communes)}</h3><div class="fe7-puces">${communes().map(([l, t]) => `<button class="s7-chip" type="button" data-l="${l}" aria-pressed="false">${esc(t)}</button>`).join('')}</div></section>` : ''}
           </div>
           <div class="fe7-pied">${L.effacerFiltres ? `<button type="button" class="ft7-tout" data-eff="tout">${esc(L.effacerFiltres)}</button>` : ''}<button type="button" class="bouton e fe7-voir" style="--ec:var(--saison)"><span>${esc(L.voirLesDates)}</span><b>${n}</b></button></div>`;
@@ -6013,6 +6033,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         $$('.fe7-m', pan).forEach(b => { const c = nb(b.dataset.mois); b.setAttribute('aria-pressed', String(b.dataset.mois === F.mois)); $('small', b).textContent = c ? String(c) : ''; if (c) b.removeAttribute('aria-disabled'); else b.setAttribute('aria-disabled', 'true'); });
         $$('[data-s]', pan).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.s === F.slug)));
         $$('[data-l]', pan).forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.l === F.l)));
+        eteindreSaison(pan);
         const q = $('#fe7-q', pan); if (q && q.value !== F.q && document.activeElement !== q) q.value = F.q;
         const t = $('.ft7-tout', pan); if (t) t.hidden = !fs.length;
         const v = $('.fe7-voir b', pan); if (v) v.textContent = String(nVoir().n);
@@ -6043,6 +6064,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         if (b.classList.contains('fe7-voir')) { fermer(true); return; }
         if (b.dataset.eff) { effacer(b.dataset.eff); return; }
         if (b.dataset.mois) { if (b.getAttribute('aria-disabled') === 'true') return; choisirMois(F.mois === b.dataset.mois ? null : b.dataset.mois, 'clic'); if (!dansPanneau) setTimeout(allerAuxDates, 120); return; }
+        if ((b.dataset.s || b.dataset.l) && b.getAttribute('aria-disabled') === 'true') return;
         if (b.dataset.s) { F.slug = F.slug === b.dataset.s ? null : b.dataset.s; dessine(true); return; }
         if (b.dataset.l) { const l = +b.dataset.l; F.l = F.l === l ? null : l; dessine(true); }
       };
@@ -6222,6 +6244,12 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       if (t !== avant) history.replaceState(history.state, '', `${location.pathname}${location.search}${chemin}${t ? '?' + t : ''}`);
     } catch (e) { /* l'adresse reste telle quelle */ }
   }
+  // une puce de filtre qui ne garderait rien (n = 0), ajoutée aux filtres en cours, s'éteint : aria-disabled (elle reste au clavier,
+  // et le lecteur d'écran la dit indisponible), son nombre à 0 ; elle se rallume quand elle aurait de quoi. La puce choisie
+  // (on) ne s'éteint jamais : on doit pouvoir la rendre. (Son nombre, s'il est écrit : <small> ; rien, quand elle garderait
+  // autre chose que ce qu'elle compte : une résidence, qui n'est pas une représentation)
+  const eteindre = (b, n, on = false, rien = !n) => { const x = $('small', b), t = rien ? '0' : n ? String(n) : ''; if (x && x.textContent !== t) x.textContent = t;
+    if (rien && !on) b.setAttribute('aria-disabled', 'true'); else b.removeAttribute('aria-disabled'); };
   // (le nombre en chiffres gras, à part de ses mots : « <b>4</b> spectacles »)
   const nSpectacles = n => esc(n === 1 ? L.unSpectacle || '1' : String(L.nSpectacles || '{n}').replace('{n}', n)).replace(/\d+/, x => `<b>${x}</b>`);
   function filtresEtab(xs) {
@@ -6250,7 +6278,11 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       // les sections montrées)
       $$('section[id^="e-g"], #e-reste', main).forEach(sec => { sec.hidden = !$$('li.ac', sec).some(li => !li.hidden); });
       psomB.forEach((b, i) => { const c = document.getElementById(b.dataset.som); const cache = !!(c && c.hidden); b.closest('li').hidden = cache; psomC[i] = cache ? null : c; });
-      $$('[data-ef]', zone).forEach(b => b.setAttribute('aria-pressed', String((b.dataset.ef === 'lieu' ? F.lieu : F.pub) === b.dataset.v)));
+      // (chaque puce dit ce qu'elle garderait, ajoutée aux filtres en cours : celle qui ne garderait rien s'éteint, aria-disabled
+      // et son nombre à 0, et se rallume quand elle aurait de quoi ; la puce choisie reste active, pour la rendre)
+      $$('[data-ef]', zone).forEach(b => { const k = b.dataset.ef === 'lieu' ? 'lieu' : 'pub', on = F[k] === b.dataset.v, G = { ...F, [k]: b.dataset.v };
+        const c = fiches.filter(li => (!G.lieu || li.dataset.efLieu === G.lieu) && (!G.pub || li.dataset.efPublic === G.pub)).length;
+        b.setAttribute('aria-pressed', String(on)); eteindre(b, c, on); });
       const t = $('[data-ef-tout]', zone); if (t) t.hidden = !(F.lieu || F.pub);
       const p = $('#ef-n', zone), h = nSpectacles(n); if (p.__h !== h) { p.__h = h; p.innerHTML = h; }
       if (vue === 'etablissement' && zone.isConnected) adresseVue({ lieu: F.lieu, public: F.pub });
@@ -6258,7 +6290,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     zone.addEventListener('click', e => {
       const b = e.target.closest('button'); if (!b) return;
       if (b.matches('[data-ef-tout]')) { F.lieu = null; F.pub = null; appliquer(); const x = $('[data-ef]', zone); if (x) x.focus(); return; }
-      if (!b.dataset.ef) return;
+      if (!b.dataset.ef || b.getAttribute('aria-disabled') === 'true') return;
       const k = b.dataset.ef === 'lieu' ? 'lieu' : 'pub';
       F[k] = F[k] === b.dataset.v ? null : b.dataset.v;
       appliquer();
