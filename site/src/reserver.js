@@ -23,8 +23,9 @@
    RESERVER.lieu(d)            le nom du lieu, ou null
    RESERVER.jours(d)           { semaine: ['ven.'], jour: '18', mois: ['déc.'] } : la date écrite court (AGENDA.court, avec les
                                noms courts de D.site.libelles) ; deux jours qui se suivent : ['jeu.', 'ven.'], '19 – 20' ;
-                               plusieurs : '8 – 11' ; une période : '12 – 20' ; un mois : 'mars', ['2027']
-   RESERVER.bouton(d, o)       le HTML du bouton d'une date, qui se lit « ven. 18 déc. · 14h, 20h · Pont-Audemer » :
+                               plusieurs : '8 – 11' ; une période : '12 – 20' ; un mois : 'mars', ['2027'] (l'intervalle :
+                               un tiret demi-cadratin entre deux espaces fines insécables, qui ne se coupe jamais)
+   RESERVER.bouton(d, o)       le HTML du bouton d'une date, qui se lit « ven. 18 déc. · 14h, 20h — Pont-Audemer » :
                                <button class="rs-date" data-reserver="<clé>" aria-pressed> ; o.choisi, o.classe, o.style
                                (les variables de l'univers), o.attributs (une chaîne : data-date-id…, aria-controls…)
    RESERVER.bande(dates, o)    le HTML de la bande : <div class="rs-bande" role="group" aria-label="<o.libelle, ou
@@ -126,7 +127,7 @@ const RESERVER = (() => {
     const a = court(js[0]), b = court(js[js.length - 1]);
     if (js.length === 1) return { semaine: [a.semaine], jour: a.jour, mois: [a.mois] };
     const suivis = js.length === 2 && Date.parse(js[1]) - Date.parse(js[0]) === 864e5;
-    return { semaine: suivis ? [a.semaine, b.semaine] : [], jour: `${a.jour} – ${b.jour}`, mois: js[0].slice(0, 7) === js[js.length - 1].slice(0, 7) ? [a.mois] : [a.mois, b.mois] };
+    return { semaine: suivis ? [a.semaine, b.semaine] : [], jour: `${a.jour}${ENTRE}${b.jour}`, mois: js[0].slice(0, 7) === js[js.length - 1].slice(0, 7) ? [a.mois] : [a.mois, b.mois] };
   }
   // les précisions de la date, quand elles disent plus que la carte (celles que l'agenda compose des séances, non)
   function precisions(d) {
@@ -157,13 +158,15 @@ const RESERVER = (() => {
   const photo = s => (s && typeof D !== 'undefined' && D.photos ? D.photos[s.slug] || null : null);
 
   /* ---------------------------------------------------------------------------------------------- le HTML */
-  const mots = xs => xs.map(x => `<span>${esc(x)}</span>`).join(' – ');
+  // (l'intervalle de la forme courte : un tiret demi-cadratin entre deux espaces fines insécables, qui ne se coupe jamais)
+  const ENTRE = '\u202f–\u202f';
+  const mots = xs => xs.map(x => `<span>${esc(x)}</span>`).join(ENTRE);
   function bouton(d, o = {}) {
     const Lb = L(), j = jours(d), h = heures(d), k = cle(d);
     return `<button type="button" class="rs-date${o.classe ? ' ' + o.classe : ''}" data-reserver="${esc(k)}" aria-pressed="${o.choisi ? 'true' : 'false'}"${o.attributs || ''}${o.style ? ` style="${esc(o.style)}"` : ''}>`
       + `<span class="rs-q">${j.semaine.length ? `<span class="rs-s">${mots(j.semaine)}</span> ` : ''}<b class="rs-n">${esc(j.jour)}</b>${j.mois.length ? ` <span class="rs-m">${mots(j.mois)}</span>` : ''}</span>`
       + `<span class="rs-sep"> · </span><span class="rs-h${h.length ? '' : ' rs-h--sans'}">${h.length ? h.map(x => `<span>${esc(x)}</span>`).join(', ') : `<span>${esc(Lb.horaireAPreciser)}</span>`}</span>`
-      + `<span class="rs-sep"> · </span><span class="rs-o">${esc(commune(d))}</span></button>`;
+      + `<span class="rs-sep"> — </span><span class="rs-o">${esc(commune(d))}</span></button>`;
   }
   function bande(ds, o = {}) {
     const Lb = L(), k = o.choisie == null ? null : String(o.choisie);

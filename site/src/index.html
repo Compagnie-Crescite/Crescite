@@ -3395,12 +3395,25 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   const retenu = (cle, f) => { const m = memoire.get(cle); if (m && m.v === versionD) return m.x; const x = f(); memoire.set(cle, { v: versionD, x }); return x; };
 
   /* ---------- les lignes de date : découpées, jamais réécrites ---------- */
+  /* les dates, dites de la même façon partout (FORME_DATES) :
+     - la forme longue, pour les titres et les phrases : celle de l'agenda (AGENDA.quand, D.dates[].ligneDate), « 18 décembre
+       2026 », « 29 et 30 janvier 2027 », « du 12 au 20 février 2027 », « mai 2027 », et les intertitres « novembre 2026 » ;
+     - la forme courte, pour les boutons et les puces : le jour de la semaine et le mois abrégés (AGENDA.court, D.site.libelles
+       joursCourts et moisCourts), « ven. 18 déc. », plusieurs jours « ven. – sam. 29 – 30 janv. », un mois seul « mars 2027 »,
+       les mois d'une saison « déc. » ; l'intervalle, un tiret demi-cadratin entre deux espaces fines insécables (ENTRE : il ne
+       se coupe jamais) ;
+     - une année seule, telle quelle, « 2019 » ; une saison, « 2019-2020 » ;
+     - entre la date et le lieu, partout, le tiret cadratin des lignes de l'agenda : « 18 décembre 2026 — Pont-Audemer (27) »,
+       « ven. 18 déc. — Pont-Audemer ». Les lignes venues de la base (D.dates[].ligne) sont du contenu : elles ne changent pas. */
+  const ENTRE = '\u202f–\u202f';
   const MOIS = 'janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre';
   const RE_MOIS = new RegExp(`^(.*?)\\s*((?:${MOIS})\\s+\\d{4})$`);
   // « 18 décembre 2026 » → ["18", "décembre 2026"] ; « mars 2027 » → ["mars", "2027"]
   const coupe = ligne => { const m = String(ligne || '').match(RE_MOIS); return !m ? [ligne || '', ''] : m[1] ? [m[1], m[2]] : m[2].split(/\s+/); };
   const moisDe = ligne => (String(ligne || '').match(RE_MOIS) || [])[2] || '';
-  const quand = (ligneDate, iso) => { const [j, m] = coupe(ligneDate); return `<time${iso ? ` datetime="${iso}"` : ''}><b>${esc(j)}</b>${m ? `<small>${esc(m)}</small>` : ''}</time>`; };
+  // (le jour en gras, le mois et l'année dessous ; entre eux une espace, que l'œil ne voit pas : « 12 novembre 2026 » se lit
+  // d'un tenant, et non « 12novembre »)
+  const quand = (ligneDate, iso) => { const [j, m] = coupe(ligneDate); return `<time${iso ? ` datetime="${iso}"` : ''}><b>${esc(j)}</b>${m ? ` <small>${esc(m)}</small>` : ''}</time>`; };
   const details = Ls => Ls && Ls.length ? `<ul class="det">${Ls.map(x => { const t = typeof x === 'string' ? x : x.texte, h = typeof x === 'string' ? null : x.lien;
     return `<li>${h ? `<a href="${esc(h)}" target="_blank" rel="noopener">${esc(t)}${DEHORS()}</a>` : esc(t)}</li>`; }).join('')}</ul>` : '';
 
@@ -3893,10 +3906,10 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const ms = Array.from({ length: 12 }, (_, i) => { const m = (8 + i) % 12, a = a0 + (8 + i >= 12 ? 1 : 0); return { k: `${a}-${String(m + 1).padStart(2, '0')}`, m, a, i }; });
     const jourDu = iso => +String(iso).slice(8, 10);
     const nbJours = (a, m) => new Date(Date.UTC(a, m + 1, 0)).getUTCDate();
-    // le jour écrit : « 12 », « 19–20 » (plusieurs jours : le premier et le dernier) ; une date qui n'a gardé que son mois, le
-    // nom court de son mois
+    // le jour écrit : « 12 », « 19 – 20 » (plusieurs jours : le premier et le dernier, la forme courte des boutons de date,
+    // FORME_DATES) ; une date qui n'a gardé que son mois, le nom court de son mois
     const ecrit = p => { if (p.precision === 'month' || !/^\d{4}-\d{2}-\d{2}/.test(p.jour || '')) return MC[+String(p.jour).slice(5, 7) - 1] || '•';
-      const a = jourDu(p.jour), b = p.fin && p.fin !== p.jour ? jourDu(p.fin) : a; return b !== a ? `${a}–${b}` : String(a); };
+      const a = jourDu(p.jour), b = p.fin && p.fin !== p.jour ? jourDu(p.fin) : a; return b !== a ? `${a}${ENTRE}${b}` : String(a); };
     // (ce que la pastille montre, le lecteur d'écran l'entend : « Scolaire », « Résidence », l'état, et une date jouée, vidée
     // et cochée, « jouée »)
     const nom = p => [p.quand, p.titre, p.l != null && CARTE.lieux[p.l] ? CARTE.nom(CARTE.lieux[p.l]) : '', p.scolaire && L.scolaire, p.residence && L.residence,
@@ -4886,9 +4899,13 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const ma = tete.match(RE_MOIS_AN);
     return ma ? `${ma[2]}-${p2(mois(ma[1]))}-31` : null;
   }
-  // « 24 janvier 2020 à 20h — Théâtre en Seine, Duclair (76) » → { jour: « 24 », heure: « à 20h », lieu: « Théâtre en Seine, Duclair (76) » }
-  function decoupe(ligne) {
-    const t = String(ligne || ''), m = t.match(RE_LIGNE);
+  // « 24 janvier 2020 à 20h — Théâtre en Seine, Duclair (76) » → { jour: « 24 », heure: « à 20h », lieu: « Théâtre en Seine, Duclair (76) » } ;
+  // une ligne qui ne dit que son année, « 2019 — Lycée Sembat, Rouen (76) » → { jour: « 2019 », lieu: « Lycée Sembat, Rouen (76) » } (son année
+  // dans la colonne des dates, comme les autres, et non collée à son lieu ; une ligne de suite, qui n'a pas de colonne des
+  // dates, la garde entière)
+  function decoupe(ligne, suite = false) {
+    const t = String(ligne || ''), m = t.match(RE_LIGNE), an = !m && !suite && t.match(/^\s*(\d{4})\s*—\s*(\S[\s\S]*)$/);
+    if (an) return { jour: an[1], heure: '', lieu: an[2].trim() };
     if (!m) return { jour: '', heure: '', lieu: t.trim() };
     const reste = m[3], k = reste.indexOf('—'), c = reste.search(/\s:\s/);
     const [h, l] = k >= 0 ? [reste.slice(0, k), reste.slice(k + 1)] : c >= 0 ? [reste.slice(0, c), reste.slice(c + 3)] : ['', reste];
@@ -4957,7 +4974,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   const DOUBLE_HAUT = '<svg class="fleche" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 11l6-5 6 5M6 18l6-5 6 5"/></svg>';
   // (pre : un préfixe de la clé de mouvement, quand la même ligne paraît deux fois dans la vue)
   const ligneAgenda = (r, pre = '', sansTitre = false) => {
-    const { d, g } = r, sp = g.slug && bySlug[g.slug], p = decoupe(d.ligne);
+    const { d, g } = r, sp = g.slug && bySlug[g.slug], p = decoupe(d.ligne, r.suite);
     const titre = r.suite || sansTitre ? '' : sp ? `<a class="t" href="${lienSp(g.slug, 'voir')}">${esc(r.titre)}</a>` : `<span class="t">${esc(r.titre)}</span>`;
     const lieu = p.lieu ? (d.lien ? `<a class="ou" href="${esc(d.lien)}" target="_blank" rel="noopener">${esc(p.lieu)}${DEHORS()}</a>` : `<span class="ou">${esc(p.lieu)}</span>`) : '';
     return `<li data-date-id="${esc(d.id ?? '')}" data-frise-id="${esc(r.fid)}" data-mv-cle="${esc(pre + r.fid)}"${d.l != null ? ` data-l="${d.l}"` : ''}${r.suite ? ' class="suite"' : ''} style="--c:${couleurDe(g.slug)}">${r.suite ? '' : `<time${d.iso ? ` datetime="${d.iso}"` : ''}><b>${esc(p.jour)}</b>${p.heure ? `<small>${esc(p.heure)}</small>` : ''}</time>`}<div class="qui">${titre}${d.scolaire ? `<em class="tag">${esc(L.scolaire)}</em>` : ''}${d.residence ? `<em class="tag">${esc(L.residence)}</em>` : ''}${d.etat ? `<em class="etat">${esc(d.etat)}</em>` : ''}${lieu}${details(d.details)}</div></li>`;
@@ -5463,7 +5480,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // une ligne de toute la saison (la 07) : le jour, l'heure, « Scolaire », « Résidence », l'état ; le spectacle dans sa police,
     // le lieu, les précisions ; une date déjà jouée, éteinte
     const ligneToute = r => {
-      const { d, g } = r, sp = g.slug && bySlug[g.slug], p = decoupe(d.ligne), passee = !!(r.k && r.k < D.aujourdhui);
+      const { d, g } = r, sp = g.slug && bySlug[g.slug], p = decoupe(d.ligne, r.suite), passee = !!(r.k && r.k < D.aujourdhui);
       const lieu = p.lieu ? `<p class="d7-lieu">${d.lien ? `<a href="${esc(d.lien)}" target="_blank" rel="noopener">${esc(p.lieu)}${DEHORS()}</a>` : esc(p.lieu)}</p>` : '';
       const marques = `${d.scolaire ? `<p class="d7-tag">${esc(L.scolaire)}</p>` : ''}${d.residence && L.residence ? `<p class="d7-tag d7-tag--rs">${esc(L.residence)}</p>` : ''}${d.etat ? `<p class="d7-etat">${esc(d.etat)}</p>` : ''}`
         + (passee && !r.suite && !d.residence && !d.etat && L.jouee ? `<p class="sr">${esc(L.jouee)}</p>` : '');   // (éteinte à l'œil : jouée, à l'oreille)
@@ -5476,7 +5493,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // une ligne d'une saison passée (la 04) : le jour et l'heure ; le lieu (lien s'il existe), le spectacle derrière sa petite
     // porte, « Scolaire », « Résidence » (son carré évidé), l'état, les précisions
     const ligneP4 = r => {
-      const { d, g } = r, sp = g.slug && bySlug[g.slug], p = decoupe(d.ligne);
+      const { d, g } = r, sp = g.slug && bySlug[g.slug], p = decoupe(d.ligne, r.suite);
       const etiq = `${d.scolaire ? `<span class="p4-etiq">${esc(L.scolaire)}</span>` : ''}${d.residence && L.residence ? `<span class="p4-etiq p4-res"><i aria-hidden="true"></i>${esc(L.residence)}</span>` : ''}`;
       const quoi = r.suite ? (etiq ? `<p class="dl-quoi">${etiq}</p>` : '')
         : `<p class="dl-quoi"><i class="dl-porte" aria-hidden="true"></i>${sp ? `<a href="${lienSp(g.slug, 'voir')}">${esc(r.titre)}</a>` : `<span class="dl-sp">${esc(r.titre)}</span>`}${etiq}</p>`;
