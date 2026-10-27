@@ -445,6 +445,7 @@ details.pl-alerte p { margin: 8px 0 0; }
 .pl-e-jour { position: sticky; top: 26px; z-index: 4; grid-row: 2; background: var(--pl-fond); border-bottom: 1px solid var(--pl-filet); }
 .pl-e-jour button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; width: 100%; height: 100%; padding: 0; border: 0;
   background: transparent; font-size: .7rem; color: var(--pl-sourd); cursor: pointer; }
+.pl-e-jour [data-t]::before { content: attr(data-t); }
 .pl-e-jour b { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; font-size: .82rem; color: var(--pl-texte); font-weight: 650; }
 .pl-e-jour.we { background: color-mix(in srgb, var(--pl-texte) 4%, var(--pl-fond)); }
 .pl-e-jour.lundi, .pl-e-c.lundi { border-left: 1px solid var(--pl-filet); }
@@ -570,7 +571,9 @@ details.pl-alerte p { margin: 8px 0 0; }
 .pl-av-1 { background: color-mix(in srgb, #2f6f9f 22%, var(--pl-fond)); } .pl-av-2 { background: color-mix(in srgb, #c27a1a 24%, var(--pl-fond)); }
 .pl-av-3 { background: color-mix(in srgb, #3d7d5a 22%, var(--pl-fond)); } .pl-av-4 { background: color-mix(in srgb, #6b4fa0 22%, var(--pl-fond)); }
 .pl-av-5 { background: color-mix(in srgb, #1f7a7a 22%, var(--pl-fond)); }
-@media (max-width: 640px) { .pl { --pl-nom: 118px; --pl-col: 34px; --pl-ligne: 40px; } .pl-e-nom .pl-av { display: none; } .pl-e-nom { padding-left: 8px; } }
+@media (max-width: 640px) { .pl { --pl-nom: 118px; --pl-col: 34px; --pl-ligne: 40px; }
+/* au doigt, un jour de la grille est une cible de 44 px (la grille défile de côté un peu plus) */
+@media (pointer: coarse) { .pl { --pl-col: 45px; --pl-ligne: 44px; } }   /* (45 : le filet du lundi en prend un) */ .pl-e-nom .pl-av { display: none; } .pl-e-nom { padding-left: 8px; } }
 @media (prefers-reduced-motion: no-preference) { .pl.pl-premier .pl-e-jour.auj b { animation: pl-auj .6s cubic-bezier(.3, 1.6, .5, 1) both; } @keyframes pl-auj { from { transform: scale(.4); } } }   /* au premier dessin, aujourd'hui se pose */
 @media (prefers-reduced-motion: reduce) { .pl *, .pl *::before, .pl *::after { transition: none !important; animation: none !important; } }
 `;
@@ -744,7 +747,7 @@ details.pl-alerte p { margin: 8px 0 0; }
       html.push('<span role="columnheader" class="pl-sr">Personne</span>');
       for (const j of jours) {
         const r = rang(j), cl = ['pl-e-jour', r >= 5 && 'we', r === 0 && 'lundi', j === A && 'auj', S.selection && S.selection.jour === j && 'choisi'].filter(Boolean).join(' ');
-        html.push(`<div role="columnheader" class="${cl}" style="grid-column:${col(j)}"><button type="button" data-pl-jour="${j}" tabindex="-1" aria-label="${esc(jourLong(j))}${j === A ? ', aujourd’hui' : ''}"><span aria-hidden="true">${INITIALES[r]}</span><b aria-hidden="true">${nombreJour(j)}</b></button></div>`);
+        html.push(`<div role="columnheader" class="${cl}" style="grid-column:${col(j)}"><button type="button" data-pl-jour="${j}" tabindex="-1" aria-label="${esc(jourLong(j))}${j === A ? ', aujourd’hui' : ''}"><span data-t="${INITIALES[r]}" aria-hidden="true"></span><b data-t="${nombreJour(j)}" aria-hidden="true"></b></button></div>`);
       }
       html.push('</div>');
       if (!I.personnes.length) {

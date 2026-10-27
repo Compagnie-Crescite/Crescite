@@ -2742,7 +2742,7 @@ function vueEquipeFrais(tete, parties) {
     </div>
     <div class="bloc">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
-        <h3 style="margin:0">Notes de frais soumises par l’équipe</h3>
+        <h3 style="margin:0" aria-level="2">Notes de frais soumises par l’équipe</h3>
         <button type="button" class="btn principal" id="btn-export-csv-frais">📥 Exporter en CSV comptable</button>
       </div>
       <div class="frais-defile" data-defile tabindex="0" role="region" aria-label="Notes de frais (le tableau défile de côté)">

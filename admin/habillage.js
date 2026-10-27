@@ -198,5 +198,99 @@ dialog.recherche, dialog.tab-dialogue, dialog.tb-brief { border-radius: var(--ra
 .connexion .marque small { color: var(--gris); }
 .connexion .marque .pieuvre { color: var(--accent); }
 @media (prefers-reduced-motion: reduce) { .ligne, .tb-l, .btn, .tb-tuile { transition: none; } .ligne:hover, .tb-l:hover, .btn.principal:hover { transform: none; } }
+/* le « Rouge » de la barre de la feuille de route, la nuit : le rouge de la feuille (sur le papier blanc) ne se lit pas sur
+   la carte de nuit ; l'étiquette prend le rouge clair des alertes (la feuille elle-même ne change pas) */
+:root:not([data-theme="jour"]) .a4-b .a4-rouge { color: var(--alerte); }
+/* la porte à 360 px : la marque passe à la ligne plutôt que d'élargir la carte */
+.connexion { grid-template-columns: minmax(0, 1fr); }
+.connexion .marque { flex-wrap: wrap; row-gap: 2px; white-space: normal; }
+/* Au doigt (un téléphone, une tablette) : chaque commande est une cible de 44 px. Les boutons, les commandes segmentées, les
+   puces, les onglets d'une fiche, les outils (mise en forme, feuille de route, tableau de bord), les listes déroulantes ;
+   les liens posés seuls sur leur ligne (une personne ou un lieu à compléter, un téléphone, une feuille de route, un
+   spectacle d'une fiche) prennent la hauteur d'un doigt. Les liens dans une phrase restent dans leur phrase. */
+@media (pointer: coarse) {
+  .btn, .seg > button, .puce, .onglets-ed button, .outils-riche button, .tb-ico, .tb-traiter, .a4-b, .a4-vues button, .tab-tri, select, .avant > summary { min-height: 44px; }
+  .btn.petit, .outils-riche button, .tb-ico, .tb-traiter, .a4-b, .tb-lien { min-width: 44px; }
+  .tb-lien { justify-content: center; }
+  .avant-fenetre select { min-height: 44px; min-width: 64px; }
+  .btn.petit, .tb-ico, .tb-traiter { display: inline-flex; align-items: center; justify-content: center; }
+  .tb-lien, .tb-cat a, .avant-corps a, a.coord, a.manque-tel, a.eq-feuille, .liste-simple a, .sous-champ a, .lieu-resume a, .eq-date a, .acces a { display: inline-flex; align-items: center; min-height: 44px; }
+  .doc-boutons, .crm-carte-actions { gap: 8px; }
+}
+
+/* ===================================================================================================== l'impression
+   Une liste (Représentations, Lieux, Équipe, Diffusion…), une fiche ou le planning, sur papier : en blanc et noir, sans
+   l'en-tête, les menus, les boutons, les squelettes ni les tiroirs ; en tête, ce qu'on imprime et les filtres en cours
+   (#imp-tete, posé par teteImpression avant l'impression) ; une ligne, une carte, un champ ne se coupent pas d'une page à
+   l'autre. La liste seule quand aucune fiche n'est ouverte, la fiche seule quand elle l'est ; le planning en paysage, ses
+   jours à la largeur de la page. La feuille de route (.fdr) garde ses couleurs et sa propre impression (feuille.js), le
+   brief du tableau de bord la sienne (html.tb-impression, tableau.js). */
+#imp-tete { display: none; }
+@media print {
+  @page { margin: 14mm 12mm; }
+  @page paysage { size: A4 landscape; margin: 10mm; }
+  :root, :root:not([data-theme="jour"]), :root[data-theme="jour"] {
+    --fond: #fff; --carte: #fff; --doux: #fff; --encre: #000; --gris: #333; --trait: #999; --accent: #000; --accent-fonce: #000; --accent-doux: #fff;
+    --sur-accent: #fff; --ok: #000; --ok-doux: #fff; --alerte: #000; --alerte-doux: #fff; --option: #000; --option-doux: #fff; --ombre: none;
+    --prune: #000; --corail: #000; --ambre: #000; --sauge: #000; --indigo: #000; --ciel: #000; --bord-champ: #999; --indice: #555; color-scheme: light;
+  }
+  html:not(.tb-impression), html:not(.tb-impression) body { background: #fff !important; color: #000 !important; }
+  html:not(.tb-impression) body { font-size: 10pt; line-height: 1.4; }
+  /* rien que la vue : ni l'en-tête, ni le pied, ni les annonces, les menus, les tiroirs, les fenêtres, la barre du téléphone */
+  html:not(.tb-impression) body > :not(#app):not(#imp-tete), html:not(.tb-impression) #app > :not(#vue) { display: none !important; }
+  html:not(.tb-impression) #imp-tete { display: block; margin: 0 0 12pt; padding: 0 0 6pt; border-bottom: 1pt solid #000; color: #000; }
+  #imp-tete p { margin: 0; }
+  #imp-tete .imp-quoi { font: 700 15pt/1.25 var(--titres); }
+  #imp-tete .imp-filtres { margin-top: 3pt; font-weight: 600; }
+  #imp-tete .imp-qui { margin-top: 3pt; font-size: 8.5pt; color: #333; }
+  main#vue { padding: 0 !important; margin: 0 !important; max-width: none !important; animation: none !important; }
+  #vue *, #vue *::before, #vue *::after { animation: none !important; transition: none !important; }
+  /* le blanc et noir : le texte noir, aucun fond ni ombre, des filets gris (sauf la feuille de route et le planning) */
+  #vue :not(.fdr, .fdr *, .pl, .pl *) { color: #000 !important; background-color: transparent !important; background-image: none !important; box-shadow: none !important; text-shadow: none !important; border-color: #999 !important; }
+  #vue a { text-decoration: none !important; }
+  /* ce qui sert à l'écran seulement : les gestes, les filtres (dits en tête), l'en-tête de la vue (son titre aussi, en tête) */
+  #vue :is(.tete, .btn, .filtres, .journal-filtres, .tab-filtres, #avant, .fil-ariane, .gps, .sel-bouton, .pied-ed, .doc-boutons, .nt-form, .eq-ajouter,
+    .ad-squelette, .liste-vide .btn, .crm-carte button, .pl-nav button, .pl-vues, .pl-filtres, .pl-masquer, .pl-btn, .pl-detail, [data-tiroir-fermer], .a4-outils) { display: none !important; }
+  #vue .titre-ed { margin-bottom: 8pt; }
+  #vue .titre-ed h2 { font-size: 13pt; }
+  /* la liste, ou la fiche */
+  #vue .deux { display: block !important; }
+  #vue .deux:not(.edition) > .editeur, #vue .deux.edition > .liste { display: none !important; }
+  #vue .deux > .liste { position: static !important; max-height: none !important; overflow: visible !important; }
+  #vue .bloc { border: 0 !important; border-radius: 0 !important; padding: 0 !important; margin: 0 0 10pt !important; }
+  #vue .bloc h3 { margin: 0 0 4pt; padding-bottom: 2pt; border-bottom: .5pt solid #999; font-size: 11pt; }
+  /* rien ne se coupe : une ligne, une carte, un champ ; un titre reste avec ce qui le suit */
+  #vue :is(.ligne, tr, li, .champ, .rangee, .crm-carte, .crm-kpi-boite, .journal-ligne, .sous-champ) { break-inside: avoid; }
+  #vue :is(h1, h2, h3, .mois, .crm-col-tete, thead) { break-after: avoid; }
+  #vue .ligne { border-width: 0 0 .5pt !important; border-style: solid !important; border-radius: 0 !important; padding-left: 0 !important; padding-right: 0 !important; transform: none !important; }
+  #vue .mois { position: static !important; margin-top: 8pt; padding: 0; font-size: 9pt; }
+  #vue .ligne .jj::before { background: #000 !important; height: 2px; }
+  /* les champs d'une fiche : leur valeur, sans cadre ni flèche ; une zone de texte à la hauteur de son texte */
+  #vue :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea, .riche) { appearance: none !important; border: 0 !important; border-bottom: .5pt solid #999 !important;
+    border-radius: 0 !important; padding: 1pt 0 !important; min-height: 0 !important; height: auto; background: none !important; }
+  #vue textarea { field-sizing: content; resize: none; overflow: visible; }
+  #vue ::placeholder { color: transparent !important; }
+  #vue ::-webkit-calendar-picker-indicator { display: none; }
+  #vue .champ .seg { border: 0 !important; padding: 0 !important; }
+  #vue .champ .seg > :not([aria-pressed="true"]) { display: none !important; }
+  #vue .champ .seg > [aria-pressed="true"] { padding: 1pt 0 !important; border: 0 !important; font-weight: 700; }
+  /* la Diffusion : les étapes l'une sous l'autre, leurs pistes sur deux colonnes */
+  #vue .crm-tableau { display: block !important; overflow: visible !important; }
+  #vue .crm-colonne { min-height: 0 !important; margin: 0 0 10pt; padding: 0 !important; border: 0 !important; }
+  #vue .crm-cartes { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6pt; min-height: 0 !important; padding: 4pt 0 0 !important; }
+  #vue .crm-carte { border: .5pt solid #999 !important; padding: 6pt !important; }
+  #vue .crm-kpi { gap: 6pt; margin-bottom: 10pt; }
+  #vue .crm-kpi-boite { border: .5pt solid #999 !important; padding: 6pt !important; }
+  /* le planning : en paysage, la grille à la largeur de la page (des colonnes de jour égales), en gris */
+  html:not(.tb-impression) body:has(#vue .pl) { page: paysage; }
+  #vue .pl { --pl-fond: #fff; --pl-papier: #fff; --pl-texte: #000; --pl-sourd: #333; --pl-filet: #999; --pl-accent: #000; --pl-doux: #e6e6e6; --pl-alerte: #000; --pl-ok: #000; --pl-nom: 150px; }
+  #vue .pl-o-b { --b-fond: #fff !important; --b-texte: #000 !important; border: .75pt solid #000; }
+  #vue .pl-o-b.option { border-style: dashed; }
+  #vue .pl-legende .l-date { background: #fff !important; border: .75pt solid #000; }
+  #vue .pl-defile { overflow: visible !important; max-height: none !important; }
+  #vue .pl-grille-e { grid-template-columns: var(--pl-nom) repeat(var(--n), minmax(0, 1fr)) !important; width: 100% !important; min-width: 0 !important; }
+  #vue .pl-e-nom, #vue .pl-e-mois span { position: static !important; }
+  #vue .pl-grille-e > * { break-inside: avoid; }
+}
 </style>`);
 })();

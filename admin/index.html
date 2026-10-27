@@ -875,6 +875,33 @@ function effacerFiltres() {
   requestAnimationFrame(() => { const q = $('.filtres input[type="search"]', vue); if (q) q.focus(); annoncer('Filtres effacés.'); });
 }
 document.addEventListener('click', e => { if (e.target.closest?.('[data-effacer-filtres]')) { e.preventDefault(); effacerFiltres(); } });
+// L'impression (sa feuille @media print est à la fin de habillage.js) : en tête de la page imprimée, posée juste avant
+// (beforeprint) hors de #app, ce qu'on imprime (la rubrique, la fiche ouverte), les filtres en cours de la liste ou du
+// planning, lus dans la vue (la recherche, un choix qui n'est pas le premier, une puce ou une commande segmentée choisie
+// autre que la première), le compte de la liste, la compagnie et le jour. À l'écran, rien (display: none).
+function teteImpression() {
+  const vue = $('#vue');
+  let t = document.getElementById('imp-tete');
+  if (!t) { t = document.createElement('div'); t.id = 'imp-tete'; t.setAttribute('aria-hidden', 'true'); document.body.prepend(t); }
+  if (!vue) { t.innerHTML = ''; return; }
+  const net = s => String(s || '').replace(/\s+/g, ' ').trim();
+  const rubrique = net($('.tete h1', vue)?.innerText) || net($('.barre .nav [aria-current="page"]')?.textContent);
+  const fiche = $('.deux.edition .editeur h2, .titre-ed h2', vue);
+  const zones = $$('.filtres, .journal-filtres, .tab-filtres, .pl-vues, .pl-filtres', vue).filter(z => !(fiche && z.closest('.liste')));
+  const mots = [];
+  zones.forEach(z => {
+    $$('input[type="search"], input[type="text"]', z).forEach(i => { if (net(i.value)) mots.push(`« ${net(i.value)} »`); });
+    $$('input[type="date"]', z).forEach(i => { if (i.value) mots.push(`${net(i.closest('label')?.textContent) || 'jour'} ${jourCourt(i.value)}`); });
+    $$('select', z).forEach(s => { if (s.selectedIndex > 0) mots.push(net(s.options[s.selectedIndex].textContent)); });
+    $$('.puces [aria-pressed="true"]', z).forEach(p => mots.push(net(p.textContent)));
+    $$('.seg, [role="group"]', z).forEach(g => { const b = $$('button', g), x = b.find(y => y.getAttribute('aria-pressed') === 'true'); if (x && x !== b[0]) mots.push(net(x.textContent)); });
+  });
+  const compte = zones.map(z => net($('.compte', z)?.textContent)).find(Boolean) || '';
+  const filtres = zones.length ? `${mots.length ? `Filtres : ${[...new Set(mots)].join(' · ')}` : 'Sans filtre'}${compte ? ` — ${compte}` : ''}` : '';
+  const jour = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  t.innerHTML = `<p class="imp-quoi">${esc(rubrique)}${fiche ? ` · ${esc(net(fiche.innerText))}` : ''}</p>${filtres ? `<p class="imp-filtres">${esc(filtres)}</p>` : ''}<p class="imp-qui">Compagnie Crescite · Administration · ${esc(jour)}</p>`;
+}
+addEventListener('beforeprint', teteImpression);
 
 function annoncer(msg, { erreur = false, action = null, libelle = 'Annuler', delai = 5000 } = {}) {
   const el = document.createElement('div');
@@ -4541,13 +4568,13 @@ function courrielConfirmation(a) {
 function vueAlertes() {
   const tete = `<div class="tete"><h1>Diffusion · Alertes de tournée</h1>${partiesDiffusion('alertes')}</div>`;
   if (!E.alertesInstallees) {
-    cadre('diffusion', `${tete}<div class="bloc"><h3>Les alertes de tournée ne sont pas encore en place</h3><p>Exécutez <code>supabase/migrations/20261030_crescite_alertes.sql</code> dans Supabase (SQL Editor → New query → coller le fichier → Run), redéployez la fonction crescite-courriel, puis rechargez cette page.</p></div>`);
+    cadre('diffusion', `${tete}<div class="bloc"><h3 aria-level="2">Les alertes de tournée ne sont pas encore en place</h3><p>Exécutez <code>supabase/migrations/20261030_crescite_alertes.sql</code> dans Supabase (SQL Editor → New query → coller le fichier → Run), redéployez la fonction crescite-courriel, puis rechargez cette page.</p></div>`);
     brancherParties();
     return;
   }
   const f = session.alertes = Object.assign({ q: '', etat: '' }, session.alertes || {});
   cadre('diffusion', `${tete}<div id="al-chiffres"></div>
-    <div class="bloc"><h3>Les alertes</h3><div class="filtres al-filtres">
+    <div class="bloc"><h3 aria-level="2">Les alertes</h3><div class="filtres al-filtres">
       <input type="search" id="al-q" placeholder="Chercher une adresse, une commune, un département" value="${esc(f.q)}" aria-label="Chercher une alerte">
       <select id="al-etat" aria-label="État"><option value="">Toutes les alertes</option>${Object.entries(ETATS_ALERTE).map(([k, [l]]) => `<option value="${k}"${f.etat === k ? ' selected' : ''}>${l === 'En attente' ? 'En attente de confirmation' : `${l}s`}</option>`).join('')}</select>
       <span class="compte" id="al-compte"></span></div><ul class="al-liste" data-liste id="al-liste"></ul></div>`);
@@ -4590,7 +4617,7 @@ function dessinerAlertes(zone) {
     xs.forEach(a => { const e = etatAlerte(a); if (e === 'desactivee') return; const k = cle(a), x = m.get(k) || { confirmee: 0, attente: 0 }; x[e]++; m.set(k, x); });
     return [...m].sort((a, b) => (b[1].confirmee + b[1].attente) - (a[1].confirmee + a[1].attente) || String(a[0]).localeCompare(String(b[0]), 'fr'));
   };
-  const table = (titre, col, lignes) => `<div class="bloc"><h3>${titre}</h3>${lignes.length ? `<table class="simple al-table"><thead><tr><th scope="col">${col}</th><th scope="col">Confirmées</th><th scope="col">En attente</th></tr></thead>
+  const table = (titre, col, lignes) => `<div class="bloc"><h3 aria-level="2">${titre}</h3>${lignes.length ? `<table class="simple al-table"><thead><tr><th scope="col">${col}</th><th scope="col">Confirmées</th><th scope="col">En attente</th></tr></thead>
     <tbody>${lignes.map(([k, x]) => `<tr><td>${esc(k)}</td><td>${x.confirmee}</td><td>${x.attente}</td></tr>`).join('')}</tbody></table>` : '<p class="aide">Aucune alerte active.</p>'}</div>`;
   const chiffres = $('#al-chiffres');
   if (chiffres) chiffres.innerHTML = `<div class="crm-kpi al-kpi">
