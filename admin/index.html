@@ -109,12 +109,17 @@ main.ad-chargement { padding: 0; max-width: none; }
 @media (min-width: 1100px) and (max-width: 1219px) { .barre.onze .nav { flex-wrap: wrap; row-gap: 2px; overflow: visible; } }
 @media (min-width: 1940px) and (max-width: 2079px) { .barre.onze { flex-wrap: wrap; row-gap: 6px; } .barre.onze .nav { order: 3; flex-basis: 100%; } .barre.onze .qui { margin-left: auto; } .barre.onze .qui .moi, .barre.onze .chercher .mot { display: inline; } }
 @media (min-width: 2080px) and (max-width: 2219px) { .barre.onze .qui .moi { display: none; } }
-@media (min-width: 1101px) and (max-width: 1219px) { .barre.onze ~ main .deux > .liste { top: 142px; max-height: calc(100vh - 162px); } }
 /* douze rubriques (le tableau de bord et la Diffusion) : une seule ligne à partir de 2 220 px, l'adresse du compte à partir
    de 2 360 px, et les rubriques sur deux rangs jusqu'à 1 339 px */
-@media (min-width: 1220px) and (max-width: 1339px) { .barre.douze .nav { flex-wrap: wrap; row-gap: 2px; overflow: visible; } .barre.douze ~ main .deux > .liste { top: 142px; max-height: calc(100vh - 162px); } }
+@media (min-width: 1220px) and (max-width: 1339px) { .barre.douze .nav { flex-wrap: wrap; row-gap: 2px; overflow: visible; } }
 @media (min-width: 2080px) and (max-width: 2219px) { .barre.douze { flex-wrap: wrap; row-gap: 6px; } .barre.douze .nav { order: 3; flex-basis: 100%; } .barre.douze .qui { margin-left: auto; } .barre.douze .qui .moi, .barre.douze .chercher .mot { display: inline; } }
 @media (min-width: 2220px) and (max-width: 2359px) { .barre.douze .qui .moi { display: none; } }
+/* une tablette couchée, un petit portable (1 101 à 1 339 px) : sans l'adresse du compte, le compte tient sur la ligne de la
+   marque, l'en-tête perd une ligne (168 px de haut sur 820, 130 sans elle) */
+@media (min-width: 1101px) and (max-width: 1339px) { .qui .moi { display: none; } }
+/* un écran bas au doigt (un téléphone couché : 390 px de haut) : l'en-tête, sur trois lignes, en aurait pris plus du
+   tiers ; il défile avec la page au lieu d'y rester arrimé (la barre du bas du téléphone en portrait n'est pas touchée) */
+@media (max-height: 500px) and (pointer: coarse) { html:not(.ob-actif) .barre { position: relative; } }
 @media (max-width: 860px) { .qui .moi { display: none; } .barre { flex-wrap: wrap; gap: 8px 14px; padding: 8px 12px; } .nav { order: 3; flex-basis: 100%; padding-right: 28px; -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); } }
 @media (max-width: 520px) { .qui { gap: 10px; font-size: 12.5px; } .qui .long, .direct .mot { display: none; } }
 /* la recherche rapide : le bouton de l'en-tête (la loupe, « Rechercher », le raccourci Ctrl K ou ⌘K) et sa fenêtre.
@@ -186,11 +191,12 @@ input:focus, select:focus, textarea:focus, .riche:focus { border-color: var(--ac
 main { padding: 20px; max-width: 1500px; margin: 0 auto; }
 .tete { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 4px 0 16px; }
 .tete h1 { margin: 0 auto 0 0; font-size: 22px; }
-.deux { display: grid; grid-template-columns: minmax(340px, 460px) 1fr; gap: 18px; align-items: start; }
-.deux > .liste { position: sticky; top: 70px; max-height: calc(100vh - 90px); overflow: auto; }
+/* la fiche prend la place qui reste, jamais plus (minmax(0, 1fr)) : ce qu'elle contient s'y range, la page ne déborde pas */
+.deux { display: grid; grid-template-columns: minmax(340px, 460px) minmax(0, 1fr); gap: 18px; align-items: start; }
+/* la liste colle sous l'en-tête, quelle que soit sa hauteur (une, deux, trois lignes ; --haut-barre, mesurée) */
+.deux > .liste { position: sticky; top: calc(var(--haut-barre, 60px) + 10px); max-height: calc(100vh - var(--haut-barre, 60px) - 30px); overflow: auto; }
 @media (max-width: 1100px) { .deux { grid-template-columns: 1fr; } .deux > .liste { position: static; max-height: none; } .deux.edition > .liste { display: none; } }
 @media (max-width: 1100px) { .deux:not(.edition) > .editeur { display: none; } }
-@media (min-width: 1101px) and (max-width: 1939px) { .deux > .liste { top: 104px; max-height: calc(100vh - 124px); } }
 .filtres { display: grid; gap: 8px; padding: 12px; background: var(--carte); border: 1px solid var(--trait); border-radius: var(--rayon); margin-bottom: 10px; }
 .seg { display: inline-flex; border: 1px solid var(--trait); border-radius: 9px; overflow: hidden; background: var(--carte); }
 .seg button { border: 0; background: none; padding: 6px 11px; cursor: pointer; font-weight: 600; color: var(--gris); }
@@ -294,7 +300,11 @@ table.reps { width: 100%; border-collapse: separate; border-spacing: 0 6px; }
 table.reps th { text-align: left; font-size: 12px; color: var(--gris); font-weight: 700; padding: 0 6px; }
 table.reps td { padding: 0 3px; vertical-align: middle; }
 table.reps td:first-child { padding-left: 0; }
-@media (max-width: 700px) {
+/* les séances en blocs d'après la place de la fiche, pas celle de l'écran (une requête de conteneur) : à côté de la liste
+   (une tablette couchée, 1 180 px), dans un tiroir, la ligne de sept champs (près de 780 px) poussait la fiche hors de
+   l'écran ; le cadre ne prend que la largeur qu'on lui donne */
+.reps-cadre { container-type: inline-size; }
+@container (max-width: 800px) {
   table.reps thead { display: none; }
   table.reps tr { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 8px; border: 1px solid var(--trait); border-radius: 10px; margin-bottom: 8px; }
   table.reps td { padding: 0; }
@@ -1074,11 +1084,12 @@ function ecouter() {
    la fraîcheur de ce qu'on lit, et le bouton lui-même relit la base (actualiser). « À jour » : le direct est relié, ou la
    lecture a moins de deux minutes ; « Lu il y a 12 min » : le direct n'est pas relié, rien n'est arrivé depuis ;
    « Reconnexion… » : le réseau est là, le direct revient ; « Hors ligne · lu il y a 3 h » : plus de réseau, l'écran reste
-   tel qu'il a été lu (un enregistrement échouerait) ; « Lecture… » pendant que la base se relit. Au téléphone, la pastille
+   tel qu'il a été lu (un enregistrement échouerait) ; « Mise à jour… » pendant que la base se relit (les mêmes mots et la
+   même icône que le témoin de l'équipe). Au téléphone, la pastille
    et l'icône seules, le mot quand il y a lieu de s'inquiéter. Le passage hors ligne et le retour s'entendent (une région
    polie, hors de #app, que cadre() ne refait pas). Au retour du réseau ou du direct, la base se relit d'elle-même : ce qui
    a changé pendant la coupure ne passe pas par le temps réel. */
-const ICONE_ACTUALISER = '<svg class="temoin-ic" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>';
+const ICONE_ACTUALISER = '<svg class="temoin-ic" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4.5v4.5H15"/></svg>';
 const heureCourteAd = t => { const d = new Date(t); return `${d.getHours()} h ${String(d.getMinutes()).padStart(2, '0')}`; };
 // « à l'instant », « il y a 12 min », « il y a 3 h », « hier à 18 h 05 », « le 25 oct. »
 function depuisTexte(t) {
@@ -1092,7 +1103,7 @@ function depuisTexte(t) {
 function etatConnexion() {
   const lu = E.luLe || Date.now();
   if (E.horsLigne || navigator.onLine === false) return { k: 'horsligne', mot: 'Hors ligne', detail: `lu ${depuisTexte(lu)}`, long: `Hors ligne : l’écran montre la base telle qu’elle a été lue ${depuisTexte(lu)} ; un enregistrement échouera jusqu’au retour du réseau.` };
-  if (E.relit) return { k: 'lecture', mot: 'Lecture…', detail: '', long: 'La base se relit.' };
+  if (E.relit) return { k: 'lecture', mot: 'Mise à jour…', detail: '', long: 'La base se relit.' };
   if (E.directPerdu) return { k: 'reconnexion', mot: 'Reconnexion…', detail: `lu ${depuisTexte(lu)}`, long: `Le direct s’est interrompu ${depuisTexte(lu)} : il se rétablit.` };
   if (E.direct) return { k: 'direct', mot: 'À jour', detail: '', long: 'À jour : chaque changement arrive en direct.' };
   if (Date.now() - lu < 120000) return { k: 'ajour', mot: 'À jour', detail: '', long: `À jour : la base a été lue à ${heureCourteAd(lu)}.` };
@@ -1122,24 +1133,27 @@ function majTemoin() {
 const erreurReseau = e => navigator.onLine === false || /fetch|network|réseau|load failed|timeout/i.test(String(e?.message || e || ''));
 // relire toute la base (le bouton du témoin, le retour du réseau, le retour du direct) et redessiner la page à sa place ;
 // une saisie en cours n'est pas touchée : seules les listes se redessinent, comme au temps réel
+// Une demande (le bouton) pendant une relecture discrète (le retour du réseau) ne se perd pas : celle-ci dira son résultat
 async function actualiser({ discret = false } = {}) {
   if (!E.pret) return false;
-  if (E.relit) return E.relit;
+  if (E.relit) { if (!discret) E.relitDire = true; return E.relit; }
   if (navigator.onLine === false) { E.horsLigne = true; majTemoin(); if (!discret) annoncer('Hors ligne : la base se relira au retour du réseau.', { erreur: true }); return false; }
   // une lecture qui échoue ne dit rien de ce que la base a (chargerEquipe la croirait sans l'équipe) : ce qu'on en savait reste
   const savait = Object.fromEntries(['equipeInstallee', 'equipeErreur', 'sql3', 'sql4', 'sql4Erreur'].map(k => [k, E[k]]));
+  E.relitDire = !discret;
   E.relit = (async () => {
+    await null;      // (E.relit posé d'abord : le témoin dit « Mise à jour… » dès le départ, pas « À jour »)
     majTemoin();
     try { await chargerTout(); } catch (e) {
       Object.assign(E, savait);
       if (erreurReseau(e)) E.horsLigne = true;
-      if (!discret) annoncer(`Lecture impossible : ${erreurReseau(e) ? 'le réseau ne répond pas' : e?.message || e}.`, { erreur: true });
+      if (E.relitDire) annoncer(`Lecture impossible : ${erreurReseau(e) ? 'le réseau ne répond pas' : e?.message || e}.`, { erreur: true });
       return false;
     }
     Object.assign(E, { luLe: Date.now(), horsLigne: false });
     if (saisieEnCours()) rafraichirListes();
     else { const y = window.scrollY; router(); window.scrollTo(0, y); if (typeof TIROIR !== 'undefined' && TIROIR.ouvert()) TIROIR.redessiner(); }
-    if (!discret) annoncer('La base est relue : tout est à jour.');
+    if (E.relitDire) annoncer('La base est relue : tout est à jour.');
     return true;
   })();
   try { return await E.relit; } finally { E.relit = null; majTemoin(); }
@@ -1176,7 +1190,7 @@ function cadre(rubrique, contenu) {
     <nav class="nav" aria-label="Rubriques">${rubriquesVisibles().map(([k, l]) => `<a href="#/${k}"${k === rubrique ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>
     <div class="qui">${temoinHtml()}
     <a href="${SITE}" target="_blank" rel="noopener">Voir le site ↗</a><a href="${SITE}?edition" target="_blank" rel="noopener" title="Écrire les textes et les dates dans la page elle-même">Modifier<span class="long"> sur le site</span> ↗</a><span class="moi">${esc(E.session.user.email)}</span>
-    <button class="btn petit" type="button" id="b-mdp" aria-label="Mot de passe" title="Changer mon mot de passe"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3M16.5 6.5l3 3M14.5 8.5l2 2"/></svg><span class="long"> Mot de passe</span></button><button class="btn petit aide-b" type="button" id="b-aide" data-aide aria-label="Raccourcis clavier" aria-keyshortcuts="?" title="Raccourcis clavier (?)">?</button><button class="btn petit" type="button" id="b-sortir">Déconnexion</button></div></header><main id="vue" tabindex="-1"${ouvertureMuette || CALME_ADMIN() ? '' : ' class="entree"'}>${contenu}</main>${PIED}`;
+    <button class="btn petit" type="button" id="b-mdp" aria-label="Mot de passe" title="Changer mon mot de passe"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3M16.5 6.5l3 3M14.5 8.5l2 2"/></svg><span class="long"> Mot de passe</span></button><button class="btn petit aide-b" type="button" id="b-aide" data-aide aria-label="Raccourcis clavier" aria-keyshortcuts="?" title="Raccourcis clavier (?)">?</button><button class="btn petit" type="button" id="b-sortir">Se déconnecter</button></div></header><main id="vue" tabindex="-1"${ouvertureMuette || CALME_ADMIN() ? '' : ' class="entree"'}>${contenu}</main>${PIED}`;
   majTemoin();
   poserHautBarre();
   setTimeout(() => $('#vue')?.classList.remove('entree'), 900);
@@ -1196,10 +1210,12 @@ function cadre(rubrique, contenu) {
 // lequel collent les en-têtes des listes qui défilent avec la page (le mois, le jour) et la barre d'outils d'une feuille
 const RO_BARRE = typeof ResizeObserver === 'function' ? new ResizeObserver(() => poserHautBarre(false)) : null;
 function poserHautBarre(observer = true) {
-  const b = $('.barre');
-  document.documentElement.style.setProperty('--haut-barre', `${b ? Math.round(b.getBoundingClientRect().height) : 0}px`);
+  const b = $('.barre'), arrime = b && getComputedStyle(b).position === 'sticky';     // (un écran bas : l'en-tête défile, rien ne colle dessous)
+  document.documentElement.style.setProperty('--haut-barre', `${arrime ? Math.round(b.getBoundingClientRect().height) : 0}px`);
   if (observer && RO_BARRE && b) { RO_BARRE.disconnect(); RO_BARRE.observe(b); }
 }
+// (le téléphone qu'on tourne : l'en-tête s'arrime ou défile sans changer de taille)
+if (typeof matchMedia === 'function') matchMedia('(max-height: 500px) and (pointer: coarse)').addEventListener?.('change', () => poserHautBarre(false));
 const ROUTES = [
   [/^#\/accueil$/, () => vueTableau()],
   [/^#\/representations(?:\/(nouvelle|tableur|carte|\d+))?$/, m => vueDates(m[1])],
@@ -1392,8 +1408,13 @@ window.addEventListener('hashchange', () => {
   const lienSuivi = !history.state || typeof history.state.n !== 'number';
   if (saisieEnCours()) {
     visee = null;
+    // une question déjà posée pour ce départ (le même pas annoncé deux fois) : rien de plus ; un autre pas pendant la
+    // question (le précédent du navigateur) : l'adresse revient, mais seule la première réponse rejoue un chemin
+    if (E.depart && E.depart === vers) return;
     const pas = revenir();
-    partirSansPerdre({ titre: 'Quitter sans enregistrer ?' }).then(oui => { if (oui) refaire(pas, vers); });
+    if (E.depart) return;
+    E.depart = vers;
+    partirSansPerdre({ titre: 'Quitter sans enregistrer ?' }).then(oui => { E.depart = null; if (oui) refaire(pas, vers); });
     return;
   }
   noterAdresse();
@@ -1403,8 +1424,12 @@ window.addEventListener('hashchange', () => {
   router();
 });
 // le précédent ou le suivant entre deux adresses qui diffèrent aussi par leur partie ?… (les filtres d'une liste) : le
-// navigateur ne le dit que par popstate, sans hashchange ; la page qui change se traite alors comme ci-dessus
-window.addEventListener('popstate', () => setTimeout(() => { if (location.hash !== E.hash) window.dispatchEvent(new HashChangeEvent('hashchange')); }, 0));
+// navigateur ne le dit que par popstate, sans hashchange ; la page qui change se traite alors comme ci-dessus. Seulement
+// s'il ne l'a pas dit lui-même : un lien suivi, un pas entre deux rubriques donnent popstate puis hashchange, et le
+// redire ferait poser la question deux fois et revenir de deux pas (l'historique alors s'emballait, d'avant en arrière)
+let hashchangesVus = 0;
+window.addEventListener('hashchange', e => { if (e.isTrusted) hashchangesVus++; }, true);
+window.addEventListener('popstate', () => { const vus = hashchangesVus; setTimeout(() => { if (hashchangesVus === vus && location.hash !== E.hash) window.dispatchEvent(new HashChangeEvent('hashchange')); }, 0); });
 window.addEventListener('beforeunload', e => { if (saisieEnCours()) { e.preventDefault(); e.returnValue = ''; } });
 // « Aller au contenu » : le titre de la rubrique reçoit le focus, sans toucher à l'adresse (#vue n'est pas une route)
 document.addEventListener('click', e => {
@@ -2052,7 +2077,7 @@ function editeurDate(id, depart = null) {
       <label class="case"><input type="checkbox" id="d-visible"${F.visible && PUBLIABLE(F.nature) ? ' checked' : ''}${PUBLIABLE(F.nature) ? '' : ' disabled'}> Publiée sur le site</label></div>
 
     <div class="bloc"><h3 id="d-reps-titre">${(F.nature || 'representations') === 'representations' ? 'Représentations' : 'Séances'}</h3>
-      <table class="reps"><thead><tr><th>Jour</th><th>Heure</th>${E.sql3 ? '<th>Fin</th>' : ''}<th>Public</th><th>Précision</th><th>Billetterie</th><th><span class="sr">Retirer</span></th></tr></thead><tbody id="d-reps"></tbody></table>
+      <div class="reps-cadre"><table class="reps"><thead><tr><th>Jour</th><th>Heure</th>${E.sql3 ? '<th>Fin</th>' : ''}<th>Public</th><th>Précision</th><th>Billetterie</th><th><span class="sr">Retirer</span></th></tr></thead><tbody id="d-reps"></tbody></table></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"><button type="button" class="btn petit" id="d-meme-jour">＋ Le même jour</button><button type="button" class="btn petit" id="d-lendemain">＋ Le lendemain</button><button type="button" class="btn petit" id="d-vide">＋ Représentation</button>${typeof SERIES !== 'undefined' ? '<button type="button" class="btn petit" id="d-serie" title="Les mêmes heures chaque jour choisi, du premier au dernier">Série…</button>' : ''}</div>
       <div id="d-sans" style="margin-top:12px"></div></div>
 
@@ -4014,10 +4039,10 @@ function ouvrirModaleProspect(p) {
 
   zone.innerHTML = `
     <div style="position:fixed;inset:0;z-index:90;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;padding:16px;">
-      <div style="background:var(--carte);border:1px solid var(--trait);border-radius:var(--rayon);max-width:560px;width:100%;max-height:92vh;overflow-y:auto;padding:22px;box-shadow:var(--ombre);">
+      <div role="dialog" aria-modal="true" aria-labelledby="t-mod-crm" style="background:var(--carte);border:1px solid var(--trait);border-radius:var(--rayon);max-width:560px;width:100%;max-height:92vh;overflow-y:auto;padding:22px;box-shadow:var(--ombre);">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <h2 style="margin:0;font-size:18px;">${nouveau ? 'Nouvelle opportunité' : 'Modifier l’opportunité'}</h2>
-          <button type="button" class="btn petit" id="b-fermer-mod-crm">✕</button>
+          <h2 id="t-mod-crm" style="margin:0;font-size:18px;">${nouveau ? 'Nouvelle opportunité' : 'Modifier l’opportunité'}</h2>
+          <button type="button" class="btn petit" id="b-fermer-mod-crm" aria-label="Fermer" title="Fermer (Échap)">✕</button>
         </div>
         <form id="f-prospect-crm" novalidate${p ? ` data-piste-id="${p.id}"` : ''}>
           <div class="champ">
@@ -4087,6 +4112,9 @@ function ouvrirModaleProspect(p) {
   const fermer = async () => { if (await partirSansPerdre({ titre: 'Fermer sans enregistrer ?', ok: 'Fermer sans enregistrer', dans: zone, avecFiche: false })) zone.innerHTML = ''; };
   $('#b-fermer-mod-crm')?.addEventListener('click', fermer);
   $('#b-annuler-crm')?.addEventListener('click', fermer);
+  // Échap la ferme aussi, comme les fenêtres de l'équipe et le tiroir (la question d'abord si elle est commencée)
+  zone.firstElementChild?.addEventListener('keydown', e => { if (e.key === 'Escape' && !e.defaultPrevented) { e.preventDefault(); e.stopPropagation(); fermer(); } });
+  $('#crm-structure')?.focus({ preventScroll: true });
 
   $('#f-prospect-crm')?.addEventListener('submit', async e => {
     e.preventDefault();

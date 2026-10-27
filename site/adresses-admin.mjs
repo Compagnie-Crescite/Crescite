@@ -26,7 +26,7 @@ const CAPT = path.join(ICI, 'dist', 'shots-adresses');
 fs.mkdirSync(CAPT, { recursive: true });
 const navigateur = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined });
 const attendre = (page, fn, ms = 6000, arg = null) => page.waitForFunction(fn, arg, { timeout: ms }).then(() => true).catch(() => false);
-const question = async page => { const v = await attendre(page, () => !!document.querySelector('dialog.gq[open]'), 4000); await page.waitForTimeout(400); return v; };   // (la boîte ignore les clics de ses 350 premières ms)
+const question = page => attendre(page, () => !!document.querySelector('dialog.gq[open][data-pret]'), 4000);   // (la boîte ignore les clics de ses 350 premières ms : data-pret dit qu'elle les écoute)
 const adresse = page => page.evaluate(() => location.search + location.hash);
 
 // ================================================================================ au bureau
@@ -126,7 +126,7 @@ const adresse = page => page.evaluate(() => location.search + location.hash);
   ok('tiroir · changé : le précédent pose la question', await question(page) && natifs === 0);
   await calme(page); await page.screenshot({ path: `${CAPT}/tiroir-question.png` });
   await page.click('dialog.gq [data-gq="non"]');
-  await page.waitForTimeout(300);
+  await attendre(page, () => !document.querySelector('dialog.gq'), 3000);
   ok('tiroir · « Rester » : le tiroir, sa saisie et son adresse restent', (await compte(page, '.tiroir #ed-date')) === 1 && (await page.$eval('.tiroir #s-org', e => e.value)) === 'Organisateur d’essai' && (await adresse(page)) === '?tiroir=representations/101#/accueil', await adresse(page));
   await page.click('.tiroir [data-tiroir-fermer]');
   ok('tiroir · « Fermer » changé : la question aussi', await question(page));
@@ -425,13 +425,14 @@ for (const [largeur, hauteur, nom] of [[1440, 900, 'bureau'], [390, 844, 'télé
   } else {
     await page.click('.ob-barre [data-ob="plus"]');
     await page.waitForSelector('.ob-voile.la .ob-feuille', { timeout: 3000 });
-    await page.waitForTimeout(300);
+    await calme(page);      // (la feuille a fini de monter)
     await page.click('.ob-item:has-text("Gestes et raccourcis")');
     await attendre(page, () => !!document.querySelector('dialog.gq-aide[open]'), 3000);
     const a = await page.evaluate(() => { const d = document.querySelector('dialog.gq-aide[open]'); return d && { titre: d.querySelector('h2').textContent, gestes: [...d.querySelectorAll('.gq-geste')].map(x => x.textContent), kbd: d.querySelectorAll('kbd').length, bas: Math.round(d.getBoundingClientRect().bottom) }; });
     ok('aide (téléphone) · « Plus » → « Gestes et raccourcis » : les gestes à la place des touches, depuis le bas', a && a.titre === 'Gestes et raccourcis' && a.gestes.includes('Appui long') && a.gestes.includes('« + »') && a.kbd === 0 && a.bas >= 840, JSON.stringify(a));
     await calme(page);
     await page.screenshot({ path: path.join(CAPT, 'aide-telephone.png') });
+    await attendre(page, () => !!document.querySelector('dialog.gq-aide[open][data-pret]'), 3000);
     await page.click('dialog.gq-aide [data-gq-fermer]');
     await attendre(page, () => !document.querySelector('dialog.gq-aide'), 2000);
     ok('aide (téléphone) · « Fermer » la ferme, le focus revient à « Plus »', await page.evaluate(() => !document.querySelector('dialog.gq-aide') && document.activeElement?.dataset.ob === 'plus'));

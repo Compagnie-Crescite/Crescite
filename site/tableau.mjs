@@ -298,7 +298,7 @@ fs.mkdirSync(CAPT, { recursive: true });
         enVue: fermer.bottom <= innerHeight + 1 && f.scrollHeight <= f.clientHeight + 1, cible: Math.min(...it.map(x => x.getBoundingClientRect().height)) }; }); };
   let plus = await plusVue();
   await page.screenshot({ path: `${CAPT}/telephone-plus.png`, fullPage: false });
-  ok('« Plus » : les rubriques sur deux colonnes, puis le compte (voir le site, le modifier, le mot de passe, la déconnexion), tout en vue', ['Feuilles de route', 'Spectacles', 'Lieux', 'Textes du site', 'Journal', 'Voir le site ↗', 'Mot de passe', 'Déconnexion'].every(x => plus.items.includes(x)) && plus.enVue && plus.cible >= 44 && !plus.courant.length, JSON.stringify(plus));
+  ok('« Plus » : les rubriques sur deux colonnes, puis le compte (voir le site, le modifier, le mot de passe, la déconnexion), tout en vue', ['Feuilles de route', 'Spectacles', 'Lieux', 'Textes du site', 'Journal', 'Voir le site ↗', 'Mot de passe', 'Se déconnecter'].every(x => plus.items.includes(x)) && plus.enVue && plus.cible >= 44 && !plus.courant.length, JSON.stringify(plus));
   await page.keyboard.press('Escape'); await page.waitForTimeout(300);
   await page.evaluate(() => { location.hash = '#/textes'; }); await page.waitForTimeout(800);
   plus = await plusVue();
