@@ -502,6 +502,13 @@ LIBELLES = {
     "modeNuit": "Mode nuit", "jour": "Jour", "nuit": "Nuit",
     "hautDePage": "Haut de page",   # le bouton rond qui ramène en haut d'une page longue (au-delà de deux écrans lus)
     "pause": "Pause",   # le bouton qui arrête ce qui bouge de lui-même (l'accueil de la synthèse : les photos, la pieuvre)
+    # l'indication du premier écran de l'accueil (elle s'efface au premier geste ; « Toutes les dates » la suit, vers les
+    # saisons), et celle du clavier, quand un titre de la pieuvre a le focus
+    "indiceScene": "Choisissez un spectacle : une fois pour le voir, deux pour ouvrir sa page.",
+    "indiceClavier": "Flèches : d’un spectacle à l’autre · Entrée : ouvrir sa page",
+    # l'erreur d'un champ des formulaires publics, dite sous lui à l'envoi (l'alerte, la demande de cession, le contact)
+    "champRequis": "Ce champ est à remplir.", "courrielInvalide": "Cette adresse électronique n’est pas complète.",
+    "caseRequise": "Cette case est à cocher pour envoyer.", "calculFaux": "Ce n’est pas le bon résultat.",
     # alertes de proximité (chantier 1)
     "alerteTournee": "Être prévenu du prochain passage",
     "alerteTourneeDesc": "Recevez un courriel dès qu’une représentation est confirmée près de chez vous.",
