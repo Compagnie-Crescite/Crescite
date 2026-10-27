@@ -2005,7 +2005,8 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 .s7-e { display: grid; grid-template-columns: minmax(0, 1fr) minmax(14rem, 20rem); grid-template-areas: "titre titre" "rac cherche"; align-items: center; gap: clamp(10px, 1.4vw, 18px) clamp(18px, 2.6vw, 36px); }
 .s7-titre { grid-area: titre; margin: 0; font: 500 clamp(2.5rem, 1.4rem + 3.6vw, 4.5rem)/.98 var(--titre); letter-spacing: -.015em; text-wrap: balance; overflow-wrap: break-word; }
 .s7-rac { grid-area: rac; list-style: none; display: flex; flex-wrap: wrap; gap: 0 clamp(18px, 2.6vw, 36px); margin: 0; padding: 0; }
-.s7-e .s7-cherche { grid-area: cherche; max-width: none; }
+.s7-e .s7-cherche-c { grid-area: cherche; }
+.s7-e .s7-cherche { max-width: none; }
 @media (max-width: 759px) {
   .s7-e { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "titre cherche" "rac rac"; align-items: end; gap: 6px 18px; }
   .s7-titre { font-size: 2.5rem; }
@@ -2026,6 +2027,18 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
   font: 400 1rem var(--texte); color: var(--encre); -webkit-appearance: none; appearance: none; transition: border-color var(--k-survol) var(--k-doux), box-shadow var(--k-survol) var(--k-doux); }
 .s7-cherche input::placeholder { color: var(--gris); opacity: 1; }
 .s7-cherche input:focus { outline: none; border-bottom-color: var(--saison-vive); box-shadow: inset 0 -1px 0 var(--saison-vive); }
+/* (ce que la recherche propose : une liste sous le champ, les spectacles à leur couleur puis les communes ; la proposition visée
+   à la flèche ou à la souris prend l'aplat de la saison, son filet à gauche) */
+.s7-cherche-c { position: relative; min-width: 0; }
+.s7-props { position: absolute; z-index: 30; top: calc(100% + 6px); left: 0; right: 0; min-width: min(20rem, calc(100vw - 2 * var(--gout))); max-height: min(24rem, 60vh); overflow-y: auto;
+  overscroll-behavior: contain; padding: 6px; border: 1px solid var(--filet); border-radius: 12px; background: var(--papier-2); box-shadow: 0 20px 44px -18px rgba(0, 0, 0, .75); }
+.s7-props[hidden] { display: none; }
+.s7-props-t { margin: 8px 10px 4px; font: 600 .72rem/1.3 var(--etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--gris); }
+.s7-prop { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 4px 10px; border-radius: 8px; color: var(--encre); font: 500 .95rem/1.25 var(--texte); cursor: pointer; }
+.s7-prop i { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
+.s7-prop[aria-selected="true"] { background: color-mix(in srgb, var(--saison-vive) 20%, transparent); box-shadow: inset 3px 0 0 var(--saison-vive); }
+@media (forced-colors: active) { .s7-prop[aria-selected="true"] { outline: 2px solid Highlight; } }
+@media (max-width: 759px) { .s7-e .s7-props { left: auto; } }
 .s7-chips { display: flex; flex-wrap: wrap; gap: .5rem; min-width: 0; }
 .s7-chip { display: inline-flex; align-items: center; gap: .55rem; min-height: 44px; padding: .38rem .85rem; border: 1px solid color-mix(in srgb, var(--encre) 30%, transparent); border-radius: 0; background: transparent;
   font: 600 .875rem/1.2 var(--texte); color: color-mix(in srgb, var(--encre) 86%, transparent); text-align: left; cursor: pointer; }
@@ -5076,7 +5089,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     main.innerHTML = `<header class="s7-entete"><div class="wrap s7-e">
         <h1 class="s7-titre" tabindex="-1"><span class="fleur">${esc(M0.texte)}</span></h1>
         <ul class="s7-rac">${[['v-saison', S0.titre], ['v-agenda', L.saisonsPassees], ['v-alerte', nAlerte]].map(([id, t]) => `<li><button type="button" data-va="${id}"><span class="s7-lampe" aria-hidden="true"></span>${esc(t)}</button></li>`).join('')}</ul>
-        <label class="s7-cherche s7-outils"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5"/><path d="M11 11l4 4"/></svg><input id="cherche" type="search" placeholder="${esc(L.rechercher)}" aria-label="${esc(L.rechercher)}" autocomplete="off" value="${esc(F.q)}"></label>
+        <div class="s7-cherche-c"><label class="s7-cherche s7-outils"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5"/><path d="M11 11l4 4"/></svg><input id="cherche" type="search" placeholder="${esc(L.rechercher)}" aria-label="${esc(L.rechercher)}" autocomplete="off" value="${esc(F.q)}"></label></div>
         <p class="sr" id="s7-annonce" role="status"></p>
       </div></header>
       <section class="s7" id="v-saison" aria-labelledby="h-saison"><div class="sf7" aria-hidden="true"></div><div class="wrap">
@@ -5432,6 +5445,57 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       const j = ++jFiltre; ensuite(() => { if (j === jFiltre && racine.isConnected) dessine(true); }); }));
     let tempo = 0;
     $('#cherche').addEventListener('input', ev => { F.q = ev.target.value; clearTimeout(tempo); tempo = setTimeout(() => dessine(true), 120); });
+    /* la recherche propose (le motif combobox de l'ARIA) : à chaque lettre, sous le champ, les spectacles et les communes des
+       dates de D dont le nom la contient (ceux qui commencent par elle d'abord), cinq et six au plus ; les flèches les
+       parcourent (le focus reste dans le champ : aria-activedescendant), Entrée ou un clic en choisit un, Échap les referme.
+       Le choix pose le filtre du spectacle ou de la commune, comme sa puce ou la carte, et vide la recherche ; sans choix, la
+       recherche libre continue (Entrée referme seulement la liste) */
+    let communesD = null;
+    const communesDe = () => communesD || (communesD = (() => { const m = new Map(), aj = l => { if (l != null && CARTE.lieux[l] && !m.has(l)) m.set(l, CARTE.nom(CARTE.lieux[l])); };
+      proch.forEach(r => aj(r.d.l)); lignes.forEach(r => aj(r.d.l)); passe.forEach(sa => sa.rows.forEach(r => aj(r.d.l))); return [...m]; })());
+    function proposer(input) {
+      const boite = input && input.closest('.s7-cherche-c');
+      if (!boite || input.__propose) return;
+      input.__propose = true;
+      const id = `${input.id}-l`, lb = document.createElement('div');
+      lb.className = 's7-props'; lb.id = id; lb.hidden = true;
+      lb.setAttribute('role', 'listbox'); lb.setAttribute('aria-label', L.rechercher);
+      boite.appendChild(lb);
+      input.setAttribute('role', 'combobox'); input.setAttribute('aria-autocomplete', 'list'); input.setAttribute('aria-expanded', 'false'); input.setAttribute('aria-controls', id);
+      let ops = [], i = -1;
+      const fermer = () => { lb.hidden = true; i = -1; input.setAttribute('aria-expanded', 'false'); input.removeAttribute('aria-activedescendant'); };
+      const viser = j => { i = j; ops.forEach((o, k) => o.el.setAttribute('aria-selected', String(k === i)));
+        if (ops[i]) { input.setAttribute('aria-activedescendant', ops[i].el.id); ops[i].el.scrollIntoView({ block: 'nearest' }); } else input.removeAttribute('aria-activedescendant'); };
+      const dessiner = () => {
+        const t = norm(input.value).trim();
+        if (!t) { fermer(); return; }
+        const tri = xs => xs.filter(x => x.n.includes(t)).sort((a, b) => (b.n.startsWith(t) - a.n.startsWith(t)) || a.n.localeCompare(b.n, 'fr'));
+        const sp = tri(puces.map(x => ({ type: 's', v: x.cle, t: x.titre, n: norm(x.titre), c: x.slug ? couleurDe(x.slug) : '' }))).slice(0, 5);
+        const co = tri(communesDe().map(([l, nom]) => ({ type: 'l', v: l, t: nom, n: norm(nom) }))).slice(0, 6);
+        if (!sp.length && !co.length) { fermer(); return; }
+        const groupe = (k, titre, xs, i0) => (xs.length ? `<div role="group" aria-labelledby="${id}-${k}"><p class="s7-props-t" id="${id}-${k}" role="presentation">${esc(titre)}</p>`
+          + xs.map((x, j) => `<div class="s7-prop" role="option" id="${id}-${i0 + j}" aria-selected="false" data-n="${i0 + j}"${x.c ? ` style="--c:${x.c}"` : ''}>${x.c ? '<i aria-hidden="true"></i>' : ''}<span>${esc(x.t)}</span></div>`).join('') + '</div>' : '');
+        lb.innerHTML = groupe('s', L.spectacles, sp, 0) + groupe('c', L.communes, co, sp.length);
+        ops = [...sp, ...co].map((x, k) => ({ ...x, el: lb.querySelector(`[data-n="${k}"]`) }));
+        lb.hidden = false; input.setAttribute('aria-expanded', 'true'); viser(-1);
+      };
+      const choisir = o => { fermer(); input.value = ''; F.q = ''; clearTimeout(tempo);
+        if (o.type === 's') F.slug = o.v; else F.l = o.v;
+        dessine(true); };
+      input.addEventListener('input', dessiner);
+      input.addEventListener('keydown', e => {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { if (lb.hidden) dessiner(); if (lb.hidden || !ops.length) return;
+          e.preventDefault(); const n = ops.length; viser(e.key === 'ArrowDown' ? (i + 1) % n : (i <= 0 ? n - 1 : i - 1)); return; }
+        if (e.key === 'Enter') { if (!lb.hidden && ops[i]) { e.preventDefault(); choisir(ops[i]); } else fermer(); return; }
+        // (ouverte, Échap ne referme qu'elle : ni le champ ne se vide, ni le panneau des filtres ne se ferme)
+        if (e.key === 'Escape' && !lb.hidden) { e.preventDefault(); e.stopPropagation(); fermer(); }
+      });
+      lb.addEventListener('pointerdown', e => e.preventDefault());   // (le focus reste dans le champ)
+      lb.addEventListener('click', e => { const o = e.target.closest('[role="option"]'); if (o && ops[+o.dataset.n]) choisir(ops[+o.dataset.n]); });
+      lb.addEventListener('mousemove', e => { const o = e.target.closest('[role="option"]'); if (o && +o.dataset.n !== i) viser(+o.dataset.n); });
+      input.addEventListener('blur', () => setTimeout(() => { if (document.activeElement !== input) fermer(); }, 0));
+    }
+    proposer($('#cherche'));
     // choisir une commune sur la carte filtre toute la page ; survoler l'une allume l'autre (dans les deux listes), et ses
     // repères sur la frise
     relier(svg, listes, l => { F.l = F.l === l ? null : l; dessine(true); });
@@ -5627,7 +5691,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         pan.innerHTML = `<div class="fe7-prise"><span class="fe7-poignee" aria-hidden="true"></span>
           <div class="fe7-tete"><h2 class="fe7-t" id="fe7-t" tabindex="-1">${esc(L.filtres)}</h2><button type="button" class="fe7-x" data-fermer aria-label="${esc(L.fermer || '')}">${CROIX}</button></div></div>
           <div class="fe7-corps">
-            <label class="s7-cherche"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5"/><path d="M11 11l4 4"/></svg><input type="search" id="fe7-q" placeholder="${esc(L.rechercher)}" aria-label="${esc(L.rechercher)}" autocomplete="off" value="${esc(F.q)}"></label>
+            <div class="s7-cherche-c"><label class="s7-cherche"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5"/><path d="M11 11l4 4"/></svg><input type="search" id="fe7-q" placeholder="${esc(L.rechercher)}" aria-label="${esc(L.rechercher)}" autocomplete="off" value="${esc(F.q)}"></label></div>
             <section aria-labelledby="fe7-hm"><h3 class="fe7-h" id="fe7-hm">${esc(S0.titre)}</h3><div class="fe7-mois">${moisSaison.map(x => `<button type="button" class="fe7-m" data-mois="${x.k}" aria-pressed="false" aria-label="${esc(`${MOIS_NOMS[x.m]} ${x.a}`)}"><b>${esc(MC[x.m] || MOIS_NOMS[x.m])}</b><small></small></button>`).join('')}</div></section>
             ${spSaison.length ? `<section aria-labelledby="fe7-hs"><h3 class="fe7-h" id="fe7-hs">${esc(L.spectacles)}</h3><div class="fe7-puces fe7-lg">${spSaison.map(x => puceSp(x, nSaison.get(x.cle))).join('')}</div></section>` : ''}
             ${spPasses.some(x => !nSaison.has(x.cle)) ? `<section aria-labelledby="fe7-hp"><h3 class="fe7-h" id="fe7-hp">${esc(L.saisonsPassees)}</h3><div class="fe7-puces">${spPasses.filter(x => !nSaison.has(x.cle)).map(x => puceSp(x)).join('')}</div></section>` : ''}
@@ -5635,6 +5699,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
           </div>
           <div class="fe7-pied">${L.effacerFiltres ? `<button type="button" class="ft7-tout" data-eff="tout">${esc(L.effacerFiltres)}</button>` : ''}<button type="button" class="bouton e fe7-voir" style="--ec:var(--saison)"><span>${esc(L.voirLesDates)}</span><b>${n}</b></button></div>`;
         majPanneau();
+        proposer($('#fe7-q', pan));
       }
       // (ouvert, il ne se redessine pas : la recherche garde son focus ; seuls les états et les nombres changent)
       function majPanneau() {
