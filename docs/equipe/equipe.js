@@ -1955,7 +1955,7 @@
     if (!d) return;
     if (!F || typeof F.telecharger !== 'function') return annoncer('Le PDF ne peut pas être préparé : l’outil des feuilles de route n’a pas pu être chargé. Rechargez la page.', { erreur: true });
     try {
-      await occupe(bouton, 'Préparation…', async () => {
+      await occupe(bouton, 'Préparation du PDF…', async () => {
         const f = await chargerFeuille(id);
         if (!f) throw new Error('cette feuille de route n’est pas (ou plus) publiée');
         await F.telecharger(f, contexte(d, { pdf: true }));

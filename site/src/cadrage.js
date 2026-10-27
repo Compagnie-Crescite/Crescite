@@ -50,17 +50,26 @@ const CADRAGE = (() => {
   }
 
   const biaisDe = (cs, nom) => { const x = parseFloat(cs.getPropertyValue(nom)); return Number.isFinite(x) ? Math.min(1, Math.max(0, x)) : .5; };
-  function position(img, l, h) {
+  // la dernière mesure d'une photo suivie : la taille de son cadre et ses réglages (object-fit, --cadre-x, --cadre-y), lus quand
+  // la mise en page est faite (ResizeObserver) ; une photo qui finit de charger se cadre sur elle, sans relire la mise en page
+  // (relue à chaque chargement, elle forçait celle de toute la page, des dizaines de millisecondes au téléphone)
+  const mesures = new WeakMap();
+  function mesurer(img, l, h) {
+    const cs = getComputedStyle(img), m = { l, h, fit: cs.objectFit, bx: biaisDe(cs, '--cadre-x'), by: biaisDe(cs, '--cadre-y') };
+    mesures.set(img, m);
+    return m;
+  }
+  function poser(img, m) {
     const k = img.dataset.cadre === 'non' ? null : cle(img.getAttribute('src')), c = k && donnees().cadrages[k];
-    if (!c || !img.naturalWidth) return null;
-    if (l == null) { l = img.clientWidth; h = img.clientHeight; }
-    if (!l || !h) return null;
-    const cs = getComputedStyle(img);
-    if (cs.objectFit !== 'cover') return null;
-    const [x, y] = calcul({ l, h }, { l: img.naturalWidth, h: img.naturalHeight }, c, [biaisDe(cs, '--cadre-x'), biaisDe(cs, '--cadre-y')]);
+    if (!c || !img.naturalWidth || !m || !m.l || !m.h || m.fit !== 'cover') return null;
+    const [x, y] = calcul({ l: m.l, h: m.h }, { l: img.naturalWidth, h: img.naturalHeight }, c, [m.bx, m.by]);
     const val = `${x.toFixed(1)}% ${y.toFixed(1)}%`;
     if (img.style.objectPosition !== val) img.style.objectPosition = val;
     return val;
+  }
+  function position(img, l, h) {
+    if (l == null) { l = img.clientWidth; h = img.clientHeight; }
+    return poser(img, mesurer(img, l, h));
   }
 
   // les photos suivies : leur taille (ResizeObserver, sans relire la mise en page), leur chargement, leur adresse
@@ -75,7 +84,8 @@ const CADRAGE = (() => {
     if (suivies.has(img)) { position(img); return; }
     if (!cle(img.getAttribute('src'))) return;
     suivies.add(img);
-    img.addEventListener('load', () => position(img));
+    // (sans mesure complète, une photo dans un bloc que la page ne met pas encore en page (content-visibility) : elle relit)
+    img.addEventListener('load', () => { const m = mesures.get(img); if (!(m && m.l && m.h && m.fit === 'cover' && poser(img, m))) position(img); });
     // (déjà chargée : sa première mesure par ResizeObserver, après la mise en page, la cadre ; sans lui, tout de suite)
     if (tailles) tailles.observe(img); else position(img);
     if (img.complete && !tailles) position(img);

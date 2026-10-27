@@ -71,7 +71,7 @@ const MOBILE = (() => {
     const items = rubriquesVisibles().filter(([k]) => !tabs.has(k)).map(([k, l]) => ({ libelle: l, href: `#/${k}`, demi: true, courant: k === r }));
     items.push({ libelle: 'Carte de tournée', href: '#/representations/carte', demi: true, courant: carte }, { libelle: 'Gestes et raccourcis', demi: true, faire: () => { if (typeof ouvrirAide === 'function') ouvrirAide($('.ob-barre [data-ob="plus"]')); } }, { libelle: 'Corbeille', detail: 'ce qui a été supprimé ces trente derniers jours', href: '#/corbeille', courant: r === 'corbeille' }, { libelle: 'Rechercher', detail: 'une date, une personne, un lieu…', faire: () => ouvrirRecherche() });
     if ($('#b-sortir')) items.push({ groupe: 'Compte' }, { libelle: 'Voir le site', href: SITE, nouvel: true, demi: true }, { libelle: 'Modifier sur le site', href: `${SITE}?edition`, nouvel: true, demi: true },
-      { libelle: 'Mot de passe', demi: true, faire: () => $('#b-mdp')?.click() }, { libelle: 'Déconnexion', demi: true, faire: () => $('#b-sortir')?.click() });
+      { libelle: 'Mot de passe', demi: true, faire: () => $('#b-mdp')?.click() }, { libelle: 'Se déconnecter', demi: true, faire: () => $('#b-sortir')?.click() });
     feuille('Les autres rubriques', items);
   }
   function feuilleCreer() {

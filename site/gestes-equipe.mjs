@@ -160,12 +160,15 @@ async function ouvrir(navigateur, { telephone = true, hash = '#/saison', base = 
   await page.waitForSelector('#contenu .heros, #contenu .titre-vue, #contenu .billet', { timeout: 15000 });
   return { ctx, page, erreurs };
 }
-// l'appui long et le balayage, par le protocole (Playwright n'a que le tap)
+// l'appui long et le balayage, par le protocole (Playwright n'a que le tap). Chaque toucher porte son heure (timestamp) :
+// le geste dure ce qu'il dit (650 ms d'appui, un balayage de 112 ms), même quand la machine est chargée et que chaque envoi
+// attend la page ; l'interface mesure les gestes à cette heure-là (e.timeStamp), comme celle d'un vrai doigt
 async function appuiLong(page, x, y, duree = 650) {
   const cdp = await page.context().newCDPSession(page);
-  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+  const t0 = Date.now() / 1000;
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }], timestamp: t0 });
   await page.waitForTimeout(duree);
-  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [], timestamp: Math.max(t0 + duree / 1000, Date.now() / 1000) });
   await cdp.detach();
 }
 // l'appui long sur un élément (défilé en vue), jusqu'à ce que le menu attendu s'ouvre : la page peut se redessiner entre-temps
@@ -182,9 +185,10 @@ async function menuSur(page, selecteur, attendu, { dx = null, dy = null, essais 
 }
 async function balayer(page, [x0, y0], [x1, y1], { pas = 8, dt = 14 } = {}) {
   const cdp = await page.context().newCDPSession(page);
-  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: x0, y: y0 }] });
-  for (let i = 1; i <= pas; i++) { const t = i / pas; await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x0 + (x1 - x0) * t, y: y0 + (y1 - y0) * t }] }); await page.waitForTimeout(dt); }
-  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  const t0 = Date.now() / 1000, quand = i => t0 + i * dt / 1000;
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: x0, y: y0 }], timestamp: quand(0) });
+  for (let i = 1; i <= pas; i++) { const t = i / pas; await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x0 + (x1 - x0) * t, y: y0 + (y1 - y0) * t }], timestamp: quand(i) }); await page.waitForTimeout(dt); }
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [], timestamp: quand(pas + 1) });
   await cdp.detach();
 }
 
@@ -214,9 +218,11 @@ fs.mkdirSync(CAPT, { recursive: true });
   ok('la page a « Date précédente / Date suivante », nommées par le jour et le lieu (le spectacle pour le lecteur d’écran)', /^-1:#\/date\/101:Date précédente:\S+ \d+(er)? \S+ · Caen:Date précédente : \S+ \d+(er)? \S+ · Caen, Bérénice \(←\)$/.test(nav[0] || '') && /^1:#\/date\/103:Date suivante:\S+ \d+(er)? \S+ · Paris:Date suivante : .+ · Paris, Bérénice \(→\)$/.test(nav[1] || ''), nav.join(' | '));
   ok('les mêmes deux boutons au pied de la page', (await page.$$eval('#contenu .nav-dates', xs => xs.length)) === 2 && await page.$eval('#contenu .nav-dates-bas [data-gps="1"]', e => e.dataset.href === '#/date/103').catch(() => false));
   await page.screenshot({ path: `${CAPT}/date.png`, fullPage: false });
-  // (après un changement de page, la transition de vue couvre l'écran un instant : le doigt attend qu'elle finisse)
-  const pageDe = async id => { await page.waitForFunction(h => location.hash === h && document.querySelector('#contenu .nav-dates') && [...document.querySelectorAll('#contenu .nav-dates [data-gps]')].every(b => b.dataset.href !== h), `#/date/${id}`, { timeout: 6000 }).catch(() => {}); await page.waitForTimeout(500); };
-  await page.waitForTimeout(500);
+  // (après un changement de page, la transition de vue couvre l'écran un instant : le doigt attend qu'elle finisse, pas un
+  // temps fixe ; pendant qu'elle court, il touche la page entière, pas ce qui est dessous)
+  const transitionFinie = () => page.waitForFunction(() => !document.getAnimations().some(a => /view-transition/.test(a.effect?.pseudoElement || '') && a.playState === 'running'), null, { timeout: 6000 }).catch(() => {});
+  const pageDe = async id => { await page.waitForFunction(h => location.hash === h && document.querySelector('#contenu .nav-dates') && [...document.querySelectorAll('#contenu .nav-dates [data-gps]')].every(b => b.dataset.href !== h), `#/date/${id}`, { timeout: 6000 }).catch(() => {}); await transitionFinie(); };
+  await transitionFinie();
   await balayer(page, [320, 240], [80, 245]);   // sur le héros de la page
   await pageDe(103);
   ok('un balayage vers la gauche ouvre la date suivante', (await hash(page)) === '#/date/103', await hash(page));
@@ -404,7 +410,7 @@ fs.mkdirSync(CAPT, { recursive: true });
   await menuSur(page, '.feuille-item[data-date="102"]', 'Repasser en brouillon');
   await page.tap('.gm-feuille [data-gm]:has-text("Repasser en brouillon")');
   // la question dans la boîte de la charte (jamais confirm()) : le bouton nommé par son action, « Annuler » a le focus
-  await page.waitForSelector('dialog.gq[open] [data-gq="oui"]', { timeout: 4000 }).catch(() => {}); await page.waitForTimeout(400);
+  await page.waitForSelector('dialog.gq[open][data-pret] [data-gq="oui"]', { timeout: 4000 }).catch(() => {});
   const boiteBrouillon = await page.evaluate(() => ({ ok: document.querySelector('dialog.gq[open] [data-gq="oui"]')?.textContent, focus: document.activeElement?.dataset?.gq, danger: !!document.querySelector('dialog.gq.gq-danger[open]') }));
   ok('« Repasser en brouillon » : la boîte de la charte, « Repasser en brouillon » à la couleur d’alerte, « Annuler » a le focus', boiteBrouillon.ok === 'Repasser en brouillon' && boiteBrouillon.focus === 'non' && boiteBrouillon.danger, JSON.stringify(boiteBrouillon));
   await page.tap('dialog.gq [data-gq="oui"]').catch(() => {});
@@ -444,7 +450,7 @@ fs.mkdirSync(CAPT, { recursive: true });
   const { ctx, page, erreurs } = await ouvrir(navigateur, { hash: '#/date/102', base });
   let natifs = 0;
   page.on('dialog', d => { natifs++; d.dismiss().catch(() => {}); });
-  const question = () => page.waitForFunction(() => !!document.querySelector('dialog.gq[open]'), null, { timeout: 4000 }).then(() => page.waitForTimeout(400)).then(() => true).catch(() => false);   // (la boîte ignore les clics de ses 350 premières ms)
+  const question = () => page.waitForFunction(() => !!document.querySelector('dialog.gq[open][data-pret]'), null, { timeout: 4000 }).then(() => true).catch(() => false);   // (la boîte ignore les clics de ses 350 premières ms)
   const adresse = () => page.evaluate(() => location.hash);
   // un vrai geste sur la barre des onglets (une entrée d'historique sans geste, le précédent du navigateur la saute)
   const onglet = k => page.locator(`.nav-item[data-onglet="${k}"]:visible`).first().tap();
@@ -453,7 +459,7 @@ fs.mkdirSync(CAPT, { recursive: true });
   ok('titre · une date : le spectacle, le jour, l’onglet (« La Folle Idée · … · Ma saison · Équipe · Compagnie Crescite »)', /^(\(\d+\) )?La Folle Idée · \S+ \S+ \S+ · Ma saison · Équipe · Compagnie Crescite$/.test(await page.title()), await page.title());
   await onglet('moi');
   await page.waitForSelector('#f-telephone', { timeout: 10000 });
-  await page.waitForTimeout(400);
+  await page.waitForFunction(() => /(^|\) )Moi · /.test(document.title), null, { timeout: 5000 }).catch(() => {});
   ok('titre · une vue d’onglet : « Moi · Équipe · Compagnie Crescite »', /(^|\) )Moi · Équipe · Compagnie Crescite$/.test(await page.title()), await page.title());
   await onglet('saison');
   await page.waitForFunction(() => location.hash === '#/saison' && document.querySelector('#contenu .heros, #contenu .billet'), null, { timeout: 6000 }).catch(() => {});
@@ -512,7 +518,7 @@ fs.mkdirSync(CAPT, { recursive: true });
   const { ctx, page, erreurs } = await ouvrir(navigateur, { hash: '#/date/102', base });
   let natifs = 0;
   page.on('dialog', d => { natifs++; d.dismiss().catch(() => {}); });
-  const question = () => page.waitForFunction(() => !!document.querySelector('dialog.gq[open]'), null, { timeout: 4000 }).then(() => page.waitForTimeout(400)).then(() => true).catch(() => false);
+  const question = () => page.waitForFunction(() => !!document.querySelector('dialog.gq[open][data-pret]'), null, { timeout: 4000 }).then(() => true).catch(() => false);
   const boite = () => page.evaluate(() => ({ titre: document.querySelector('dialog.gq[open] h2')?.textContent, ok: document.querySelector('dialog.gq[open] [data-gq="oui"]')?.textContent, annuler: document.querySelector('dialog.gq[open] [data-gq="non"]')?.textContent, focus: document.activeElement?.dataset?.gq, danger: !!document.querySelector('dialog.gq.gq-danger[open]') }));
   await page.waitForSelector('.heros[data-date="102"]', { timeout: 10000 }).catch(() => {}); await page.waitForTimeout(500);
   await menuSur(page, '.heros[data-date="102"]', 'Supprimer la date…', { dy: -30 });
@@ -620,7 +626,7 @@ fs.mkdirSync(CAPT, { recursive: true });
   ok('aide (téléphone) · « Gestes et raccourcis », au bas de « Moi » : l’appui long, tirer vers le bas, balayer ; pas de touches', a && a.titre === 'Gestes et raccourcis' && ['Appui long', 'Tirer vers le bas', 'Balayer', 'Glisser depuis le bord gauche'].every(g => a.gestes.includes(g)) && a.kbd === 0, JSON.stringify(a));
   await page.waitForTimeout(300); await page.screenshot({ path: `${CAPT}/aide-telephone.png`, fullPage: false });
   await page.keyboard.press('Escape');
-  await page.waitForTimeout(200);
+  await page.waitForFunction(() => !document.querySelector('dialog.gq-aide'), null, { timeout: 3000 }).catch(() => {});
   ok('aide (téléphone) · Échap la ferme, le focus revient au bouton', await page.evaluate(() => !document.querySelector('dialog.gq-aide') && document.activeElement?.matches('.moi-aide [data-aide]')));
   ok('aide (téléphone) · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();
@@ -639,7 +645,8 @@ fs.mkdirSync(CAPT, { recursive: true });
   await page.click('.nav-pied [data-aide]');
   await page.waitForSelector('dialog.gq-aide[open]', { timeout: 3000 }).catch(() => {});
   ok('aide (ordinateur) · « Raccourcis », au pied de la colonne, l’ouvre aussi', (await compte(page, 'dialog.gq-aide[open]')) === 1);
-  await page.waitForTimeout(400); await page.click('dialog.gq-aide [data-gq-fermer]'); await page.waitForTimeout(300);
+  await page.waitForSelector('dialog.gq-aide[open][data-pret]', { timeout: 3000 }).catch(() => {}); await page.click('dialog.gq-aide [data-gq-fermer]');
+  await page.waitForFunction(() => !document.querySelector('dialog.gq-aide'), null, { timeout: 3000 }).catch(() => {});
   ok('aide (ordinateur) · « Fermer » la ferme, le focus revient à « Raccourcis »', await page.evaluate(() => !document.querySelector('dialog.gq-aide') && document.activeElement?.matches('.nav-pied [data-aide]')));
   ok('aide (ordinateur) · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();

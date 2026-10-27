@@ -496,6 +496,8 @@ LIBELLES = {
     "sommaire": "Sommaire",
     # les vidéos lues dans le site (règle 18, LECTEUR)
     "lire": "Lire la vidéo", "pleinEcran": "Plein écran", "assombrir": "Assombrir", "rallumer": "Rallumer", "fermer": "Fermer",
+    # (ses touches, quand le lecteur a le focus : la bulle de l'affiche et du cadre, avec aria-keyshortcuts)
+    "raccourcisVideo": "Espace ou K : lire ou mettre en pause · F : plein écran · M : couper le son · Échap : rallumer",
     # le jour et la nuit (règle 19, THEME) : le nom du bouton du menu (lecteurs d'écran, bulle), et les deux thèmes
     "modeNuit": "Mode nuit", "jour": "Jour", "nuit": "Nuit",
     "hautDePage": "Haut de page",   # le bouton rond qui ramène en haut d'une page longue (au-delà de deux écrans lus)

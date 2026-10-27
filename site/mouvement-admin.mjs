@@ -150,7 +150,8 @@ fs.mkdirSync(CAPT, { recursive: true });
   await page.waitForFunction(() => location.hash === '#/representations/101' && document.querySelector('#s-org'), null, { timeout: 8000 });
   await page.waitForTimeout(300);
   await page.fill('#s-org', 'Ville de Caen');
-  await page.waitForTimeout(100);
+  // (la barre se déploie en 0,3 s : on attend qu'elle ait commencé, pas un temps fixe, que la machine chargée dépassait)
+  await page.waitForFunction(() => { const p = document.querySelector('.pied-ed'), m = getComputedStyle(p, '::before').transform.match(/matrix\(([-\d.]+)/); return p.classList.contains('sale') && m && parseFloat(m[1]) > 0.05; }, null, { timeout: 3000 }).catch(() => {});
   const sale = await page.evaluate(() => { const p = document.querySelector('.pied-ed'); return { sale: p.classList.contains('sale'), barre: getComputedStyle(p, '::before').transform, etat: p.querySelector('.etat-ed').textContent }; });
   ok('le pied dit l\'état : modifiée, la barre ambre se déploie', sale.sale && parseFloat((sale.barre.match(/matrix\(([-\d.]+)/) || [])[1] || '0') > 0.05 && /non enregistrées/.test(sale.etat), JSON.stringify(sale));
   await page.evaluate(() => { marquerSale(false); bravo(); });
