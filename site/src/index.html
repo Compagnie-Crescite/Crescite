@@ -151,6 +151,54 @@ body { display: flow-root; }   /* (la cale et la marge de l'en-tête restent dan
 .top.fin .top-in, .top.fin .entrees { gap: 0; }
 .top.fin .top-in { padding: 0 3px; }
 .top.fin .entrees a { padding: 0 7px; font-size: .64rem; letter-spacing: .02em; }
+/* (la loupe tient encore : les pièces sans leur filet transparent, leur anneau d'élément lu dessiné en dedans ; sinon, dernier
+   recours, la loupe quitte la ligne : la recherche reste à « / » et Ctrl K) */
+.top.fin.etroit .top-in { padding: 0; }
+.top.fin.etroit .entrees a { border-width: 0; }
+.top.fin.etroit .entrees a[aria-current="true"] { box-shadow: inset 0 0 0 2px #fff; }
+.top.fin.etroit.tasse .entrees a { padding: 0 3px; letter-spacing: 0; }
+.top.sans-loupe .loupe-b { display: none; }
+/* la loupe du menu (CHERCHE) : un rond à la suite des pièces, la boîte de recherche ouverte, il se remplit */
+.loupe-b { flex: none; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: none; color: #fff; cursor: pointer; }
+.loupe-b svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; transition: scale var(--k-survol) var(--k-souple); }
+.loupe-b:hover { background-color: rgba(255, 255, 255, .13); }
+.loupe-b:is(:hover, :focus-visible) svg { scale: 1.12; }
+.loupe-b[aria-expanded="true"] { background: #fff; color: var(--saison); }
+/* la boîte de recherche (CHERCHE) : le papier de nuit sur un voile, posée haut ; ses propositions par groupe, celle qu'on vise
+   teintée de la saison et marquée d'un filet ; au téléphone, tout l'écran. Elle monte de 10 px en s'ouvrant (posée d'emblée
+   avec moins d'animations) */
+.cs { position: fixed; inset: 0; z-index: 70; }
+.cs-voile { position: absolute; inset: 0; background: rgba(6, 3, 5, .66); }
+.cs-boite { position: absolute; left: 50%; top: max(9vh, 72px); translate: -50% 0; display: flex; flex-direction: column; width: min(680px, calc(100vw - 32px)); max-height: min(74vh, 700px);
+  overflow: hidden; border-radius: 20px; background: var(--papier-2); color: var(--encre); box-shadow: 0 0 0 1px color-mix(in srgb, var(--encre) 14%, transparent), 0 30px 70px -20px rgba(0, 0, 0, .95); }
+html:not(.still) .cs-voile { animation: fm7-parait .24s var(--k-doux) backwards; }
+html:not(.still) .cs-boite { animation: cs-monte .26s var(--k-doux) backwards; }
+@keyframes cs-monte { from { opacity: 0; transform: translateY(var(--k-monte, 10px)); } }
+.cs-tete { flex: none; display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 20px; border-bottom: 1px solid var(--filet); transition: box-shadow var(--k-survol) var(--k-doux); }
+.cs-tete:focus-within { box-shadow: inset 0 -2px 0 var(--saison-vive); }
+.cs-champ { flex: 1; display: flex; align-items: center; gap: 12px; min-width: 0; }
+.cs-champ svg { flex: none; width: 20px; height: 20px; fill: none; stroke: var(--saison-vive); stroke-width: 2; stroke-linecap: round; }
+.cs-champ input { flex: 1; min-width: 0; height: 52px; padding: 0; border: 0; background: none; color: var(--encre); font: 400 1.2rem/1.2 var(--texte); outline: none; -webkit-appearance: none; appearance: none; }
+.cs-champ input::placeholder { color: var(--gris); }
+.cs-champ input::-webkit-search-cancel-button { display: none; }
+.cs-x { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: none; color: var(--encre); cursor: pointer; }
+.cs-x:hover { background: color-mix(in srgb, var(--encre) 10%, transparent); }
+.cs-x .croix { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.cs-l { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 4px 8px 14px; }
+.cs-g { margin: 14px 12px 6px; color: var(--gris); font: 700 .72rem/1.3 var(--etiq); letter-spacing: .14em; text-transform: uppercase; }
+.cs-o { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 12px; min-height: 48px; padding: 6px 12px; border-radius: 10px; color: var(--encre); text-decoration: none; cursor: pointer; }
+.cs-o i { grid-row: 1 / span 2; width: 9px; height: 9px; border-radius: 50%; background: var(--c, transparent); box-shadow: inset 0 0 0 1.5px var(--c, var(--gris)); }
+.cs-ot { min-width: 0; font: 500 1.02rem/1.25 var(--titre); overflow-wrap: anywhere; }
+.cs-os { grid-column: 2; min-width: 0; color: var(--gris); font-size: .86rem; line-height: 1.3; }
+.cs-o[aria-selected="true"] { background: color-mix(in srgb, var(--saison-vive) 20%, transparent); box-shadow: inset 3px 0 0 var(--saison-vive); }
+@media (forced-colors: active) { .cs-o[aria-selected="true"] { outline: 2px solid Highlight; } }
+.cs-vide { margin: 18px 12px; color: var(--gris); }
+html.cs-ouvert { overflow: hidden; }
+@media (max-width: 759px) {
+  .cs-voile { display: none; }
+  .cs-boite { inset: 0; translate: none; width: auto; max-height: none; padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); border-radius: 0; box-shadow: none; }
+  .cs-tete { padding-left: 16px; }
+}
 /* (mesuré marque dépliée, ajuste()) */
 .top.mesure .marque { transition: none; }
 
@@ -631,6 +679,34 @@ html[data-theme="nuit"] .df[data-motif="paperboard"] .df-in { --u-texte: var(--u
    par saison et « Écrire à la compagnie », à côté de la carte de tous les lieux, en blanc sur l'aplat (les partenaires : au
    pied de page seulement). */
 .ep-cat { display: grid; gap: clamp(20px, 2.4vw, 32px); margin: 0; padding: 0; list-style: none; }
+/* le catalogue d'un regard, avant les fiches : un tableau net (celui du dossier), un spectacle par ligne, son titre dans sa
+   police et sa couleur ; au téléphone, une carte compacte par spectacle (ses faits en deux colonnes) */
+.rec { margin: 0 0 clamp(44px, 5.4vw, 80px); }
+.rec-t { width: 100%; border-collapse: collapse; font-size: .95rem; line-height: 1.4; }
+.rec-t th, .rec-t td { padding: 10px 14px; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--filet); }
+.rec-t thead th { padding-block: 0 10px; border-bottom-color: color-mix(in srgb, var(--encre) 55%, transparent); color: var(--gris); font: 700 .72rem/1.3 var(--etiq); letter-spacing: .12em; text-transform: uppercase; }
+.rec-t tbody th { width: 30%; font-weight: 400; }
+.rec-t td { color: color-mix(in srgb, var(--encre) 86%, transparent); }
+.rec-t td:nth-child(3) { white-space: nowrap; }   /* (la durée d'un tenant : « 55 minutes ») */
+.rec-t td b, .rec-c dd b { color: var(--encre); font: 700 1.05em var(--titre); }
+.rec-t tbody tr { transition: background-color var(--k-survol) var(--k-doux); }
+.rec-t tbody tr:hover { background: color-mix(in srgb, var(--c) 8%, transparent); }
+.rec-a { display: inline-flex; align-items: center; min-height: 44px; padding: 0; border: 0; background: none; color: var(--c); font: var(--rec-g, 600) 1.22rem/1.15 var(--rec-f, var(--titre));
+  text-align: left; text-decoration: underline transparent; text-decoration-thickness: 1px; text-underline-offset: .2em; cursor: pointer; transition: text-decoration-color var(--k-survol) var(--k-doux); }
+.rec-a:hover { text-decoration-color: currentColor; }
+.rec-tag { display: inline-block; margin-left: 4px; padding: 0 9px; border: 1px solid currentColor; border-radius: 999px; color: var(--gris); font: 600 .68rem/1.6 var(--etiq); letter-spacing: .08em; text-transform: uppercase; vertical-align: .15em; }
+.rec-c { display: none; }
+@media (max-width: 759px) {
+  .rec-t { display: none; }
+  .rec-c { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+  .rec-c li { padding: 4px 14px 12px; border: 1px solid var(--filet); border-left: 3px solid var(--c); border-radius: 6px; background: var(--papier-2); }
+  .rec-ct { margin: 0; }
+  .rec-c dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; margin: 2px 0 0; }
+  .rec-c dl > div { min-width: 0; }
+  .rec-c .rec-long { grid-column: 1 / -1; }
+  .rec-c dt { color: var(--gris); font: 700 .66rem/1.3 var(--etiq); letter-spacing: .12em; text-transform: uppercase; }
+  .rec-c dd { margin: 1px 0 0; font-size: .9rem; line-height: 1.35; overflow-wrap: anywhere; }
+}
 .ep-diff { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: clamp(32px, 4.4vw, 80px); align-items: center; }
 .ep-diff-t > p:not(.ep-k):not(.ep-ecrire) { max-width: 52ch; margin: 0 0 18px; font-size: 1.02rem; line-height: 1.6; }
 .ep-diff .p-diff { max-width: none; min-height: 118px; margin: clamp(18px, 2vw, 26px) 0; }
@@ -690,6 +766,18 @@ html:not(.ed-actif) .ct-tel.vide { display: none; }
 .ep-ecole { max-width: 62ch; margin: 0; font: 400 clamp(1.2rem, 1rem + .7vw, 1.6rem)/1.5 var(--texte); }
 .ep-ecole::first-letter { color: var(--saison-texte); font: 700 2.4em/.8 var(--titre); }
 .acs { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: clamp(16px, 2vw, 28px); margin: 0; padding: 0; list-style: none; }
+/* choisir une action culturelle : les puces des filtres des saisons, par groupe (le lieu, le public), et au bout le nombre de
+   spectacles gardés ; au téléphone, les groupes l'un sous l'autre, les puces passent à la ligne */
+.ef-in { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 18px clamp(24px, 3vw, 44px); padding: 18px 0; border-block: 1px solid var(--filet); }
+.ef-g { min-width: 0; max-width: 100%; }
+.ef-k { margin: 0 0 8px; color: var(--gris); font: 700 .72rem/1.3 var(--etiq); letter-spacing: .12em; text-transform: uppercase; }
+.ef-puces { display: flex; flex-wrap: wrap; gap: 8px; }
+.ef-bout { display: flex; align-items: center; gap: 14px; min-height: 44px; margin-left: auto; }
+.ef-n { margin: 0; font: 500 1.06rem/1.2 var(--titre); font-variant-numeric: tabular-nums; white-space: nowrap; }
+@media (max-width: 759px) {
+  .ef-in { flex-direction: column; align-items: stretch; }
+  .ef-bout { justify-content: space-between; margin-left: 0; }
+}
 .ep-act { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(36px, 6vw, 96px); align-items: start; }
 .ep-prose { max-width: 68ch; overflow-wrap: break-word; }
 .ep-prose p, .ep-prose ul { margin: 0 0 1em; }
@@ -1844,6 +1932,23 @@ html:not(.still) .une-ph img { transform: translateY(calc(var(--p, 0) * 8%)) sca
   .sp .rs-photo { position: relative; display: block; inset: auto; width: 100%; height: 150px; opacity: .65; -webkit-mask-image: linear-gradient(0deg, transparent, #000 70%); mask-image: linear-gradient(0deg, transparent, #000 70%); }
   .sp .rs-c { margin-top: -40px; padding: 0 18px 22px; }
 }
+/* de la place pour lire au téléphone (Range) : sur la page d'un spectacle, quand on descend, le menu flottant se range
+   au-dessus de l'écran (html.menu-range) et la rangée des entrées arrimée monte à sa place, ce qui s'arrime sous elle aussi
+   (--range : la place qu'il rend) ; il revient quand on remonte. Seules les places des pièces arrimées changent (aucune
+   hauteur : la page ne bouge pas) ; moins d'animations, rien ne glisse. Au bureau, rien de tout cela */
+:root { --range: 0px; }
+@media (max-width: 759px) {
+  html.menu-range { --range: calc(var(--haut) - 8px); scroll-padding-top: calc(var(--haut) + 16px - var(--range)); }
+  html.menu-range .top { translate: 0 calc(-100% - 20px - env(safe-area-inset-top)); box-shadow: none; }
+  html.menu-range .u-onglets { top: calc(var(--haut) - 8px - var(--range)); }
+  html.menu-range .u-onglets::before { opacity: 0; }
+  .u-onglets::before { bottom: 100%; }   /* (sans filet au téléphone : le fond monte d'aplomb, aucune ligne de texte ne passe entre) */
+  html.menu-range :is(.recit-panneau, .rc-vis) { top: calc(var(--haut) + var(--onglets) - var(--range)); }
+  html.menu-range .carte-sp { top: calc(var(--haut) + var(--onglets) + 16px - var(--range)); }
+  html.menu-range .u-faits { top: calc(var(--haut) + var(--onglets) + 20px - var(--range)); }
+  html:not(.still) .top { transition: box-shadow var(--k-survol) var(--k-doux), translate .3s var(--k-doux); }
+  html:not(.still) :is(.u-onglets, .recit-panneau, .rc-vis, .carte-sp, .u-faits) { transition: top .3s var(--k-doux); }
+}
 @media (max-width: 640px) {
   .cartons7 { grid-template-columns: minmax(0, 1fr); gap: 28px; }
   .carton7:first-child:not(:last-child) img { aspect-ratio: 3 / 2; }
@@ -2063,6 +2168,10 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 .s7-chip[aria-pressed="true"] { color: var(--encre); border-color: var(--c, var(--saison-vive)); background: color-mix(in srgb, var(--c, var(--saison-vive)) 12%, transparent); box-shadow: inset 0 0 0 1px var(--c, var(--saison-vive)); }
 .s7-chip .croix { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
 .s7-chip--lieu { --c: var(--saison-vive); }
+/* (une puce ne dépasse jamais sa rangée : un titre trop long, « Mon Royaume pour un cheval – Romeo & Juliet » au téléphone,
+   s'abrège d'une ellipse ; le texte entier reste dans la page, pour les lecteurs d'écran) */
+.s7-chip { max-width: 100%; }
+.s7-ct { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .s7 { padding: clamp(.75rem, 1.6vw, 1.5rem) 0 clamp(3.5rem, 7vw, 6rem); }
 .s7-tete { display: flex; flex-wrap: wrap; align-items: baseline; gap: .4rem 1.5rem; padding-bottom: clamp(.6rem, 1vw, .9rem); border-bottom: 1px solid var(--saison-vive); }
 .s7-t { margin: 0; font: 500 clamp(1.875rem, 1.2rem + 2.2vw, 3.25rem)/1 var(--titre); letter-spacing: -.012em; }
@@ -2267,7 +2376,7 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
   .fe7-t { margin: 0; font: 500 1.375rem/1.2 var(--titre); outline: none; }
   .fe7-x { display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: none; color: var(--encre); cursor: pointer; }
   .fe7-x .croix { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
-  .fe7-corps { flex: 1; min-height: 0; display: grid; align-content: start; gap: 24px; overflow-y: auto; overscroll-behavior: contain; padding: 6px 20px 20px; }
+  .fe7-corps { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 24px; overflow-y: auto; overscroll-behavior: contain; padding: 6px 20px 20px; }
   .fe7-corps .s7-cherche { max-width: none; }
   .fe7-h { margin: 0 0 10px; font: 600 .75rem/1.3 var(--etiq); letter-spacing: .16em; text-transform: uppercase; color: var(--gris); }
   .fe7-mois { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
@@ -2318,6 +2427,12 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 .s7-h::after { content: ""; flex: 1; height: 1px; background: var(--filet); }
 .d7-mois + .d7-mois { margin-top: 2.5rem; }
 .d7-mois-t { margin: 0; padding-bottom: .8rem; font: 600 .875rem/1.3 var(--etiq); letter-spacing: .16em; text-transform: uppercase; color: var(--gris); }
+/* « Toutes les dates » garde son mois : l'intertitre reste arrimé en haut de l'écran, sous le menu et le sous-menu de la
+   saison, tant qu'on lit ses dates (arrimé dans son mois, il part avec lui et le suivant prend sa place) ; dans une saison
+   passée ouverte, sous la bande des saisons (--p4-idx : sa hauteur, mesurée). Un fond plein, et son filet du bas ; la page
+   ne bouge pas d'un pixel (la marge rend ce que le fond prend au-dessus) */
+.d7-mois-t { position: sticky; top: calc(var(--haut) - 8px + var(--sm7-h, 0px)); z-index: 3; margin-top: -.5rem; padding-top: .5rem; background: var(--papier); box-shadow: 0 1px 0 var(--filet); }
+.p4-mois { position: sticky; top: calc(var(--haut) + var(--p4-idx, 61px)); z-index: 3; margin-top: -8px; padding-top: 8px; background: var(--papier); }
 .d7s { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--filet); }
 .d7 { position: relative; display: grid; grid-template-columns: minmax(0, 12.5rem) minmax(0, 1fr); gap: .3rem 2rem; padding: 1.25rem 0 1.3rem 1.6rem; border-bottom: 1px solid var(--filet); transition: background-color var(--k-survol) var(--k-doux); }
 .d7::before { content: ""; position: absolute; left: 0; top: 1.62rem; width: 12px; height: 12px; border-radius: 50%; background: radial-gradient(circle, var(--c) 0 2.4px, var(--papier) 2.9px 3.9px, var(--c) 4.4px);
@@ -2821,6 +2936,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
 <header class="top" id="top"><div class="top-in">
   <a class="marque" href="#/"><span class="l" id="marque" data-pieuvre aria-hidden="true"></span><span id="nom"></span></a>
   <nav class="entrees" id="entrees"></nav>
+  <button type="button" class="loupe-b" id="loupe-b" aria-haspopup="dialog" aria-expanded="false" aria-controls="cs" aria-keyshortcuts="/ Control+K" hidden><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg></button>
 </div></header>
 <main id="main" tabindex="-1"></main>
 <footer><div class="wrap pied" id="pied"></div></footer>
@@ -3852,7 +3968,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       s.avec ? `<li><span class="f-k"${edS(s, 'avec', 'libelle')}>${esc(s.avec.libelle)}</span> <span${edS(s, 'avec', 'valeur')}>${s.avec.valeur}</span></li>` : ''].join('');
     const sur = [s.creation && `<span${edS(s, 'creation')}>${esc(s.creation)}</span>`, s.lieuTemps && `<span${edS(s, 'lieuTemps')}>${esc(s.lieuTemps)}</span>`,
       !s.statut && s.enTournee && `<span>${esc(L.enTournee)}</span>`].filter(Boolean);
-    return `<li class="fp ${uClasse(s)}" style="${uVars(s)}">
+    return `<li class="fp ${uClasse(s)}" id="fp-${esc(s.slug)}" style="${uVars(s)}">
       <a class="fp-ph" href="${href}" tabindex="-1" aria-hidden="true"${edP(s, 'photo')}><img src="${D.photos[s.slug]}" alt="" loading="lazy"${s.focale != null ? ` style="object-position:${+s.focale}% 35%"` : ''}></a>
       <div class="fp-c">
         <p class="fp-sur">${petit(mo(s))}${sur.join('<span class="pt" aria-hidden="true"></span>')}</p>
@@ -3869,6 +3985,28 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         <p class="fp-liens">${dossierBouton(s.slug, 'bu plein')}<a class="bu plein" href="${href}" aria-label="${esc(`${s.titre} – ${L.decouvrir}`)}">${esc(L.decouvrir)}${FLECHE}</a>${lienVideo(s, 'boite')}</p>
       </div></li>`;
   }
+  // le catalogue d'un regard, avant les fiches : un tableau, une ligne par spectacle, ce que ses fiches disent déjà (son format,
+  // sa durée, sa jauge, son public, ses représentations), une case vide quand D ne dit rien ; une valeur qui répète le nom de
+  // sa colonne (« durée : 1h10 », « Jauge par représentation : … ») n'en garde que la suite. Chaque titre, dans la police et la
+  // couleur de son spectacle, mène à sa fiche plus bas (data-va, qui y porte le focus). Au téléphone, une carte compacte par
+  // spectacle, sans ses cases vides
+  const sansEtiquette = (v, mot) => { const t = String(v || ''), m = t.match(/^([^:]{1,40}?)\s*:\s*(\S[\s\S]*)$/); return m && norm(m[1]).trim().startsWith(norm(mot).trim()) ? m[2] : t; };
+  const policeTitre = s => { const m = /--u-titre-f:([^;]+);--u-titre-g:([^;]+)/.exec(uVars(s)); return m ? `;--rec-f:${m[1]};--rec-g:${m[2]}` : ''; };
+  function recapProg() {
+    const cols = [['format', L.format], ['duree', L.duree], ['jauge', L.jauge], ['public', L.public], ['representations', L.representations]];
+    const val = (s, k) => { const P = s.programmer || {};
+      return k === 'format' ? P.format : k === 'duree' ? sansEtiquette(P.duree || s.duree, L.duree) : k === 'jauge' ? sansEtiquette(P.jauge, L.jauge)
+        : k === 'public' ? (s.actionCulturelle || {}).public : P.representations; };
+    const html = (k, v) => { if (!v) return ''; const m = k === 'representations' && String(v).match(/^(\d[\d  ]*?)(\s+\D[\s\S]*)$/); return m ? `<b>${esc(m[1])}</b>${esc(m[2])}` : esc(v); };
+    const titre = s => `<button type="button" class="rec-a" data-va="fp-${esc(s.slug)}">${esc(s.titre)}</button>${s.statut ? ` <span class="rec-tag">${esc(s.statut)}</span>` : ''}`;
+    const sty = s => esc(`--c:${couleurDe(s.slug)}${policeTitre(s)}`);
+    return `<div class="rec">
+      <h3 class="ep-k rec-h" id="rec-h">${esc(L.dUnRegard || L.lesSpectacles)}</h3>
+      <table class="rec-t" aria-labelledby="rec-h"><thead><tr><th scope="col">${esc(L.leSpectacle)}</th>${cols.map(([, t]) => `<th scope="col">${esc(t)}</th>`).join('')}</tr></thead>
+        <tbody>${D.shows.map(s => `<tr style="${sty(s)}"><th scope="row">${titre(s)}</th>${cols.map(([k]) => `<td>${html(k, val(s, k))}</td>`).join('')}</tr>`).join('')}</tbody></table>
+      <ul class="rec-c" aria-labelledby="rec-h">${D.shows.map(s => `<li style="${sty(s)}"><p class="rec-ct">${titre(s)}</p>${(xs => xs.length ? `<dl>${xs.join('')}</dl>` : '')(cols.filter(([k]) => val(s, k)).map(([k, t]) => `<div${k === 'representations' ? ' class="rec-long"' : ''}><dt>${esc(t)}</dt><dd>${html(k, val(s, k))}</dd></div>`))}</li>`).join('')}</ul>
+    </div>`;
+  }
   // la fiche « établissement » (la 05), dans l'univers du spectacle : son titre et son motif, sa photo (celle d'un
   // établissement s'il y en a une), le type de son action culturelle en grande capitale (la demande 3), son public et son
   // statut, son texte, sa formule, ses dispositifs ; le dossier scolaire ou sa page
@@ -3876,7 +4014,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const A = s.actionCulturelle || {}, t = (A.textes || [])[0], href = lienSp(s.slug, 'etablissement');
     const ph = (s.photos || []).find(p => p.etablissement), img = ph ? D.photos[ph.cle] : D.photos[s.slug];
     const ac = (...k) => edS(s, 'actionCulturelle', ...k), aType = !(A.aCompleter || !A.type);
-    return `<li class="ac ${uClasse(s)}" style="${uVars(s)}">
+    return `<li class="ac ${uClasse(s)}" style="${uVars(s)}" data-ef-lieu="${esc(A.lieu || '')}" data-ef-public="${esc(A.public || '')}">
       <div class="ac-tete"><h3 class="ac-t"><a href="${href}"${edS(s, 'titre')}>${esc(s.titre)}</a></h3>${petit(mo(s))}</div>
       <a class="ac-ph" href="${href}" tabindex="-1" aria-hidden="true"${ph ? edP(s, 'photos', rangPh(s, ph)) : edP(s, 'photo')}><img src="${img}" alt="" loading="lazy"></a>
       <p class="ac-type${aType ? '' : ' x'}"${aType ? ac('type') : ''}>${esc(aType ? A.type : L.aCompleter)}</p>
@@ -5098,7 +5236,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const nSaison = new Map();
     ptsSaison(() => true).forEach(([r]) => nSaison.set(r.cle, (nSaison.get(r.cle) || 0) + 1));
     const spSaison = puces.filter(x => nSaison.has(x.cle)), spPasses = puces.filter(x => passe.some(sa => sa.rows.some(r => r.cle === x.cle)));
-    const puceSp = (x, n) => `<button class="s7-chip" type="button" data-s="${esc(x.cle)}" aria-pressed="false" style="--c:${x.slug ? couleurDe(x.slug) : 'var(--gris)'}"><i aria-hidden="true"></i>${esc(x.titre)}${n ? `<small>${n}</small>` : ''}</button>`;
+    // (un titre trop long pour la largeur de l'écran s'abrège d'une ellipse, .s7-ct : il reste entier dans la page, que lisent
+    // les lecteurs d'écran, et dans sa bulle)
+    const puceSp = (x, n) => `<button class="s7-chip" type="button" data-s="${esc(x.cle)}" aria-pressed="false" title="${esc(x.titre)}" style="--c:${x.slug ? couleurDe(x.slug) : 'var(--gris)'}"><i aria-hidden="true"></i><span class="s7-ct">${esc(x.titre)}</span>${n ? `<small>${n}</small>` : ''}</button>`;
     // le sous-menu d'une saison (comme celui des univers d'un spectacle) : une ligne, un bouton par spectacle, sa vignette (sa
     // photo, cerclée de sa couleur ; sans photo, sa couleur seule), son titre, le nombre de ses dates
     const itemSp = (x, n) => { const src = x.slug && D.photos[x.slug];
@@ -5168,6 +5308,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       ${L.filtres ? `<div class="bf7" id="bf7"><button type="button" class="bf7-ouvrir" aria-haspopup="dialog" aria-expanded="false" aria-controls="fe7">${FILTRE}<span>${esc(L.filtres)}</span><span class="bf7-n"></span></button><span class="bf7-etiq" aria-hidden="true">${esc(L.filtres)}</span><div class="bf7-puces" role="group" aria-label="${esc(L.filtres)}"></div></div>
       <div class="fe7" id="fe7" role="dialog" aria-modal="true" aria-labelledby="fe7-t" hidden><div class="fe7-voile" data-fermer></div><div class="fe7-panneau"></div></div>` : ''}`;
     const svg = $('.ag7-carte svg'), liste = $('#ag-liste'), toutes = $('#ag-toutes'), listes = $('#ag-listes'), racine = $('#ag-saisons'), index = $('#ag-index'), legC = $('.s7-legende');
+    // (la hauteur de la bande des saisons, sous laquelle s'arriment les mois d'une saison passée ouverte)
+    if (index && 'ResizeObserver' in window) { const p4 = index.closest('.p4'), ro = new ResizeObserver(() => { if (index.offsetHeight) p4.style.setProperty('--p4-idx', `${index.offsetHeight}px`); }); ro.observe(index); lecteurs.push(ro); }
     // quand le filtre change, les saisons qui ont des résultats s'ouvrent ; quand il s'efface, les saisons reprennent leur état d'avant
     function recompte() {
       if (actif()) { if (!F.avant) F.avant = new Set(F.ouv); F.ouv = new Set(passe.filter(s => s.rows.some(garde)).map(s => s.k)); }
@@ -5361,8 +5503,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const jourChoisi = () => (F.jour ? pts.find(p => p.j === F.jour) || null : null);
     const nomMois = m => `<span>${esc(MOIS_NOMS[+m.slice(5, 7) - 1])}</span> <span>${m.slice(0, 4)}</span>`;
     const filtresEnCours = () => { const pj = jourChoisi(), sp = F.slug && puces.find(x => x.cle === F.slug);
-      return [pj && ['j', `<i aria-hidden="true"></i>${esc(pj.quand)}`, pj.couleur], F.mois && ['m', `<span>${nomMois(F.mois)}</span>`], sp && ['s', `<i aria-hidden="true"></i>${esc(sp.titre)}`, sp.slug ? couleurDe(sp.slug) : ''],
-        F.l !== null && CARTE.lieux[F.l] && ['l', esc(CARTE.nom(CARTE.lieux[F.l]))], terme() && ['q', esc(F.q.trim())]].filter(Boolean); };
+      return [pj && ['j', `<i aria-hidden="true"></i>${esc(pj.quand)}`, pj.couleur], F.mois && ['m', `<span>${nomMois(F.mois)}</span>`], sp && ['s', `<i aria-hidden="true"></i><span class="s7-ct">${esc(sp.titre)}</span>`, sp.slug ? couleurDe(sp.slug) : ''],
+        F.l !== null && CARTE.lieux[F.l] && ['l', `<span class="s7-ct">${esc(CARTE.nom(CARTE.lieux[F.l]))}</span>`], terme() && ['q', `<span class="s7-ct">${esc(F.q.trim())}</span>`]].filter(Boolean); };
     // (une étiquette de filtre en cours l'efface : le lecteur d'écran l'entend, « Retirer le filtre Bérénice »)
     const retirer = () => (L.retirerFiltre ? `<span class="sr">${esc(L.retirerFiltre)} </span>` : '');
     const htmlFiltres = fs => fs.map(([c, h, col]) => `<button type="button" class="s7-chip" data-eff="${c}"${col ? ` style="--c:${col}"` : ''}>${retirer()}${h}${CROIX}</button>`).join('')
@@ -5820,7 +5962,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const e = E.programmer, lieux = retenu('tout', () => CARTE.tout());
     retenir('programmer');
     main.innerHTML = `${tetePro(e, [['p-spectacles', L.lesSpectacles], ['p-simulateur', L.devisTitre], ['p-lieux', L.lieuxDiffusion], ['p-ecrire', L.ecrire]], contactHTML(null))}
-      <section class="ep-sec" id="p-spectacles" aria-labelledby="h-progs"><div class="wrap"><h2 class="ep-sr" id="h-progs">${esc(L.lesSpectacles)}</h2><ul class="ep-cat">${D.shows.map(ficheProg).join('')}</ul></div></section>
+      <section class="ep-sec" id="p-spectacles" aria-labelledby="h-progs"><div class="wrap"><h2 class="ep-sr" id="h-progs">${esc(L.lesSpectacles)}</h2>${recapProg()}<ul class="ep-cat">${D.shows.map(ficheProg).join('')}</ul></div></section>
       <section class="ep-sec" id="p-simulateur" aria-labelledby="h-simulateur"><div class="wrap">${SEP}<p class="ep-k">${esc(L.devisBadge)}</p><h2 class="ep-sec-t" id="h-simulateur" data-mv="monte">${esc(L.devisTitre)}</h2>
         <p class="simu-desc">${esc(L.devisDesc)}</p>
         <div class="simu-boite">
@@ -5865,8 +6007,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   /* ---------- je représente un établissement scolaire (la 05) : l'en-tête d'aplat, la position de la compagnie sur les publics
      jeunes, la convention, l'action culturelle de chaque spectacle par lieu, le dossier scolaire, les actions culturelles, les
      dates scolaires à côté de leur carte, l'appel final ---------- */
-  function etablissement() {
+  function etablissement(q, surPlace) {
     vue = 'etablissement';
+    if (!surPlace) etatEtab = { lieu: null, pub: null };
     const e = E.etablissement, A = S.actions && S.actions.blocs ? S.actions : null, sco = D.dates.filter(d => d.scolaire), lieux = CARTE.aVenir('scolaire');
     const ac = s => s.actionCulturelle || {}, avecAction = D.shows.filter(s => s.actionCulturelle);   // un spectacle sans action culturelle n'est pas ici (règle 14)
     const groupes = [['etablissement', L.lieu.etablissement], ['salle', L.lieu.salle]].map(([k, t]) => [t, avecAction.filter(s => ac(s).lieu === k)]).filter(g => g[1].length);
@@ -5890,8 +6033,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
           <div id="conv-modal" class="conv-modal" hidden></div>
         </div>
       </div></section>
+      ${filtresEtab(avecAction)}
       ${groupes.map((x, i) => `<section class="ep-sec" id="${g(i)}" aria-labelledby="${g(i)}-h"><div class="wrap">${SEP}<h2 class="ep-sec-t" id="${g(i)}-h" data-mv="monte">${esc(x[0])}</h2><ul class="acs">${ordre(x[1]).map(ficheEtab).join('')}</ul></div></section>`).join('')}
-      ${reste.length ? `<div class="ep-sec"><div class="wrap"><ul class="acs">${reste.map(ficheEtab).join('')}</ul></div></div>` : ''}
+      ${reste.length ? `<div class="ep-sec" id="e-reste"><div class="wrap"><ul class="acs">${reste.map(ficheEtab).join('')}</ul></div></div>` : ''}
       ${ber ? `<section class="ep-sec" id="e-dossier" aria-labelledby="e-dossier-h"><div class="wrap"><a class="dos-appel ${uClasse(ber)}" style="${uVars(ber)}" href="${lienSp(ber.slug, 'etablissement')}">
           <span class="dos-appel-ph" aria-hidden="true"${edP(ber, 'photo')}><img src="${D.photos[ber.slug]}" alt=""></span>
           <span class="dos-appel-c"><span class="dos-type"${ed(`dossiers.${ber.dossier}.type`)}>${esc(B.type)}</span><h2 class="dos-titre" id="e-dossier-h"${ed(`dossiers.${ber.dossier}.titre`)}>${esc(B.titre)}</h2><span class="dos-auteur"${ed(`dossiers.${ber.dossier}.auteur`)}>${esc(B.auteur)}</span><span class="dos-public"${ed(`dossiers.${ber.dossier}.public`)}>${esc(B.public)}</span><span class="bu plein">${esc(L.dossierScolaire)}${FLECHE}</span></span></a></div></section>` : ''}
@@ -5915,8 +6059,54 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       auFil(liste, svg, fSco);   // (scrollytelling) les dates scolaires se dessinent au fil de la lecture
     }
     lierSommairePage();
+    lierFiltresEtab();
     bientot(() => { initEspaceScolaire(); });
     return { titre: e.texte, entree: 'etablissement' };
+  }
+  /* choisir une action culturelle : avant les spectacles par lieu, des puces (celles des filtres des saisons) tirées de ce que D
+     dit de l'action culturelle de chaque spectacle, son lieu (dans l'établissement, en salle) et son public quand il est dit,
+     chacune avec le nombre de ses spectacles ; une puce choisie ne garde que les siens (la choisir encore la rend), les groupes
+     vides s'effacent avec leur pièce du sommaire arrimé ; le nombre de spectacles gardés est écrit à côté et dit aux lecteurs
+     d'écran quand il change. Les filtres tiennent tant que la vue se refait sur place (D qui change), pas d'une visite à l'autre */
+  let etatEtab = { lieu: null, pub: null };
+  // (le nombre en chiffres gras, à part de ses mots : « <b>4</b> spectacles »)
+  const nSpectacles = n => esc(n === 1 ? L.unSpectacle || '1' : String(L.nSpectacles || '{n}').replace('{n}', n)).replace(/\d+/, x => `<b>${x}</b>`);
+  function filtresEtab(xs) {
+    const A = s => s.actionCulturelle || {}, lieux = ['etablissement', 'salle'].map(k => [k, L.lieu[k], xs.filter(s => A(s).lieu === k).length]).filter(x => x[2]);
+    const pubs = [...new Set(xs.map(s => A(s).public).filter(Boolean))].map(p => [p, xs.filter(s => A(s).public === p).length]);
+    if (lieux.length + pubs.length < 2) return '';
+    const puce = (attr, v, t, n) => `<button type="button" class="s7-chip" data-ef="${attr}" data-v="${esc(v)}" aria-pressed="false"><i aria-hidden="true"></i><span class="s7-ct">${esc(t)}</span><small>${n}</small></button>`;
+    const groupe = (id, t, puces) => (puces.length ? `<div class="ef-g" role="group" aria-labelledby="${id}"><p class="ef-k" id="${id}">${esc(t)}</p><div class="ef-puces">${puces.join('')}</div></div>` : '');
+    return `<div class="ep-sec ef" id="e-filtres"><div class="wrap"><div class="ef-in">
+      ${groupe('ef-kl', L.actionCulturelle, lieux.map(([k, t, n]) => puce('lieu', k, t, n)))}${groupe('ef-kp', L.public, pubs.map(([p, n]) => puce('pub', p, p, n)))}
+      <div class="ef-bout"><p class="ef-n" id="ef-n" role="status">${nSpectacles(xs.length)}</p>${L.effacerFiltres ? `<button type="button" class="ft7-tout" data-ef-tout hidden>${esc(L.effacerFiltres)}</button>` : ''}</div>
+    </div></div></div>`;
+  }
+  function lierFiltresEtab() {
+    const zone = $('#e-filtres', main); if (!zone) return;
+    const fiches = $$('li.ac[data-ef-lieu]', main), F = etatEtab;
+    $('#ef-n', zone).__h = nSpectacles(fiches.length);   // (le nombre écrit à l'arrivée : rien n'est dit tant qu'il ne change pas)
+    const garde = li => (!F.lieu || li.dataset.efLieu === F.lieu) && (!F.pub || li.dataset.efPublic === F.pub);
+    const appliquer = () => {
+      let n = 0;
+      fiches.forEach(li => { const g = garde(li); li.hidden = !g; if (g) n++; });
+      // (un groupe dont aucune fiche ne reste s'efface, et sa pièce du sommaire arrimé avec lui ; le sommaire ne lit plus que
+      // les sections montrées)
+      $$('section[id^="e-g"], #e-reste', main).forEach(sec => { sec.hidden = !$$('li.ac', sec).some(li => !li.hidden); });
+      psomB.forEach((b, i) => { const c = document.getElementById(b.dataset.som); const cache = !!(c && c.hidden); b.closest('li').hidden = cache; psomC[i] = cache ? null : c; });
+      $$('[data-ef]', zone).forEach(b => b.setAttribute('aria-pressed', String((b.dataset.ef === 'lieu' ? F.lieu : F.pub) === b.dataset.v)));
+      const t = $('[data-ef-tout]', zone); if (t) t.hidden = !(F.lieu || F.pub);
+      const p = $('#ef-n', zone), h = nSpectacles(n); if (p.__h !== h) { p.__h = h; p.innerHTML = h; }
+    };
+    zone.addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      if (b.matches('[data-ef-tout]')) { F.lieu = null; F.pub = null; appliquer(); const x = $('[data-ef]', zone); if (x) x.focus(); return; }
+      if (!b.dataset.ef) return;
+      const k = b.dataset.ef === 'lieu' ? 'lieu' : 'pub';
+      F[k] = F[k] === b.dataset.v ? null : b.dataset.v;
+      appliquer();
+    });
+    appliquer();
   }
 
   /* ---------- les spectacles : le sommaire de la 08 ----------
@@ -6096,6 +6286,15 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const suivre = e => { const a = e.target.closest && e.target.closest('.tdm-a'); if (a) choisir(+a.dataset.i); };
     liste.addEventListener('mouseover', suivre, { passive: true });
     liste.addEventListener('focusin', suivre);
+    // (au clavier, une liste de liens : les flèches haut et bas vont d'un spectacle à l'autre, Début et Fin au premier et au
+    // dernier, l'aperçu suit le focus ; Entrée ouvre la page, Tab sort de la liste comme d'habitude)
+    liste.addEventListener('keydown', e => {
+      const a = e.target.closest && e.target.closest('.tdm-a'); if (!a || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+      const i = +a.dataset.i, n = liens.length, j = e.key === 'ArrowDown' ? Math.min(n - 1, i + 1) : e.key === 'ArrowUp' ? Math.max(0, i - 1) : e.key === 'Home' ? 0 : e.key === 'End' ? n - 1 : null;
+      if (j == null) return;
+      e.preventDefault();
+      if (j !== i) liens[j].focus();
+    });
   }
   // l'aperçu qui prend le relais : ses lignes arrivent l'une après l'autre ; la première fois, les bras de sa carte poussent
   function relayerTdm(c) {
@@ -6980,6 +7179,150 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     secs.forEach(x => { x.__h = 0; }); const o = $('.u-onglets', main); if (o) o.__haut = undefined; if (psom) psom.__haut = undefined;
     if (secs.length || chaps.length || ecrans.length || psom) defile(); }); });
 
+  /* ---------- de la place pour lire au téléphone ----------
+     Sur la page d'un spectacle au téléphone, le menu flottant et la rangée des entrées arrimée prenaient ensemble le haut de
+     l'écran. Quand on descend, la rangée arrimée (.colle, posée par defile), le menu se range au-dessus de l'écran
+     (html.menu-range) et la rangée monte à sa place ; il revient dès qu'on remonte d'un rien, qu'on revient en haut de la page,
+     que le focus y va, et à chaque page. Le défilement ne fait que lire scrollY (une fois par image) ; au bureau, rien. */
+  const ETROIT_MENU = matchMedia('(max-width: 759px)');
+  const Range = (() => {
+    const html = document.documentElement;
+    let y0 = scrollY, cumul = 0, raf = 0, calme = 0;
+    const poser = oui => { if (html.classList.contains('menu-range') === oui) return; html.classList.toggle('menu-range', oui); const o = $('.u-onglets', main); if (o) o.__haut = undefined; };
+    const lire = () => {
+      raf = 0;
+      const y = scrollY, d = y - y0; y0 = y;
+      const ong = vue === 'spectacle' && ETROIT_MENU.matches ? $('.u-onglets', main) : null;
+      if (!ong || !ong.classList.contains('colle') || y < 40 || Menu.el.contains(document.activeElement)) { cumul = 0; poser(false); return; }
+      // (un saut, la page posée par le site — une page qui arrive, un onglet posé sous les menus — n'est pas une lecture : le
+      // menu reste)
+      if (performance.now() < calme || Math.abs(d) > VH * .6) { cumul = 0; return; }
+      // (un sens tenu : 24 px vers le bas le range, 10 px vers le haut le rend)
+      cumul = (d > 0) === (cumul > 0) ? cumul + d : d;
+      if (cumul > 24) poser(true); else if (cumul < -10) poser(false);
+    };
+    addEventListener('scroll', () => { if (!raf && (html.classList.contains('menu-range') || vue === 'spectacle')) raf = requestAnimationFrame(lire); }, { passive: true });
+    Menu.el.addEventListener('focusin', () => { cumul = 0; poser(false); });
+    ETROIT_MENU.addEventListener('change', () => poser(false));
+    // (à chaque page : rendu d'un coup, sans glisser, la place des pièces arrimées se lit juste aussitôt — sousLesMenus)
+    return { rendre() { y0 = scrollY; cumul = 0; calme = performance.now() + 500; if (!html.classList.contains('menu-range')) return;
+      html.classList.add('sans-glisse'); poser(false); void html.offsetWidth; html.classList.remove('sans-glisse'); } };
+  })();
+
+  /* ---------- chercher partout (CHERCHE) ----------
+     La loupe du menu (et « / » ou Ctrl K) ouvre une boîte de recherche, à la charte, posée haut sur un voile ; au téléphone, elle
+     prend tout l'écran. À chaque lettre, elle propose, tirés de D : les spectacles (leur titre, leur sous-titre, leur genre), les
+     communes de toutes les saisons (leur prochaine date, sinon le nombre de leurs dates) et les pages du site (le menu, les deux
+     pages de l'espace pro, le contact, les saisons passées, les mentions) ; ceux qui commencent par elle d'abord ; vide, elle
+     propose les spectacles et les pages. Le motif combobox de l'ARIA : le focus reste dans le champ, les flèches parcourent les
+     propositions (aria-activedescendant), Entrée ouvre celle qu'on vise (la première sinon), un clic aussi ; le nombre de
+     propositions est dit un instant après la dernière lettre ; Échap ou la croix referment la boîte et rendent le focus là où il
+     était. Tant qu'elle est ouverte, le reste de la page est inerte (Tab va du champ à la croix). Une commune de la saison en
+     cours ouvre les saisons filtrées sur elle (?l=), une autre la recherche des saisons sur son nom : ses saisons s'ouvrent. */
+  const CHERCHE = (() => {
+    const html = document.documentElement, bouton = $('#loupe-b');
+    let boite = null, champ, liste, annonce, ops = [], i = -1, retour = null, tDire = 0, inertes = [];
+    const ouverte = () => !!boite && !boite.hidden;
+    const compte = (n, un, plusieurs) => (n === 1 ? un : String(plusieurs || '').replace('{n}', n));
+    // les propositions possibles, relues dans D à chaque ouverture : [{t, s (la ligne d'en dessous), h (l'adresse), c (la couleur), n (le texte cherché)}]
+    let tout = null;
+    function lister() {
+      const saisons = (menuDe('saisons') || {}).href || '#/saisons';
+      const sp = D.shows.map(s => ({ t: s.titre, s: s.creation || '', h: lienSp(s.slug), c: couleurDe(s.slug), n: norm(`${s.titre} ${s.sousTitre || ''} ${s.genre || ''}`) }));
+      const enCours = new Set([...CARTE.aVenir(), ...CARTE.saison(D.saison)].map(x => x.l));
+      const co = retenu('tout', () => CARTE.tout()).map(x => { const d = D.dates.find(y => y.l === x.l), nom = CARTE.nom(x);
+        return { t: nom, s: d ? `${d.ligneDate} · ${d.titre}` : compte(x.n, L.uneDate, L.nDates), h: enCours.has(x.l) ? `${saisons}?l=${x.l}` : `${saisons}?recherche=${encodeURIComponent(x.c)}`, n: norm(nom) }; })
+        .sort((a, b) => a.t.localeCompare(b.t, 'fr'));
+      const ep = S.espacePro && S.espacePro.titre;
+      const pg = [...(S.menu || []).filter(x => x && x.href).map(x => ({ t: x.texte, h: x.href })),
+        ...['programmer', 'etablissement'].filter(k => E[k]).map(k => ({ t: E[k].texte, s: ep || '', h: `#/espace-pro/${k}` })),
+        { t: L.contact, h: S.ecrire.href }, ...(S.saisons || []).slice(1).filter(x => x.href).map(x => ({ t: x.titre, h: x.href, passe: true })),
+        ...(S.liensLegaux || []).map(x => ({ t: x.texte, h: x.href }))].map(x => ({ ...x, n: norm(`${x.t} ${x.s || ''}`) }));
+      return { sp, co, pg };
+    }
+    function construire() {
+      boite = document.createElement('div');
+      boite.className = 'cs'; boite.id = 'cs'; boite.hidden = true;
+      boite.setAttribute('role', 'dialog'); boite.setAttribute('aria-modal', 'true'); boite.setAttribute('aria-labelledby', 'cs-t');
+      boite.innerHTML = `<div class="cs-voile" data-fermer></div><div class="cs-boite"><h2 class="sr" id="cs-t"></h2>
+        <div class="cs-tete"><label class="cs-champ"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg><input id="cs-q" type="search" autocomplete="off" spellcheck="false" enterkeyhint="go" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="cs-l"></label><button type="button" class="cs-x" data-fermer>${CROIX}</button></div>
+        <div class="cs-l" id="cs-l" role="listbox"></div><p class="sr" id="cs-n" role="status"></p></div>`;
+      document.body.appendChild(boite);
+      champ = $('#cs-q', boite); liste = $('#cs-l', boite); annonce = $('#cs-n', boite);
+      champ.addEventListener('input', () => { dessiner(); clearTimeout(tDire); tDire = setTimeout(dire, 600); });
+      champ.addEventListener('keydown', e => {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); const n = ops.length; if (n) viser(e.key === 'ArrowDown' ? (i + 1) % n : (i <= 0 ? n - 1 : i - 1)); return; }
+        if (e.key === 'Enter') { e.preventDefault(); const o = ops[i] || ops[0]; if (o) o.el.click(); }
+      });
+      boite.addEventListener('keydown', e => {
+        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); fermer(); return; }
+        // (le focus reste dans la boîte : du champ à la croix, et retour)
+        if (e.key === 'Tab') { const x = $('.cs-x', boite), a = document.activeElement;
+          if (!e.shiftKey && a === x) { e.preventDefault(); champ.focus(); } else if (e.shiftKey && a === champ) { e.preventDefault(); x.focus(); } }
+      });
+      boite.addEventListener('click', e => {
+        if (e.target.closest('[data-fermer]')) { fermer(); return; }
+        const o = e.target.closest('[role="option"]'); if (!o) return;
+        // (la même page : la boîte se referme seulement ; une autre : elle se referme et la page change, le focus va à son titre)
+        if (o.getAttribute('href') === location.hash) { e.preventDefault(); fermer(); } else fermer(false);
+      });
+      liste.addEventListener('pointerdown', e => { if (e.target.closest('[role="option"]')) e.preventDefault(); });   // (le focus reste dans le champ)
+      liste.addEventListener('mousemove', e => { const o = e.target.closest('[role="option"]'); if (o && +o.dataset.n !== i) viser(+o.dataset.n); });
+    }
+    function viser(j) {
+      i = j; ops.forEach((o, k) => o.el.setAttribute('aria-selected', String(k === i)));
+      if (ops[i]) { champ.setAttribute('aria-activedescendant', ops[i].el.id); ops[i].el.scrollIntoView({ block: 'nearest' }); } else champ.removeAttribute('aria-activedescendant');
+    }
+    function dessiner() {
+      const t = norm(champ.value).trim(), mots = x => x.n.split(/[\s'’-]+/).some(w => w.startsWith(t));
+      const tri = (xs, max) => (t ? xs.filter(x => x.n.includes(t)).sort((a, b) => (b.n.startsWith(t) - a.n.startsWith(t)) || (mots(b) - mots(a))) : xs).slice(0, max);
+      const sp = tri(tout.sp, t ? 6 : 8), co = t ? tri(tout.co, 8) : [], pg = tri(t ? tout.pg : tout.pg.filter(x => !x.passe), t ? 6 : 12);
+      let k = 0;
+      const groupe = (id, titre, xs) => (xs.length ? `<div role="group" aria-labelledby="cs-g-${id}"><p class="cs-g" id="cs-g-${id}" role="presentation">${esc(titre)}</p>${xs.map(x => `<a class="cs-o" role="option" id="cs-o-${k}" data-n="${k++}" aria-selected="false" tabindex="-1" href="${esc(x.h)}"${x.c ? ` style="--c:${x.c}"` : ''}><i aria-hidden="true"></i><span class="cs-ot">${esc(x.t)}</span>${x.s ? `<span class="cs-os">${esc(x.s)}</span>` : ''}</a>`).join('')}</div>` : '');
+      const tous = [...sp, ...co, ...pg];
+      liste.innerHTML = tous.length ? groupe('s', L.spectacles, sp) + groupe('c', L.communes, co) + groupe('p', L.pages, pg) : `<p class="cs-vide">${esc(L.aucunResultat || '')}</p>`;
+      ops = tous.map((x, j) => ({ ...x, el: liste.querySelector(`[data-n="${j}"]`) }));
+      champ.setAttribute('aria-expanded', String(tous.length > 0));
+      viser(-1);
+      liste.scrollTop = 0;
+    }
+    // (le nombre de propositions, dit au lecteur d'écran, seulement quand on a tapé quelque chose)
+    const dire = () => { if (!ouverte()) return; annonce.textContent = norm(champ.value).trim() ? (ops.length ? compte(ops.length, L.unResultat, L.nResultats) : L.aucunResultat || '') : ''; };
+    function ouvrir() {
+      if (!L.chercherSite) return;
+      if (!boite) construire();
+      if (ouverte()) { champ.focus(); champ.select(); return; }
+      $('#cs-t', boite).textContent = L.chercherSite;
+      champ.placeholder = L.rechercher; champ.setAttribute('aria-label', L.chercherSite); liste.setAttribute('aria-label', L.chercherSite);
+      $('.cs-x', boite).setAttribute('aria-label', L.fermer || '');
+      tout = lister(); retour = document.activeElement;
+      inertes = [...document.body.children].filter(x => x !== boite && !x.inert && !/^(SCRIPT|STYLE|CANVAS)$/.test(x.tagName));
+      inertes.forEach(x => { x.inert = true; });
+      boite.hidden = false; html.classList.add('cs-ouvert'); bouton.setAttribute('aria-expanded', 'true');
+      champ.value = ''; annonce.textContent = ''; dessiner();
+      champ.focus({ preventScroll: true });
+    }
+    function fermer(rendre = true) {
+      if (!ouverte()) return;
+      clearTimeout(tDire);
+      boite.hidden = true; html.classList.remove('cs-ouvert'); bouton.setAttribute('aria-expanded', 'false');
+      inertes.forEach(x => { x.inert = false; }); inertes = [];
+      if (rendre) (retour && retour.isConnected && retour !== document.body ? retour : bouton).focus({ preventScroll: true });
+    }
+    bouton.addEventListener('click', () => (ouverte() ? fermer() : ouvrir()));
+    // « / » (hors d'un champ) ou Ctrl K, ⌘ K : la boîte s'ouvre ; ouverte, Ctrl K revient au champ
+    document.addEventListener('keydown', e => {
+      if (e.defaultPrevented || e.altKey) return;
+      const k = (e.ctrlKey || e.metaKey) && !e.shiftKey && (e.key === 'k' || e.key === 'K'), barre = e.key === '/' && !e.ctrlKey && !e.metaKey;
+      if (!k && !barre) return;
+      const a = e.target;
+      if (!ouverte() && a && (a.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) return;
+      if (ouverte() ? !k : (!L || !L.chercherSite || html.classList.contains('fe7-ouvert') || (typeof INTRO !== 'undefined' && INTRO.ouverte()))) return;
+      e.preventDefault(); ouvrir();
+    });
+    return { ouvrir, fermer, ouverte };
+  })();
+
   // les phrases s'écrivent et les photos apparaissent quand elles arrivent à l'écran
   let io = null;
   function ecrire(surPlace) {
@@ -7009,7 +7352,10 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   main.addEventListener('click', e => {
     const va = e.target.closest('[data-va]');
     // (une pièce du sommaire d'une page : la page y va, et la section prend le focus : le clavier continue de là)
-    if (va) { vers(va.dataset.va); if (va.closest('.psom')) { const t = document.getElementById(va.dataset.va); if (t) { if (!t.hasAttribute('tabindex')) t.setAttribute('tabindex', '-1'); t.focus({ preventScroll: true }); } } return; }
+    if (va) { vers(va.dataset.va); if (va.closest('.psom')) { const t = document.getElementById(va.dataset.va); if (t) { if (!t.hasAttribute('tabindex')) t.setAttribute('tabindex', '-1'); t.focus({ preventScroll: true }); } }
+      // (un titre du catalogue d'un regard : le focus va au titre de sa fiche, le lien de sa page)
+      else if (va.closest('.rec')) { const t = document.getElementById(va.dataset.va), f = t && $('.fp-t a', t); if (f) f.focus({ preventScroll: true }); }
+      return; }
     // (le sommaire flottant d'un spectacle : sa liste est au-dessus du bouton, avant lui dans la page ; ouverte au clavier, le
     // focus y entre, sur le chapitre lu ; Échap la ferme et rend le focus au bouton, le focus qui en sort la ferme)
     const sb = e.target.closest('.som-b'); if (sb) { const l = $('#som-l'), o = l.hidden; l.hidden = !o; sb.setAttribute('aria-expanded', String(o)); if (o && MV) MV.cascade(l, { decalage: 6 });
@@ -7047,17 +7393,22 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     $('.marque').setAttribute('aria-label', S.titreSuffixe);
     $('#entrees').setAttribute('aria-label', L.menu);
     $('#entrees').innerHTML = parts.entrees;
+    // (la loupe : la recherche sur tout le site, CHERCHE ; sans son libellé dans D, elle ne paraît pas)
+    const lb = $('#loupe-b'); lb.hidden = !L.chercherSite; if (L.chercherSite) { lb.setAttribute('aria-label', L.chercherSite); lb.title = L.chercherSite; }
     $('#pied').innerHTML = parts.pied;
     ajuste();
   }
   // une seule ligne, à toutes les largeurs : le texte entier des pièces si la place le permet, sinon leur nom court, puis plus
-  // serrées, puis sans leurs ventouses ni (au bureau) la marque, puis d'une lettre plus petite (360 px) ; mesuré marque dépliée (celle qu'il a, arrimé), quand le menu change, quand
-  // la largeur change et quand les polices arrivent (jamais au fil d'un rendu)
+  // serrées, puis sans leurs ventouses ni (au bureau) la marque, puis d'une lettre plus petite, puis (la loupe au bout de la
+  // ligne : le téléphone) sans filet ni marge, puis plus serrées encore (360 px), et en dernier recours sans la loupe ; mesuré
+  // marque dépliée (celle qu'il a, arrimé), quand le menu change, quand la largeur change et quand les polices arrivent
+  // (jamais au fil d'un rendu)
   function ajuste() {
     const top = $('#top'), inn = $('.top-in', top);
-    top.classList.remove('serre', 'compact', 'mince', 'fin');
+    const PAS = ['serre', 'compact', 'mince', 'fin', 'etroit', 'tasse', 'sans-loupe'];
+    top.classList.remove(...PAS);
     top.classList.add('mesure');
-    for (const c of ['serre', 'compact', 'mince', 'fin']) { if (inn.scrollWidth <= inn.clientWidth + 1) break; top.classList.add(c); }
+    for (const c of PAS) { if (inn.scrollWidth <= inn.clientWidth + 1) break; top.classList.add(c); }
     // (rien ne saute : sur l'accueil, la marque repliée a été mesurée dépliée ; sans cela, en se repliant de nouveau, elle
     // glissait de toute sa largeur en 300 ms, et le menu centré avec elle, à chaque police arrivée et quand la base répondait)
     const mq = $('.marque', top);
@@ -7248,6 +7599,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const marque = avant && type === 'quitter' ? centreDe($('.marque .l', Menu.el)) || centreDe(Menu.el) : null;
     const ong = type === 'onglet' ? $('.u-onglets a[aria-current="page"]', main) : null, q0 = ong ? ong.getBoundingClientRect() : null;
     Encre.arreter();
+    Range.rendre();
+    CHERCHE.fermer(false);   // (le retour du navigateur, la boîte ouverte : elle se referme, la page prend le focus)
     document.documentElement.classList.remove(vers0);
     cadre();
     let r = rendre(a, false), b = a;

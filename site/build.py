@@ -458,6 +458,14 @@ LIBELLES = {
     "contactDiffusion": "Contact diffusion", "dossierPdf": "Dossier du spectacle (PDF)", "aTelecharger": "À télécharger",
     "conditionsFinancieres": "Conditions financières sur demande", "ficheTechniqueSurDemande": "Fiche technique sur demande",
     "documentsScolaires": "Documents pour les enseignants", "objetProgrammation": "Programmation",
+    # le catalogue d'un regard, avant les fiches de « Je souhaite programmer » : son titre (un tableau, une ligne par spectacle)
+    "dUnRegard": "Le catalogue d’un regard",
+    # « Je représente un établissement scolaire » : le nombre de spectacles que gardent les filtres de l'action culturelle
+    "nSpectacles": "{n} spectacles", "unSpectacle": "1 spectacle",
+    # chercher partout : la loupe du menu et sa boîte (son nom, le titre de ses pages, rien trouvé, le nombre de propositions,
+    # dit aux lecteurs d'écran ; {n} : le nombre)
+    "chercherSite": "Rechercher sur le site", "pages": "Pages", "aucunResultat": "Aucun résultat",
+    "nResultats": "{n} résultats", "unResultat": "1 résultat",
     # les frises chronologiques (règle 15) : le repère du jour
     "aujourdhui": "Aujourd’hui",
     # réserver une date (règle 17, RESERVER) : la carte de réservation, et les noms courts des boutons de date
