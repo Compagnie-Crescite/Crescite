@@ -116,7 +116,7 @@ const DONNEES = (() => {
       try {
         [pe, di] = await Promise.all([
           lireTable('crescite_personnes', 'id,slug,prenom,nom,metiers,photo,photo_credit,photo_publique,ordre', 'ordre.asc,id.asc', ctl.signal),
-          lireTable('crescite_distributions', 'spectacle_id,personne_id,categorie,fonction,role,alternance,ordre', 'ordre.asc,id.asc', ctl.signal)]);
+          lireTable('crescite_distributions', 'spectacle_id,personne_id,categorie,fonction,role,alternance,en_tournee,ordre', 'ordre.asc,id.asc', ctl.signal)]);
       } catch { pe = di = undefined; }
       return { sp, li, da, re, at, tx, pe, di, dc };
     } finally { clearTimeout(minuteur); }
@@ -198,7 +198,7 @@ const DONNEES = (() => {
     const slugPersonne = new Map((pe || []).map(p => [p.id, p.slug]));
     const equipeDe = s => (avecEquipe
       ? di.filter(x => x.spectacle_id === s.id && slugPersonne.has(x.personne_id)).map(x => ({ personne: slugPersonne.get(x.personne_id),
-          categorie: x.categorie, fonction: x.fonction || '', role: x.role || null, alternance: x.alternance || null }))
+          categorie: x.categorie, fonction: x.fonction || '', role: x.role || null, alternance: x.alternance || null, enTournee: x.en_tournee !== false }))
       : S.equipes[s.slug] || []);
     const shows = pages.map(s => {
       const u = s.univers || {}, c = u.couleurs || {};
