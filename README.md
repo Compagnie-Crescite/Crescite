@@ -540,7 +540,13 @@ Bérénice dans le stockage privé. L'import n'écrase jamais le travail de l'ad
   geste ajoute, la fenêtre reste ouverte pour en ajouter d'autres, une personne sans fiche se crée au vol. C'est la même
   ligne que « Ses spectacles » sur la fiche de la personne, où l'on peut aussi l'ajouter à un spectacle ou l'en retirer ;
   tout s'enregistre aussitôt. L'onglet « Fiche artistique » (l'ancien « Équipe ») ne garde que le texte libre de la page
-  et du dossier. **Dans chaque date** : son équipe (la distribution « en tournée » cochée ; on décoche qui ne part pas, on ajoute un
+  et du dossier. **Qui a joué quand**, sous la distribution : chacun avec ses périodes (« du 12 mars 2019 au 20 mai
+  2022 · 34 dates »), lues dans l'équipe de chaque date. « Régler sa période » (du … au … ; vide : depuis la première
+  date, jusqu'à la dernière) écrit d'un coup les écarts des dates qu'elle change, avec un aperçu (combien de dates, dont
+  combien à venir, dont la personne sera prévenue) et « Annuler » ; « Quelqu'un qui a joué avant » fait de même pour une
+  personne qui n'est plus dans la distribution. Retirer de la distribution quelqu'un qui a joué des dates passées
+  demande si elles le gardent. La fiche de la personne dit aussi ce qu'elle a joué, et quand. Rien ne change dans la
+  base : ce sont les écarts de `crescite_equipes`, comme ceux de l'historique importé. **Dans chaque date** : son équipe (la distribution « en tournée » cochée ; on décoche qui ne part pas, on ajoute un
   remplaçant).
 - **Feuilles de route** : la feuille d'une date s'écrit directement sur une page A4 à l'écran, dans la forme des
   feuilles de la compagnie (le logo rond noir, la police FdR Sans, dérivée de Carlito et métriquement identique à
