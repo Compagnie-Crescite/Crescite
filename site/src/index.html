@@ -1323,6 +1323,25 @@ html:not(.still):not(.sur-place) :is(.ecrit, .apparait).vu { transition: opacity
 .som-l button:hover { background: color-mix(in srgb, var(--u-texte) 8%, transparent); color: var(--u-texte); }
 .som-l button[aria-current="location"] { color: var(--u-texte); font-weight: 600; }
 .som-l .n { min-width: 1.2em; font-variant-numeric: tabular-nums; color: var(--u-vif); }
+/* le retour en haut d'une page longue : un bouton rond, discret, en bas à droite, qui paraît après deux écrans lus ; il se
+   pose au-dessus de ce qui occupe déjà le bas de l'écran (l'indicateur de section d'un spectacle, les filtres des saisons),
+   et s'efface quand la liste des sections est ouverte */
+.haut-page { --hp-bas: 16px; position: fixed; right: 16px; bottom: calc(var(--hp-bas) + env(safe-area-inset-bottom)); z-index: 34; display: grid; place-items: center; width: 44px; height: 44px; padding: 0;
+  border: 1px solid color-mix(in srgb, var(--encre) 18%, transparent); border-radius: 50%; background: color-mix(in srgb, var(--papier-2) 94%, transparent); color: var(--encre); cursor: pointer;
+  box-shadow: 0 12px 26px -14px rgba(0, 0, 0, .9); opacity: 0; visibility: hidden; translate: 0 10px;
+  transition: opacity var(--k-survol) var(--k-doux), translate var(--k-survol) var(--k-doux), bottom var(--k-survol) var(--k-doux), border-color var(--k-survol) var(--k-doux), visibility 0s var(--k-survol); }
+.haut-page.est-visible { opacity: .88; visibility: visible; translate: none; transition: opacity var(--k-survol) var(--k-doux), translate var(--k-survol) var(--k-doux), bottom var(--k-survol) var(--k-doux), border-color var(--k-survol) var(--k-doux); }
+.haut-page:is(:hover, :focus-visible) { opacity: 1; border-color: var(--saison-vive); }
+.haut-page:focus-visible { outline: 2px solid var(--saison-vive); outline-offset: 2px; }
+.haut-page .fleche { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.haut-page.sur-som { --hp-bas: 68px; }
+body:has(.bf7.est-visible.a-filtres) .haut-page { --hp-bas: 86px; }
+body:has(#som-l:not([hidden])) .haut-page, html.intro-active .haut-page { opacity: 0; visibility: hidden; }
+@media (max-width: 759px) {
+  .haut-page { --hp-bas: 14px; right: 12px; }
+  .haut-page.sur-som { --hp-bas: 64px; }
+  body:has(.bf7.est-visible) .haut-page { --hp-bas: 76px; }
+}
 
 /* les chapitres */
 .chap { position: relative; scroll-margin-top: calc(var(--onglets) + 8px); }
@@ -6896,6 +6915,23 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   if (MV) MV.presse(document);
   lire();
   cadre();
+  // le retour en haut d'une page longue (hors de <main> : il survit aux pages) : il paraît après deux écrans lus, remonte la
+  // page (en glissant, si le mouvement est permis) et pose le focus sur son titre, d'où le clavier repart
+  const hautPage = document.createElement('button');
+  hautPage.type = 'button'; hautPage.className = 'haut-page'; hautPage.innerHTML = HAUT;
+  hautPage.setAttribute('aria-label', L.hautDePage);
+  document.body.appendChild(hautPage);
+  // (l'indicateur de section d'un spectacle ne se montre qu'à certains moments de la lecture : le bouton se pose au-dessus de
+  // lui quand on le voit, relu au défilement et juste après, quand son fondu est fini ; les filtres des saisons : en CSS)
+  let rafHaut = 0, tHaut = 0;
+  const majHaut = () => { rafHaut = 0; const vu = scrollY > 2 * VH, sb = vu && $('.som-b', main), st = sb && getComputedStyle(sb);
+    hautPage.classList.toggle('est-visible', vu);
+    hautPage.classList.toggle('sur-som', !!st && st.visibility !== 'hidden' && sb.getClientRects().length > 0); };
+  addEventListener('scroll', () => { if (!rafHaut) rafHaut = requestAnimationFrame(majHaut); clearTimeout(tHaut); tHaut = setTimeout(majHaut, 400); }, { passive: true });
+  hautPage.addEventListener('click', () => {
+    scrollTo({ top: 0, left: 0, behavior: motionOK() ? 'smooth' : 'instant' });
+    ($('h1[tabindex="-1"]', main) || main).focus({ preventScroll: true });
+  });
   // la créature : la petite pieuvre de l'en-tête (la marque, posée par cadre()) vit, avec ses vraies tentacules ; elle prend la
   // relève du dessin à la fin de l'ouverture. route() la fait naître (la vue connue) et joue ses moments : chaque page,
   // l'entrée dans un spectacle
