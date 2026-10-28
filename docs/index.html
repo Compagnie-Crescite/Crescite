@@ -203,6 +203,9 @@ body { display: flow-root; }   /* (la cale et la marge de l'en-tête restent dan
 .top.fin.etroit .entrees a[aria-current="true"] { box-shadow: inset 0 0 0 2px #fff; }
 .top.fin.etroit.tasse .entrees a { padding: 0 3px; letter-spacing: 0; }
 .top.sans-loupe .loupe-b { display: none; }
+/* (sur l'accueil, en haut, pas de loupe : elle ne paraît que dans la barre qui vient en descendant (au téléphone, la barre
+   qui prend son fond ; au bureau, le menu arrimé) ; le raccourci (/ ou Ctrl K) reste là) */
+.top.sur-scene .loupe-b, .top.sous-pieuvre:not(.est-arrime):not(.mesure) .loupe-b { width: 0; overflow: hidden; opacity: 0; visibility: hidden; transition: opacity var(--k-survol) ease, visibility 0s var(--k-survol); }
 /* la loupe du menu (CHERCHE) : un rond à la suite des pièces, la boîte de recherche ouverte, il se remplit */
 .loupe-b { flex: none; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: none; color: #fff; cursor: pointer; }
 .loupe-b svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; transition: scale var(--k-survol) var(--k-souple); }
@@ -437,6 +440,9 @@ section.bloc.sans-filet { border-top: 0; padding-top: clamp(28px, 4vw, 48px); }
 .sc-pause .i-l, .sc-pause[aria-pressed="true"] .i-p { display: none; }
 .sc-pause[aria-pressed="true"] .i-l { display: block; }
 html.still .sc-pause { display: none; }   /* rien ne bouge de lui-même : rien à arrêter */
+/* (masqué : il ne paraît qu'au clavier, quand on y arrive (le moyen d'arrêter ce qui bouge de soi-même reste là, WCAG 2.2.2) ;
+   la pause se fait aussi d'elle-même pour qui a demandé moins d'animations) */
+.sc-pause:not(:focus-visible) { opacity: 0; pointer-events: none; }
 .sc-titres { list-style: none; margin: 0; padding: 0; }
 .sc-t { position: absolute; left: 0; top: 0; z-index: 3; display: block; min-height: 44px; color: #fff; text-decoration: none; opacity: 0; will-change: transform, opacity; transition: color var(--k-survol) var(--k-doux);
   -webkit-user-drag: none; -webkit-touch-callout: none; }
@@ -12231,7 +12237,7 @@ const CREATURE = (() => {
       // (la fenêtre qui passe d'un côté à l'autre de 760 px : le haut se pose sur la scène, ou retourne sous elle ; son fond suit
       // le nom de la scène, que l'observateur ne relit pas tant qu'il ne bouge pas)
       // (« crescite » sous la pieuvre : sa place et sa largeur, celles de la couronne (motCouronne))
-      motPos = { x: ox + COEUR[0] * s - 827 * .38 * s / 2, y: oy + 932 * s, w: 827 * .38 * s };
+      motPos = { x: ox + COEUR[0] * s - 827 * .38 * s / 2, y: oy + (351 - 30 - 163 * .38) * s, w: 827 * .38 * s };
       motEl.style.width = motPos.w.toFixed(1) + 'px'; motEl.style.transform = `translate(${motPos.x.toFixed(1)}px, ${motPos.y.toFixed(1)}px)`;
       if (affiche) { if (yMenu == null) { Menu.surScene(); majMot(); } else { Menu.el.classList.remove('sur-scene'); Menu.sousPieuvre(yMenu); majMot(); } }
       // les deux bouts du texte de chaque titre (tx0, tx1), par rapport à lui : c'est le texte que la tentacule souligne, pas le
@@ -12430,7 +12436,6 @@ const CREATURE = (() => {
           // (les plus enfoncées d'abord : elles passent derrière les autres ; celle qu'on regarde, devant tout)
           for (const a of [...BRAS].sort((x, y) => x.t.profondeur() - y.t.profondeur())) if (a !== ab) trace(a);
           if (ab) trace(ab);
-          if (couronne) motCouronne(gC);
           // (les tentacules posées flottent, portées par les remous (PIEUVRE, flotter) : c'est ce mouvement qui invite à les
           // remonter ; plus de lueur qui court dessus)
           // (les titres et leurs dates sont devant, par-dessus la toile : rien n'y est effacé, les bras passent derrière les
@@ -12453,28 +12458,26 @@ const CREATURE = (() => {
       for (const T of TIT) placer(T, allumes.has(T), now, anime);
       if (eclairer(vivant)) occupe = true;
       if (!une) dessinee = true;
+      motVenue(eveil === null ? 0 : anime ? clamp((now - eveil - 200) / 700, 0, 1) : 1);
       if (pres || tenue || (eveil !== null && now - eveil < 2600)) occupe = true;
       if (!une && occupe) raf = requestAnimationFrame(image);
       else if (une && occupe) reveil();
     }
     const reveil = () => { if (!raf && affiche && visible && !document.hidden) raf = requestAnimationFrame(image); };
-    // « crescite » sous la couronne, sobre : au tiers de sa taille du logo (38 %), centré sous la pieuvre, juste sous ses boucles
-    // (leur bas : 904 unités ; le mot du logo : 355 à 1182 en largeur, 937 à 1100 en hauteur), un peu adouci ; par-dessus les
-    // tentacules qui descendent vers les titres (elles passent dessous : il se lit), venu en dernier. C'est le nom de la page
-    // en haut de l'accueil (le titre, .sc-h, ne se voit pas) : quand on descend, il s'efface en arrivant sous le haut de
-    // l'écran (au téléphone, sous la barre), et la barre déplie alors son nom, « Compagnie Crescite » (.sur-scene) : il le devient
-    function motCouronne(g) {
-      const gm = clamp((g - .55) / .45, 0, 1);
-      if (gm !== motG) { motG = gm; majMot(); }
-    }
+    // « crescite » au-dessus de la pieuvre, sobre : au tiers de sa taille du logo (38 %), centré au-dessus de sa tête (le haut
+    // de l'arche : 351 unités ; le mot du logo : 355 à 1182 en largeur, 937 à 1100 en hauteur), un peu adouci ; il paraît à
+    // l'éveil. C'est le nom de la page en haut de l'accueil (le titre, .sc-h, ne se voit pas) : quand on descend, il s'efface en
+    // approchant du haut de l'écran, et la barre déplie alors son nom, « Compagnie Crescite » (.sur-scene) : il le devient
+    function motVenue(gm) { if (gm !== motG) { motG = gm; majMot(); } }
     function majMot() {
       if (!affiche) return;
-      // (au téléphone, le mot passe sous la barre, toujours en haut ; au bureau, le menu, posé sous la scène, monte s'arrimer en
-      // haut de l'écran et y déplie le nom : le mot s'efface pendant qu'il monte, et n'est plus là quand il s'arrime)
-      const tel = TEL.matches, m = Menu.el.getBoundingClientRect();
-      const p = tel ? clamp((el.getBoundingClientRect().top + motPos.y - m.bottom - 8) / 90, 0, 1) : clamp((m.top - 10) / 260, 0, 1), op = (.86 * motG * p).toFixed(3);
+      // (il s'efface en approchant du haut de l'écran : au téléphone, dès les premiers pixels, il est sous la barre ; au bureau,
+      // aussi pendant que le menu, posé sous la scène, monte s'arrimer en haut et y déplier le nom : il n'est plus là quand il
+      // s'arrime)
+      const tel = TEL.matches, m = Menu.el.getBoundingClientRect(), y = el.getBoundingClientRect().top + motPos.y;
+      const p = tel ? clamp((y - 4) / 30, 0, 1) : Math.min(clamp((y - 4) / 120, 0, 1), clamp((m.top - 10) / 260, 0, 1)), op = (.86 * motG * p).toFixed(3);
       if (op !== motOp) { motOp = op; motEl.style.opacity = op; }
-      // (au téléphone, la barre reste sans fond, son nom replié, tant que le mot est sous elle)
+      // (au téléphone, la barre reste sans fond, son nom et sa loupe repliés, tant que le mot est là)
       Menu.el.classList.toggle('sur-scene', tel && p > 0);
     }
     addEventListener('scroll', () => { if (affiche && !motRaf) motRaf = requestAnimationFrame(() => { motRaf = 0; majMot(); }); }, { passive: true });
