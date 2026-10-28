@@ -67,7 +67,9 @@ pendant que leurs racines rejoignent la tête (plus de nœud au-dessus du corps)
 jeu : elle regarde la souris, sursaute, la lampe la suit, et une tentacule tendue se laisse tirer (au doigt, après un
 appui tenu), puis revient tenir son titre d'un ressort. Quand chaque titre est tenu, de nouvelles tentacules poussent de
 sa tête et refont le logo de la compagnie autour d'elle, « crescite » dessous, sobrement (la couronne) : au loin, pâle,
-sous la pieuvre et ses tentacules colorées, qui portent une ombre douce et flottent au premier plan. La page de chaque spectacle prend son
+sous la pieuvre et ses tentacules colorées, qui portent une ombre douce et flottent au premier plan. En haut de
+l'accueil, pas de nom en barre : c'est ce « crescite » qui le dit, et qui devient « Compagnie Crescite » dans la barre
+quand on descend (il s'efface pendant qu'elle déplie son nom). La page de chaque spectacle prend son
 univers (couleurs, police de titre, motif, photos, citations) et se lit selon trois entrées, ses onglets : « Je viens voir
 un spectacle », « Je souhaite programmer », « Je représente un établissement scolaire » (`#/spectacle/berenice/voir`,
 `…/programmer`, `…/etablissement`) ; la dernière entrée choisie sert de défaut. Les anciennes adresses (`#/voir`,
