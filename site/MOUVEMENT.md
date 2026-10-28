@@ -16,6 +16,8 @@ Quatre durées, trois courbes, et rien qui bouge sans raison.
 | Suivre le doigt ou le pointeur (le retour, une notification, tirer pour rafraîchir, le bord d'une fenêtre qu'on tire) | le temps du geste, puis 180 à 300 ms ; la remise d'une fenêtre à sa taille d'origine, 220 ms | linéaire sous le doigt ou le pointeur (une mise à jour par image, jamais un transform), le doux pour revenir | `brancherRetour`, `brancherGlisserNotif`, `brancherTirer`, `FENETRES.poignee` |
 | Passer d'une vue à l'autre | 220 à 300 ms | le doux, par les View Transitions | `changerVue`, `changerVueAdmin` |
 | Replier le menu latéral (la colonne passe de 240 à 64 px, ou l'inverse) | 220 ms ; les libellés en 120 ms d'opacité | le doux, par la propriété déclarée `--large-menu` (`@property`) : la grille et l'aside la lisent, le contenu suit | `--large-menu` (`html`) |
+| Zoomer la carte de tournée (+ − ⌂, Ctrl+molette, « Voir sur la carte ») | 220 ms | le doux : une animation sans cible donne la progression déjà adoucie, un `setAttribute('viewBox')` par image la suit (le glisser au pointeur, lui, suit le pointeur sans durée) | `animerCadre` (tournee.js) |
+| Allumer une pastille de la carte (le survol d'une étape, le focus) | 450 ms | le ressort, sur ses deux cercles (`scale(1.15)`, `transform-box: fill-box`), jamais sur le `<g>` qui porte son `translate` | `.tn-pin.allume` |
 | Viser une ligne (le champ qu'un lien vise, la ligne que « Voir dans le tableur » ouvre) | 1,6 s | `ease-out` | `visee`, `visee-ligne` |
 | Respirer (une lueur, une lampe, une photo qui dérive) | 1,6 à 26 s, en continu | ease-in-out | `respire`, `lampe`, `derive`, `bn-temps` |
 
@@ -62,6 +64,11 @@ pas), ni quand un épinglé change de place (il est déplacé, pas recréé), et
   « Personnaliser », le corps de la tuile se voit pendant le geste (opacité pleine) et le redessin complet de la grille est
   différé au relâchement ; le zoom de la feuille A4 change d'échelle d'un coup, sans transition (une page qui glisse sous
   une mesure fausserait la pagination, qui mesure par `offsetTop`).
+- **La carte de tournée** : le cadre (le `viewBox`) glisse de l'ancien au nouveau en 220 ms, au doux, à chaque zoom (+ − ⌂, la
+  molette, « Voir sur la carte » ou « Autour des dates ») ; la carte est redessinée d'abord, avec les rayons et les polices
+  à l'échelle du nouveau cadre, puis le cadre rejoint sa place. Le glisser au pointeur suit le pointeur (une mise à jour par
+  image, rien d'animé). Sous « moins d'animations » ou avec `?anim=0`, le cadre change d'un coup, et la pastille allumée ne
+  grossit pas (l'étape allumée, elle, garde son anneau : c'est un repère, pas un mouvement). `carte-travail.mjs` y regarde.
 - **Une mesure ne se fait pas sous un transform** : ce qu'un pli ouvre paraît en fondu, sans translation, pour que les
   lignes qui glissent se mesurent juste.
 - **Ce qui s'anime reste lisible aux lecteurs d'écran** : « en ce moment » est aussi un `aria-current="time"`, un bouton
@@ -97,7 +104,8 @@ thème et la densité : le jour, « appareil » qui suit le système, la compact
 distribution à l'écran : la cellule d'une date, qui sera prévenu, la boîte d'impact, la fiche d'une date),
 `fenetres.mjs` (les fenêtres ajustables : la poignée
 du tiroir, le séparateur de la liste, le coin des boîtes et les réglages du menu), `fenetres-2.mjs` (les autres : le
-détail du planning, la carte, la hauteur d'une tuile, le zoom de la feuille A4) et `acces.mjs` (les accès
+détail du planning, la carte, la hauteur d'une tuile, le zoom de la feuille A4), `carte-travail.mjs` (la carte comme vue
+de travail) et `acces.mjs` (les accès
 rapides du menu et la barre de commande : l'arrivée d'un épinglé en `ad-pop`, d'un récent en `ad-arrive`, le menu
 « Créer » en `gm-paraitre`). Ils ne touchent presque
 pas à ce vocabulaire : `cadre.mjs` mesure seulement que le repli anime la colonne une fois, et rien sous « moins
@@ -111,7 +119,9 @@ mise en page : le tableur les dessinera par tranches) ; `fenetres.mjs`, que la r
 d'origine s'anime une fois (et d'un coup sous « moins d'animations »), que rien ne glisse ni ne se remesure pendant le
 geste, et qu'aucune tâche ne dépasse 200 ms à `CPU=4` pendant un glisser (le coin d'une boîte suit le pointeur de la même façon, et sa remise à la taille d'origine est la
 même) ; `fenetres-2.mjs`, qu'aucune tâche ne dépasse 200 ms à `CPU=4` pendant un glisser du détail du planning, de
-la carte ou d'une tuile, et que le zoom A4 ne bouge ni la pagination ni rien d'autre ; `acces.mjs`, les trois arrivées ci-dessus, et le
+la carte ou d'une tuile, et que le zoom A4 ne bouge ni la pagination ni rien d'autre ; `carte-travail.mjs`, que le cadre de la carte glisse en passant par un cadre intermédiaire (et
+change d'un coup sous « moins d'animations » et avec `?anim=0`, la pastille allumée ne grossissant pas non plus), et
+qu'aucune tâche ne dépasse 200 ms à `CPU=4` pendant le zoom, la molette, le glisser et le survol ; `acces.mjs`, les trois arrivées ci-dessus, et le
 silence sous « moins d'animations » ; pour le reste, ils veillent à ce qu'une refonte ne casse rien. (La case de la matrice qui saute, `ad-pop`,
 vient avec le mode Distribution du tableur.)
 
@@ -119,6 +129,6 @@ vient avec le mode Distribution du tableur.)
 
 - Un défilement automatique vers l'étape en cours le jour J : la page arriverait ailleurs que là où on l'a laissée.
 - Une animation par mot dans les comptes et les titres : trop de nœuds, le budget d'interaction ne tenait plus.
-- Un mouvement continu sur la carte de la tournée de la saison : la route pointillée ne tourne que sur la carte d'une
+- Un mouvement continu sur la carte de la tournée de la saison (la route pointillée ne tourne pas, ni quand on zoome) : elle ne tourne que sur la carte d'une
   date, huit fois, puis se pose.
 - Des transitions de hauteur en continu (plis, listes) : l'API Web Animations les joue une fois, à la demande.

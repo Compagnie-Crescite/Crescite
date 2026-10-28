@@ -425,6 +425,9 @@ const hors = page => page.evaluate(() => document.activeElement?.blur?.());
   ok('10 · … et change de vue en gardant les filtres (la recherche « caen » suit dans l’adresse)', /q=caen/.test(await adresse(page)) && /#\/representations\/carte$/.test(await adresse(page)), await adresse(page));
   // dans un champ, les lettres sont des lettres
   await page.evaluate(() => { location.hash = '#/representations'; });
+  // (le passage d'une vue à l'autre est un fondu : tant qu'il dure, la page montre encore la carte, avec son propre #f-q ; on attend
+  // la liste elle-même, puis le champ qu'elle a dessiné)
+  await page.waitForSelector('#l-dates', { timeout: 8000 });
   await page.waitForSelector('#f-q', { timeout: 8000 });
   await page.fill('#f-q', '');
   await page.focus('#f-q');

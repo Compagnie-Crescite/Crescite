@@ -4,7 +4,8 @@
    connaît l'état (E), les outils d'index.html, equipe.js et tableau.js.
    - Une date (la liste, le tableau de bord) : ouvrir, la feuille de route, prévenir l'équipe, dupliquer, le tableur,
      confirmer une option, copier le lien, supprimer. Une personne : appeler, écrire, sa fiche. Un lieu : l'itinéraire,
-     appeler son contact, sa fiche. Une feuille : l'ouvrir sur « À compléter », la date. Une demande de devis : écrire,
+     appeler son contact, sa fiche, nouvelle date ici ; une pastille de la carte de tournée y ajoute en tête les dates du lieu, chacune
+     en tiroir. Une feuille : l'ouvrir sur « À compléter », la date. Une demande de devis : écrire,
      appeler, changer son statut sans l'ouvrir. Une piste de diffusion (la carte du Kanban) : l'étape d'avant, d'après,
      relance faite, le courriel, modifier, supprimer ; la carte se glisse aussi d'une colonne à l'autre. Une note de
      frais : valider, refuser, marquer remboursée. Une invitation pro : prolonger de trente jours, copier le lien,
@@ -248,6 +249,15 @@
   }
   G.menu({ cible: 'a.ligne[href], a.tb-l[href], a.carte-sp[href], .crm-carte[data-prospect-id]', titre: el => titreObjet(objetDe(el)) || (el.dataset.j ? 'Modification' : ''),
     actions: el => { const avant = [...actionsUrgence(el), ...actionsFil(el)]; const o = objetDe(el); if (o) return [...avant, ...actionsObjet(o, el)]; const href = el.getAttribute('href'); return [...avant, ...(href && href.startsWith('#/') ? [ouvrirA(href), ...liens(href)] : [])]; } });
+  // une pastille de la carte de tournée (tournee.js : le clic au pointeur fin, Entrée, le clic droit, l'appui long) : les dates du lieu
+  // qu'elle montre, chacune ouverte en tiroir (tiroir.js lit le lien) sans quitter la carte, puis ce qu'on peut faire du lieu
+  G.menu({ cible: '.tn-pin[data-tn-lieu]', titre: el => lieuTexte(lieu(+el.dataset.tnLieu)) || 'Lieu',
+    actions: el => {
+      const l = lieu(+el.dataset.tnLieu); if (!l) return [];
+      const ds = (el.dataset.dates || '').split(',').map(id => E.dates.find(d => d.id === +id)).filter(Boolean);
+      return [...ds.map(d => ({ libelle: spectacle(d.spectacle_id)?.titre || 'Date', detail: `${jourCourt(d.debut)}${d.statut === 'option' ? ' · option' : ''}`, href: `#/representations/${d.id}`, icone: ICO.agenda })),
+        ds.length ? { separateur: true } : null, ...actionsLieu(l)];
+    } });
   G.menu({ cible: '.journal-ligne', titre: 'Journal', actions: actionsJournal });
   // l'en-tête d'un tiroir (le clic droit, Maj+F10, ou son bouton « ⋯ ») : sa taille. La commande vient de la poignée du tiroir
   // (FENETRES.de) : sans poignée (le téléphone, le doigt), il n'y a rien à proposer. « Plus large » ajoute 160 px.
@@ -392,6 +402,13 @@
         { t: [['Suppr']], d: 'Vider la case' },
         { t: [[CMD, 'Z']], d: 'Annuler la dernière écriture' },
         { t: [[CMD, 'A']], d: 'Tout sélectionner' }] },
+      { titre: 'La carte', ici: h.startsWith('#/representations/carte'), lignes: [
+        { t: [['Entrée']], d: 'Sur une pastille : ses dates, nouvelle date ici, l’itinéraire, la fiche (le clic, le clic droit aussi)' },
+        { t: [['Maj', 'clic']], d: 'Choisir toutes les dates du lieu, puis agir sur elles' },
+        { t: [['+'], ['−']], d: 'Rapprocher, éloigner' },
+        { t: [['0']], d: 'Toute la France (⌂)' },
+        { t: [['Ctrl', 'molette']], d: 'Rapprocher ou éloigner autour du pointeur (la molette seule, une fois la carte choisie)' },
+        { g: 'Glisser la carte', d: 'Déplacer la vue' }] },
       { titre: 'Le planning', ici: h.startsWith('#/planning'), lignes: [
         { t: [['←'], ['→'], ['↑'], ['↓']], d: 'D’un jour à l’autre dans la grille' },
         { t: [['Page ↑'], ['Page ↓']], d: 'La période précédente, la suivante' },

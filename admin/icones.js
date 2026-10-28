@@ -110,6 +110,7 @@ const ICONES = (() => {
     'vue-liste': '<rect x="3.5" y="4" width="17" height="4.5" rx="1.5"/><rect x="3.5" y="10" width="17" height="4.5" rx="1.5"/><rect x="3.5" y="16" width="17" height="4.5" rx="1.5"/>',
     'vue-tableur': '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14.5h18M9.5 4v16"/>',
     'vue-carte': '<path d="M3 6.5 9 4l6 2.5L21 4v13.5L15 20l-6-2.5L3 20z"/><path d="M9 4v13.5M15 6.5V20"/>',
+    maison: '<path d="M4 11.5 12 4l8 7.5M6.5 10v9.5h11V10"/>',
   });
   const NOMS = Object.keys(TRACES);
 

@@ -7,7 +7,8 @@
    frais : valider, refuser, marquer remboursées, exporter. Chaque action groupée s'annonce avec « Annuler » (les statuts
    d'avant reviennent). La sélection tient quand la liste se redessine (le temps réel, un enregistrement) et s'oublie en
    changeant de page. Échap la quitte. D'autres modules ajoutent leurs actions (SELECTION.ajouterAction : séries.js,
-   modeles.js). Chargé après corbeille.js et tiroir.js.
+   modeles.js). Sur la carte de tournée (tournee.js), une pastille se choisit comme une ligne, avec toutes les dates du lieu
+   (data-dates) : les mêmes actions, le même compte (« 2 dates »). Chargé après corbeille.js et tiroir.js.
    SELECTION.genre()  SELECTION.ids()  SELECTION.vider()  SELECTION.ajouterAction(genre, { libelle, faire(objets, ids), dispo }) */
 const SELECTION = (() => {
   const S = { genre: null, ids: new Set(), mode: false };
@@ -40,7 +41,7 @@ const SELECTION = (() => {
   const pl = (n, mot, f = `${mot}s`) => `${n} ${n > 1 ? f : mot}`;
 
   const GENRES = {
-    date: { sel: '[data-liste] a.ligne[href^="#/representations/"]', id: el => +el.getAttribute('href').split('/').pop(), objets: ids => E.dates.filter(d => ids.has(d.id)), nom: n => pl(n, 'date'),
+    date: { sel: '[data-liste] a.ligne[href^="#/representations/"], .tn-pin[data-dates]', id: el => +el.getAttribute('href').split('/').pop(), ids: el => (el.dataset.dates ? el.dataset.dates.split(',').map(Number) : [+el.getAttribute('href').split('/').pop()]), objets: ids => E.dates.filter(d => ids.has(d.id)), nom: n => pl(n, 'date'),
       actions: [
         { libelle: 'Statut…', faire: async ds => { const v = await choisir('Le statut de ces dates', [['option', 'Option'], ['confirmee', 'Confirmée'], ['annulee', 'Annulée'], ['reportee', 'Reportée']], ds[0].statut); if (!v) return;
           await changerChamp({ table: 'crescite_dates', objets: ds, champ: 'statut', valeur: v, quoi: `${pl(ds.length, 'date')} : statut « ${{ option: 'option', confirmee: 'confirmée', annulee: 'annulée', reportee: 'reportée' }[v]} ».`, retabli: 'Les statuts d’avant sont revenus.' }); } },
@@ -114,18 +115,25 @@ const SELECTION = (() => {
   const lignes = g => (g ? $$(GENRES[g].sel) : []);
   function ajouterAction(genre, action) { if (GENRES[genre]) GENRES[genre].actions.push(action); }
 
+  // les identifiants d'une ligne : un seul d'ordinaire, plusieurs pour une pastille de la carte (les dates du lieu : data-dates)
+  const idsDe = (el, g) => (GENRES[g].ids ? GENRES[g].ids(el) : [GENRES[g].id(el)]);
   function basculer(el, g) {
-    const id = GENRES[g].id(el);
+    const ids = idsDe(el, g);
     if (S.genre !== g) { S.genre = g; S.ids.clear(); }
-    if (S.ids.has(id)) S.ids.delete(id); else S.ids.add(id);
+    if (ids.every(id => S.ids.has(id))) ids.forEach(id => S.ids.delete(id)); else ids.forEach(id => S.ids.add(id));     // (une pastille à moitié choisie se complète)
     S.mode = true;
     marquer(); barre();
   }
-  function tout() { const g = S.genre || Object.keys(GENRES).find(k => lignes(k).length); if (!g) return; S.genre = g; lignes(g).forEach(el => S.ids.add(GENRES[g].id(el))); S.mode = true; marquer(); barre(); }
+  function tout() { const g = S.genre || Object.keys(GENRES).find(k => lignes(k).length); if (!g) return; S.genre = g; lignes(g).forEach(el => idsDe(el, g).forEach(id => S.ids.add(id))); S.mode = true; marquer(); barre(); }
   function vider() { S.ids.clear(); S.genre = null; S.mode = false; marquer(); barre(); }
+  // la marque d'une ligne choisie : aria-selected ; une pastille de la carte est un bouton (role="button"), qui n'a pas d'état « choisi » : aria-pressed
   function marquer() {
     document.documentElement.classList.toggle('sel-mode', S.mode);
-    Object.keys(GENRES).forEach(g => lignes(g).forEach(el => { const on = S.genre === g && S.ids.has(GENRES[g].id(el)); el.classList.toggle('sel-on', on); if (S.mode) el.setAttribute('aria-selected', String(on)); else el.removeAttribute('aria-selected'); }));
+    Object.keys(GENRES).forEach(g => lignes(g).forEach(el => {
+      const ids = idsDe(el, g), on = S.genre === g && ids.length > 0 && ids.every(id => S.ids.has(id)), attr = el.matches('.tn-pin') ? 'aria-pressed' : 'aria-selected';
+      el.classList.toggle('sel-on', on);
+      if (S.mode) el.setAttribute(attr, String(on)); else el.removeAttribute(attr);
+    }));
   }
   function barre() {
     let b = $('#sel-barre');
@@ -186,6 +194,8 @@ html.sel-mode [data-liste] a.ligne::after, html.sel-mode #kanban-zone .crm-carte
 html.sel-mode [data-liste] a.ligne, html.sel-mode #kanban-zone .crm-carte { position: relative; padding-right: 36px; }
 html.sel-mode .sel-on::after { background: var(--accent) !important; border-color: var(--accent) !important; box-shadow: inset 0 0 0 3px var(--carte); }
 .sel-on { outline: 2px solid var(--accent); outline-offset: 1px; background: color-mix(in srgb, var(--accent) 8%, var(--carte)) !important; }
+.tn-pin.sel-on { outline: none; background: none !important; }
+html .tn-pin.sel-on .tn-point { stroke: var(--accent); stroke-width: 3; }
 #table-frais tr.sel-on td { background: color-mix(in srgb, var(--accent) 10%, var(--carte)); }
 .sel-bouton { margin-left: auto; }
 .filtres .sel-bouton { justify-self: end; }

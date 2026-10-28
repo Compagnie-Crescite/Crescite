@@ -1025,7 +1025,7 @@ const LISTES_ADRESSE = [
   [/^#\/journal$/, 'journal', { q: '', quoi: '', qui: '', periode: '', du: '', au: '' }],
 ];
 // Représentations : la liste, le tableur et la carte ont les mêmes filtres (l'état session.dates, une seule entrée) ; tri, vides,
-// serre et ouvertes (session.vues.<vue>) et cible (« Voir dans le tableur ») ne vont jamais dans l'adresse. Seule clé lue et
+// serre, vb (le cadre de la carte : il ne dure que le temps où la carte reste ouverte) et ouvertes (session.vues.<vue>) et cible (« Voir dans le tableur ») ne vont jamais dans l'adresse. Seule clé lue et
 // jamais réécrite : ?tri= (le tableur l'écrivait avant les filtres communs) ; elle sort de l'adresse à la première vue dessinée.
 const CLES_LUES_SEULEMENT = ['tri'];
 const CLES_FILTRES = [...new Set([...LISTES_ADRESSE.flatMap(x => Object.keys(x[2])), ...CLES_LUES_SEULEMENT])];
@@ -2601,10 +2601,10 @@ function formNouveauLieu(zone, texte, etablissement, fini) {
    le public, et nature, département, contrat, du, au), un seul prédicat (dateRetenue), une seule barre (filtresDates).
    Changer de vue les garde ; l'adresse les porte (LISTES_ADRESSE : ce qui diffère de la valeur d'office). Ce qui est propre
    à une vue reste dans session.vues.<vue>, hors de l'adresse (la liste : ses saisons ouvertes ; le tableur : le tri et les
-   colonnes vides ; la carte : « Autour des dates »). Les trois vues partagent aussi le sélecteur de vues (choixVueDates :
+   colonnes vides ; la carte : « Autour des dates » et le cadre du zoom, vb, que la carte efface à chaque ouverture). Les trois vues partagent aussi le sélecteur de vues (choixVueDates :
    une pilule de trois liens à icônes). */
 const DEFAUTS_DATES = { q: '', saison: '', spectacle: '', periode: 'avenir', statut: '', public: '', nature: '', dep: '', contrat: '', du: '', au: '' };
-const DEFAUTS_VUES = { liste: { ouvertes: [] }, tableur: { tri: 'asc', vides: false }, carte: { serre: false } };
+const DEFAUTS_VUES = { liste: { ouvertes: [] }, tableur: { tri: 'asc', vides: false }, carte: { serre: false, vb: null } };
 const FILTRES_PLUS = ['nature', 'dep', 'contrat', 'du', 'au'];   // ceux que la barre range sous « Plus de filtres »
 // l'état propre à une vue (session.vues.<vue>), complété de ses valeurs d'office ; le même objet à chaque appel
 function etatVue(nom) {
@@ -2866,6 +2866,15 @@ function relierAvant(el) {
   el.addEventListener('toggle', e => { if (e.target.matches('details.avant') && e.target.open !== reglagesAvant().ouvert) garderAvant({ ...reglagesAvant(), ouvert: e.target.open }); }, true);   // (le navigateur dit « toggle » aussi au premier dessin d'un panneau ouvert : rien à garder)
   el.addEventListener('change', e => { if (e.target.id !== 'avant-jours') return; garderAvant({ ...reglagesAvant(), jours: +e.target.value }); dessinerAvant(el); $('#avant-jours', el)?.focus(); });
 }
+// les badges d'une date (statut, site, public, nature) et les points de son parcours : les mêmes dans la liste, sur la carte de
+// tournée (tournee.js) et partout où une date se résume en une ligne
+function badgesDate(d) {
+  const badges = [d.statut === 'option' && '<span class="badge option">Option</span>', d.statut === 'annulee' && '<span class="badge annulee">Annulée</span>',
+    d.statut === 'reportee' && '<span class="badge option">Reportée</span>', !d.visible && '<span class="badge masquee">Masquée</span>',
+    d.public === 'scolaire' && '<span class="badge sco">Scolaire</span>', d.public === 'mixte' && '<span class="badge sco">Mixte</span>',
+    d.nature === 'repetitions' && '<span class="badge">Répétitions</span>', d.nature === 'residence' && '<span class="badge">Résidence</span>'].filter(Boolean).join('');
+  return `${badges}${typeof PARCOURS !== 'undefined' ? PARCOURS.points(d) : ''}`;
+}
 // la liste : la période se lit ici autrement que dans le tableur et la carte — « à venir » (d'office) le bloc des dates à venir
 // puis les saisons passées, repliées sauf la saison en cours ; « passées » les saisons passées seules ; « toutes » tout ouvert
 function listeDates(zone, actif) {
@@ -2877,16 +2886,12 @@ function listeDates(zone, actif) {
   $('#f-compte').textContent = f.periode === 'passees' ? `${passees.length} passée${passees.length > 1 ? 's' : ''}` : `${aVenir.length} à venir · ${passees.length} passée${passees.length > 1 ? 's' : ''}`;
   const ligne = d => {
     const s = spectacle(d.spectacle_id), l = lieu(d.lieu_id), reps = repsDe(d.id);
-    const badges = [d.statut === 'option' && '<span class="badge option">Option</span>', d.statut === 'annulee' && '<span class="badge annulee">Annulée</span>',
-      d.statut === 'reportee' && '<span class="badge option">Reportée</span>', !d.visible && '<span class="badge masquee">Masquée</span>',
-      d.public === 'scolaire' && '<span class="badge sco">Scolaire</span>', d.public === 'mixte' && '<span class="badge sco">Mixte</span>',
-      d.nature === 'repetitions' && '<span class="badge">Répétitions</span>', d.nature === 'residence' && '<span class="badge">Résidence</span>'].filter(Boolean).join('');
     const jours = [...new Set(reps.map(r => r.jour))];
     return `<a class="ligne" href="#/representations/${d.id}" style="--c:${couleurSp(s)}"${String(actif) === String(d.id) ? ' aria-current="true"' : ''}>
       <span class="jj"><b>${+d.debut.slice(8, 10)}</b>${MC[+d.debut.slice(5, 7) - 1]}${(d.fin && d.fin !== d.debut) ? `<br>→ ${+d.fin.slice(8, 10)}` : ''}</span>
       <span class="corps"><span class="t">${esc(s?.titre || '?')}</span><span class="ou">${esc(l ? lieuTexte(l) : (d.intitule || '').split(' — ')[1] || 'Lieu à préciser')}</span>
       ${reps.length ? `<span class="reps">${reps.slice(0, 8).map(r => `<span class="rep${r.public === 'scolaire' ? ' sco' : ''}${r.annulee ? ' ann' : ''}">${jours.length > 1 ? `${+r.jour.slice(8, 10)}/${+r.jour.slice(5, 7)} ` : ''}${r.heure ? AGENDA.heureTexte(h5(r.heure)) : 'heure ?'}</span>`).join('')}${reps.length > 8 ? `<span class="rep">+${reps.length - 8}</span>` : ''}</span>` : ''}</span>
-      <span class="badges">${badges}${typeof PARCOURS !== 'undefined' ? PARCOURS.points(d) : ''}</span></a>`;
+      <span class="badges">${badgesDate(d)}</span></a>`;
   };
   const parMois = ds => { let m = '', h = ''; ds.forEach(d => { const k = d.debut.slice(0, 7); if (k !== m) { m = k; h += `<div class="mois">${AGENDA.MOIS[+k.slice(5) - 1]} ${k.slice(0, 4)}</div>`; } h += ligne(d); }); return h; };
   const saisonEnCours = AGENDA.saisonDe(AUJ);
@@ -4041,7 +4046,7 @@ function editeurLieu(id) {
   const nb = l0 ? E.dates.filter(d => d.lieu_id === id).length : 0;
   nChamp = 0;
   zone.innerHTML = `<div class="titre-ed"><a class="btn petit" data-tt="retour" href="#/lieux">←</a><h2>${esc(l0 ? lieuTexte(l0) : 'Nouveau lieu')}</h2></div>
-    <div class="bloc" id="li-f">${SPEC_LIEU.map(c => champ(c, F)).join('')}<p class="aide">Astuce : la commune se cherche avec « Trouver la commune » ; département et position suivent.</p><button type="button" class="btn petit" id="li-geo">Trouver la commune</button></div>
+    <div class="bloc" id="li-f">${SPEC_LIEU.map(c => champ(c, F)).join('')}<p class="aide">Astuce : la commune se cherche avec « Trouver la commune » ; département et position suivent.</p><button type="button" class="btn petit" id="li-geo">Trouver la commune</button> ${l0 && typeof TOURNEE !== 'undefined' && TOURNEE.projeter(l0) ? `<a class="btn petit" id="li-carte" href="#/representations/carte" data-tn-viser="${id}">Voir sur la carte</a>` : ''}</div>
     <div class="bloc" id="li-s"><h3>Suivi interne <span class="aide" style="font-weight:400">— jamais publié</span></h3>${SPEC_LIEU_SUIVI.map(c => champ(c, G)).join('')}</div>
     ${l0 && typeof CARNET !== 'undefined' ? '<div class="bloc" id="li-carnet"></div>' : ''}${l0 ? datesDuLieu(id) : ''}${l0 && typeof NOTES !== 'undefined' ? '<div class="bloc" id="li-notes"></div>' : ''}
     ${l0 ? `<div class="bloc"><h3>Fusionner</h3><p class="aide">Ce lieu fait doublon ? Ses ${nb} date${nb > 1 ? 's' : ''} et ses séances passent sur le lieu choisi, puis il disparaît.</p><div id="li-fusion"></div></div>` : ''}

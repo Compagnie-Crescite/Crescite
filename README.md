@@ -44,6 +44,7 @@ node site/distribution.mjs         # la distribution à l'écran : la cellule d'
 node site/fenetres.mjs             # les fenêtres ajustables : la poignée du tiroir, le séparateur de la liste, le coin des boîtes, les réglages du menu (après le build)
 node site/acces.mjs                # les accès rapides du menu et la recherche comme barre de commande, dans Chromium (après le build)
 node site/fenetres-2.mjs           # les fenêtres qui restent : le détail du planning, la carte, la hauteur d'une tuile, le zoom de la feuille A4 (après le build)
+node site/carte-travail.mjs        # la carte de tournée comme vue de travail : le menu des pastilles, le survol, Maj+clic, le zoom, « Voir sur la carte » (après le build)
 bash site/bancs-admin.sh           # le build, puis tous les bancs de l'administration l'un après l'autre ; --tout y joint
                                    # ceux de l'espace de l'équipe (sinon, seulement si gestes.js, planning.js ou feuille.js changent)
 node site/reactivite.mjs /tmp/x index --strict  # les budgets de réactivité du site, au bureau et au téléphone ralenti ×4
@@ -494,9 +495,17 @@ compte du projet inscrit dans `crescite_admins`.
     saison, le spectacle et les autres filtres sont ceux des trois vues de Représentations, communs, voir plus bas) sur la
     carte de France, une pastille par lieu avec ses dates, le trajet dans l'ordre, et la tournée étape par étape avec la
     distance à vol d'oiseau et le délai entre deux dates ; les enchaînements serrés se signalent ; « Autour des dates »
-    resserre le cadre ; à l'ordinateur, la largeur de la carte se tire entre elle et la colonne des étapes ; une pastille ouvre le lieu en tiroir ; les lieux sans position sont listés. Les répétitions n'y
-    sont pas (sauf si on choisit la nature « Répétitions »), les dates annulées ou reportées non plus (sauf si on choisit
-    ce statut). Sans date à venir, la carte le dit et propose « Toutes les périodes ».
+    resserre le cadre ; à l'ordinateur, la largeur de la carte se tire entre elle et la colonne des étapes ; une pastille
+    ouvre son menu : ses dates en tiroir (la carte reste là), nouvelle date ici, itinéraire, fiche du lieu (au doigt, le
+    toucher garde le lieu en tiroir et l'appui long ouvre le menu) ; Maj+clic sélectionne les dates du lieu (la barre
+    d'actions des dates paraît) ; survoler ou focaliser une pastille allume ses étapes à droite, et inversement ; + − ⌂ en
+    coin de carte, Ctrl+molette et le glisser règlent la vue (le cadre dure le temps où la carte reste ouverte — un
+    redessin, un enregistrement, un filtre le gardent —, jamais dans l'adresse, et la carte s'ouvre toujours recadrée ; « Autour
+    des dates » ou ⌂ le remet) ; les étapes portent les badges de la
+    liste et les points du parcours ; la fiche d'un lieu placé propose « Voir sur la carte » ; les lieux sans position sont
+    listés. Les répétitions n'y sont pas (sauf si on choisit la nature « Répétitions »), les dates annulées ou reportées non
+    plus (sauf si on choisit ce statut). Sans date à venir, la carte le dit et propose « Toutes les périodes ».
+    Le banc `node site/carte-travail.mjs` (106 vérifications) regarde tout cela.
   - **Les documents générés** (`admin/modeles.js`) : un devis, un contrat de cession, une facture, une fiche technique
     d'accueil, depuis une date (ses séances, son lieu, son équipe en tournée) ou une piste (sa structure, son contact), à
     partir des modèles de la compagnie (Textes du site → « Modèle : devis »…, créés avec un texte de départ à la première
