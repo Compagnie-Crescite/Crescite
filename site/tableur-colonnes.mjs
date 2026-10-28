@@ -1,7 +1,7 @@
 // Les colonnes du tableur à la carte (rubrique Représentations, vue « Tableur » : #/representations/tableur), vérifiées dans
 // Chromium, hors ligne, sur la base fictive commune (admin-fictif.mjs).
 //   python3 site/build.py && node site/tableur-colonnes.mjs
-// Ce que le banc regarde : une poignée au bord droit de chaque en-tête (au pointeur fin et au-dessus de 700 px seulement), qui
+// Ce que le banc regarde : une poignée au bord droit de chaque en-tête (sauf l'icône « fiche » ; au pointeur fin et au-dessus de 700 px seulement), qui
 // se tire (une seule écriture de tableur.colonnes, au relâchement), se règle aux flèches, ajuste la colonne à son contenu d'un
 // double-clic, et dont la largeur gardée est retrouvée (bornée à 640 px) ; le cadre qui naît avec ses largeurs ; le menu d'un
 // en-tête (focus tournant, Maj+F10) : masquer, figer jusqu'ici (les bords gauche cumulés, la case visée jamais sous les colonnes
@@ -61,8 +61,8 @@ const annonces = page => page.$$eval('.annonce', xs => xs.map(x => x.textContent
   await page.waitForSelector('#tab-corps tr[data-l]', { timeout: 15000 });
   const gabarit = await page.evaluate(() => window.__gabarit);
   ok('1 · le cadre naît avec sa largeur retenue : le gabarit de la vue porte déjà --w-lieu:230px dans le style de #tab-cadre (avant le premier dessin)', !!gabarit && /id="tab-cadre" style="[^"]*--w-lieu:230px/.test(gabarit), (gabarit || '').match(/id="tab-cadre"[^>]*>/)?.[0]);
-  const n = await compte(page, TETE);
-  ok('1 · à 1 600 px, au pointeur fin : une poignée au bord droit de chaque en-tête (role=separator, nommée, vertical)', n >= 10 && (await compte(page, `${TETE} > .poignee[role=separator][aria-label^="Largeur de la colonne"]`)) === n && (await compte(page, `${TETE} > .poignee[aria-orientation=vertical]`)) === n, `${n} en-têtes`);
+  const n = await compte(page, `${TETE}:not(.c-fiche)`);   // (l'icône « fiche » n'a pas de largeur à régler : pas de poignée, vérifié plus bas)
+  ok('1 · à 1 600 px, au pointeur fin : une poignée au bord droit de chaque en-tête, sauf l’icône « fiche » (role=separator, nommée, vertical)', n >= 10 && (await compte(page, `${TETE} > .poignee[role=separator][aria-label^="Largeur de la colonne"]`)) === n && (await compte(page, `${TETE} > .poignee[aria-orientation=vertical]`)) === n && (await compte(page, `${TETE}.c-fiche > .poignee`)) === 0, `${n} en-têtes`);
   ok('1 · une seule poignée est dans l’ordre de Tab (celle de l’en-tête courant), les autres se joignent aux flèches', (await compte(page, `${TETE} > .poignee[tabindex="0"]`)) === 1 && (await compte(page, `${TETE}[tabindex="0"]`)) === 1);
   ok('1 · la poignée dit sa valeur (aria-valuenow = la largeur de la colonne), ses bornes 48 et 640', await page.$eval(poignee('lieu'), (p) => p.getAttribute('aria-valuemin') === '48' && p.getAttribute('aria-valuemax') === '640' && p.getAttribute('aria-valuenow') === '230'));
   ok('1 · la largeur retenue au démarrage s’applique : « Lieu » fait 230 px', (await largeurDe(page, 'lieu')) === 230);
@@ -171,7 +171,7 @@ const annonces = page => page.$$eval('.annonce', xs => xs.map(x => x.textContent
   const b = await ouvrir(navigateur, { largeur: 1600, hauteur: 1000, hash: '#/representations/tableur' });
   await b.page.waitForSelector('#tab-corps tr[data-l]', { timeout: 15000 });
   const cles = await enTetes(b.page);
-  ok('3 · l’ancienne forme plate est lue : « Colonnes vides » cochée (22 colonnes moins la masquée), Lieu à 200 px', cles.length === 21 && !cles.includes('commune') && (await b.page.$eval('#tab-vides', c => c.checked)) && (await largeurDe(b.page, 'lieu')) === 200, `${cles.length} colonnes`);
+  ok('3 · l’ancienne forme plate est lue : « Colonnes vides » cochée (22 colonnes moins la masquée, plus l’icône « fiche » du lot 12), Lieu à 200 px', cles.length === 22 && cles.at(-1) === 'fiche' && !cles.includes('commune') && (await b.page.$eval('#tab-vides', c => c.checked)) && (await largeurDe(b.page, 'lieu')) === 200, `${cles.length} colonnes`);
   await b.ctx.close();
 }
 
@@ -181,7 +181,7 @@ const annonces = page => page.$$eval('.annonce', xs => xs.map(x => x.textContent
   const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1600, hauteur: 1000, hash: '#/representations/tableur' });
   await page.waitForSelector('#tab-corps tr[data-l]', { timeout: 15000 });
   const cles0 = await enTetes(page);
-  ok('4 · les colonnes d’aujourd’hui, dans l’ordre d’origine (celui du schéma)', cles0.join() === 'jour,spectacle,heure,lieu,commune,public,statut,nature,distribution,organisateur,contact,contrat,site', cles0.join());
+  ok('4 · les colonnes d’aujourd’hui, dans l’ordre d’origine (celui du schéma)', cles0.join() === 'jour,spectacle,heure,lieu,commune,public,statut,nature,distribution,organisateur,contact,contrat,site,fiche', cles0.join());   // (l’icône « fiche » ferme la ligne depuis le lot 12)
   ok('4 · Jour et Spectacle sont figés d’office : deux th.figee, la seconde .derniere', (await compte(page, `${TETE}.figee`)) === 2 && (await compte(page, `${TETE}.figee.derniere[data-k="spectacle"]`)) === 1 && (await compte(page, '#tab-corps td.figee')) === 14);
   // le focus tournant : Tab arrive sur un seul en-tête, ← → passent de l'un à l'autre
   await page.focus('#tab-tete th[data-k="jour"]');
@@ -299,8 +299,8 @@ const annonces = page => page.$$eval('.annonce', xs => xs.map(x => x.textContent
   await page.click('#tab-colonnes');
   await page.waitForSelector('.tab-pop .tab-col-liste .tab-col', { timeout: 4000 });
   const lignes = await page.$$eval('.tab-col', xs => xs.map(x => x.dataset.k));
-  ok('5 · la fenêtre liste toutes les colonnes possibles (22 : Fin, Jauge, Notes… y sont, même vides), cochables', lignes.length === 22 && (await compte(page, '.tab-col input[type=checkbox]')) === 22, `${lignes.length} colonnes`);
-  ok('5 · … toutes cochées (22) : neuf disent « vide, repliée » (« Colonnes vides » les montre) ; « Jour » reste coché et grisé', (await compte(page, '.tab-col input:checked')) === 22 && (await compte(page, '.tab-col small')) === 9 && (await page.$eval('.tab-col[data-k="jour"] input', i => i.disabled && i.checked)), `${await compte(page, '.tab-col small')} vides`);
+  ok('5 · la fenêtre liste toutes les colonnes possibles (34 : Fin, Jauge, Notes… y sont, même vides, et les douze du lot 12, hors de la disposition d’origine ; pas l’icône « fiche »), cochables', lignes.length === 34 && !lignes.includes('fiche') && (await compte(page, '.tab-col input[type=checkbox]')) === 34, `${lignes.length} colonnes`);
+  ok('5 · … les 22 d’origine cochées (les douze du lot 12, non) : neuf disent « vide, repliée » (« Colonnes vides » les montre) ; « Jour » reste coché et grisé', (await compte(page, '.tab-col input:checked')) === 22 && (await compte(page, '.tab-col small')) === 9 && (await page.$eval('.tab-col[data-k="jour"] input', i => i.disabled && i.checked)), `${await compte(page, '.tab-col small')} vides`);
   ok('5 · le bouton est enfoncé (aria-expanded), la fenêtre est un dialog nommé', (await page.$eval('#tab-colonnes', b => b.getAttribute('aria-expanded'))) === 'true' && (await page.$eval('.tab-pop', p => p.getAttribute('role') === 'dialog' && p.getAttribute('aria-label') === 'Colonnes du tableur')));
   // décocher « Public »
   await page.uncheck('.tab-col[data-k="public"] input');

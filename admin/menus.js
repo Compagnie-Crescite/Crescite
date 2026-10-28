@@ -415,6 +415,9 @@
         { g: 'Glisser le bord d’un en-tête', d: 'Régler la largeur de la colonne (la poignée se règle aussi aux flèches, ← →) ; double-clic : l’ajuster à son contenu' },
         { g: 'Clic droit sur un en-tête', d: 'Masquer, figer jusqu’ici, ajuster, avancer, reculer, les colonnes d’origine, en Complet (Maj+F10 sur l’en-tête choisi aux flèches ← →)' },
         { g: '« Colonnes… » (Complet)', d: 'Montrer ou masquer chaque colonne, changer leur ordre (↑ ↓ ou glisser)' },
+        { g: '« Jeu » (Complet)', d: 'Toutes les colonnes d’un sujet, vides comprises : Site, Tournée, Suivi, Bilan, Diffusion (le montant de cession, avec un cadenas : jamais exporté sans la case « Inclure la diffusion »), ou Tout' },
+        { g: 'L’icône « fiche » en bout de ligne', d: 'Ouvre la date dans le tiroir (Ctrl+Entrée le fait sur le champ de la case active, qui s’allume) ; la grille se met à jour derrière. Une case grisée dit pourquoi, au survol' },
+        { g: 'Une date « période » (Complet)', d: 'Écrire dans une case de séance demande d’abord : ajouter une séance ce jour, ou déplacer le début ; « Détacher cette séance dans sa propre date » est dans le menu d’une ligne (clic droit)' },
         { g: 'Glisser le bas du cadre', d: 'Régler la hauteur du tableur' }] },
       { titre: 'La carte', ici: h.startsWith('#/representations/carte'), lignes: [
         { t: [['Entrée']], d: 'Sur une pastille : ses dates, nouvelle date ici, l’itinéraire, la fiche (le clic, le clic droit aussi)' },

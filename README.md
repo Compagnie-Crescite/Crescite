@@ -36,6 +36,7 @@ node site/niveau.mjs               # les dix idées de l'administration, dans Ch
 node site/adresses-admin.mjs       # les adresses et les garde-fous de l'administration, sur la même base fictive
 node site/tableur.mjs              # le tableur des représentations en Complet (?mode=complet), dans Chromium, sur la même base fictive (après le build)
 node site/tableur-colonnes.mjs     # les colonnes du tableur à la carte : largeur, ordre, masquées, figées, hauteur (après le build)
+node site/tableur-complet.mjs      # le tableur Complet, chaque champ atteignable : les jeux, la diffusion, Ctrl+Entrée, la période, « Détacher », l'import (après le build)
 node site/tableur-simple.mjs       # le tableur Simple, une ligne par date : les modes, les séances, la ligne vide, le temps réel, les états d'une case, la barre d'état, le calendrier, le collage, le budget (après le build)
 node site/icones.mjs               # la bibliothèque d'icônes de l'administration et ses consommateurs, dans Chromium (après le build)
 node site/cadre.mjs                # la coque, le menu latéral, ses raccourcis et ses badges, dans Chromium, sur la même base fictive (après le build)
@@ -484,7 +485,8 @@ compte du projet inscrit dans `crescite_admins`.
     écrire), un seul appel par geste (la fiche, un geste qui mêle date, équipe, montant et chiffres, la feuille
     « Horaires », une case du tableur), une source de chiffres gardée même sans nombre, la question posée à la base qui
     échoue sans jamais valoir « sans le script », la fonction absente qui ramène aux quatre écritures, la base qui
-    refuse : 83 vérifications, des captures dans `site/dist/shots-champs/`.
+    refuse ; enfin, que les 34 colonnes du tableur sont portées par le schéma et que chacune a son en-tête en « Jeu :
+    Tout » : 86 vérifications, des captures dans `site/dist/shots-champs/`.
   - **Annuler plutôt que confirmer** (`admin/corbeille.js`) : plus de « Êtes-vous sûr ? » pour supprimer (une date, un
     lieu, une séance, un atelier, une piste, une demande de devis, une alerte, un document, une invitation, du matériel,
     une note) ni pour revenir sur une ligne du journal : c'est fait tout de suite, et l'annonce porte « Annuler » (ou
@@ -584,6 +586,25 @@ compte du projet inscrit dans `crescite_admins`.
     200 ms à `CPU=4`, geste par geste, mais sur une trentaine de lignes seulement (voir `site/MOUVEMENT.md`) :
     118 vérifications, des captures dans `site/dist/shots-tableur-colonnes/` (`colonnes.png`, `colonnes-menu.png`,
     `colonnes-fenetre.png`, `distribution-plus.png`).
+  - `node site/tableur-complet.mjs` garde le tableur Complet, chaque champ atteignable : le menu « Jeu » (la disposition
+    d'origine inchangée et terminée par l'icône « fiche », puis chacun des six jeux : les colonnes exactes, vides comprises, la
+    préférence qui les retient, « Colonnes… » qui montre une colonne nouvelle sans jeu) ; les colonnes nouvelles lues dans
+    leurs cases (la ligne du site, « 2 précisions », la précision en toutes lettres, la saison et la feuille de route en
+    lecture seule avec leur lien, « Modifié » et la source) ; la diffusion (le montant visible avec son cadenas, sa bande
+    `--ciel-doux` et « confidentiel » en `.sr`, l'étape de la piste en `aria-readonly`, « 1 200 » écrit dans le montant, ce que
+    rend `TABLEUR.tableau({ confidentiel })`, le CSV sans puis avec la case « Inclure la diffusion (confidentiel) », décochée
+    à chaque fois) ; l'icône « fiche » et Ctrl+Entrée (le tiroir, le champ visé de la colonne : le contrat, l'heure de la
+    bonne séance, le début d'une période, les précisions du site ; l'adresse sans `?champ=` ; la grille qui se redessine
+    derrière après un enregistrement ; le focus qui revient à la case) ; le garde-fou d'une date « période » (le menu, « Ajouter une
+    séance ce jour », « Déplacer le début » et son retour par Ctrl+Z, la saisie qui reprend avec le caractère tapé, le
+    collage et Suppr qui n'écrivent rien, la case « annulée ») ; « Détacher cette séance dans sa propre date » (la
+    confirmation, deux enregistrements, le suivi sans le montant, l'équipe avec la fonction et la note de chacun, un seul
+    « Annuler ») ; ce que les colonnes écrivent ou refusent (une ligne du site posée puis vidée, la billetterie de la
+    séance, le nombre de représentations et la fin figés avec une date à séances, une fin avant le début refusée, la
+    précision) ; l'import (les en-têtes d'un export reconnus, la jauge, la ligne du site, les précisions, les chiffres et leur
+    source appliqués, l'aperçu qui nomme les colonnes lues, la ligne qui rejoint une date existante, l'avertissement sous un
+    jeu, une colonne montrée sans titre qui garde sa place, « Montant (EUR) » reconnu) ; le menu « Jeu » qui dit le jeu retenu après un passage du Simple au Complet ; l'impression sans la colonne de l'icône « fiche » ; « Détacher » dont la seconde écriture est refusée (la date neuve est retirée) ; les précisions du site copiées puis collées, toujours séparées ; 390 px et « moins d'animations » : 119 vérifications, une quinzaine de secondes, des captures dans
+    `site/dist/shots-tableur-complet/` (`complet-jeux.png`, `complet-diffusion.png`, `tiroir-depuis-grille.png`).
   - `node site/tableur-simple.mjs` garde le tableur Simple (une ligne par date) : le rendu (six colonnes, le petit calendrier
     du jour, le liseré de la couleur du spectacle, les pastilles d'heures, le statut en badge, le lieu sur deux lignes, les
     lignes de 44 px, la ligne vide du bas) ; le segment « Simple · Complet » (le compte le retient, `?mode=complet` ne
@@ -840,9 +861,50 @@ compte du projet inscrit dans `crescite_admins`.
     séances retirées »). En Simple, il n'y a ni « Colonnes… », ni « Colonnes vides », ni colonnes à déplacer : seules les
     largeurs se règlent et se retiennent.
   - **Complet** : une ligne par séance ; les séances d'une même date se suivent, en bande. Colonnes : jour, spectacle,
-    heure et fin, lieu, commune, public, statut, nature, distribution, billetterie, précisions, organisateur, contact,
-    contrat, notes, séance annulée, site (les colonnes se tirent du schéma de la date). Ce qui est vide reste vide, et une
+    heure et fin, lieu, commune, public, statut, nature, distribution, billetterie, « Note de séance » (la précision
+    publique d'une séance : « complet », « audiodécrite »), organisateur, contact, contrat, montant de cession, notes,
+    chiffres, séance annulée, site (les colonnes se tirent du schéma de la date). Ce qui est vide reste vide, et une
     colonne vide sur toute la vue se replie (« Colonnes vides » la montre). Chaque en-tête porte l'icône de son type.
+    Chaque ligne finit par une icône « fiche », nommée, qui ouvre la date dans le tiroir.
+  - **Chaque champ d'une date est atteignable** (Complet, à l'ordinateur). Douze colonnes de plus, hors de la disposition
+    d'origine (la grille de tous les jours ne change pas) : la **ligne du site** (le texte que le site affiche à la place
+    de celui qu'il compose), les **précisions du site** (la case dit « n précisions » ; elles s'écrivent dans la fiche,
+    où l'on les met en forme : Entrée ouvre le tiroir sur elles ; collées ou importées, une par ligne), la **billetterie
+    de la séance** (distincte de la billetterie de la date), le **nombre de représentations**, la **précision** (jour,
+    période, mois ou saison), la **fin de période**, la **saison** (en lecture seule), la **feuille de route** (en lecture
+    seule : à composer, brouillon ou publiée v2, un lien vers sa page), « **Modifié** » (quand et par qui, en lecture
+    seule), la **source de la date** et la **source des chiffres**, et l'**étape de la piste** de diffusion (en lecture
+    seule : la piste porte le suivi commercial depuis le vingt-deuxième script). La fin de période, la précision et le
+    nombre de représentations ne s'écrivent que pour une date sans séance : dès qu'elle en a, la case est grise et son
+    infobulle dit pourquoi (la base les déduit des séances) ; une fin ne passe pas avant le début. La fonction et la note
+    d'un remplaçant ne sont pas des colonnes (une ligne est une séance, une date a plusieurs personnes) : elles restent
+    dans le tiroir et dans la fenêtre de distribution. Le **menu « Jeu »** de la tête montre d'un coup toutes les colonnes
+    d'un sujet, vides comprises, et masque les autres : *Site* (ce que le site dit), *Tournée* (lieu, heures, distribution,
+    feuille de route), *Suivi* (organisateur, contact, contrat, notes, dernière modification), *Bilan* (saison, montant,
+    chiffres et leurs sources), *Diffusion* (le montant de cession et l'étape de la piste), *Tout* ; « Disposition
+    d'origine » rend les colonnes d'avant. Le choix est gardé avec le compte (`tableur.colonnes`, par mode : `jeu`,
+    `masquees`, et `montrees` pour les colonnes nouvelles qu'on a montrées une à une par « Colonnes… »).
+  - **La diffusion est confidentielle** : le montant de cession HT (script de la compagnie idéale) reste visible quand il est
+    rempli, mais son en-tête porte un cadenas (« confidentiel » pour les lecteurs d'écran) et une bande bleutée, comme
+    l'étape de la piste, et ni l'un ni l'autre ne sortent du tableur sans la case **« Inclure la diffusion
+    (confidentiel) »** du menu Exporter : décochée à chaque fois, jamais mémorisée, et la barre d'état dit ce qui est resté
+    de côté. L'organisateur, le contact, le contrat et les notes du suivi s'exportent comme avant.
+  - **La date dans le tiroir, sur le champ de la case** : l'icône « fiche » en bout de ligne et **Ctrl+Entrée** (listé par
+    l'aide « ? ») ouvrent la date dans le tiroir à droite, le focus sur le champ de la colonne (le contrat, l'heure de cette
+    séance, le début d'une période), qui s'allume ; la page garde son adresse, le tiroir y ajoute `?tiroir=representations/101`
+    comme partout. Quand on enregistre dans la fiche, la grille se met à jour derrière, sans attendre le direct ; à la
+    fermeture, le focus revient à la case. L'icône n'existe pas au téléphone ; Ctrl+Entrée (et « Ouvrir la date dans le tiroir » du clic droit) marche aussi en Simple, ce que l'aide du Simple dit.
+  - **Une date « période »** (une résidence, une répétition : des jours, aucune séance) : écrire dans une case de séance
+    (l'heure, le public, la note, la billetterie, « annulée ») créerait une séance sans le dire, et la période deviendrait
+    un jour. La case demande donc d'abord, dans un menu : « Ajouter une séance ce jour » (la période devient un jour) ;
+    pour le jour, aussi « Déplacer le début » (la fin suit si elle passait avant) ; ou « Annuler ». Le collage et Suppr
+    n'y créent rien : la case est signalée en ambre (« cette date est une période : Entrée sur la case pour choisir »).
+  - **Détacher une séance** : le menu d'une ligne (clic droit, Maj+F10) propose « Détacher cette séance dans sa propre
+    date » : une date neuve, au même lieu et au même statut, avec le suivi (organisateur, contact, contrat, notes ; le
+    montant de cession reste à la date d'origine) et l'équipe (avec la fonction et la note de chacun), puis la séance
+    quitte l'ancienne. Une confirmation le dit : l'équipe reçoit la notification « Nouvelle date ». Un seul « Annuler »
+    rend tout. Si la base refuse la seconde écriture, la date neuve est retirée et la barre dit que la séance est restée sur
+    sa date.
   - Les colonnes du Complet sont à la carte, à l'ordinateur : le bord droit de chaque en-tête se tire (un double-clic l'ajuste à
     son contenu ; la poignée se règle aussi aux flèches, ← →) ; un clic droit sur un en-tête, ou Maj+F10 (les en-têtes
     se parcourent aux flèches ← →), propose Masquer, Figer jusqu'ici, Ajuster la largeur, Avancer, Reculer (Alt+← et
@@ -850,7 +912,7 @@ compte du projet inscrit dans `crescite_admins`.
     colonnes, à cocher, à réordonner par ↑ ↓ ou en les glissant. Le jour ne se masque pas. Le jour et le spectacle sont
     figés d'office ; figer jusqu'ici en fige autant qu'on veut, de la première à celle-ci. Tout est retenu avec le
     compte (la préférence `tableur.colonnes`, par mode : l'ordre, les colonnes masquées, le nombre de colonnes figées,
-    les largeurs, « Colonnes vides »), et « Colonnes d'origine » l'oublie avec un « Annuler ». Les largeurs ne se
+    les largeurs, « Colonnes vides », le jeu choisi, les colonnes nouvelles qu'on a montrées), et « Colonnes d'origine » l'oublie avec un « Annuler ». Les largeurs ne se
     règlent qu'au pointeur fin et au-dessus de 700 px : le téléphone garde les siennes. Une poignée sous le cadre en
     règle la hauteur (`fenetres.tableur-h`) ; sans elle, le cadre prend la place qui reste sous lui, et suit le menu
     latéral qui se replie ou se déplie. La fenêtre du lieu ou de la distribution, ouverte sur une case, retient sa taille
@@ -904,11 +966,15 @@ compte du projet inscrit dans `crescite_admins`.
     masquée n'est pas exportée, « Colonnes vides » les rend) : Excel (un .xlsx écrit par l'administration elle-même,
     sans bibliothèque : de vraies dates et heures, l'en-tête filtrable, autant de colonnes figées que dans la vue),
     CSV (points-virgules, pour Excel en français), Google Sheets (le tableau copié, une feuille vierge sheets.new
-    s'ouvre : on colle). « Importer » : des lignes copiées d'un tableur (les titres de colonnes reconnus, ou l'ordre
-    de l'export) deviennent des séances, après un aperçu ligne par ligne ; « Annuler » reprend tout l'import. Le
-    tableur ne montre ni n'exporte rien des colonnes de diffusion du suivi (l'étape, les contacts, les relances, les
-    notes de diffusion) ; seul le montant de cession HT y a sa colonne (« Cession HT (€) »), avec le script de la
-    compagnie idéale.
+    s'ouvre : on colle). Les colonnes de la diffusion n'en font partie qu'avec la case « Inclure la diffusion
+    (confidentiel) » du menu Exporter. « Importer » : des lignes copiées d'un tableur deviennent des séances, après un
+    aperçu ligne par ligne ; « Annuler » reprend tout l'import. Il lit toutes les colonnes qu'il reconnaît par leur
+    titre (ceux d'un export aussi : « Cession HT (€) », « Jauge », « Spectateurs », « Heures d'ateliers »…) : le site, le
+    statut, la nature, la ligne et les précisions du site, la billetterie de la date et celle de la séance, les
+    chiffres et leur source, le suivi, le montant ; « Précisions » désigne la note de séance, « Précisions du site » les
+    précisions sous la ligne. Sans ligne de titres, les colonnes sont celles que le tableau montre (l'aperçu les nomme, et
+    demande une ligne de titres quand le tableau montre un jeu, des colonnes masquées ou des colonnes ajoutées). L'aperçu montre chaque colonne
+    lue ; une ligne qui rejoint une date qui existe déjà n'y ajoute que sa séance, et l'aperçu le dit.
 - **Spectacles** : toute la fiche, l'univers (avec le contrôle des contrastes) et les photos (allégées avant l'envoi).
 - **Ateliers** : le catalogue publié et les séances dans les établissements, avec le total des heures par saison.
 - **Lieux** : avec la recherche de commune (geo.api.gouv.fr), la fusion des doublons, et ses dates (à venir, puis
@@ -1292,7 +1358,7 @@ Représentations), `menu.epingles` (les accès épinglés du menu latéral : la 
 planning, les devis, les frais, le journal et le site, voir « Le cadre et le menu latéral »), `theme` (`nuit`, `jour` ou
 `appareil` ; la nuit tant qu'on n'a pas choisi) et `densite` (`confortable` ou `compacte` ; voir « L'apparence »), puis
 `tableur.colonnes` (les colonnes du tableur à la carte, par mode : ordre, masquées, colonnes figées, largeurs, «
-Colonnes vides » ; voir Représentations), `tableur.mode` (le mode du tableur, `simple` ou `complet` ; voir
+Colonnes vides », jeu choisi, colonnes montrées ; voir Représentations), `tableur.mode` (le mode du tableur, `simple` ou `complet` ; voir
 Représentations), puis `fenetres.tiroir` (la largeur du tiroir, en pixels), `fenetres.liste` (la
 largeur de la colonne de la liste à côté d'une fiche, en pixels), `fenetres.pl-detail` (la colonne du détail d'un jour
 du planning), `fenetres.tn` (la colonne de la carte de tournée) et `fenetres.a4-zoom` (le zoom de la page A4 : un

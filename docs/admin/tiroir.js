@@ -21,10 +21,15 @@
    menus.js) propose « Taille d'origine », « Plus large » (+ 160 px) et « Pleine page ». Quand le tiroir du dessus est plus
    large que celui qu'il couvre, celui-ci recule d'autant de plus que ses 28 px : recaler() le redit à l'ouverture, à la
    fermeture et à chaque pas de la poignée. Au téléphone, le tiroir garde sa largeur d'écran (LARGEUR).
-   TIROIR.ouvrir(href, { viser, depuis })   TIROIR.fermer()   TIROIR.fermerTout()   TIROIR.ouvert()   TIROIR.racine()
+   TIROIR.ouvrir(href, { viser, depuis, apres })   TIROIR.fermer()   TIROIR.fermerTout()   TIROIR.ouvert()   TIROIR.racine()
    TIROIR.redessiner(id)                     TIROIR.peut(href) : ce lien s'ouvrirait-il en tiroir ici ?
    TIROIR.restaurer() (à l'ouverture de l'administration)   TIROIR.surAdresse() (index.html, à chaque changement d'adresse)
-   TIROIR.titre() : le nom du tiroir du haut et sa rubrique, pour le titre de l'onglet */
+   TIROIR.titre() : le nom du tiroir du haut et sa rubrique, pour le titre de l'onglet
+   Les options d'ouvrir : viser (le sélecteur du champ à allumer dans la fiche), depuis (d'où l'on vient : le nœud qui reprend le focus à
+   la fermeture, ou une fonction rappelée alors — quand la page derrière s'est redessinée, l'ancien nœud n'est plus dans le document :
+   la fonction retrouve la case et lui rend le focus), apres (une fonction rappelée après chaque enregistrement de la fiche et à sa
+   fermeture, pour que la page derrière se redessine sans attendre le temps réel : le tableur s'en sert, pour la date ouverte
+   depuis une de ses cases). */
 const TIROIR = (() => {
   const pile = [];
   const LARGEUR = 'min(780px, 94vw)';     // (la valeur du téléphone ; à l'ordinateur, la largeur est un nombre : defaut() ou la valeur gardée)
@@ -76,14 +81,14 @@ const TIROIR = (() => {
   const voulus = () => { const st = history.state; return st && Array.isArray(st.tiroirs) && st.sur === location.hash ? st.tiroirs.filter(x => typeof x === 'string') : []; };
   const noter = () => { if (typeof noterAdresse === 'function') noterAdresse(); if (typeof majTitreAdmin === 'function') majTitreAdmin(); };
   let ignorerPop = false;
-  function ouvrir(href, { viser: cible = '', depuis = null, histoire = true } = {}) {
+  function ouvrir(href, { viser: cible = '', depuis = null, apres = null, histoire = true } = {}) {
     const x = ficheDe(href); if (!x || !x.f.peut()) { location.hash = href; return null; }
     const { f, id } = x;
     if (typeof noterRecente === 'function') noterRecente(f.href(id));     // (la recherche rapide la proposera, champ vide)
     const haut = pile[pile.length - 1];
     if (haut && haut.genre === f.genre && haut.id === id) { if (cible) { visee = cible; viser(); } return haut; }
     if (!pile.length) document.documentElement.classList.add('tiroir-ouvert');
-    const t = { genre: f.genre, id, f, saleAvant: E.sale, depuis: depuis || document.activeElement, el: null };
+    const t = { genre: f.genre, id, f, saleAvant: E.sale, depuis: depuis || document.activeElement, apres, el: null };
     E.sale = false;
     const voile = document.createElement('div'); voile.className = 'tiroir-voile'; voile.dataset.tiroirFermer = '';
     const el = document.createElement('aside');
@@ -134,7 +139,10 @@ const TIROIR = (() => {
     const t = pile[pile.length - 1]; if (!t) return;
     if (id != null && Number.isFinite(+id)) t.id = +id;
     dessiner(t);
+    rappeler(t);
   }
+  // la page derrière veut savoir que la fiche a changé (apres) ; une erreur de sa part ne touche pas à la fiche
+  const rappeler = t => { try { if (typeof t.apres === 'function') t.apres(); } catch (e) { console.error(e); } };
   // fermer le tiroir du haut ; des modifications pas enregistrées : la question d'abord (une boîte de la charte), et le tiroir
   // se ferme si l'on quitte. histoire : l'historique suit (fermé à la main, on revient du pas que le tiroir avait fait)
   function fermer({ demander = true, histoire = true } = {}) {
@@ -152,7 +160,10 @@ const TIROIR = (() => {
     if (haut) { haut.el.style.removeProperty('--tiroir-recul'); haut.el.removeAttribute('aria-hidden'); haut.el.inert = false; recaler(); }
     else document.documentElement.classList.remove('tiroir-ouvert');
     marquerSale(E.sale);
-    const d = t.depuis; if (d && d.isConnected && typeof d.focus === 'function') d.focus({ preventScroll: true }); else haut?.el.querySelector('[data-tiroir-fermer]')?.focus({ preventScroll: true });
+    rappeler(t);
+    // (depuis est une fonction quand le nœud d'origine n'existera plus à la fermeture : elle rend le focus elle-même, ou rend un nœud)
+    const d = typeof t.depuis === 'function' ? (() => { try { return t.depuis(); } catch (e) { console.error(e); return null; } })() : t.depuis;
+    if (d && d.isConnected && typeof d.focus === 'function') d.focus({ preventScroll: true }); else if (typeof t.depuis !== 'function') haut?.el.querySelector('[data-tiroir-fermer]')?.focus({ preventScroll: true });
     if (histoire) {
       const st = history.state;
       // l'entrée présente est celle que ce tiroir avait ajoutée : on en revient (le précédent du navigateur, sans rien redessiner)

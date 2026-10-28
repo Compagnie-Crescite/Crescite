@@ -58,6 +58,15 @@ clignote comme avant (`vient-d-ailleurs`, `tab-ok`). Une saison entière (trois 
 douze premières lignes d'abord, le reste de tâche en tâche (`poserTranche`), pour qu'aucune tâche ne dépasse 200 ms à `CPU=4` ;
 un redessin qui ne change que des lignes les remplace aussi par tranches.
 
+Le tableur Complet, chaque champ atteignable, n'ajoute aucun mouvement non plus. Ctrl+Entrée et l'icône « fiche » ouvrent la date dans le
+tiroir, qui glisse comme tous les tiroirs (le doux, 220 ms) ; le champ de la colonne s'allume en `visee` (1,6 s, `ease-out`, le même
+effet que pour tout lien qui vise un champ) ; la grille qui se redessine derrière quand on enregistre ne rejoue rien (`dessinerLignes`),
+et l'icône « fiche » n'est qu'une case dessinée en masque CSS, sans bouton ni svg par ligne (une saison entière en pose six cents :
+un bouton et un svg par ligne alourdissaient chaque tranche et le changement de mode). Le menu « Jeu » redessine la grille d'un coup, comme le changement de mode. Le menu du
+garde-fou d'une date « période » se pose comme les autres menus (150 ms, `ad-arrive`). Sous « moins d'animations » ou `?anim=0`, le
+tiroir est posé d'un coup et le champ visé reçoit sa marque sans s'animer (`tableur-complet.mjs` le vérifie : aucune animation sur
+le champ visé).
+
 Trois choses s'y ajoutent, toutes à `transform` ou `opacity`. Une case qu'on écrit prend un petit anneau dans le coin, qui
 tourne tant que la base répond (`tab-tourne`, 0,9 s, linéaire, en boucle, `transform` seulement : un mouvement sans durée à suivre, la
 ligne « Attendre » du tableau) ; enregistrée, elle garde le cadre vert de `tab-ok` (1,4 s) et une coche paraît dans le coin,
@@ -115,7 +124,9 @@ captures vont dans `site/dist/shots-equipe/` et `site/dist/shots-admin/`. Un ban
 manque.
 
 `bash site/bancs-admin.sh` enchaîne aussi `prefs.mjs` (où chaque réglage est gardé : avec le compte ou sur
-l'appareil), `tableur.mjs` (le tableur des représentations, en Complet), `tableur-simple.mjs` (le tableur Simple : une ligne par
+l'appareil), `tableur.mjs` (le tableur des représentations, en Complet), `tableur-complet.mjs` (le tableur Complet, chaque
+champ atteignable : les jeux de colonnes, la diffusion et sa case d'export, Ctrl+Entrée et l'icône « fiche », le garde-fou
+d'une période, « Détacher », l'import), `tableur-simple.mjs` (le tableur Simple : une ligne par
 date, ses modes, la fenêtre des séances, la ligne vide, le rendu par ligne du temps réel, les états d'une case, la
 barre d'état, le petit calendrier, les lecteurs, le collage), `icones.mjs` (la bibliothèque d'icônes), `cadre.mjs` (la
 coque, le menu latéral, ses raccourcis et ses badges), `champs.mjs` (la fiche d'une date : le schéma de ses champs, la

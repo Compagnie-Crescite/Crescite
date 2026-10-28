@@ -302,7 +302,7 @@ html.bascule *, html.bascule *::before, html.bascule *::after { transition: none
   /* le tableur imprimé : toutes ses lignes, sans la hauteur ni le défilement du cadre (les poignées des en-têtes et du bas sont déjà masquées) */
   #vue .tab-cadre { max-height: none !important; height: auto !important; overflow: visible !important; }
   /* le mode Simple : le segment des modes est dans la tête (masquée) ; l'état de la ligne ne garde que le compte « n dates · m séances » */
-  #vue .tab-modes, #vue .tab-etat, #vue .tab-suppr { display: none !important; }
+  #vue .tab-modes, #vue .tab-etat, #vue .tab-suppr, #vue .tableur .c-fiche { display: none !important; }
   #vue .tab-ligne-etat { position: static !important; }
   #vue .tab-jj::before { background: #000 !important; height: 2px; }
   #vue .tableur tr.tab-neuve { display: none !important; }

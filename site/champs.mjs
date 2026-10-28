@@ -60,9 +60,23 @@ function comparer(colonnes, champs) {
     !champs.some(c => ['etape_crm', 'date_dernier_contact', 'date_prochaine_relance', 'notes_diffusion'].includes(c.col)) && champs.some(c => c.k === 'montant' && c.table === 'dates_suivi' && c.col === 'montant_cession' && c.confidentiel && c.jeux.includes('diffusion') && c.niveau === 'diffusion'));
   ok('un identifiant par champ ; chaque champ écrivable a son geste d’écriture ; les dérivés sont en lecture avec leur raison',
     new Set(champs.map(c => c.k)).size === champs.length && champs.filter(c => c.niveau !== 'lecture' && c.niveau !== 'lieu').every(c => c.ecrit) && champs.filter(c => c.niveau === 'lecture' && c.col && c.derive).length >= 4, '');
-  ok('les 22 colonnes du tableur sont portées dans le schéma (colonne propre)', champs.filter(c => c.colonne).length === 22, String(champs.filter(c => c.colonne).length));
+  ok('les 34 colonnes du tableur sont portées dans le schéma (colonne propre) : les 22 d’avant et les douze du lot 12 (chaque champ atteignable)', champs.filter(c => c.colonne).length === 34, String(champs.filter(c => c.colonne).length));
   ok('le schéma porte les quatre envois entiers : séances, équipe, suivi, chiffres', ['representations', 'equipe', 'suivi', 'chiffres'].every(k => champs.some(c => c.k === k && c.ecrit)));
   ok('1 · aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+
+// ================================================================================ 1 bis · chaque champ-colonne du schéma a son en-tête en « Jeu : Tout » (le lot 12)
+{
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { hash: '?mode=complet#/representations/tableur', largeur: 1600, hauteur: 1000 });
+  await page.waitForSelector('#tab-corps tr[data-l]', { timeout: 15000 });
+  await page.selectOption('#tab-jeu', 'tout');
+  await attendre(page, () => document.querySelectorAll('#tab-tete th').length > 30);
+  const { attendues, presentes } = await page.evaluate(() => ({ attendues: SCHEMA_DATE.filter(c => c.colonne && (!c.si || c.si())).map(c => c.k), presentes: [...document.querySelectorAll('#tab-tete th')].map(t => t.dataset.k) }));
+  const manquent = attendues.filter(k => !presentes.includes(k));
+  ok('1 bis · en « Jeu : Tout », chaque champ du schéma qui porte une colonne a son en-tête dans le tableur (' + attendues.length + ')', attendues.length >= 30 && manquent.length === 0, `manquent : ${manquent.join(', ')}`);
+  ok('1 bis · … et chaque en-tête a un libellé et une infobulle', await page.$$eval('#tab-tete th', xs => xs.every(th => th.textContent.trim() !== '' && th.title !== '')));
+  ok('1 bis · aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();
 }
 

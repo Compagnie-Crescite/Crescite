@@ -11,7 +11,16 @@
      bande, cle } : jamais de x.r, donc jamais repDe. Aucune colonne à masquer, déplacer ou replier : seules les largeurs se retiennent.
      Le jour s'écrit aussi dans un petit calendrier (.tab-cal, poserCal : mois ‹ ›, lundi en premier, aujourd'hui cerclé, ← → ↑ ↓ et
      Page ↑ ↓ depuis le champ, qui garde le focus ; au doigt, le champ de date du téléphone), ou se tape sous toutes les formes que lireJour lit.
-   - Complet : une ligne par séance (jour et heure) ; les séances d'une même date se suivent, en bande.
+   - Complet : une ligne par séance (jour et heure) ; les séances d'une même date se suivent, en bande. Chaque champ d'une date y est atteignable :
+     douze colonnes de plus que la disposition d'origine (la ligne du site, les précisions du site, la billetterie de la séance, le nombre de
+     représentations, la précision, la fin de période, la saison, la feuille de route, « Modifié le… par… », la source de la date, celle des
+     chiffres, l'étape de la piste : horsOrigine dans le schéma), que le menu « Jeu » (JEUX : Site, Tournée, Suivi, Bilan, Diffusion, Tout) montre
+     d'un coup avec toutes celles de son sujet, vides comprises. Une colonne de la diffusion (le montant de cession, l'étape de la piste :
+     `confidentiel`) a un cadenas et une bande à l'en-tête, et n'est exportée qu'avec la case « Inclure la diffusion (confidentiel) » du menu
+     Exporter. Une case que le schéma dit figée (`fige`) est grise et dit pourquoi en infobulle. L'icône « fiche » (FICHE, une colonne de type
+     'action' au bout de la ligne) et Ctrl+Entrée ouvrent la date dans le tiroir sur le champ de la colonne (ouvrirFiche : TIROIR.ouvrir avec
+     viser, depuis et apres). Écrire dans une case de séance d'une date « période » (sans séance) demande d'abord (gardePeriode, un menu des
+     gestes) ; le collage et Suppr n'y écrivent jamais ; « Détacher cette séance dans sa propre date » est au menu d'une ligne (detacher).
    Le mode se garde avec le compte (la préférence tableur.mode, écrite au clic) et dans l'adresse (?mode=complet, sur le tableur
    seulement : l'entrée propre de LISTES_ADRESSE) ; sans ?mode=, c'est la préférence qui décide ; une adresse qui le dit n'écrit rien
    dans le compte. Changer de mode redessine la grille d'un coup, sans transition.
@@ -79,7 +88,11 @@
      TABLEUR.lireHeure(t)     une heure tapée (« 20h30 », « 20 h », « 20:30:00 », « 2030 ») → 'HH:MM', '' si vide, ou undefined
      TABLEUR.lireTsv(texte)   un texte de tableur (tabulations, guillemets d'Excel) → des lignes de cases
      TABLEUR.xlsx({ entetes, lignes })   un classeur .xlsx (un Blob), écrit ici sans bibliothèque
-     TABLEUR.lireImport(texte)           les lignes collées → { lignes (chacune avec son aperçu et ses erreurs), cles, avecTete }
+     TABLEUR.tableau({ confidentiel })   le tableau exporté : { entetes, figees, exclues, lignes } ; sans confidentiel (faux d'office), les colonnes de la
+                              diffusion n'en font pas partie (exclues les nomme) ; jamais l'icône « fiche »
+     TABLEUR.exporter(genre, { confidentiel })   'xlsx', 'csv' ou 'sheets' (la case du menu Exporter donne confidentiel)
+     TABLEUR.lireImport(texte)           les lignes collées → { lignes (chacune avec son aperçu, ses erreurs et ce qu'elle a lu : lus), cles, avecTete,
+                              supposees, laissees, avertir } ; tous les en-têtes du schéma (`entetes`) sont reconnus
      TABLEUR.lecteurs         { choix, spectacle, lieu, personnes } : ce qui lit un texte tapé (un choix par son libellé, un
                               spectacle, un lieu, des personnes), pour le schéma de la date (SCHEMA_DATE, script principal)
      TABLEUR.colonnes         les colonnes à la carte, que menus.js appelle (le menu d'un en-tête) et que les raccourcis atteignent :
@@ -87,7 +100,8 @@
                               ajuster(k) (au contenu, et garde la largeur ; sans effet au doigt et au téléphone), deplacer(k, ±1) (-1 : avancer, 1 : reculer), origine()
                               (oublie tableur.colonnes ; rend ce qu'elle retenait), retablir(avant) (le remet : « Annuler », et celui de
                               « Disposition d'origine », fenetres.js), ouvrirChoix() (la fenêtre « Colonnes… »),
-                              actions(k) (les actions du menu d'un en-tête, pour GESTES.menu)
+                              actions(k) (les actions du menu d'un en-tête, pour GESTES.menu), jeu(k) (le menu « Jeu » : une clé de JEUX, ou '')
+     TABLEUR.jeux             [{ k, l }] : Site, Tournée, Suivi, Bilan, Diffusion, Tout
      TABLEUR.clesFenetres     les clés fenetres.* que le tableur règle (tableur-h, tab-pop-lieu, tab-pop-distribution,
                               tab-ed-notes) : de quoi « Disposition d'origine » (FENETRES) les oublie avec les siennes
    (lireTsv, xlsx et lireImport ne sont lues par aucun autre module : les bancs les atteignent ; lireJour et lireHeure, le
@@ -103,7 +117,7 @@
      d'une date) ; ecrireDate, effacerDate (l'écriture, par le chemin de la fiche) ;
      AGENDA.heureTexte, AGENDA.MOIS (admin/agenda.js).
    D'admin/equipe.js : personne, nomDe, distributionDe, fonctionDistribution, equipeDate, equipeDeLaDate, ecartsDate,
-     enregistrerEquipeDate, listeEt.
+     enregistrerEquipeDate, listeEt. D'admin/tiroir.js (sous typeof) : TIROIR (peut, ouvrir : viser, depuis, apres) ; du script principal : confirmerAction.
    D'admin/prefs.js : PREFS (lire, ecrire, normaliser, surChangement : tableur.mode, tableur.colonnes, menu.replie, fenetres.tableur-h) ; d'admin/icones.js :
      ICONES.svg ; du registre des raccourcis (script principal) : RACCOURCIS.declarer.
    Sous typeof (le module marche sans eux) : GESTES (gestes.js : garder et saisie, pour la fenêtre d'import), FENETRES
@@ -200,10 +214,12 @@ const TABLEUR = (() => {
   const equipeIds = d => (E.equipeInstallee ? equipeDeLaDate(d).map(x => x.personne_id) : []);
   const tourneeIds = spId => equipeDate(spId, []).map(x => x.personne_id);
   // les écarts qui donnent cette équipe-là (une liste d'identifiants) : rien d'explicite pour qui part par défaut
-  function ecartsPour(d, ids, spId = d.spectacle_id) {
+  // fonctions : { personne_id: fonction sur la date } pour qui n'a pas encore d'écart sur celle-ci (un renfort recomposé, une distribution étendue
+  // à d'autres dates, une séance détachée dans sa propre date : sans elle, « remplace Lauren » se perdrait) ; notes : de même, la note de chacune
+  function ecartsPour(d, ids, spId = d.spectacle_id, { fonctions = {}, notes = {} } = {}) {
     const voulus = new Set(ids), actuels = ecartsDate(d.id), base = tourneeIds(spId), out = [];
-    base.forEach(p => { if (!voulus.has(p)) out.push({ personne_id: p, present: false, fonction: '', note: null }); else { const e = actuels.find(x => x.personne_id === p && x.present); if (e) out.push(e); } });
-    voulus.forEach(p => { if (!base.includes(p)) out.push(actuels.find(x => x.personne_id === p && x.present) || { personne_id: p, present: true, fonction: '', note: null }); });
+    base.forEach(p => { if (!voulus.has(p)) out.push({ personne_id: p, present: false, fonction: '', note: null }); else { const e = actuels.find(x => x.personne_id === p && x.present); if (e) out.push(e); else if (fonctions[p] || notes[p]) out.push({ personne_id: p, present: true, fonction: fonctions[p] || '', note: notes[p] || null }); } });
+    voulus.forEach(p => { if (!base.includes(p)) out.push(actuels.find(x => x.personne_id === p && x.present) || { personne_id: p, present: true, fonction: fonctions[p] || '', note: notes[p] || null }); });
     return out;
   }
   const prenoms = ids => { const ps = ids.map(personne).filter(Boolean); return ps.map(p => (ps.filter(q => norm(q.prenom) === norm(p.prenom)).length > 1 && p.nom ? `${p.prenom || ''} ${p.nom[0]}.` : p.prenom || nomDe(p)).trim()); };
@@ -216,16 +232,33 @@ const TABLEUR = (() => {
   // 'nombre', qui est un texte à nombre:true. l : l'en-tête (le `court` du schéma, sinon son libellé). val (pour écrire,
   // annuler, comparer), texte (ce qui s'affiche et se copie), html, copie, exp (la valeur exportée), lire (un texte tapé ou
   // collé → une valeur ; undefined : pas reconnu), ecrire (la valeur dans le formulaire de la date, dateVersForm), vider,
-  // fige, choix, si : tels que le schéma les donne. largeur : la largeur d'origine, en pixels, la seule source du CSS
-  // (styleColonnes) et de la préférence tableur.colonnes ; icone : un nom de la bibliothèque ICONES ; rang : sa place d'origine.
+  // fige, choix, si : tels que le schéma les donne (fige : x => 'la raison' | '', l'infobulle de la case grise). largeur : la largeur d'origine, en
+  // pixels, la seule source du CSS (styleColonnes) et de la préférence tableur.colonnes ; icone : un nom de la bibliothèque ICONES ; rang : sa
+  // place d'origine ; horsOrigine : hors de la disposition d'origine (elle vient avec un jeu, ou par « Colonnes… ») ; jeux : les jeux où elle
+  // entre ; confidentiel : une colonne de la diffusion (confidentielle, du jeu « diffusion » : le montant de cession, l'étape de la piste) — un
+  // cadenas à l'en-tête, et jamais dans l'export sans la case « Inclure la diffusion (confidentiel) » ; entetes : l'en-tête qu'elle reconnaît à
+  // l'import ; viser : où mène Ctrl+Entrée dans la fiche (SCHEMA_DATE.selecteur) ; pourquoi : pourquoi une lecture ne s'écrit pas ; lien : l'adresse
+  // où une lecture mène (Entrée) ; erreurLire : pourquoi lire a refusé ce qu'on a tapé.
   const NIVEAUX_TABLEUR = { seance: 'seance', lieu: 'lieu' };
   function colonneDe(champ) {
     const co = champ.colonne || {}, nombre = champ.type === 'nombre';
     return { k: champ.k, l: champ.court || champ.l, niveau: NIVEAUX_TABLEUR[champ.niveau] || 'date', type: nombre ? 'texte' : champ.type, nombre, toujours: !!co.toujours,
       largeur: co.largeur || 120, icone: co.icone || null, rang: co.rang ?? 1e3, si: champ.si, choix: champ.choix, fige: champ.fige,
-      val: champ.val, texte: champ.texte, html: champ.html, copie: champ.copie || champ.texte, exp: champ.exp, lire: champ.lire, vider: champ.vider, ecrire: champ.ecrire };
+      horsOrigine: !!co.horsOrigine, jeux: champ.jeux || [], confidentiel: !!champ.confidentiel && (champ.jeux || []).includes('diffusion'), entetes: champ.entetes, pourquoi: champ.pourquoi, lien: champ.lien, erreurLire: champ.erreurLire,
+      val: champ.val, texte: champ.texte, html: champ.html, copie: champ.copie || champ.texte, exp: champ.exp, lire: champ.lire, vider: champ.vider, ecrire: champ.ecrire,
+      viser: x => SCHEMA_DATE.selecteur(champ.k, x) };
   }
-  const COLONNES = SCHEMA_DATE.filter(c => c.colonne).map(colonneDe).sort((a, b) => a.rang - b.rang);
+  // la dernière colonne de chaque ligne du Complet : l'icône « fiche » (type 'action'), qui ouvre la date dans le tiroir : sa case porte la classe
+  // .tab-fiche, aria-keyshortcuts et une infobulle (htmlLigne). Ni écrite, ni copiée, ni exportée, ni masquée, ni déplacée (« Colonnes… » ne la
+  // liste pas) ; cachée au téléphone (le CSS).
+  const FICHE = { k: 'fiche', l: 'Fiche', niveau: 'date', type: 'action', nombre: false, toujours: true, largeur: 52, icone: 'fiche', rang: 9000, horsOrigine: false, jeux: [], confidentiel: false,
+    val: () => '', texte: () => '', copie: () => '', html: x => (x.neuve ? '' : `Ouvrir la date du ${esc(jourCourt(x.d.debut))} (${esc(spectacle(x.d.spectacle_id)?.titre || '')}) dans le tiroir`) };   // (la case elle-même est le bouton, sans nœud de plus : une saison entière pose six cents lignes ; le libellé est le texte de la case, caché par le CSS comme un .sr, l'icône est dessinée par le CSS)
+  const COLONNES = [...SCHEMA_DATE.filter(c => c.colonne).map(colonneDe).sort((a, b) => a.rang - b.rang), FICHE];
+  // les jeux de colonnes (le menu « Jeu » de la tête, en Complet) : tirés du schéma (le `jeux` de chaque champ). Un jeu montre toutes ses colonnes,
+  // vides comprises, et masque les autres ; « Tout » les montre toutes. Les colonnes qui sont toujours là (le jour, le spectacle) sont de chaque jeu.
+  const JEUX = [['site', 'Site'], ['tournee', 'Tournée'], ['suivi', 'Suivi'], ['bilan', 'Bilan'], ['diffusion', 'Diffusion'], ['tout', 'Tout']].map(([k, l]) => ({ k, l }));
+  const colsDuJeu = k => new Set(COLONNES.filter(c => c.type !== 'action' && (!c.si || c.si()) && (k === 'tout' || c.toujours || c.jeux.includes(k))).map(c => c.k));
+  const reglables = COLONNES.filter(c => c.type !== 'action').map(c => c.k);
 
   // ———— les colonnes du mode Simple (une ligne par date) : les six de MODES.simple.colonnes. Quatre ne sont pas celles du schéma tel
   // quel : le jour (de niveau « date » : il décale la date, ses séances le suivent), les séances (en pastilles d'heures ; une fenêtre
@@ -302,10 +335,12 @@ const TABLEUR = (() => {
 
   // ———— la mémoire des colonnes : la préférence tableur.colonnes
   // Par mode (le Simple a six colonnes fixes, le jour figé : seules ses largeurs se retiennent) :
-  //   { complet: { ordre: [k…], masquees: [k…], figees: n, largeurs: { k: px }, vides: bool }, simple: { largeurs } }
+  //   { complet: { ordre: [k…], masquees: [k…], figees: n, largeurs: { k: px }, vides: bool, jeu: k | null, montrees: [k…] }, simple: { largeurs } }
   // ordre : l'ordre voulu (vide : celui d'origine) ; masquees : les colonnes cachées par choix ; figees : le nombre de colonnes
   // figées à gauche, comptées dans l'ordre (une colonne vide repliée compte : elle reste à sa place quand « Colonnes vides » la
-  // montre) ; largeurs : celles qu'on a tirées ; vides : « Colonnes vides ». normaliserColonnes ramène ce qu'on lit à cette forme
+  // montre) ; largeurs : celles qu'on a tirées ; vides : « Colonnes vides » ; jeu : le jeu de colonnes choisi (une clé de JEUX, sinon
+  // null : la disposition d'origine) — le choix d'un jeu écrit aussi masquees ; montrees : les colonnes hors de la disposition d'origine
+  // (horsOrigine) qu'on a montrées une à une, sans jeu. normaliserColonnes ramène ce qu'on lit à cette forme
   // (clés inconnues ignorées, colonnes dont si() est faux tolérées, largeurs de 48 à 640 px, l'ancienne forme plate lue comme le
   // mode complet) ; la lecture s'en sert à chaque fois (PREFS.normaliser).
   // Les deux modes : le Simple, une ligne par date (parDate), avec ses six colonnes et le jour seul figé ; le Complet, une ligne par séance.
@@ -318,11 +353,12 @@ const TABLEUR = (() => {
   const modePrefere = () => (typeof PREFS !== 'undefined' && modeValide(PREFS.lire('tableur.mode', null))) || 'simple';
   const entierOuNul = v => (typeof v === 'number' && Number.isFinite(v) ? Math.round(v) : null);
   function normaliserMode(mode, brut) {
-    const cles = COLONNES.map(c => c.k), b = brut && typeof brut === 'object' && !Array.isArray(brut) ? brut : {}, largeurs = {};
+    const cles = reglables, b = brut && typeof brut === 'object' && !Array.isArray(brut) ? brut : {}, largeurs = {};
     if (b.largeurs && typeof b.largeurs === 'object') Object.entries(b.largeurs).forEach(([k, v]) => { const n = entierOuNul(v); if (n !== null && (cles.includes(k) || (mode === 'simple' && k === 'seances'))) largeurs[k] = Math.max(LARGEUR_MIN, Math.min(LARGEUR_MAX, n)); });
     if (mode === 'simple') return { largeurs };
     const liste = xs => (Array.isArray(xs) ? [...new Set(xs.filter(k => cles.includes(k)))] : []), f = entierOuNul(b.figees);
-    return { ordre: liste(b.ordre), masquees: liste(b.masquees).filter(k => k !== 'jour'), figees: f === null ? FIGEES_ORIGINE : Math.max(0, Math.min(cles.length, f)), largeurs, vides: b.vides === true };
+    return { ordre: liste(b.ordre), masquees: liste(b.masquees).filter(k => k !== 'jour'), figees: f === null ? FIGEES_ORIGINE : Math.max(0, Math.min(cles.length, f)), largeurs, vides: b.vides === true,
+      jeu: JEUX.some(j => j.k === b.jeu) ? b.jeu : null, montrees: liste(b.montrees).filter(k => COLONNES.find(c => c.k === k)?.horsOrigine) };
   }
   function normaliserColonnes(brut) {
     if (!brut || typeof brut !== 'object' || Array.isArray(brut)) return null;
@@ -333,7 +369,7 @@ const TABLEUR = (() => {
   if (typeof PREFS !== 'undefined') PREFS.normaliser('tableur.colonnes', normaliserColonnes);
   const toutesColonnes = () => (typeof PREFS !== 'undefined' && PREFS.lire('tableur.colonnes', null)) || normaliserColonnes({});
   // (le Simple n'a que ses largeurs en mémoire : le reste, d'office, est fixe)
-  const REGLAGES_SIMPLE = { ordre: [], masquees: [], vides: false, figees: MODES.simple.figees };
+  const REGLAGES_SIMPLE = { ordre: [], masquees: [], vides: false, figees: MODES.simple.figees, jeu: null, montrees: [] };
   const reglages = () => (modeSimple() ? { ...REGLAGES_SIMPLE, ...toutesColonnes().simple } : toutesColonnes()[T.mode]);
   // une modification du mode courant, écrite aussitôt (un clic) ; rend ce qu'il y avait, pour « Annuler »
   function ecrireReglages(modif) {
@@ -370,8 +406,15 @@ const TABLEUR = (() => {
   // les colonnes possibles (celles dont la base a le script qu'il faut), dans l'ordre voulu ; puis les montrées : ni masquées, ni vides
   // sur toute la vue (sauf « Colonnes vides », et celles qui sont toujours là). Le Simple a les siennes, toujours toutes montrées : on
   // ne teste pas leurs textes (une colonne repliée n'y a pas de sens, et c'était un appel par case)
-  const possibles = () => (modeSimple() ? colonnesSimple() : ordonner(COLONNES.filter(c => !c.si || c.si()), reglages().ordre));
-  const colonnes = (xs, ps = possibles(), rg = reglages()) => (modeSimple() ? ps : ps.filter(c => !rg.masquees.includes(c.k) && (rg.vides || c.toujours || xs.some(x => c.texte(x) !== ''))));
+  // (l'icône « fiche » ferme toujours la ligne : ordonner la laisserait suivre sa voisine d'origine)
+  const possibles = () => { if (modeSimple()) return colonnesSimple(); const cs = ordonner(COLONNES.filter(c => !c.si || c.si()), reglages().ordre); return [...cs.filter(c => c.type !== 'action'), ...cs.filter(c => c.type === 'action')]; };
+  // une colonne hors de la disposition d'origine ne se montre que par un jeu, ou parce qu'on l'a montrée ; masquée par choix, elle ne se montre pas
+  const admise = (c, rg) => c.type === 'action' || (!rg.masquees.includes(c.k) && (!c.horsOrigine || !!rg.jeu || rg.montrees.includes(c.k)));
+  const colonnes = (xs, ps = possibles(), rg = reglages()) => {
+    if (modeSimple()) return ps;
+    const jeu = rg.jeu ? colsDuJeu(rg.jeu) : null;
+    return ps.filter(c => admise(c, rg) && (c.type === 'action' || rg.vides || c.toujours || (jeu && jeu.has(c.k)) || xs.some(x => c.texte(x) !== '')));
+  };
   // les colonnes figées : les n premières des possibles (une colonne vide repliée, ou masquée, garde sa place dans le compte)
   const figeesDe = (ps = possibles(), rg = reglages()) => new Set(ps.slice(0, rg.figees).map(c => c.k));
 
@@ -380,8 +423,8 @@ const TABLEUR = (() => {
   const NOMS_MODES = [['simple', 'Simple', 'liste', 'une ligne par date'], ['complet', 'Complet', 'grille', 'une ligne par séance']];
   const libelleAjout = () => (modeSimple() ? '＋ Date' : '＋ Séance');
   const texteAide = () => (modeSimple()
-    ? 'Flèches pour aller de case en case ; Entrée (ou taper) pour écrire, Échap pour renoncer ; la case des séances s’ouvre en fenêtre (ajouter, retirer, changer une heure) ; Maj+flèches pour choisir plusieurs cases ; Ctrl+C, Ctrl+V comme dans un tableur ; Suppr pour vider une case, Ctrl+Suppr pour supprimer la date ; Ctrl+Z pour annuler. Le jour s’écrit dans un petit calendrier (← → ↑ ↓, Page ↑ Page ↓). La ligne vide du bas reçoit une nouvelle date : le jour, le spectacle, le lieu.'
-    : 'Flèches pour aller de case en case ; Entrée (ou taper) pour écrire, Échap pour renoncer ; Maj+flèches pour choisir plusieurs cases ; Ctrl+C, Ctrl+V comme dans un tableur ; Suppr pour vider une case, Ctrl+Suppr pour supprimer la séance ; Ctrl+Z pour annuler. Une case grisée répète la date : elle vaut pour toutes ses séances.');
+    ? 'Flèches pour aller de case en case ; Entrée (ou taper) pour écrire, Échap pour renoncer ; la case des séances s’ouvre en fenêtre (ajouter, retirer, changer une heure) ; Maj+flèches pour choisir plusieurs cases ; Ctrl+C, Ctrl+V comme dans un tableur ; Suppr pour vider une case, Ctrl+Suppr pour supprimer la date ; Ctrl+Z pour annuler ; Ctrl+Entrée ouvre la date dans le tiroir. Le jour s’écrit dans un petit calendrier (← → ↑ ↓, Page ↑ Page ↓). La ligne vide du bas reçoit une nouvelle date : le jour, le spectacle, le lieu.'
+    : 'Flèches pour aller de case en case ; Entrée (ou taper) pour écrire, Échap pour renoncer ; Maj+flèches pour choisir plusieurs cases ; Ctrl+C, Ctrl+V comme dans un tableur ; Suppr pour vider une case, Ctrl+Suppr pour supprimer la séance ; Ctrl+Z pour annuler ; Ctrl+Entrée (ou l’icône en bout de ligne) ouvre la date dans le tiroir, sur le champ de la case. Une case grisée répète la date : elle vaut pour toutes ses séances ; au survol, une case figée dit pourquoi.');
   const nomGrille = () => `Représentations : ${NOMS_MODES.find(m => m[0] === T.mode)[3]}`;
   const segmentModes = () => `<span class="seg tab-modes" role="group" aria-label="Mode du tableur">${NOMS_MODES.map(([k, l, ic, d]) => `<button type="button" data-mode="${k}" aria-pressed="${k === T.mode}" title="${esc(`${l} : ${d}`)}">${icone(ic)}<span>${l}</span></button>`).join('')}</span>`;
   function vue(f = session.dates) {
@@ -399,8 +442,9 @@ const TABLEUR = (() => {
       <span class="tab-actions"><button type="button" class="btn principal" id="tab-plus" aria-expanded="false" aria-controls="tab-ajout">${libelleAjout()}</button>
       <button type="button" class="btn" id="tab-importer">Importer</button>
       <span class="tab-menu"><button type="button" class="btn" id="tab-exporter" aria-haspopup="true" aria-expanded="false" aria-controls="tab-export">Exporter</button>
-        <span class="tab-export" id="tab-export" role="group" aria-label="Exporter" hidden><button type="button" class="btn" data-export="xlsx">Excel (.xlsx)</button><button type="button" class="btn" data-export="sheets">Google Sheets</button><button type="button" class="btn" data-export="csv">CSV</button>
+        <span class="tab-export" id="tab-export" role="group" aria-label="Exporter" hidden>${E.ideale ? `<label class="case tab-export-conf"${modeSimple() ? ' hidden' : ''} title="Le montant de cession et l’étape de la piste ne sortent du tableur que si vous cochez cette case (elle se décoche à chaque fois)"><input type="checkbox" id="tab-export-conf"> Inclure la diffusion (confidentiel)</label>` : ''}<button type="button" class="btn" data-export="xlsx">Excel (.xlsx)</button><button type="button" class="btn" data-export="sheets">Google Sheets</button><button type="button" class="btn" data-export="csv">CSV</button>
         <span class="aide">Google Sheets : le tableau est copié, une feuille vierge s’ouvre (sheets.new) ; collez-le (Ctrl+V). Ou importez-y le fichier Excel.</span></span></span>
+      <label class="tab-jeu"${modeSimple() ? ' hidden' : ''} title="Un jeu de colonnes : toutes celles d’un sujet, vides comprises"><span>Jeu</span><select id="tab-jeu" aria-label="Jeu de colonnes"><option value="">Disposition d’origine</option>${JEUX.map(j => `<option value="${j.k}">${j.l}</option>`).join('')}</select></label>
       <button type="button" class="btn" id="tab-colonnes" aria-haspopup="dialog" aria-expanded="false"${modeSimple() ? ' hidden' : ''}>Colonnes…</button></span></div>
     ${filtresDates(f, { vue: 'tableur', aDroite: `<label class="case tab-vides"${modeSimple() ? ' hidden' : ''}><input type="checkbox" id="tab-vides"${reglages().vides ? ' checked' : ''}> Colonnes vides</label>` })}
     <form class="bloc tab-ajout" id="tab-ajout" hidden></form>
@@ -421,6 +465,8 @@ const TABLEUR = (() => {
     if (cible != null && !lignes().some(x => x.d.id === cible)) montrerAjouts([cible]);   // la ligne visée ne se cache pas derrière un filtre
     dessiner();
     brancher();
+    poserMenus(); poserIconeFiche();
+    majJeu();
     if (cible != null) viserDate(cible);
   }
   // « Voir dans le tableur » : la ligne de la date devient la case active (elle vient en vue) et se cerne un instant : visee sur
@@ -444,11 +490,14 @@ const TABLEUR = (() => {
     $('#tab').setAttribute('aria-label', nomGrille());
     $('#tab-plus').textContent = libelleAjout();
     $('#tab-colonnes').hidden = simple;
+    const jeu = $('#tab-jeu'); if (jeu) jeu.closest('label').hidden = simple;
+    const conf = $('#tab-export-conf'); if (conf) conf.closest('label').hidden = simple;
     const vides = $('#tab-vides'); if (vides) { vides.closest('label').hidden = simple; vides.checked = reglages().vides; }
     $('#tab-aide').textContent = texteAide();
     const form = $('#tab-ajout'); if (form && !form.hidden) { form.hidden = true; $('#tab-plus').setAttribute('aria-expanded', 'false'); }
     poserLargeurs();
     const tete = $('#tab-tete'); if (tete) tete.dataset.cles = '';
+    majJeu();   // (le menu « Jeu » dit le jeu retenu dès qu'on revient en Complet, il n'est posé qu'à l'ouverture sinon)
   }
   function changerMode(mode) {
     if (!modeValide(mode) || mode === T.mode || !$('#tab-corps')) return;
@@ -473,8 +522,8 @@ const TABLEUR = (() => {
   // lignes ou des colonnes n'est plus la même (une date change de place ou sort du filtre, une séance s'ajoute en Complet, une colonne vide
   // se déplie), elle se replie sur dessiner complet.
   const cleCase = (x, c) => `${x.cle}|${c.k}`;
-  const titreCol = c => (modeSimple() ? (c.k === 'seances' ? 'Les séances de la date' : c.niveau === 'lieu' ? 'Vient de la fiche du lieu' : 'Propre à la date')
-    : c.niveau === 'date' ? 'Vaut pour toutes les séances de la date' : c.niveau === 'lieu' ? 'Vient de la fiche du lieu' : 'Propre à chaque séance');
+  const titreCol = c => `${c.type === 'action' ? 'Ouvrir la date dans le tiroir' : modeSimple() ? (c.k === 'seances' ? 'Les séances de la date' : c.niveau === 'lieu' ? 'Vient de la fiche du lieu' : 'Propre à la date')
+    : c.niveau === 'date' ? 'Vaut pour toutes les séances de la date' : c.niveau === 'lieu' ? 'Vient de la fiche du lieu' : 'Propre à chaque séance'}${c.confidentiel ? ' · confidentiel : jamais exporté sans le demander' : ''}`;
   const texteTri = () => `Jour <span aria-hidden="true">${T.v.tri === 'desc' ? '↓' : '↑'}</span><span class="sr">, trier ${T.v.tri === 'desc' ? 'du plus ancien' : 'du plus récent'} d’abord</span>`;
   const derniereFigee = () => [...T.cols].reverse().find(c => T.figees.has(c.k))?.k;
   // une ligne de plus que les dates, au bas du Simple : la date qu'on y écrit n'existe pas encore (T.brouillon), elle se crée quand son jour et
@@ -490,17 +539,17 @@ const TABLEUR = (() => {
     const sp = spectacle(x.d.spectacle_id), style = modeSimple() && sp ? ` style="--c:${esc(couleurSp(sp))}"` : '';
     return `<tr role="row" aria-rowindex="${i + 2}"${x.neuve ? ' data-neuve' : ` data-l="${i}"`} class="b${x.bande}${x.premier ? ' premier' : ''}${x.neuve ? ' tab-neuve' : ''}${x.d.statut === 'annulee' || x.r?.annulee ? ' barree' : ''}"${style}>${T.cols.map((c, j) => {
       const neuf = x.neuve && !CASES_NEUVES.includes(c.k), t = neuf ? '' : c.texte(x), cle = cleCase(x, c); T.textes.set(cle, t);
-      const lecture = neuf || c.type === 'lecture' || c.fige?.(x);
+      const raison = neuf ? '' : c.fige?.(x) || '', lecture = neuf || c.type === 'lecture' || !!raison, periode = !neuf && !x.r && c.niveau === 'seance';   // (la classe .periode marque ces cases pour le banc ; le garde-fou, lui, passe par T.garde)
       const vide = x.neuve && c.k === 'jour' && !t ? ' data-vide="Nouvelle date…" aria-label="Nouvelle date : le jour"' : '';
       // (une case que la base a refusée garde ce qu'on y avait écrit, cerclée de rouge, le message en infobulle ; une case ignorée d'un collage est en ambre)
-      const erreur = T.erreurs.get(cle), ignoree = T.ignorees.get(cle), titre = erreur ? `Pas enregistré : ${erreur}` : ignoree ? `Ignorée : ${ignoree.raison} (« ${ignoree.brut} »)` : t.length > 16 ? t : '';
-      return `<td role="gridcell" aria-colindex="${j + 1}" data-c="${j}" class="c-${c.k}${T.figees.has(c.k) ? ` figee${c.k === derniere ? ' derniere' : ''}` : ''}${c.niveau !== 'seance' && !x.premier ? ' repete' : ''}${neuf ? ' neuve-vide' : ''}${erreur ? ' erreur' : ''}${ignoree ? ' ignoree' : ''}" tabindex="-1"${lecture ? ' aria-readonly="true"' : ''}${erreur ? ' aria-invalid="true"' : ''}${titre ? ` title="${esc(titre)}"` : ''}${vide}>${neuf ? '' : erreur ? esc(T.refus.get(cle) ?? t) : c.html ? c.html(x) : esc(t)}</td>`;
+      const erreur = T.erreurs.get(cle), ignoree = T.ignorees.get(cle), titre = erreur ? `Pas enregistré : ${erreur}` : ignoree ? `Ignorée : ${ignoree.raison} (« ${ignoree.brut} »)` : c.type === 'action' ? (neuf ? '' : 'Ouvrir la date dans le tiroir (Ctrl+Entrée)') : raison || (t.length > 16 ? t : '');
+      return `<td role="gridcell" aria-colindex="${j + 1}" data-c="${j}" class="c-${c.k}${T.figees.has(c.k) ? ` figee${c.k === derniere ? ' derniere' : ''}` : ''}${c.niveau !== 'seance' && !x.premier ? ' repete' : ''}${neuf ? ' neuve-vide' : ''}${periode ? ' periode' : ''}${c.type === 'action' ? ' tab-fiche' : ''}${erreur ? ' erreur' : ''}${ignoree ? ' ignoree' : ''}" tabindex="-1"${c.type === 'action' ? ' aria-keyshortcuts="Control+Enter"' : lecture ? ' aria-readonly="true"' : ''}${erreur ? ' aria-invalid="true"' : ''}${titre ? ` title="${esc(titre)}"` : ''}${vide}>${neuf ? '' : erreur ? esc(T.refus.get(cle) ?? t) : c.html ? c.html(x) : esc(t)}</td>`;
     }).join('')}</tr>`;
   }
   const phraseCompte = (plie = [], rg = reglages()) => {
     const n = T.lignes.length;
     return modeSimple() ? `${pl(n, 'date')} · ${pl(T.lignes.reduce((s, x) => s + x.rs.length, 0), 'séance')}`
-      : `${pl(n, 'séance')} · ${pl(new Set(T.lignes.map(x => x.d.id)).size, 'date')}${plie.length && !rg.vides ? ` · colonnes vides repliées : ${plie.map(c => c.l.toLowerCase()).join(', ')}` : ''}`;
+      : `${pl(n, 'séance')} · ${pl(new Set(T.lignes.map(x => x.d.id)).size, 'date')}${plie.length && !rg.vides ? ` · colonnes vides repliées : ${plie.length > 6 ? `${plie.slice(0, 6).map(c => c.l.toLowerCase()).join(', ')} et ${plie.length - 6} autres` : plie.map(c => c.l.toLowerCase()).join(', ')}` : ''}`;
   };
   function dessiner({ garder = false } = {}) {
     const corps = $('#tab-corps'), tete = $('#tab-tete'), cadreT = $('#tab-cadre');
@@ -511,7 +560,7 @@ const TABLEUR = (() => {
     const ps = possibles(), rg = reglages();
     T.lignes = lignes(); T.cols = colonnes(T.lignes, ps, rg); T.figees = figeesDe(ps, rg);
     T.neuve = modeSimple() ? ligneNeuve() : null;
-    const plie = ps.filter(c => !T.cols.includes(c) && !rg.masquees.includes(c.k)), derniere = derniereFigee();
+    const plie = ps.filter(c => !T.cols.includes(c) && admise(c, rg)), derniere = derniereFigee();
     $('#tab').setAttribute('aria-rowcount', String(nbLignes() + 1));
     $('#tab').setAttribute('aria-colcount', String(T.cols.length));
     if (!T.cols.some(c => c.k === T.tournant)) T.tournant = T.cols[0]?.k || null;
@@ -669,7 +718,7 @@ const TABLEUR = (() => {
       });
       refaites.push(neuf);
     });
-    $('#tab-compte').textContent = phraseCompte(ps.filter(c => !T.cols.includes(c) && !rg.masquees.includes(c.k)), rg);
+    $('#tab-compte').textContent = phraseCompte(ps.filter(c => !T.cols.includes(c) && admise(c, rg)), rg);
     marquer(focus);
     compterPlus(refaites.flatMap(tr => $$('td.c-distribution', tr)));
     placerCadre();
@@ -683,9 +732,10 @@ const TABLEUR = (() => {
   function dessinerTete(tete, derniere) {
     const signature = `${T.cols.map(c => c.k).join(',')}|${avecPoignees()}|${T.mode}`;
     if (tete.dataset.cles !== signature) {
-      tete.innerHTML = `<tr role="row" aria-rowindex="1">${T.cols.map((c, j) => `<th role="columnheader" scope="col" class="c-${c.k}" data-k="${c.k}" data-l="${esc(c.l)}" aria-colindex="${j + 1}" aria-keyshortcuts="Alt+ArrowLeft Alt+ArrowRight"${c.k === 'jour' ? ` aria-sort="${T.v.tri === 'desc' ? 'descending' : 'ascending'}"` : ''} title="${titreCol(c)}">${c.k === 'jour' ? `<button type="button" class="tab-tri" id="tab-tri">${iconeType(c)}${texteTri()}</button>` : `<span class="tab-th">${iconeType(c)}<span>${esc(c.l)}</span></span>`}</th>`).join('')}</tr>`;
+      // (une colonne de la diffusion porte un cadenas et « confidentiel » en .sr ; l'icône « fiche » n'a que son libellé en .sr)
+      tete.innerHTML = `<tr role="row" aria-rowindex="1">${T.cols.map((c, j) => `<th role="columnheader" scope="col" class="c-${c.k}${c.confidentiel ? ' confidentiel' : ''}" data-k="${c.k}" data-l="${esc(c.l)}" aria-colindex="${j + 1}"${c.type === 'action' ? '' : ' aria-keyshortcuts="Alt+ArrowLeft Alt+ArrowRight"'}${c.k === 'jour' ? ` aria-sort="${T.v.tri === 'desc' ? 'descending' : 'ascending'}"` : ''} title="${esc(titreCol(c))}">${c.k === 'jour' ? `<button type="button" class="tab-tri" id="tab-tri">${iconeType(c)}${texteTri()}</button>` : `<span class="tab-th">${iconeType(c)}<span${c.type === 'action' ? ' class="sr"' : ''}>${esc(c.l)}</span>${c.confidentiel ? `<span class="tab-cadenas">${icone('cadenas', 12)}<span class="sr"> confidentiel</span></span>` : ''}</span>`}</th>`).join('')}</tr>`;
       tete.dataset.cles = signature;
-      if (avecPoignees()) T.cols.forEach(c => poignee($(`th[data-k="${c.k}"]`, tete), c));
+      if (avecPoignees()) T.cols.filter(c => c.type !== 'action').forEach(c => poignee($(`th[data-k="${c.k}"]`, tete), c));   // (l'icône « fiche » n'a pas de largeur à régler)
     }
     $$('th', tete).forEach((th, j) => {
       const c = T.cols[j];
@@ -877,6 +927,7 @@ const TABLEUR = (() => {
     $('#tab-tete').addEventListener('click', e => { if (e.target.closest('#tab-tri')) { basculerTri(); $('#tab-tri')?.focus(); } });
     brancherTete($('#tab-tete'));
     $('#tab-colonnes').addEventListener('click', () => { if (T.pop?.ouvreur === $('#tab-colonnes')) fermerPop(); else ouvrirChoix(); });
+    $('#tab-jeu').addEventListener('change', e => choisirJeu(e.target.value));
     $('#tab-etat').addEventListener('click', e => {
       if (e.target.closest('#tab-annuler')) annuler();
       else if (e.target.closest('#tab-voir')) voirIgnorees();
@@ -887,16 +938,16 @@ const TABLEUR = (() => {
     $('#tab-importer').addEventListener('click', () => importer());
     $('#tab-suppr').addEventListener('click', () => supprimerLignes());
     const exp = $('#tab-export'), bExp = $('#tab-exporter');
-    const fermerExport = (rendre = false) => { exp.hidden = true; bExp.setAttribute('aria-expanded', 'false'); if (rendre) bExp.focus(); };
+    const fermerExport = (rendre = false) => { exp.hidden = true; bExp.setAttribute('aria-expanded', 'false'); const conf = $('#tab-export-conf'); if (conf) conf.checked = false; if (rendre) bExp.focus(); };   // (la case ne se mémorise jamais : décochée à chaque fermeture)
     bExp.addEventListener('click', () => { const ouvrir = exp.hidden; exp.hidden = !ouvrir; bExp.setAttribute('aria-expanded', String(ouvrir)); if (ouvrir) $('button', exp).focus(); });
-    exp.addEventListener('click', e => { const b = e.target.closest('[data-export]'); if (b) { fermerExport(); exporter(b.dataset.export); } });
+    exp.addEventListener('click', e => { const b = e.target.closest('[data-export]'); if (b) { const confidentiel = !!$('#tab-export-conf')?.checked; fermerExport(); exporter(b.dataset.export, { confidentiel }); } });
     exp.addEventListener('keydown', e => { if (e.key === 'Escape') fermerExport(true); });
     const dehorsExport = e => { if (!exp.hidden && !e.target.closest('.tab-menu')) fermerExport(); };
     document.addEventListener('click', dehorsExport);
     T.nettoyer.push(() => document.removeEventListener('click', dehorsExport));
     const corps = $('#tab-corps'), table = $('#tab');
     corps.addEventListener('mousedown', e => {
-      const td = e.target.closest('td[data-c]'); if (!td || td.contains(T.edition?.el)) return;
+      const td = e.target.closest('td[data-c]'); if (!td || td.contains(T.edition?.el) || td.classList.contains('tab-fiche')) return;   // (la case « fiche » est un bouton : son clic ouvre le tiroir)
       const l = td.parentNode.hasAttribute('data-neuve') ? T.lignes.length : +td.parentNode.dataset.l, c = +td.dataset.c;
       if (T.edition) fermerEdition({ valider: true });
       const deja = td === document.activeElement && !T.ancre;   // un clic sur la case active (déjà choisie) : écrire
@@ -904,7 +955,12 @@ const TABLEUR = (() => {
       activer(l, c, { etendre: e.shiftKey });
       if (deja && !e.shiftKey) editer();
     });
-    corps.addEventListener('dblclick', e => { const td = e.target.closest('td[data-c]'); if (td && !T.edition) editer(); });
+    corps.addEventListener('dblclick', e => { const td = e.target.closest('td[data-c]'); if (td && !T.edition && !td.classList.contains('tab-fiche')) editer(); });
+    corps.addEventListener('click', e => {
+      const td = e.target.closest('td.tab-fiche'); if (!td || !td.textContent) return;
+      const tr = td.parentNode;
+      ouvrirFiche(tr.hasAttribute('data-neuve') ? T.lignes.length : +tr.dataset.l, +td.dataset.c);
+    });
     table.addEventListener('keydown', clavier);
     table.addEventListener('copy', e => { if (T.edition || !corps.contains(document.activeElement)) return; e.preventDefault(); e.clipboardData.setData('text/plain', copie()); etat(`Copié : ${pl(nbCases(), 'case')}.`); });
     table.addEventListener('paste', e => { if (T.edition || !corps.contains(document.activeElement)) return; e.preventDefault(); coller(e.clipboardData.getData('text/plain')); });
@@ -968,6 +1024,7 @@ const TABLEUR = (() => {
     if (k === 'Escape') { if (T.ancre) { e.preventDefault(); T.ancre = null; marquer(true); } return; }
     if (mod && !e.altKey && k.toLowerCase() === 'z') { e.preventDefault(); return annuler(); }
     if (mod && !e.altKey && k.toLowerCase() === 'a') { e.preventDefault(); T.ancre = { l: 0, c: 0 }; T.actif = { l: T.lignes.length - 1, c: T.cols.length - 1 }; return marquer(true); }
+    if (mod && !e.altKey && k === 'Enter') { e.preventDefault(); return ouvrirFiche(); }
     if (mod && (k === 'Delete' || k === 'Backspace')) { e.preventDefault(); return supprimerLignes(); }
     if (k === 'Delete' || k === 'Backspace') { e.preventDefault(); return vider(); }
     if (k === 'Enter' || k === 'F2') { e.preventDefault(); return editer(); }
@@ -1002,32 +1059,47 @@ const TABLEUR = (() => {
     dessiner({ garder: true });
     if (k) $(`#tab-tete th[data-k="${k}"]`)?.focus();
     const b = $('#tab-vides'); if (b) b.checked = reglages().vides;
+    majJeu();
   }
   function retablir(avant) { if (typeof PREFS !== 'undefined') PREFS.ecrire('tableur.colonnes', avant, { aussitot: true }); rafraichirColonnes(); }
   function masquer(k, { dire = true } = {}) {
     const c = colonne(k), rg = reglages();
-    if (!c || modeSimple() || rg.masquees.includes(k)) return;
+    if (!c || c.type === 'action' || modeSimple() || rg.masquees.includes(k)) return;
     if (k === 'jour') { annoncer('Le jour reste : c’est lui qui date chaque ligne.'); return; }
-    const avant = ecrireReglages({ masquees: [...rg.masquees, k] }), j = T.cols.findIndex(x => x.k === k), dansTete = !!document.activeElement?.closest?.('#tab-tete');
+    const avant = ecrireReglages({ masquees: [...rg.masquees, k], montrees: rg.montrees.filter(x => x !== k) }), j = T.cols.findIndex(x => x.k === k), dansTete = !!document.activeElement?.closest?.('#tab-tete');
     dessiner({ garder: true });
     if (dansTete) $$('#tab-tete th')[Math.min(Math.max(0, j), T.cols.length - 1)]?.focus();   // (l'en-tête qu'on vient de masquer avait le focus : il passe à la colonne qui prend sa place)
     if (dire) annoncer(`Colonne « ${c.l} » masquée.`, { action: () => retablir(avant) });
   }
+  // (une colonne hors de la disposition d'origine, sans jeu choisi, se montre en entrant dans `montrees`)
   function montrer(k) {
-    const rg = reglages();
-    if (!colonne(k) || modeSimple() || !rg.masquees.includes(k)) return;
-    ecrireReglages({ masquees: rg.masquees.filter(x => x !== k) });
+    const rg = reglages(), c = colonne(k);
+    if (!c || c.type === 'action' || modeSimple() || admise(c, rg)) return;
+    ecrireReglages({ masquees: rg.masquees.filter(x => x !== k), ...(c.horsOrigine && !rg.jeu && !rg.montrees.includes(k) ? { montrees: [...rg.montrees, k] } : {}) });
     dessiner({ garder: true });
   }
   // « Figer jusqu'ici » : les colonnes de la première à celle-ci restent à gauche quand le tableau défile ; de nouveau sur la dernière
   // figée, elles se défigent
   function figer(k) {
     const c = colonne(k), n = rang(k) + 1;
-    if (!c || modeSimple() || n < 1) return;
+    if (!c || c.type === 'action' || modeSimple() || n < 1) return;
     const deja = reglages().figees === n;
     ecrireReglages({ figees: deja ? 0 : n });
     dessiner({ garder: true });
     annoncer(deja ? 'Plus aucune colonne figée.' : `Colonnes figées jusqu’à « ${c.l} ».`);
+  }
+  // le menu « Jeu » de la tête : toutes les colonnes d'un sujet (Site, Tournée, Suivi, Bilan, Diffusion, Tout), vides comprises, les autres
+  // masquées ; « Disposition d'origine » rend les colonnes comme elles étaient. Le choix se garde avec le compte (jeu, masquees).
+  function choisirJeu(k) {
+    if (modeSimple()) return;
+    const jeu = JEUX.find(j => j.k === k) || null, dans = jeu ? colsDuJeu(jeu.k) : null;
+    const avant = ecrireReglages({ jeu: jeu ? jeu.k : null, masquees: jeu && jeu.k !== 'tout' ? reglables.filter(c => c !== 'jour' && !dans.has(c)) : [], montrees: [] });
+    dessiner({ garder: true });
+    const n = T.cols.filter(c => c.type !== 'action').length;
+    annoncer(jeu ? `Jeu « ${jeu.l} » : ${pl(n, 'colonne')}.` : 'Colonnes d’origine rétablies.', { action: () => retablir(avant) });
+  }
+  function majJeu() {
+    const s = $('#tab-jeu'); if (s) s.value = modeSimple() ? '' : reglages().jeu || '';
   }
   function ajusterEtGarder(k) {
     const w = ajuster(k), cadreT = $('#tab-cadre');
@@ -1038,15 +1110,15 @@ const TABLEUR = (() => {
   // une colonne d'un cran vers l'avant (-1) ou l'arrière (+1), parmi celles qu'on voit (l'en-tête) ou parmi toutes (la fenêtre
   // « Colonnes… ») ; le focus revient où il était
   function deplacer(k, sens, { parmi = 'montrees', focus = false } = {}) {
-    const c = colonne(k), liste = parmi === 'toutes' ? possibles() : T.cols, j = liste.findIndex(x => x.k === k), v = liste[j + sens];
-    if (!c || modeSimple() || j < 0) return false;
+    const c = colonne(k), liste = (parmi === 'toutes' ? possibles() : T.cols).filter(x => x.type !== 'action'), j = liste.findIndex(x => x.k === k), v = liste[j + sens];
+    if (!c || c.type === 'action' || modeSimple() || j < 0) return false;
     if (!v) { annoncer(`« ${c.l} » est déjà la ${sens < 0 ? 'première' : 'dernière'} colonne.`); return false; }
-    const ordre = possibles().map(x => x.k).filter(x => x !== k), i = ordre.indexOf(v.k);
+    const ordre = possibles().filter(x => x.type !== 'action').map(x => x.k).filter(x => x !== k), i = ordre.indexOf(v.k);
     ordre.splice(sens < 0 ? i : i + 1, 0, k);
     ecrireReglages({ ordre });
     dessiner({ garder: true });
     if (focus) $(`#tab-tete th[data-k="${k}"]`)?.focus();
-    annoncer(`${c.l} déplacée en ${ordinal((parmi === 'toutes' ? possibles() : T.cols).findIndex(x => x.k === k) + 1)}.`);
+    annoncer(`${c.l} déplacée en ${ordinal((parmi === 'toutes' ? possibles() : T.cols).filter(x => x.type !== 'action').findIndex(x => x.k === k) + 1)}.`);
     return true;
   }
   // « Colonnes d'origine » : tout ce que la préférence retient s'oublie ; rend ce qu'elle retenait (« Annuler » et « Disposition d'origine »)
@@ -1059,7 +1131,7 @@ const TABLEUR = (() => {
   }
   // le menu d'un en-tête (clic droit, Maj+F10, appui long) : menus.js l'appelle, rien d'autre
   function actions(k) {
-    const c = colonne(k); if (!c) return [];
+    const c = colonne(k); if (!c || c.type === 'action') return [];
     // (le Simple a six colonnes fixes : on ne les masque, ne les fige ni ne les déplace ; la largeur et, pour le jour, le tri)
     if (modeSimple()) return [...(largeLa() ? [{ libelle: 'Ajuster la largeur', icone: icone('poignee-v'), faire: () => ajusterEtGarder(k) }] : []),
       ...(k === 'jour' ? [{ libelle: T.v.tri === 'desc' ? 'Trier : du plus ancien' : 'Trier : du plus récent', icone: icone(T.v.tri === 'desc' ? 'haut' : 'bas'), faire: () => basculerTri() }] : [])];
@@ -1070,7 +1142,7 @@ const TABLEUR = (() => {
       ...(largeLa() ? [{ libelle: 'Ajuster la largeur', icone: icone('poignee-v'), faire: () => ajusterEtGarder(k) }] : []),
       { separateur: true },
       { libelle: 'Avancer', raccourci: 'Alt ←', icone: icone('gauche'), desactive: j <= 0, faire: () => deplacer(k, -1) },
-      { libelle: 'Reculer', raccourci: 'Alt →', icone: icone('droite'), desactive: j < 0 || j >= T.cols.length - 1, faire: () => deplacer(k, 1) },
+      { libelle: 'Reculer', raccourci: 'Alt →', icone: icone('droite'), desactive: j < 0 || j >= T.cols.filter(x => x.type !== 'action').length - 1, faire: () => deplacer(k, 1) },
       ...(k === 'jour' ? [{ libelle: T.v.tri === 'desc' ? 'Trier : du plus ancien' : 'Trier : du plus récent', icone: icone(T.v.tri === 'desc' ? 'haut' : 'bas'), faire: () => basculerTri() }] : []),
       { separateur: true },
       { libelle: 'Colonnes…', icone: icone('vue-tableur'), faire: () => ouvrirChoix() },
@@ -1101,8 +1173,8 @@ const TABLEUR = (() => {
   // ———— la fenêtre « Colonnes… » : la liste de toutes les colonnes possibles, dans l'ordre voulu, chacune cochable (montrée ou
   // masquée), avec ↑ ↓ pour l'ordre et le glisser d'une ligne à l'autre ; « Colonnes d'origine » remet tout
   function htmlChoix() {
-    const ps = possibles(), rg = reglages(), vides = new Set(ps.filter(c => !T.cols.includes(c) && !rg.masquees.includes(c.k)).map(c => c.k));
-    return ps.map((c, i) => `<li class="tab-col" data-k="${c.k}" draggable="true"><label class="tab-col-nom"><input type="checkbox" data-col-montrer${rg.masquees.includes(c.k) ? '' : ' checked'}${c.k === 'jour' ? ' disabled' : ''}>${c.icone ? icone(c.icone) : ''}<span>${esc(c.l)}</span>${vides.has(c.k) ? '<small>vide, repliée</small>' : ''}</label>
+    const ps = possibles().filter(c => c.type !== 'action'), rg = reglages(), vides = new Set(ps.filter(c => !T.cols.includes(c) && admise(c, rg)).map(c => c.k));
+    return ps.map((c, i) => `<li class="tab-col" data-k="${c.k}" draggable="true"><label class="tab-col-nom"><input type="checkbox" data-col-montrer${admise(c, rg) ? ' checked' : ''}${c.k === 'jour' ? ' disabled' : ''}>${c.icone ? icone(c.icone) : ''}<span>${esc(c.l)}</span>${vides.has(c.k) ? '<small>vide, repliée</small>' : ''}</label>
       <span class="tab-col-ordre"><button type="button" class="btn petit" data-col-haut aria-label="Avancer ${esc(c.l)}"${i === 0 ? ' disabled' : ''}>${icone('haut')}</button><button type="button" class="btn petit" data-col-bas aria-label="Reculer ${esc(c.l)}"${i === ps.length - 1 ? ' disabled' : ''}>${icone('bas')}</button></span></li>`).join('');
   }
   function ouvrirChoix() {
@@ -1144,15 +1216,19 @@ const TABLEUR = (() => {
     pop.addEventListener('drop', e => {
       const li = e.target.closest('.tab-col'); if (!glisse || !li || li.dataset.k === glisse) return;
       e.preventDefault();
-      const k = glisse, tout = possibles().map(c => c.k), ordre = tout.filter(x => x !== k), i = ordre.indexOf(li.dataset.k);
+      const k = glisse, tout = possibles().filter(c => c.type !== 'action').map(c => c.k), ordre = tout.filter(x => x !== k), i = ordre.indexOf(li.dataset.k);
       ordre.splice(tout.indexOf(k) > tout.indexOf(li.dataset.k) ? i : i + 1, 0, k);   // (tirée vers le haut, elle prend la place de la ligne visée ; vers le bas, elle passe après)
       glisse = null;
       ecrireReglages({ ordre });
       dessiner({ garder: true });
       dessinerListe({ k, attr: 'data-col-montrer' });   // (le focus revient dans la fenêtre : Échap la ferme encore)
-      annoncer(`${colonne(k).l} déplacée en ${ordinal(possibles().findIndex(c => c.k === k) + 1)}.`);
+      annoncer(`${colonne(k).l} déplacée en ${ordinal(possibles().filter(c => c.type !== 'action').findIndex(c => c.k === k) + 1)}.`);
     });
   }
+  // Ctrl+Entrée dans la grille : la date dans le tiroir, sur le champ de la case (la grille le prend elle-même, comme Alt+← Alt+→ ; le registre le liste
+  // dans l'aide « ? » et ne l'attrape pas : la grille est un endroit où il se tait)
+  if (typeof RACCOURCIS !== 'undefined') RACCOURCIS.declarer({ id: 'tableur.fiche', touches: ['Ctrl+Entrée'], groupe: 'Le tableur', d: 'Ouvrir la date de la case dans le tiroir, sur le champ de la colonne (il s’allume) ; la grille se met à jour derrière',
+    quand: () => location.hash.startsWith('#/representations/tableur'), faire: () => { if (document.activeElement?.closest?.('#tab-corps')) ouvrirFiche(); } });
   // Alt+← Alt+→ sur un en-tête : déclarés au registre des raccourcis (l'aide « ? » les liste ; le registre ne les attrape pas lui-même,
   // la grille est un endroit où il se tait : brancherTete les prend)
   if (typeof RACCOURCIS !== 'undefined') [['Alt+←', 'Avancer la colonne dont l’en-tête a le focus', -1], ['Alt+→', 'Reculer la colonne dont l’en-tête a le focus', 1]].forEach(([touche, d, sens]) =>
@@ -1229,12 +1305,21 @@ const TABLEUR = (() => {
   }
 
   // ———— écrire dans une case
-  function editer(initial = null) {
-    const x = ligne(T.actif.l), c = T.cols[T.actif.c];
+  // sansGarde, col : la suite du garde-fou d'une date « période » (gardePeriode) — la case s'écrit malgré tout, éventuellement par une autre
+  // colonne que la sienne (« Déplacer le début »)
+  function editer(initial = null, { sansGarde = false, col = null } = {}) {
+    const x = ligne(T.actif.l), c = col || T.cols[T.actif.c];
     if (!x || !c) return;
     if (x.neuve && !CASES_NEUVES.includes(c.k)) return etat('Cette case se remplit quand la date existe : écrivez d’abord son jour et son spectacle.');
-    if (c.type === 'lecture') { const j = T.cols.findIndex(y => y.k === 'lieu'); etat('La commune vient de la fiche du lieu : changez le lieu.'); if (j >= 0) { activer(T.actif.l, j); editer(); } return; }
-    if (c.fige?.(x)) return etat('Une répétition, une résidence : jamais sur le site.');
+    if (c.type === 'action') return ouvrirFiche();
+    if (c.type === 'lecture') {
+      if (c.niveau === 'lieu') { const j = T.cols.findIndex(y => y.k === 'lieu'); etat('La commune vient de la fiche du lieu : changez le lieu.'); if (j >= 0) { activer(T.actif.l, j); editer(); } return; }
+      const lien = c.lien?.(x); if (lien) { location.hash = lien; return; }   // (la feuille de route, la piste : la case mène à leur page)
+      return etat(`${c.l} : ${c.pourquoi || 'en lecture seule'}.`);
+    }
+    const raison = c.fige?.(x); if (raison) return etat(`${raison}.`);
+    if (c.type === 'riche') return ouvrirFiche();   // (les précisions du site s'écrivent dans la fiche, où l'on met en forme et où l'on ajoute des liens)
+    if (!sansGarde && c.niveau === 'seance' && !x.r && !x.neuve) return gardePeriode(x, c, initial);
     if (c.type === 'case') return ecrire([{ x, col: c, v: !c.val(x) }]);
     if (c.type === 'lieu') return editerLieu(x, c, initial);
     if (c.type === 'equipe') return editerEquipe(x, c, initial);
@@ -1280,7 +1365,8 @@ const TABLEUR = (() => {
       const brut = el.value;
       v = col.type === 'choix' ? col.choix().find(([y]) => String(y) === brut)?.[0] : (col.type === 'jour' && el.type === 'date') ? brut || undefined : (col.type === 'heure' && el.type === 'time') ? brut : col.lire(brut, x);
       if (v === undefined || (v === '' && !col.vider && col.type !== 'heure')) {
-        etat(`${col.l} : « ${brut} » n’est pas reconnu${focus ? '' : ', la case garde sa valeur'}.${col.type === 'jour' ? (/^\s*du\s|\sau\s|→/i.test(brut) ? ' Une période n’est pas un jour : écrivez un seul jour, par exemple 5/11/2026.' : ' Écrivez par exemple 5/11/2026.') : col.type === 'heure' ? ' Écrivez par exemple 20h30.' : ''}`, 'erreur');
+        const conseil = col.erreurLire ? ` ${typeof col.erreurLire === 'function' ? col.erreurLire(brut, x) : col.erreurLire}` : col.type === 'jour' ? (/^\s*du\s|\sau\s|→/i.test(brut) ? ' Une période n’est pas un jour : écrivez un seul jour, par exemple 5/11/2026.' : ' Écrivez par exemple 5/11/2026.') : col.type === 'heure' ? ' Écrivez par exemple 20h30.' : '';
+        etat(`${col.l} : « ${brut} » n’est pas reconnu${focus ? '' : ', la case garde sa valeur'}.${conseil}`, 'erreur');
         if (focus) { el.focus(); return; }
         valider = false;
       }
@@ -1296,6 +1382,72 @@ const TABLEUR = (() => {
     else if (aller === 'droite') activer(T.actif.l, T.actif.c + 1, { focus });
     else if (aller === 'gauche') activer(T.actif.l, T.actif.c - 1, { focus });
     else if (focus) marquer(true);
+  }
+  // ———— le garde-fou d'une date « période » (une résidence, une répétition : des jours, aucune séance) : écrire dans une case de séance (l'heure, le
+  // public, la note…) créerait une séance en silence, et la période deviendrait un jour. À l'écriture, la case demande d'abord : « Ajouter une séance ce
+  // jour » (la période devient un jour), pour le jour « Déplacer le début » (la fin ne passe pas avant), ou « Annuler ». C'est un menu des gestes
+  // (GESTES.ouvrir, source clavier) sur la case, que actionsCase construit ; le collage et Suppr, eux, n'écrivent jamais dans une telle case.
+  function gardePeriode(x, c, initial) {
+    const td = cellule(T.actif.l, T.actif.c);
+    T.garde = { x, c, initial, l: T.actif.l, j: T.actif.c };
+    if (td && typeof GESTES !== 'undefined' && GESTES.ouvrir(td, { source: 'clavier' })) return;
+    T.garde = null;
+    etat('Cette date est une période : elle n’a pas de séance. Ajoutez la séance dans la fiche de la date (Ctrl+Entrée).');
+  }
+  const debutDePeriode = c => ({ ...c, instantane: true, val: x => x.d.debut, ecrire: (F, x, v) => { F.debut = v; if (!F.fin || F.fin < v) F.fin = v; } });
+  // le dessin de l'icône « fiche » de la grille vient de la bibliothèque (ICONES.TRACES.fiche) : une règle de masque posée une fois, sans nœud par ligne
+  function poserIconeFiche() {
+    if (document.getElementById('tab-fiche-masque') || typeof ICONES === 'undefined' || !ICONES.TRACES.fiche) return;
+    const url = `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONES.TRACES.fiche}</svg>`)}") center / contain no-repeat`;
+    const st = document.createElement('style'); st.id = 'tab-fiche-masque';
+    st.textContent = `.tableur td.tab-fiche::before { -webkit-mask: ${url}; mask: ${url}; }`;
+    document.head.append(st);
+  }
+  // la date dans le tiroir, sur le champ de la case (Ctrl+Entrée, l'icône « fiche », « Ouvrir la date » du menu d'une case) : la grille se redessine
+  // derrière après chaque enregistrement de la fiche et à sa fermeture (apres), et le focus revient à la case (depuis : une fonction, la case
+  // d'origine n'est plus dans le document une fois la ligne redessinée) ; rien dans l'adresse que le tiroir n'y mette déjà
+  function ouvrirFiche(l = T.actif.l, c = T.actif.c) {
+    const x = ligne(l), col = T.cols[c];
+    if (!x || !col) return;
+    if (x.neuve || x.d.id == null) return etat('Cette date n’existe pas encore : écrivez d’abord son jour et son spectacle.');
+    const id = x.d.id, cle = x.cle, k = col.k, href = `#/representations/${id}`;
+    activer(l, c, { focus: false });
+    if (typeof TIROIR === 'undefined' || !TIROIR.peut(href)) { location.hash = href; return; }
+    TIROIR.ouvrir(href, {
+      viser: col.type === 'action' ? '' : col.viser?.(x) || '',
+      depuis: () => {
+        if (!$('#tab-corps')) return;
+        let l2 = T.lignes.findIndex(y => y.cle === cle); if (l2 < 0) l2 = T.lignes.findIndex(y => y.d.id === id);
+        if (l2 >= 0) activer(l2, Math.max(0, T.cols.findIndex(y => y.k === k)), { focus: true });
+      },
+      apres: () => { if ($('#tab-corps')) redessiner([id]); },
+    });
+  }
+  // le menu d'une case (clic droit, Maj+F10, appui long) : celui du garde-fou quand editer vient de le demander, sinon la date et la séance de la ligne
+  let menusPoses = false;
+  function poserMenus() {
+    if (menusPoses || typeof GESTES === 'undefined' || GESTES.etroit()) return;   // (le téléphone ne change pas : ni menu de case, ni appui long qui le réclame)
+    menusPoses = true;
+    GESTES.menu({ cible: '#tab-corps td[data-c]', titre: td => (T.titreGarde || `Date du ${jourCourt(ligne(+td.parentNode.dataset.l)?.d.debut || AUJ)}`), actions: actionsCase });
+  }
+  function actionsCase(td) {
+    const tr = td.parentNode, l = tr.hasAttribute('data-neuve') ? T.lignes.length : +tr.dataset.l, c = +td.dataset.c, x = ligne(l), col = T.cols[c], g = T.garde;
+    T.garde = null;
+    T.titreGarde = g && g.x === x ? 'Cette date est une période' : '';   // (GESTES demande le titre après les actions : le motif se garde ici)
+    if (!x || !col || x.neuve) return [];
+    if (g && g.x === x) {
+      const reprendre = opts => { activer(g.l, g.j, { focus: false }); editer(g.initial, { sansGarde: true, ...opts }); };
+      return [
+        { libelle: 'Ajouter une séance ce jour', detail: 'la période devient un jour', icone: icone('plus'), faire: () => reprendre({}) },
+        ...(g.c.k === 'jour' ? [{ libelle: 'Déplacer le début', detail: 'la période commence ce jour-là', icone: icone('calendrier'), faire: () => reprendre({ col: debutDePeriode(g.c) }) }] : []),
+        { libelle: 'Annuler', icone: icone('croix'), faire: () => marquer(true) },
+      ];
+    }
+    const seule = repsDe(x.d.id).length < 2;
+    return [
+      { libelle: 'Ouvrir la date dans le tiroir', raccourci: 'Ctrl Entrée', icone: icone('fiche'), faire: () => ouvrirFiche(l, c) },
+      ...(x.r && !modeSimple() ? [{ libelle: 'Détacher cette séance dans sa propre date', detail: seule ? 'la date n’a qu’une séance' : '', icone: icone('dupliquer'), desactive: seule, faire: () => detacher(x) }] : []),
+    ];
   }
   // ce qu'une case montre pendant l'enregistrement
   const apercu = (col, v) => col.type === 'seances' ? v.map(r => heureT(r.heure)).filter(Boolean).join(' · ') : col.type === 'heure' ? heureT(v) : col.type === 'jour' ? jourCourt(v) : col.type === 'choix' ? (col.choix().find(([y]) => String(y) === String(v)) || [null, ''])[1] : col.type === 'lieu' ? lieuTexte(lieu(v)) : col.type === 'equipe' ? prenoms(v).join(', ') : String(v ?? '');
@@ -1328,7 +1480,7 @@ const TABLEUR = (() => {
         const retirees = instantane ? new Set(instantane.representations.filter(y => y.id && !F.representations.some(z => z.id === y.id)).map(y => y.id)) : null;   // (celles que ce geste retire : « Annuler » les recrée)
         const manque = manqueDate(F); if (manque) throw new Error(manque);
         T.recents.set(id, Date.now());
-        const { equipeOk } = await ecrireDate(F, d, { libre: !!(d.intitule || '').trim() });
+        const { equipeOk } = await ecrireDate(F, d, { libre: !!(F.intitule || '').trim() });   // (libre se calcule sur la ligne écrite : une ligne du site posée sur une date qui n'en avait pas ne se perd pas, la vider rend la ligne au site)
         T.recents.set(id, Date.now());
         if (!equipeOk) throw new Error('La date est enregistrée, mais pas son équipe.');
         defaire.push(instantane ? { instantane, id, retirees } : { avant });
@@ -1349,7 +1501,7 @@ const TABLEUR = (() => {
             const F = u.instantane;
             F.representations = F.representations.filter(r => !r.id || u.retirees.has(r.id) || E.reps.some(y => y.id === r.id));   // (une séance retirée ailleurs entre-temps ne revient pas ; celle que ce geste a retirée revient, recréée)
             F.representations.forEach(r => { if (u.retirees.has(r.id)) delete r.id; });
-            await ecrireDate(F, d, { libre: !!(d.intitule || '').trim() }); T.recents.set(u.id, Date.now());
+            await ecrireDate(F, d, { libre: !!(F.intitule || '').trim() }); T.recents.set(u.id, Date.now());
           }
           else if (!(await ecrire(u.avant, { annulable: false, dire: 'retour en arrière' }))) throw new Error('la base a refusé');
         }
@@ -1407,7 +1559,7 @@ const TABLEUR = (() => {
     const p = plage(), chs = [];
     for (let l = p.l0; l <= p.l1; l++) for (let j = p.c0; j <= p.c1; j++) {
       const x = T.lignes[l], c = T.cols[j];
-      if (!x || !c || !(c.vider || c.type === 'heure' || c.type === 'case') || c.fige?.(x)) continue;
+      if (!x || !c || !(c.vider || c.type === 'heure' || c.type === 'case') || c.fige?.(x) || (!x.r && c.niveau === 'seance')) continue;   // (la case d'une séance sur une date sans séance : rien à vider, et jamais de séance créée en silence)
       const v = c.type === 'case' ? false : c.type === 'equipe' ? [] : c.type === 'lieu' ? null : '';
       if (JSON.stringify(c.val(x)) !== JSON.stringify(v)) chs.push({ x, col: c, v });
     }
@@ -1696,12 +1848,13 @@ const TABLEUR = (() => {
     $('#tab-et-non', dlg).addEventListener('click', () => dlg.close());
     $('#tab-et-ok', dlg).addEventListener('click', async () => {
       const b = $('#tab-et-ok', dlg), xs = [...cibles], avants = xs.map(dd => ({ id: dd.id, sp: dd.spectacle_id, equipe: ecartsDate(dd.id) }));
+      const fonctions = Object.fromEntries(ecartsDate(d0.id).filter(e => e.present && e.fonction).map(e => [e.personne_id, e.fonction]));   // (qui remplace qui, sur la date d'où l'on étend)
       b.disabled = true;
       let n = 0, rates = 0;
       for (const dd of xs) {
         b.textContent = `${n + 1} / ${xs.length}…`;
         T.recents.set(dd.id, Date.now());
-        const ok = await enregistrerEquipeDate(dd.id, { spectacle_id: dd.spectacle_id, equipe: ecartsPour(dd, ids) });
+        const ok = await enregistrerEquipeDate(dd.id, { spectacle_id: dd.spectacle_id, equipe: ecartsPour(dd, ids, dd.spectacle_id, { fonctions }) });
         if (ok) n++; else rates++;
       }
       dlg.close();
@@ -1720,8 +1873,11 @@ const TABLEUR = (() => {
   const ecartJours = (d, j) => (j < d.debut ? (Date.parse(d.debut) - Date.parse(j)) : j > (d.fin || d.debut) ? (Date.parse(j) - Date.parse(d.fin || d.debut)) : 0) / 864e5;
   const dateVoisine = (sp, lieuId, jour) => E.dates.filter(d => d.spectacle_id === sp && d.statut !== 'annulee' && (d.lieu_id ?? null) === (lieuId ?? null) && ecartJours(d, jour) <= 1).sort((a, b) => ecartJours(a, jour) - ecartJours(b, jour))[0] || null;
   const ouDit = lieuId => { const l = lieu(lieuId); return l ? `${l.nom ? `${l.nom}, ` : ''}${l.commune}` : 'lieu à préciser'; };
-  // separee : une date neuve, jamais fusionnée avec sa voisine (une ligne du Simple est une date)
-  async function ajouterSeance({ jour, heure = '', fin = '', spectacle_id, lieu_id = null, seance = {}, date = {}, suivi = {}, equipe = null, separee = false }) {
+  // separee : une date neuve, jamais fusionnée avec sa voisine (une ligne du Simple est une date, « Détacher » en fait une aussi). date : tout
+  // ce que la ligne dit de la date elle-même (le statut, la ligne du site, les précisions…), posé sur la date neuve ; suivi, chiffres : le suivi et
+  // les chiffres de la ligne ; equipe : les personnes de la date (des identifiants), fonctions et notes : ce que chacune a sur cette date (ecartsPour).
+  // Une ligne qui rejoint une date qui existe déjà n'y ajoute que la séance : le reste, elle le dit.
+  async function ajouterSeance({ jour, heure = '', fin = '', spectacle_id, lieu_id = null, seance = {}, date = {}, suivi = {}, chiffres = null, equipe = null, fonctions = {}, notes = {}, separee = false }) {
     const d = separee ? null : dateVoisine(spectacle_id, lieu_id, jour);
     const rep = { jour, heure, fin, public: 'tout_public', annulee: false, lien: '', note: '', ...seance };
     if (d) {
@@ -1733,12 +1889,13 @@ const TABLEUR = (() => {
       await ecrireDate(F, d, { libre: !!(d.intitule || '').trim() });
       const nouvelle = E.reps.find(r => r.date_id === d.id && !ids.has(r.id));
       // (ce que la ligne disait de la date elle-même, son statut, son suivi, son équipe, ne remplace pas celle qui existe : on le dit)
-      const ignore = Object.keys(date).length || Object.values(suivi).some(v => v != null && v !== '') || (Array.isArray(equipe) && equipe.length);
-      return { id: d.id, nouvelle: false, rep: nouvelle?.id, texte: `séance ajoutée à la date du ${jourCourt(d.debut)}${d.fin && d.fin !== d.debut ? ` au ${jourCourt(d.fin)}` : ''} (${ouDit(lieu_id)})${ignore ? ' ; le statut, le suivi et l’équipe de la ligne ne sont pas repris : la date existait, ils se règlent dans sa fiche' : ''}` };
+      const ignore = Object.keys(date).length || Object.values(suivi).some(v => v != null && v !== '') || Object.values(chiffres || {}).some(v => v != null && v !== '') || (Array.isArray(equipe) && equipe.length);
+      return { id: d.id, nouvelle: false, rep: nouvelle?.id, texte: `séance ajoutée à la date du ${jourCourt(d.debut)}${d.fin && d.fin !== d.debut ? ` au ${jourCourt(d.fin)}` : ''} (${ouDit(lieu_id)})${ignore ? ' ; seule la séance est reprise : le reste de la ligne (statut, suivi, chiffres, équipe…) ne l’est pas, la date existait, il se règle dans sa fiche' : ''}` };
     }
     const F = Object.assign(nouvelleDate(), { spectacle_id, lieu_id, debut: jour, fin: jour, representations: [rep] }, date);
     F.suivi = { ...F.suivi, ...suivi };
-    if (equipe) F.equipe = ecartsPour({ id: -1, spectacle_id }, equipe, spectacle_id);
+    if (chiffres) F.chiffres = { ...F.chiffres, ...chiffres };
+    if (equipe) F.equipe = ecartsPour({ id: -1, spectacle_id }, equipe, spectacle_id, { fonctions, notes });
     const { id } = await ecrireDate(F, null);
     T.recents.set(id, Date.now());
     return { id, nouvelle: true, texte: `nouvelle date : ${jourCourt(jour)}, ${spectacle(spectacle_id)?.titre || ''} (${ouDit(lieu_id)})` };
@@ -1761,6 +1918,53 @@ const TABLEUR = (() => {
     const F = dateVersForm(d);
     F.representations = F.representations.filter(r => r.id !== a.rep);
     if (F.representations.length) await ecrireDate(F, d, { libre: !!(d.intitule || '').trim() });
+  }
+  // « Détacher cette séance dans sa propre date » : une date neuve (le même spectacle, le même lieu, le même statut, le même suivi — sauf le
+  // montant de cession, qui reste à la date d'origine —, la même équipe avec ses fonctions et ses notes), puis la séance quitte l'ancienne. Un seul
+  // « Annuler » rend tout : la séance revient, la date neuve s'efface. Une date qui s'ajoute prévient son équipe (« Nouvelle date »), la phrase de
+  // la confirmation le dit. Dans la file (T.file) : rien ne se croise.
+  async function detacher(x) {
+    const d = E.dates.find(y => y.id === x.d.id), r = x.r && E.reps.find(y => y.id === x.r.id);
+    if (!d || !r) return etat('Cette séance n’existe plus.', 'erreur');
+    if (repsDe(d.id).length < 2) return etat('Cette date n’a qu’une séance : il n’y a rien à détacher.');
+    const quand = `${jourCourt(r.jour)}${r.heure ? ` à ${heureT(r.heure)}` : ''}`;
+    const oui = await (typeof confirmerAction === 'function' ? confirmerAction({ titre: `Détacher la séance du ${quand} dans sa propre date ?`, ok: 'Détacher', danger: false,
+      texte: `Elle quitte la date du ${jourCourt(d.debut)} et devient une date à elle, avec le même statut, le même suivi (sauf le montant de cession) et la même équipe. L’équipe reçoit la notification « Nouvelle date ».` }) : Promise.resolve(true));
+    if (!oui) { marquer(true); return; }
+    etat('Enregistrement…', 'encours');
+    const su = suiviDe(d), ecarts = ecartsDate(d.id).filter(e => e.present);
+    const tache = T.file.then(async () => {
+      const a = await ajouterSeance({ jour: r.jour, heure: h5(r.heure), fin: h5(r.fin), spectacle_id: d.spectacle_id, lieu_id: d.lieu_id, separee: true,
+        seance: { public: r.public, annulee: !!r.annulee, lien: r.lien || '', note: r.note || '' },
+        date: { statut: d.statut, nature: nature(d), visible: d.visible, lien: d.lien || '' },
+        suivi: { organisateur: su.organisateur || '', contact: su.contact || '', contrat: su.contrat || '', notes: su.notes || '' },
+        equipe: E.equipeInstallee ? equipeIds(d) : null,
+        fonctions: Object.fromEntries(ecarts.filter(e => e.fonction).map(e => [e.personne_id, e.fonction])), notes: Object.fromEntries(ecarts.filter(e => e.note).map(e => [e.personne_id, e.note])) });
+      const d1 = E.dates.find(y => y.id === d.id), F = dateVersForm(d1);
+      F.representations = F.representations.filter(y => y.id !== r.id);
+      T.recents.set(d.id, Date.now());
+      try { await ecrireDate(F, d1, { libre: !!(F.intitule || '').trim() }); } catch (err) {
+        // (la séance n'a pas quitté sa date : la date neuve qu'on vient de créer n'a plus de raison d'être, on la retire ; si elle résiste, on le dit)
+        let suite = ' La séance est restée sur sa date, la date neuve a été retirée.';
+        try { const dn = E.dates.find(y => y.id === a.id); if (dn) { T.recents.set(dn.id, Date.now()); await effacerDate(dn); } } catch (e) { suite = ' La séance est restée sur sa date, mais la date neuve existe : à supprimer à la main.'; }
+        throw new Error(`${String(err?.message || err).replace(/\.$/, '')}.${suite}`);
+      }
+      return a;
+    });
+    T.file = tache.catch(() => {});
+    try {
+      const a = await tache, texte = `séance du ${quand} détachée dans sa propre date`;
+      T.pile.push({ libelle: texte, ids: [d.id, a.id], defaire: async () => {
+        const d1 = E.dates.find(y => y.id === d.id), dn = E.dates.find(y => y.id === a.id);
+        if (d1) { const G = dateVersForm(d1); G.representations.push({ ...repSimple(r), id: undefined }); T.recents.set(d1.id, Date.now()); await ecrireDate(G, d1, { libre: !!(G.intitule || '').trim() }); }
+        if (dn) { T.recents.set(dn.id, Date.now()); await effacerDate(dn); }
+      } });
+      etat(`${texte[0].toUpperCase()}${texte.slice(1)}.`, 'ok', true);
+      montrerAjouts([a.id]);
+      dessiner({ garder: true });
+      const l = T.lignes.findIndex(y => y.d.id === a.id);
+      if (l >= 0) { activer(l, T.actif.c, { focus: true }); $$(`#tab-corps tr[data-l="${l}"] td`).forEach(td => td.classList.add('vient-d-ailleurs')); }
+    } catch (err) { etat(`Pas détachée : ${err?.message || err}`, 'erreur'); dessiner({ garder: true }); }
   }
   function formAjout() {
     const form = $('#tab-ajout'), b = $('#tab-plus');
@@ -1851,9 +2055,10 @@ const TABLEUR = (() => {
   // ==================== copier, coller
   // ———— copier, coller (des cases, comme dans un tableur : des colonnes séparées par des tabulations)
   const cellTsv = v => (/[\t\n"]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
+  // (une case « riche » — les précisions du site — garde ses sauts de ligne entre guillemets, comme Excel : c'est ce qui sépare ses éléments au collage)
   function copie() {
     const p = plage(), out = [];
-    for (let l = p.l0; l <= p.l1; l++) { const x = T.lignes[l]; if (!x) continue; out.push(T.cols.slice(p.c0, p.c1 + 1).map(c => cellTsv(String(c.copie(x) ?? '').replace(/\r?\n/g, ' '))).join('\t')); }
+    for (let l = p.l0; l <= p.l1; l++) { const x = T.lignes[l]; if (!x) continue; out.push(T.cols.slice(p.c0, p.c1 + 1).map(c => cellTsv(c.type === 'riche' ? String(c.copie(x) ?? '').replace(/\r\n?/g, '\n') : String(c.copie(x) ?? '').replace(/\r?\n/g, ' '))).join('\t')); }
     return out.join('\n');
   }
   // un texte de tableur → des lignes de cases (les guillemets d'Excel et de Google Sheets compris)
@@ -1912,8 +2117,9 @@ const TABLEUR = (() => {
       if (!x || !c) { dehors++; return; }
       const ignorer = raison => ignorees.push({ ligne: l, colonne: j, brut: String(brut).trim(), raison, cle: cleCase(x, c) });
       if (x.neuve && !CASES_NEUVES.includes(c.k)) { if (String(brut).trim() !== '') ignorer('cette case se remplit quand la date existe'); return; }   // (une case vide, à cheval sur la ligne vide, ne se compte pas)
-      if (c.type === 'lecture') return ignorer('case en lecture seule');
-      if (c.fige?.(x)) return ignorer('une répétition, une résidence : jamais sur le site');
+      if (c.type === 'lecture' || c.type === 'action') return ignorer('case en lecture seule');
+      const raison = c.fige?.(x); if (raison) return ignorer(raison[0].toLowerCase() + raison.slice(1));
+      if (!x.neuve && !x.r && c.niveau === 'seance') { if (String(brut).trim() !== '') ignorer('cette date est une période : Entrée sur la case pour choisir'); return; }   // (le garde-fou de la période : une heure collée créerait une séance en silence)
       const v = c.lire(brut, x);
       if (v === undefined) return ignorer(`valeur non reconnue pour « ${c.l} »`);
       if (v === '' && !c.vider && c.type !== 'heure') return ignorer(`« ${c.l} » ne se vide pas ainsi`);
@@ -1935,12 +2141,15 @@ const TABLEUR = (() => {
 
   // ==================== l'export : Excel, CSV, Google Sheets
   // ———— exporter : les lignes et les colonnes de la vue (Excel, CSV, Google Sheets)
-  function tableau() {
-    return { entetes: T.cols.map(c => c.l), figees: T.cols.filter(c => T.figees.has(c.k)).length, lignes: T.lignes.map(x => T.cols.map(c => {
+  // Les colonnes de la diffusion (le montant de cession, l'étape de la piste : c.confidentiel) n'en font pas partie sans la case « Inclure la
+  // diffusion (confidentiel) » du menu Exporter ; l'icône « fiche » n'en fait jamais partie. exclues : les colonnes confidentielles laissées de côté.
+  function tableau({ confidentiel = false } = {}) {
+    const cols = T.cols.filter(c => c.type !== 'action' && (confidentiel || !c.confidentiel));
+    return { entetes: cols.map(c => c.l), figees: cols.filter(c => T.figees.has(c.k)).length, exclues: T.cols.filter(c => c.confidentiel && !confidentiel).map(c => c.l), lignes: T.lignes.map(x => cols.map(c => {
       if (c.type === 'jour') return { t: 'd', v: c.exp(x).jour };
       if (c.type === 'heure') { const h = c.exp(x).heure; return h ? { t: 'h', v: h } : { t: 's', v: '' }; }
       if (c.nombre) { const v = c.val(x); return v === '' || v == null ? { t: 's', v: '' } : { t: 'n', v: Number(v) }; }
-      return { t: 's', v: c.texte(x) };
+      return { t: 's', v: c.copie(x) };
     })) };
   }
   const nomFichier = ext => `crescite-representations-${AUJ}.${ext}`;
@@ -1959,21 +2168,21 @@ const TABLEUR = (() => {
   // ne doit rien calculer ni appeler chez celui qui ouvre le fichier) part précédée d'une apostrophe
   const sansFormule = v => (/^[=+\-@\t\r]/.test(v) ? `'${v}` : v);
   const texteCase = (c, sep) => (c.t === 'd' ? jjmmaaaa(c.v) : c.t === 'h' ? c.v : c.t === 'n' ? String(c.v).replace('.', ',') : sansFormule(String(c.v ?? '').replace(/\r?\n/g, sep === '\t' ? ' ' : '\n')));
-  async function exporter(genre) {
+  async function exporter(genre, { confidentiel = false } = {}) {
     if (!T.lignes.length) return etat('Rien à exporter : aucune séance dans la vue.', 'erreur');
-    const t = tableau(), n = pl(t.lignes.length, 'ligne');
-    if (genre === 'xlsx') { telecharger(xlsx(t), nomFichier('xlsx')); return etat(`Excel : ${n}, ${pl(t.entetes.length, 'colonne')} (celles de la vue).`, 'ok'); }
+    const t = tableau({ confidentiel }), n = pl(t.lignes.length, 'ligne'), vue = `celles de la vue${t.exclues.length ? `, sans la diffusion : ${t.exclues.join(', ').toLowerCase()}` : ''}`;
+    if (genre === 'xlsx') { telecharger(xlsx(t), nomFichier('xlsx')); return etat(`Excel : ${n}, ${pl(t.entetes.length, 'colonne')} (${vue}).`, 'ok'); }
     if (genre === 'csv') {
       const q = v => (/[;"\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
       const csv = [t.entetes, ...t.lignes.map(l => l.map(c => texteCase(c, ';')))].map(l => l.map(v => q(String(v))).join(';')).join('\r\n');
       telecharger(new Blob(['﻿', csv], { type: 'text/csv;charset=utf-8' }), nomFichier('csv'));
-      return etat(`CSV : ${n} (séparées par des points-virgules, pour Excel en français).`, 'ok');
+      return etat(`CSV : ${n} (séparées par des points-virgules, pour Excel en français)${t.exclues.length ? ` ; sans la diffusion : ${t.exclues.join(', ').toLowerCase()}` : ''}.`, 'ok');
     }
     const tsv = [t.entetes, ...t.lignes.map(l => l.map(c => texteCase(c, '\t')))].map(l => l.map(v => cellTsv(String(v))).join('\t')).join('\n');
     const ok = await copierTexte(tsv);
     if (!ok) return etat('La copie n’a pas pu se faire : exportez plutôt en Excel, puis importez le fichier dans Google Sheets.', 'erreur');
     window.open('https://sheets.new', '_blank', 'noopener');
-    etat(`Tableau copié (${n}) : dans la feuille Google qui s’ouvre, collez-le (Ctrl+V).`, 'ok');
+    etat(`Tableau copié (${n}${t.exclues.length ? `, sans la diffusion : ${t.exclues.join(', ').toLowerCase()}` : ''}) : dans la feuille Google qui s’ouvre, collez-le (Ctrl+V).`, 'ok');
   }
 
   // ———— un .xlsx sans bibliothèque : un classeur d'une feuille (en-tête en gras, figée, filtrable ; jours et heures en
@@ -2041,57 +2250,81 @@ const TABLEUR = (() => {
   // ==================== l'import : des lignes copiées d'un tableur
   // ———— importer des lignes copiées d'un tableur : une ligne par séance, au moins le jour et le spectacle ; la première
   // ligne peut nommer les colonnes (sinon, l'ordre de l'export). Un aperçu dit ce que chaque ligne deviendra.
-  const ENTETES_LUS = [['jour', /^(jour|date|dates|le)$/], ['heure', /^(heure|horaire|heure de debut|debut)$/], ['fin', /^(fin|heure de fin)$/], ['spectacle', /^(spectacle|piece|titre|creation)$/],
-    ['lieu', /^(lieu|salle|theatre|structure|lieu de representation)$/], ['commune', /^(commune|ville|localite)$/], ['public', /^(public|type de public)$/], ['statut', /^(statut|etat)$/],
-    ['nature', /^(nature|type)$/], ['distribution', /^(distribution|comediens|comediennes|equipe|artistes|interpretes)$/], ['billetterie', /^(billetterie|lien|reservation|reservations)$/],
-    ['precisions', /^(precisions?|remarques?)$/], ['organisateur', /^(organisateur|organisatrice|programmateur|programmatrice)$/], ['contact', /^(contact|contacts)$/],
-    ['contrat', /^contrat$/], ['montant', /^(cession( ht)?|montant( de cession)?( ht)?|prix( de cession)?)( \(?(€|eur)\)?)?$/], ['notes', /^(notes?|commentaires?)$/], ['annulee', /^(seance annulee|annulee|annule)$/], ['site', /^site$/]];
-  const ORDRE_EXPORT = COLONNES.map(c => c.k);
+  // Les en-têtes qu'on reconnaît viennent des colonnes du schéma (leur `entetes`, lu sur le titre sans accent, sans signe, en minuscules) : ajouter
+  // une colonne au schéma, c'est la rendre lisible ici. Le jour, l'heure, la fin, le spectacle, le lieu (avec la commune) et la distribution se lisent
+  // à part (ils décident de la date et de la séance, et leurs erreurs ont leurs phrases) ; tout le reste passe par le `lire` et le `ecrire` de la
+  // colonne, sur un formulaire de date qui ne contient que ce que la ligne dit (nouvelleDate() donne les valeurs d'office à la date neuve).
+  const ENTETES_LUS = COLONNES.filter(c => c.entetes).map(c => [c.k, c.entetes]);
+  const A_PART = new Set(['jour', 'heure', 'fin', 'spectacle', 'lieu', 'commune', 'distribution']);
+  const enteteNet = x => norm(x).replace(/[^a-z ]/g, '').replace(/\s+/g, ' ').trim();
+  // sans ligne de titres, les colonnes sont celles que le tableau montre (au moment du collage, hors lectures et icône) ; hors du Complet, ou sans
+  // tableau à l'écran, celles de la disposition d'origine
+  function colonnesSupposees() {
+    const vues = !modeSimple() && $('#tab-corps') && T.cols.length ? T.cols : COLONNES.filter(c => (!c.si || c.si()) && !c.horsOrigine);
+    return vues.filter(c => c.type !== 'action').map(c => (c.entetes ? c.k : null));   // (une colonne sans titre à lire garde sa place : null, sinon tout ce qui suit serait lu une colonne trop tôt)
+  }
+  // ce que la ligne a compris d'une colonne, en toutes lettres (l'aperçu)
+  const texteLu = (c, v) => (c.type === 'case' ? (v ? 'oui' : 'non') : c.type === 'riche' ? pl(v.length, 'précision') : c.type === 'choix' ? libelleDe(c.choix(), v) || String(v) : v === '' ? '(vide)' : c.nombre ? nombreFr(v) : String(v));
   function lireImport(texte) {
     const m = lireTsv(texte);
     if (!m.length) return { lignes: [], cles: [] };
-    const tete = m[0].map(x => norm(x).trim().replace(/[^a-z ]/g, '').replace(/\s+/g, ' '));
+    const tete = m[0].map(enteteNet);
     const lues = tete.map(t => (ENTETES_LUS.find(([, re]) => re.test(t)) || [null])[0]);
     const avecTete = lues.filter(Boolean).length >= 2;
-    const cles = avecTete ? lues : ORDRE_EXPORT.filter(k => colonne(k) && (!colonne(k).si || colonne(k).si()));
+    const cles = avecTete ? lues : colonnesSupposees();
+    const rg = $('#tab-corps') && !modeSimple() ? reglages() : null;
+    const avertir = !avecTete && rg && (rg.jeu || rg.masquees.length || rg.montrees.length) ? `Le tableau montre ${rg.jeu ? 'un jeu de colonnes' : rg.masquees.length ? 'des colonnes masquées' : 'des colonnes ajoutées'} : sans ligne de titres, les colonnes sont supposées être celles du tableau. Ajoutez une ligne de titres (Jour, Spectacle, Heure…) pour être sûr de ce qui est lu.` : '';
+    const laissees = [...new Set(cles.filter(k => k && !A_PART.has(k) && (colonne(k).type === 'lecture' || colonne(k).type === 'action' || (colonne(k).si && !colonne(k).si()))).map(k => colonne(k).l))];
     const virtuelles = [];   // les dates que l'import créera, pour l'aperçu
     const lignes = (avecTete ? m.slice(1) : m).map((cases, i) => {
       const v = {}; cles.forEach((k, j) => { if (k) v[k] = (cases[j] ?? '').trim(); });
       const jour = lireJour(v.jour, AUJ), sp = trouverSpectacle(v.spectacle || ''), heure = lireHeure(v.heure), fin = lireHeure(v.fin);
-      const erreurs = [], notes = [];
+      const erreurs = [], notes = [], lus = {};
       if (!jour) erreurs.push(v.jour ? `jour illisible : « ${v.jour} »` : 'pas de jour');
       if (!sp) erreurs.push(v.spectacle ? `spectacle inconnu : « ${v.spectacle} »` : 'pas de spectacle');
       if (heure === undefined) erreurs.push(`heure illisible : « ${v.heure} »`);
+      if (fin === undefined) notes.push(`heure de fin « ${v.fin} » ignorée`);
       let lieuId = null;
       if (v.lieu || v.commune) { lieuId = trouverLieu(v.lieu || v.commune, v.lieu ? v.commune : ''); if (lieuId == null || lieuId === undefined) { notes.push(`lieu inconnu : « ${[v.lieu, v.commune].filter(Boolean).join(', ')} » (laissé vide)`); lieuId = null; } }
-      const pub = v.public ? lireChoix(PUBLICS)(v.public) : 'tout_public', statut = v.statut ? lireChoix(STATUTS)(v.statut) : undefined, nat = v.nature ? lireChoix(NATURES_DATE)(v.nature) : undefined;
-      if (v.public && !pub) notes.push(`public « ${v.public} » ignoré`);
-      if (v.statut && !statut) notes.push(`statut « ${v.statut} » ignoré`);
       const equipe = v.distribution ? lirePersonnes(v.distribution) : null;
       if (v.distribution && !equipe) notes.push('distribution : un nom n’est pas reconnu (ignorée)');
-      const contrat = v.contrat ? lireChoix(CONTRATS)(v.contrat) : '';
+      if (v.commune) lus.commune = v.commune;
+      if (fin) lus.fin = heureT(fin);
+      if (equipe) lus.distribution = prenoms(equipe).join(', ');
+      // tout le reste, colonne par colonne : lire, puis ecrire sur le formulaire de la ligne (P) — la séance de la ligne (rep) est celle que repDe y retrouve
+      const rep = { jour, heure: heure || '', fin: fin || '', public: 'tout_public', annulee: false, lien: '', note: '' };
+      const P = { spectacle_id: sp, representations: [rep], suivi: {}, chiffres: {} };
+      cles.forEach(k => {
+        const c = k && !A_PART.has(k) ? colonne(k) : null, brut = v[k];
+        if (!c || c.type === 'lecture' || c.type === 'action' || (c.si && !c.si()) || brut === '' || brut === undefined) return;
+        const xv = { d: { id: null, spectacle_id: sp, nature: P.nature || 'representations', statut: P.statut || 'confirmee', debut: jour || '', fin: jour || '' }, r: rep, rs: [rep], n: 1 };
+        const raison = c.fige?.(xv);
+        if (raison) { notes.push(`${c.l} : ${raison.toLowerCase()} (ignoré)`); return; }
+        const val = c.lire(brut, xv);
+        if (val === undefined) { notes.push(`${c.l.toLowerCase()} « ${brut} » ignoré`); return; }
+        try { c.ecrire(P, xv, val); lus[k] = texteLu(c, val); } catch (e) { notes.push(`${c.l.toLowerCase()} « ${brut} » ignoré`); }
+      });
+      const { representations: _r, spectacle_id: _s, suivi, chiffres, ...date } = P;
+      const reprise = Object.keys(date).length > 0 || Object.keys(suivi).length > 0 || Object.keys(chiffres).length > 0 || !!equipe?.length;   // (ce qui ne tient pas dans une séance : une date qui existe déjà ne le reçoit pas)
       let cible = '';
       if (!erreurs.length) {
         const d = dateVoisine(sp, lieuId, jour), w = virtuelles.find(x => x.sp === sp && x.lieu === lieuId && Math.abs(Date.parse(x.debut) - Date.parse(jour)) <= 864e5 * Math.max(1, x.n));
-        cible = d ? `ajoutée à la date du ${jourCourt(d.debut)}` : w ? 'avec la nouvelle date de la ligne ' + w.ligne : 'nouvelle date';
+        cible = d ? `ajoutée à la date du ${jourCourt(d.debut)}${reprise ? ' ; seule la séance est reprise, le reste de la ligne ne l’est pas (la date existe)' : ''}` : w ? 'avec la nouvelle date de la ligne ' + w.ligne : 'nouvelle date';
         if (!d && !w) virtuelles.push({ sp, lieu: lieuId, debut: jour, n: 1, ligne: i + 1 + (avecTete ? 1 : 0) });
       }
-      return { n: i + 1 + (avecTete ? 1 : 0), v, ok: !erreurs.length, erreurs, notes, cible,
+      return { n: i + 1 + (avecTete ? 1 : 0), v, ok: !erreurs.length, erreurs, notes, cible, lus,
         seance: { jour, heure: heure || '', fin: fin || '', spectacle_id: sp, lieu_id: lieuId,
-          seance: { public: pub || 'tout_public', note: v.precisions || '', annulee: colonne('annulee').lire(v.annulee || '') === true },
-          date: { ...(statut ? { statut } : {}), ...(nat ? { nature: nat } : {}), ...(v.billetterie && colonne('billetterie').lire(v.billetterie) ? { lien: colonne('billetterie').lire(v.billetterie) } : {}) },
-          suivi: { ...(v.organisateur ? { organisateur: v.organisateur } : {}), ...(v.contact ? { contact: v.contact } : {}), ...(contrat ? { contrat } : {}), ...(v.notes ? { notes: v.notes } : {}),
-            ...(v.montant && E.ideale && colonne('montant').lire(v.montant) !== undefined && colonne('montant').lire(v.montant) !== '' ? { montant_cession: colonne('montant').lire(v.montant) } : {}) },
-          equipe: equipe || null } };
+          seance: { public: rep.public, annulee: rep.annulee, lien: rep.lien, note: rep.note },
+          date, suivi, chiffres: Object.keys(chiffres).length ? chiffres : null, equipe: equipe || null } };
     });
-    return { lignes, cles: cles.filter(Boolean), avecTete };
+    return { lignes, cles: cles.filter(Boolean), avecTete, supposees: !avecTete, laissees, avertir };
   }
   function importer() {
     const dlg = document.createElement('dialog');
     dlg.className = 'tab-dialogue large';
     dlg.setAttribute('aria-labelledby', 'tab-im-titre');
     dlg.innerHTML = `<div class="tab-dialogue-boite"><h2 id="tab-im-titre">Importer des séances</h2>
-      <p class="aide">Copiez des lignes dans un tableur (Excel, Google Sheets, LibreOffice) et collez-les ici : une ligne par séance, avec au moins le jour et le spectacle. La première ligne peut donner les titres des colonnes (Jour, Heure, Spectacle, Lieu, Commune, Public…) ; sans elle, les colonnes sont lues dans l’ordre de l’export. Rien ne s’écrit avant « Créer ».</p>
+      <p class="aide">Copiez des lignes dans un tableur (Excel, Google Sheets, LibreOffice) et collez-les ici : une ligne par séance, avec au moins le jour et le spectacle. La première ligne peut donner les titres des colonnes : tous ceux du tableau sont reconnus (Jour, Heure, Spectacle, Lieu, Commune, Public, Statut, Ligne du site, Précisions du site, Jauge, Spectateurs…) ; sans elle, les colonnes sont lues dans l’ordre de celles du tableau. Une ligne qui rejoint une date qui existe déjà n’y ajoute que sa séance. Rien ne s’écrit avant « Créer ».</p>
       <label for="tab-im-texte" class="lib">Les lignes</label><textarea id="tab-im-texte" rows="6" spellcheck="false" placeholder="Jour&#9;Heure&#9;Spectacle&#9;Lieu"></textarea>
       <div class="tab-im-apercu" id="tab-im-apercu" aria-live="polite"></div>
       <div class="fm-boutons"><button type="button" class="btn principal" id="tab-im-ok" disabled>Créer</button><button type="button" class="btn" id="tab-im-non">Fermer</button></div></div>`;
@@ -2099,10 +2332,13 @@ const TABLEUR = (() => {
     let lu = { lignes: [] };
     const apercu = () => {
       lu = lireImport($('#tab-im-texte', dlg).value);
-      const bons = lu.lignes.filter(x => x.ok);
-      $('#tab-im-apercu', dlg).innerHTML = lu.lignes.length ? `<p><b>${pl(bons.length, 'séance')} à créer</b>${lu.lignes.length - bons.length ? ` ; ${pl(lu.lignes.length - bons.length, 'ligne')} de côté` : ''}${lu.avecTete ? ` · colonnes lues : ${esc(lu.cles.map(k => colonne(k)?.l || k).join(', '))}` : ''}.</p>
-        <div class="tab-im-cadre"><table class="simple"><thead><tr><th scope="col">Ligne</th><th scope="col">Jour</th><th scope="col">Heure</th><th scope="col">Spectacle</th><th scope="col">Lieu</th><th scope="col">Ce qui se fera</th></tr></thead><tbody>
-        ${lu.lignes.map(x => `<tr class="${x.ok ? '' : 'tab-im-non'}"><td>${x.n}</td><td>${esc(x.seance.jour ? jourCourt(x.seance.jour) : x.v.jour || '')}</td><td>${esc(x.seance.heure ? heureT(x.seance.heure) : '')}</td><td>${esc(spectacle(x.seance.spectacle_id)?.titre || x.v.spectacle || '')}</td><td>${esc(x.seance.lieu_id ? ouDit(x.seance.lieu_id) : '')}</td>
+      const bons = lu.lignes.filter(x => x.ok), noms = lu.cles.map(k => colonne(k)?.l || k).join(', ');
+      // (les colonnes lues au-delà des quatre d'office, chacune dans l'aperçu : ce que la ligne en a compris)
+      const autres = lu.cles.filter(k => !['jour', 'heure', 'spectacle', 'lieu'].includes(k));
+      $('#tab-im-apercu', dlg).innerHTML = lu.lignes.length ? `<p><b>${pl(bons.length, 'séance')} à créer</b>${lu.lignes.length - bons.length ? ` ; ${pl(lu.lignes.length - bons.length, 'ligne')} de côté` : ''} · ${lu.avecTete ? 'colonnes lues' : 'pas de ligne de titres, colonnes supposées'} : ${esc(noms)}${lu.laissees.length ? ` · laissées de côté (en lecture seule ou absentes de la base) : ${esc(lu.laissees.join(', '))}` : ''}.</p>
+        ${lu.avertir ? `<p class="tab-im-alerte" role="status">${esc(lu.avertir)}</p>` : ''}
+        <div class="tab-im-cadre"><table class="simple"><thead><tr><th scope="col">Ligne</th><th scope="col">Jour</th><th scope="col">Heure</th><th scope="col">Spectacle</th><th scope="col">Lieu</th>${autres.map(k => `<th scope="col">${esc(colonne(k)?.l || k)}</th>`).join('')}<th scope="col">Ce qui se fera</th></tr></thead><tbody>
+        ${lu.lignes.map(x => `<tr class="${x.ok ? '' : 'tab-im-non'}"><td>${x.n}</td><td>${esc(x.seance.jour ? jourCourt(x.seance.jour) : x.v.jour || '')}</td><td>${esc(x.seance.heure ? heureT(x.seance.heure) : '')}</td><td>${esc(spectacle(x.seance.spectacle_id)?.titre || x.v.spectacle || '')}</td><td>${esc(x.seance.lieu_id ? ouDit(x.seance.lieu_id) : '')}</td>${autres.map(k => `<td>${esc(x.lus[k] ?? '')}</td>`).join('')}
           <td>${x.ok ? esc(x.cible) : `<b class="tab-im-erreur">${esc(x.erreurs.join(' ; '))}</b>`}${x.notes.length ? `<br><small>${esc(x.notes.join(' ; '))}</small>` : ''}</td></tr>`).join('')}</tbody></table></div>` : '';
       $('#tab-im-ok', dlg).textContent = bons.length ? `Créer ${pl(bons.length, 'séance')}` : 'Créer';
       $('#tab-im-ok', dlg).disabled = !bons.length;
@@ -2135,6 +2371,6 @@ const TABLEUR = (() => {
     $('#tab-im-texte', dlg).focus();
   }
 
-  return { vue, lireJour, lireHeure, lireTsv, xlsx, lireImport, lecteurs: { choix: lireChoix, spectacle: trouverSpectacle, lieu: trouverLieu, personnes: lirePersonnes },
-    colonnes: { masquer, montrer, figer, ajuster: ajusterEtGarder, deplacer, origine, retablir, ouvrirChoix, actions }, clesFenetres: FENETRES_TABLEUR.slice() };
+  return { vue, lireJour, lireHeure, lireTsv, xlsx, lireImport, tableau, exporter, lecteurs: { choix: lireChoix, spectacle: trouverSpectacle, lieu: trouverLieu, personnes: lirePersonnes },
+    colonnes: { masquer, montrer, figer, ajuster: ajusterEtGarder, deplacer, origine, retablir, ouvrirChoix, actions, jeu: choisirJeu }, jeux: JEUX.map(j => ({ ...j })), clesFenetres: FENETRES_TABLEUR.slice() };
 })();

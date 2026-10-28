@@ -13,7 +13,7 @@
      'tableur' ou 'carte', à l'ordinateur seulement ; lue par le lien du menu et la page d'ouverture, index.html), theme ('nuit',
      'jour' ou 'appareil') et densite ('confortable' ou 'compacte') : l'apparence, réglée dans le menu (cadre.js), dont le
      miroir de l'appareil est aussi lu par index.html,
-     tableur.colonnes (les colonnes du tableur, par mode : { complet: { ordre, masquees, figees, largeurs, vides },
+     tableur.colonnes (les colonnes du tableur, par mode : { complet: { ordre, masquees, figees, largeurs, vides, jeu, montrees },
      simple: { largeurs } } ; tableur.js la normalise à chaque lecture), tableur.mode (le mode du tableur : 'simple', une ligne par
      date, ou 'complet', une ligne par séance ; tableur.js, écrite aussitôt au clic du segment des modes ; absente : Simple),
      fenetres.tiroir (la largeur du tiroir, en pixels) et fenetres.liste
