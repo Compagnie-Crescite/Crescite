@@ -41,6 +41,7 @@ node site/champs.mjs               # la fiche d'une date : le schéma de ses cha
 node site/vues-dates.mjs           # les trois vues de Représentations (pilule, filtres communs, ligne visée), dans Chromium (après le build)
 node site/theme.mjs                # le thème (nuit, jour, appareil) et la densité, dans Chromium, sur la même base fictive (après le build)
 node site/distribution.mjs         # la distribution à l'écran : la cellule d'une date, qui sera prévenu, la fiche, l'impact, dans Chromium (après le build)
+node site/fenetres.mjs             # les fenêtres ajustables : la poignée du tiroir et le séparateur de la liste, dans Chromium (après le build)
 bash site/bancs-admin.sh           # le build, puis tous les bancs de l'administration l'un après l'autre ; --tout y joint
                                    # ceux de l'espace de l'équipe (sinon, seulement si gestes.js, planning.js ou feuille.js changent)
 node site/reactivite.mjs /tmp/x index --strict  # les budgets de réactivité du site, au bureau et au téléphone ralenti ×4
@@ -364,6 +365,24 @@ compte du projet inscrit dans `crescite_admins`.
   bibliothèque, un nom par dessin (`ICONES.svg('calendrier', { taille: 22 })`), que l'en-tête, la barre du téléphone, les
   tuiles, les menus et le planning de l'administration reprennent ; l'espace de l'équipe garde ses tracés. La page
   `#/essai/icones` les montre toutes en grille, le nom sous chacune (hors du menu et de la recherche).
+- **Les fenêtres ajustables** (`admin/fenetres.js`, chargé avant le tiroir) : à l'ordinateur, le bord d'une surface se tire.
+  Une poignée est une bande invisible de 6 px au bord ; au survol ou au clavier, une ligne de 2 px à la couleur de la
+  saison paraît, et le curseur dit le sens. Le bord gauche du tiroir se tire (de 480 px à l'écran moins 80 px : le voile
+  reste cliquable) ; un bouton « ⋯ » dans son en-tête, ou le clic droit, propose « Taille d'origine », « Plus large » et
+  « Pleine page ». Entre la liste et la fiche (Représentations, Lieux, Équipe, Ateliers, Textes, Espace pro, Demandes de
+  devis, Planning › propositions), un séparateur règle la largeur de la liste, la même pour ces huit pages (de 340 px à
+  55 % du contenu). Double-clic ou Entrée sur la poignée : la taille d'origine, en un cinquième de seconde (rien ne bouge
+  si l'appareil demande moins d'animations) ; au clavier, ← → règlent de 16 px (Maj : 64 px), Début et Fin vont aux deux
+  bouts. La taille se garde avec le compte, une clé par surface (`fenetres.tiroir`, `fenetres.liste`), écrite une seule
+  fois, au relâchement ; sur un écran plus petit, elle est ramenée dans ce qu'il permet. Rien de tout cela au
+  téléphone ni au doigt (la poignée n'existe qu'à partir de 641 px avec un pointeur précis), ni dans l'espace de
+  l'équipe, ni à l'impression. Pendant le geste, rien d'autre ne bouge (les lignes d'une liste ne glissent pas, le pied de
+  la fiche ne se remesure pas). `node site/fenetres.mjs` le vérifie dans Chromium, hors ligne, sur une base fictive
+  (104 vérifications : la poignée et ses valeurs, un glisser qui n'écrit qu'une fois, la taille retrouvée et bornée à
+  l'écran, le double-clic, les flèches, le bouton « ⋯ », le recul des tiroirs empilés, le séparateur de la liste sur les
+  huit pages et après un enregistrement, le squelette du chargement, la remise de toutes les tailles et son « Annuler »,
+  le téléphone et le tactile, l'impression, aucune tâche de plus de 200 ms à `CPU=4` ; captures dans
+  `site/dist/shots-fenetres/`). Les coins des boîtes de dialogue, « Pleine largeur » et « Disposition d'origine » suivent.
 - **Le niveau supérieur** (dix modules chargés après les menus, chacun dans son fichier) :
   - **Les fiches en tiroir** (`admin/tiroir.js`) : une date, un lieu, une personne, une demande de devis ou une piste de
     diffusion s'ouvrent dans un panneau qui glisse à droite, depuis n'importe où (le tableau de bord, le Kanban, le
@@ -372,6 +391,8 @@ compte du projet inscrit dans `crescite_admins`.
     place (ses enregistrements redessinent le tiroir, ses suppressions le ferment). Dans sa rubrique (Représentations,
     Lieux, Équipe), une fiche s'ouvre à côté de sa liste, comme avant. L'adresse `#/diffusion/piste/3` ouvre le Kanban
     puis la piste ; une carte du Kanban cliquée fait de même.
+    Son bord gauche se tire (voir « Les fenêtres ajustables ») ; quand le tiroir du dessus est plus large, celui qu'il
+    couvre recule d'autant.
   - **La sélection multiple** (`admin/selection.js`) : Maj+clic (ou « Sélectionner » dans les filtres, ou la barre
     d'espace) sur des dates, des personnes, des lieux, des cartes du Kanban ou des notes de frais, puis une barre
     flottante : statut, publier ou masquer, écrire aux contacts, exporter en CSV, dupliquer vers…, devis, supprimer
@@ -1067,14 +1088,17 @@ fait de même quand le compte connecté administre. Trois fonctions, à déploye
 **Les préférences.** Le sixième script, `supabase/migrations/20261025_crescite_preferences.sql`, s'exécute après les cinq
 autres, de la même façon, et peut être relancé. Il ajoute `crescite_preferences` : ce que chacun règle une fois et
 retrouve sur tous ses appareils, une valeur par compte et par clé. Chacun ne lit et n'écrit que les siennes,
-l'administration comprise ; le public n'y a aucun droit. Sept clés servent aujourd'hui : `accueil.tableau` (la
+l'administration comprise ; le public n'y a aucun droit. Neuf clés servent aujourd'hui : `accueil.tableau` (la
 disposition du tableau de bord), `planning.masques` (les personnes masquées du planning, en liste brute, que lit aussi
 l'espace de l'équipe), `representations.avant` (le panneau « À compléter avant la tournée » : ouvert ou fermé, 30, 60
 ou 90 jours), `menu.replie` (le menu latéral de l'administration, replié ou déplié : vrai ou faux, absente tant qu'on
 ne l'a pas choisi ; elle ne se garde que sur un grand écran, voir « Le cadre et le menu latéral »), `representations.vue`
 (la dernière vue de Représentations, `liste`, `tableur` ou `carte` : écrite à l'ordinateur seulement, voir
 Représentations), `theme` (`nuit`, `jour` ou `appareil` ; la nuit tant qu'on n'a pas choisi) et `densite` (`confortable`
-ou `compacte` ; voir « L'apparence »). Une clé nouvelle se nomme `rubrique.reglage`, en minuscules, et sa valeur garde la même forme d'une
+ou `compacte` ; voir « L'apparence »), puis `fenetres.tiroir` (la largeur du tiroir, en pixels) et `fenetres.liste` (la
+largeur de la colonne de la liste à côté d'une fiche, en pixels), absentes tant qu'on ne les a pas tirées, ramenées dans ce
+que l'écran permet à chaque lecture (voir « Les fenêtres ajustables ») ; les autres fenêtres ajustables auront leur clé
+`fenetres.…` en venant. Une clé nouvelle se nomme `rubrique.reglage`, en minuscules, et sa valeur garde la même forme d'une
 version à l'autre. Tous les modules passent par un seul outil, `admin/prefs.js` (`PREFS`), qui lit le compte en une
 requête à l'ouverture, répond ensuite sans attendre, et écrit sans faire attendre : le réglage est gardé sur l'appareil
 tout de suite (sous `crescite-prefs:<compte>` : une copie par compte, rien ne se mélange sur un ordinateur partagé),

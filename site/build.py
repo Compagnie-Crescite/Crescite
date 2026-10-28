@@ -1124,7 +1124,7 @@ def admin(dest):
     # les préférences du compte, les icônes (admin seulement : l'équipe garde ses tracés), la feuille de route et le planning
     # (communs avec equipe/), l'équipe, la rubrique Planning (propositions de dates), le tableau de bord, le tableur
     for f in ("prefs.js", "icones.js", "feuille.js", "equipe.js", "distribution.js", "planning.js", "disponibilites.js", "tableau.js", "tableur.js", "gestes.js", "menus.js",
-              "corbeille.js", "tiroir.js", "selection.js", "parcours.js", "gardefous.js", "series.js", "modeles.js", "notes.js", "carnet.js", "fond-carte.js", "tournee.js", "cadre.js", "mobile.js", "habillage.js",
+              "corbeille.js", "fenetres.js", "tiroir.js", "selection.js", "parcours.js", "gardefous.js", "series.js", "modeles.js", "notes.js", "carnet.js", "fond-carte.js", "tournee.js", "cadre.js", "mobile.js", "habillage.js",
               "manifest.webmanifest", "sw.js"):
         shutil.copyfile(ROOT / "admin" / f, dest / "admin" / f)
     for f in (ROOT / "admin" / "vendor").iterdir():

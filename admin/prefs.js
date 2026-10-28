@@ -11,7 +11,10 @@
      menu.replie (le menu latéral replié ou déplié, cadre.js), representations.vue (la dernière vue de Représentations : 'liste',
      'tableur' ou 'carte', à l'ordinateur seulement ; lue par le lien du menu et la page d'ouverture, index.html), theme ('nuit',
      'jour' ou 'appareil') et densite ('confortable' ou 'compacte') : l'apparence, réglée dans le menu (cadre.js), dont le
-     miroir de l'appareil est aussi lu par index.html.
+     miroir de l'appareil est aussi lu par index.html,
+     fenetres.tiroir (la largeur du tiroir, en pixels) et fenetres.liste
+     (la colonne de la liste à côté d'une fiche, en pixels) : fenetres.js, une écriture par geste, au relâchement ; les clés
+     fenetres.* suivantes (le contenu sur toute la largeur, les boîtes de dialogue) viendront avec leur surface.
    - La lecture est synchrone : PREFS.charger() lit tout le compte en une requête (select cle, valeur, modifie_le), après
      quoi PREFS.lire(cle, defaut) répond depuis la mémoire, puis depuis le miroir de l'appareil, puis le défaut. Les
      modules attendent charger() (chargerTout) ; actualiser le rejoue avec { relire: true } sans écraser un réglage encore

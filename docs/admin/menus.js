@@ -236,6 +236,18 @@
   G.menu({ cible: 'a.ligne[href], a.tb-l[href], a.carte-sp[href], .crm-carte[data-prospect-id]', titre: el => titreObjet(objetDe(el)) || (el.dataset.j ? 'Modification' : ''),
     actions: el => { const avant = [...actionsUrgence(el), ...actionsFil(el)]; const o = objetDe(el); if (o) return [...avant, ...actionsObjet(o, el)]; const href = el.getAttribute('href'); return [...avant, ...(href && href.startsWith('#/') ? [ouvrirA(href), ...liens(href)] : [])]; } });
   G.menu({ cible: '.journal-ligne', titre: 'Journal', actions: actionsJournal });
+  // l'en-tête d'un tiroir (le clic droit, Maj+F10, ou son bouton « ⋯ ») : sa taille. La commande vient de la poignée du tiroir
+  // (FENETRES.de) : sans poignée (le téléphone, le doigt), il n'y a rien à proposer. « Plus large » ajoute 160 px.
+  function actionsTiroir(tete) {
+    const f = typeof FENETRES !== 'undefined' ? FENETRES.de(tete.closest('.tiroir')) : null;
+    if (!f) return [];
+    const pleine = $('[data-tiroir-pleine]', tete);
+    return [
+      { libelle: 'Taille d’origine', detail: `${f.defaut()} px`, icone: ICO.reglages, faire: () => f.origine({ anime: true }) },
+      { libelle: 'Plus large', detail: '+ 160 px', icone: ICO.plus, faire: () => f.regler(f.lire() + 160, { anime: true }) },
+      pleine ? { libelle: 'Pleine page', detail: 'ouvre la fiche à sa place', icone: ICO.ouvrir, faire: () => pleine.click() } : null];   // (le lien de l'en-tête, qui va à la page : data-tiroir-pleine)
+  }
+  G.menu({ cible: '.tiroir-tete', titre: 'Taille du tiroir', actions: actionsTiroir });
   G.menu({ cible: '.tb-tuile', titre: sec => (typeof TABLEAU !== 'undefined' && TABLEAU.TUILES[sec.dataset.k]?.titre) || 'Tuile',
     actions: (sec, infos) => { const b = infos && infos.x != null ? document.elementFromPoint(infos.x, infos.y) : null; return b && b.closest('.tb-actions .btn') ? actionsActionRapide(b.closest('.tb-actions .btn')) : b && b.closest('a.tb-l') ? [] : actionsTuile(sec); } });
   G.menu({ cible: '.tb-actions .btn', titre: 'Action rapide', actions: actionsActionRapide });
@@ -343,7 +355,9 @@
       { titre: 'Une fiche', ici: fiche, lignes: [
         { t: [['Alt', '↑'], ['Alt', '↓']], d: 'La fiche précédente, la suivante, dans l’ordre de la liste' },
         { t: [[CMD, 'S']], d: 'Enregistrer' },
-        { t: [['Échap']], d: 'Fermer le tiroir (le dernier ouvert)' }] },
+        { t: [['Échap']], d: 'Fermer le tiroir (le dernier ouvert)' },
+        { g: 'Glisser le bord du tiroir', d: 'Régler sa largeur (la poignée se règle aussi aux flèches, ← →) ; double-clic : la taille d’origine ; « ⋯ » dans son en-tête : plus large, taille d’origine' },
+        { g: 'Glisser le séparateur', d: 'Entre une liste et sa fiche : régler la largeur de la liste, pour toutes les pages' }] },
       { titre: 'Le tableau de bord', ici: h === '#/accueil', lignes: [
         { t: [['J'], ['K']], d: 'La ligne à traiter suivante, la précédente' },
         { t: [['Entrée']], d: 'La traiter sur place' },

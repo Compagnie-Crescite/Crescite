@@ -13,7 +13,7 @@ Quatre durées, trois courbes, et rien qui bouge sans raison.
 | Paraître (un bloc, un menu, un contenu lu après la page) | 150 à 450 ms | `cubic-bezier(.2, .8, .2, 1)`, le « doux » | `monte`, `ad-arrive`, `arrive`, `ad-neuf`, `neuve` |
 | Sauter (un compte, un badge, une coche, un bouton qui a réussi, l'icône du thème ou de la densité qu'on vient de choisir) | 450 ms | `cubic-bezier(.3, 1.6, .5, 1)`, le ressort | `pop`, `ad-pop`, `fait` |
 | Glisser à sa place (une ligne, un billet, une carte qui change de rang) | 380 à 420 ms | le doux, par l'API Web Animations (FLIP) | `glisserVers`, `reperer` |
-| Suivre le doigt (le retour, une notification, tirer pour rafraîchir) | le temps du geste, puis 180 à 300 ms | linéaire sous le doigt, le doux pour revenir | `brancherRetour`, `brancherGlisserNotif`, `brancherTirer` |
+| Suivre le doigt ou le pointeur (le retour, une notification, tirer pour rafraîchir, le bord d'une fenêtre qu'on tire) | le temps du geste, puis 180 à 300 ms ; la remise d'une fenêtre à sa taille d'origine, 220 ms | linéaire sous le doigt ou le pointeur (une mise à jour par image, jamais un transform), le doux pour revenir | `brancherRetour`, `brancherGlisserNotif`, `brancherTirer`, `FENETRES.poignee` |
 | Passer d'une vue à l'autre | 220 à 300 ms | le doux, par les View Transitions | `changerVue`, `changerVueAdmin` |
 | Replier le menu latéral (la colonne passe de 240 à 64 px, ou l'inverse) | 220 ms ; les libellés en 120 ms d'opacité | le doux, par la propriété déclarée `--large-menu` (`@property`) : la grille et l'aside la lisent, le contenu suit | `--large-menu` (`html`) |
 | Viser une ligne (le champ qu'un lien vise, la ligne que « Voir dans le tableur » ouvre) | 1,6 s | `ease-out` | `visee`, `visee-ligne` |
@@ -45,6 +45,11 @@ change de chiffre sans rouler (`cadre.mjs` en vérifie le calcul : aucune tâche
 - **Une entrée ne se rejoue pas** quand la page se redessine après une lecture de la base : `main.entree` (administration)
   ne dure qu'une seconde, `main.rafraichi` (équipe) garde la page immobile, les saisons passées n'arrivent en cascade qu'à
   l'ouverture de leur pli (`.saison-corps.neuve`).
+- **Tirer le bord d'une fenêtre suit le pointeur, sans rien d'autre** (`FENETRES.poignee`, `html.redim`) : une mise à jour
+  par image, en largeur ou en variable, jamais en transform ; pendant le geste les transitions sont coupées (pas les
+  animations), les lignes d'une liste ne glissent pas (`reperer` rend une Map vide) et le pied d'une fiche ne se remesure
+  pas ; la remise à la taille d'origine s'anime une fois, 220 ms, le doux ; le tiroir, lui, arrive et repart au doux
+  (`transform` seul, 220 ms). Sous « moins d'animations », la taille d'origine revient d'un coup.
 - **Une mesure ne se fait pas sous un transform** : ce qu'un pli ouvre paraît en fondu, sans translation, pour que les
   lignes qui glissent se mesurent juste.
 - **Ce qui s'anime reste lisible aux lecteurs d'écran** : « en ce moment » est aussi un `aria-current="time"`, un bouton
@@ -76,8 +81,9 @@ manque.
 latéral, ses raccourcis et ses badges), `champs.mjs` (la fiche d'une date : le schéma de ses champs, la jauge, le bandeau
 « Modifiée ailleurs », qui paraît en `ad-arrive`), `vues-dates.mjs` (les trois vues de Représentations : la pilule, les
 filtres communs, le fondu, le focus, la ligne visée, la vue retenue et les touches V puis L / T / C), `theme.mjs` (le
-thème et la densité : le jour, « appareil » qui suit le système, la compacte, le menu replié) et `distribution.mjs` (la
-distribution à l'écran : la cellule d'une date, qui sera prévenu, la boîte d'impact, la fiche d'une date). Ils ne touchent presque
+thème et la densité : le jour, « appareil » qui suit le système, la compacte, le menu replié), `distribution.mjs` (la
+distribution à l'écran : la cellule d'une date, qui sera prévenu, la boîte d'impact, la fiche d'une date) et
+`fenetres.mjs` (les fenêtres ajustables : la poignée du tiroir et le séparateur de la liste). Ils ne touchent presque
 pas à ce vocabulaire : `cadre.mjs` mesure seulement que le repli anime la colonne une fois, et rien sous « moins
 d'animations », et que le compte des badges ne tient jamais la page plus de 200 ms à `CPU=4` ; `vues-dates.mjs`, que le
 passage entre les trois vues est un fondu ; `theme.mjs`, qu'aucune transition de couleur ne se lance au changement de
@@ -85,7 +91,9 @@ thème, que l'icône choisie saute en 450 ms au ressort, que rien ne bouge sous 
 qu'à `CPU=4` aucune tâche ne dépasse 200 ms ; `distribution.mjs`, que les pastilles de la cellule (qui se chevauchent, un anneau pointillé pour un
 remplaçant, grises et barrées pour qui ne part pas) n'animent rien (ni animation ni transition, d'après le style calculé), que le HTML de 120 dates de huit personnes se fabrique en moins de
 100 ms, et qu'un écran de 30 dates se pose et se met en page en moins de 100 ms à `CPU=4` (les 120 d'un coup, 960 pastilles, coûtent plus de 100 ms de
-mise en page : le tableur les dessinera par tranches) ; pour le reste, ils veillent à ce qu'une refonte ne casse rien. (La case de la matrice qui saute, `ad-pop`,
+mise en page : le tableur les dessinera par tranches) ; `fenetres.mjs`, que la remise à la taille
+d'origine s'anime une fois (et d'un coup sous « moins d'animations »), que rien ne glisse ni ne se remesure pendant le
+geste, et qu'aucune tâche ne dépasse 200 ms à `CPU=4` pendant un glisser ; pour le reste, ils veillent à ce qu'une refonte ne casse rien. (La case de la matrice qui saute, `ad-pop`,
 vient avec le mode Distribution du tableur.)
 
 ## Ce qui a été écarté

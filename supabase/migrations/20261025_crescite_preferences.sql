@@ -32,6 +32,10 @@
 --                           l'appareil seulement (crescite-admin-apparence:<compte>, que lit la page avant son premier dessin).
 --   densite                 'confortable' (par défaut) ou 'compacte' : la densité de l'administration à l'ordinateur (lignes, champs et
 --                           texte resserrés, à la souris seulement). Sur l'appareil avant ce script, comme le thème.
+--   fenetres.tiroir         la largeur du tiroir de l'administration (admin/fenetres.js), en pixels, tirée à son bord gauche (absente
+--                           tant qu'on ne l'a pas tirée) ; ramenée dans les bornes de l'écran à chaque lecture.
+--   fenetres.liste          la largeur de la colonne de la liste à côté d'une fiche (huit pages à deux colonnes), en pixels, même forme.
+--                           D'autres clés fenetres.* (le contenu sur toute la largeur, les boîtes de dialogue) suivront avec leur surface.
 -- Rien à migrer dans la base : les clés sont des lignes, pas des colonnes.
 
 begin;

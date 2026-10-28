@@ -286,6 +286,8 @@ html.bascule *, html.bascule *::before, html.bascule *::after { transition: none
      barre du téléphone ; la coque reste (elle porte la vue), sans sa grille */
   html:not(.tb-impression) body > :not(#app):not(#imp-tete), html:not(.tb-impression) #app > :not(.coque), html:not(.tb-impression) .coque > :not(#vue) { display: none !important; }
   html:not(.tb-impression) .coque { display: block; }
+  /* les poignées des fenêtres ajustables (fenetres.js : le séparateur de la liste, le coin des boîtes) ne s'impriment pas */
+  .poignee, .sep-v, .dlg-coin { display: none !important; }
   html:not(.tb-impression) #imp-tete { display: block; margin: 0 0 12pt; padding: 0 0 6pt; border-bottom: 1pt solid #000; color: #000; }
   #imp-tete p { margin: 0; }
   #imp-tete .imp-quoi { font: 700 15pt/1.25 var(--titres); }

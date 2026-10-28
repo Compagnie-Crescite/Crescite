@@ -291,8 +291,9 @@ input:focus, select:focus, textarea:focus, .riche:focus { border-color: var(--ac
 main { padding: 20px; max-width: 1500px; margin: 0 auto; }
 .tete { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 4px 0 16px; }
 .tete h1 { margin: 0 auto 0 0; font-size: 22px; }
-/* la fiche prend la place qui reste, jamais plus (minmax(0, 1fr)) : ce qu'elle contient s'y range, la page ne déborde pas */
-.deux { display: grid; grid-template-columns: minmax(340px, 460px) minmax(0, 1fr); gap: 18px; align-items: start; }
+/* la fiche prend la place qui reste, jamais plus (minmax(0, 1fr)) : ce qu'elle contient s'y range, la page ne déborde pas ; la liste a la largeur que
+   chacun lui a donnée (--l-liste, posée sur <html> par FENETRES : le séparateur .sep-v qu'elle ajoute, en absolu, est hors des colonnes) */
+.deux { position: relative; display: grid; grid-template-columns: minmax(340px, var(--l-liste, 460px)) minmax(0, 1fr); gap: 18px; align-items: start; }
 /* la liste colle sous l'en-tête, quelle que soit sa hauteur (une, deux, trois lignes ; --haut-barre, mesurée) */
 .deux > .liste { position: sticky; top: calc(var(--haut-barre, 60px) + 10px); max-height: calc(100vh - var(--haut-barre, 60px) - 30px); overflow: auto; }
 @media (max-width: 1100px) { .deux { grid-template-columns: 1fr; } .deux > .liste { position: static; max-height: none; } .deux.edition > .liste { display: none; } }
@@ -786,7 +787,7 @@ html.still *, html.still *::before, html.still *::after { animation: none !impor
 .sq-tuile { height: 490px; border-radius: var(--rayon); }
 .sq-tuile-g { grid-column: 1 / -1; height: 171px; }
 .sq-tuile-m { grid-column: span 2; }
-.sq-deux { display: grid; grid-template-columns: minmax(340px, 460px) minmax(0, 1fr); gap: 18px; align-items: start; }
+.sq-deux { display: grid; grid-template-columns: minmax(340px, var(--l-liste, 460px)) minmax(0, 1fr); gap: 18px; align-items: start; }
 .sq-pile { display: grid; gap: 8px; align-content: start; }
 .sq-ligne { height: 64px; border-radius: 10px; }
 .sq-fiche { height: 84px; border-radius: var(--rayon); }
@@ -1258,6 +1259,7 @@ function corpsSquelette(rub) {
 function squeletteAdmin() {
   const k = (location.hash.match(/^#\/([a-z]+)/) || [])[1], rub = RUBRIQUES.some(r => r[0] === k) ? k : 'accueil';
   // (la coque aussi : un aside inerte de la même largeur, pour que le premier cadre() ne décale pas le contenu)
+  if (typeof FENETRES !== 'undefined') FENETRES.appliquerListe();     // (la colonne de la liste telle qu'on l'a réglée, avant le premier dessin)
   $('#app').innerHTML = `${barreHtml(true)}<div class="coque attente"><aside class="menu menu-attente" aria-hidden="true" inert></aside><main class="ad-chargement" aria-busy="true"><div class="ad-squelette" aria-hidden="true">${corpsSquelette(rub)}</div><p class="sr" role="status">Chargement de la base…</p></main></div>`;
   majTemoin();
   tt('pieuvre');     // (la marque a sa pieuvre, comme dans la page : l'en-tête garde sa largeur)
@@ -1604,6 +1606,7 @@ function cadre(rubrique, contenu) {
   poserHautBarre();
   setTimeout(() => $('#vue')?.classList.remove('entree'), 900);
   if (typeof CADRE !== 'undefined') CADRE.marquer(rubrique);
+  if (typeof FENETRES !== 'undefined') FENETRES.equiperDeux();     // (le séparateur de la liste ; une page redessinée sur place, un enregistrement, le retrouve)
 }
 // la hauteur de l'en-tête arrimé (une ligne ; 56 px au téléphone) : --haut-barre, sous lequel
 // collent les en-têtes des listes qui défilent avec la page (le mois, le jour) et la barre d'outils d'une feuille
@@ -2262,12 +2265,12 @@ function rafraichirListes() {
 const CLE_FLIP = el => el.getAttribute('href') || el.dataset.prospectId || el.id || '';
 function reperer(racine) {
   const m = new Map();
-  if (CALME_ADMIN() || typeof Element.prototype.animate !== 'function') return m;
+  if (CALME_ADMIN() || typeof Element.prototype.animate !== 'function' || document.documentElement.classList.contains('redim')) return m;     // (html.redim : on tire le bord d'une fenêtre, rien ne glisse)
   $$('.ligne[href], .crm-carte[data-prospect-id]', racine).forEach(el => { const r = el.getBoundingClientRect(); if (r.width) m.set(CLE_FLIP(el), [r.left, r.top + window.scrollY]); });
   return m;
 }
 function glisserVers(avant, racine = $('[data-liste]')) {
-  if (!racine || !avant.size || CALME_ADMIN()) return;
+  if (!racine || !avant.size || CALME_ADMIN() || document.documentElement.classList.contains('redim')) return;
   const doux = 'cubic-bezier(.2, .8, .2, 1)';
   $$('.ligne[href], .crm-carte[data-prospect-id]', racine).forEach(el => {
     const a = avant.get(CLE_FLIP(el)), r = el.getBoundingClientRect();
@@ -2405,9 +2408,18 @@ function ajusterPied(pied = $('.pied-ed.a-plus')) {
 }
 function suivrePied(pied) {
   if (!pied || typeof ResizeObserver === 'undefined') return ajusterPied(pied);
-  let largeur = -1;
+  let largeur = -1, attente = 0;
+  // (html.redim : on tire le bord d'une fenêtre, le pied dort ; on le remesure d'un coup quand le geste est fini)
+  const mesurer = () => {
+    attente = 0;
+    if (!pied.isConnected) return;
+    if (document.documentElement.classList.contains('redim')) { attente = setTimeout(mesurer, 150); return; }
+    const w = Math.round(pied.getBoundingClientRect().width);
+    if (w !== largeur) { largeur = w; ajusterPied(pied); }
+  };
   const ro = new ResizeObserver(es => {
     if (!pied.isConnected) { ro.disconnect(); return; }
+    if (document.documentElement.classList.contains('redim')) { if (!attente) attente = setTimeout(mesurer, 150); return; }
     const w = Math.round(es[0].contentRect.width);
     if (w !== largeur) { largeur = w; ajusterPied(pied); }
   });
@@ -4862,6 +4874,8 @@ async function vueJournal() {
      le parcours d'une date, les garde-fous à la saisie, les séries et modèles de dates, les documents générés, les notes
      internes, le carnet des lieux, la carte de tournée, le téléphone -->
 <script src="corbeille.js"></script>
+<!-- les fenêtres ajustables : la poignée qu'on tire (bornes, mémoire avec le compte), la colonne de la liste ; avant le tiroir, qui s'en sert -->
+<script src="fenetres.js"></script>
 <script src="tiroir.js"></script>
 <script src="selection.js"></script>
 <script src="parcours.js"></script>
