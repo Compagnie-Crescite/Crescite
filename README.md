@@ -32,8 +32,34 @@ python3 site/build.py --captures   # avec des captures de relecture (Playwright 
 python3 site/build.py --pages      # en plus, le site publié dans docs/
 node site/onglets.mjs /tmp/x index # parcourt les vues du site et signale les anomalies
 node site/mouvement-equipe.mjs     # les dix effets de l'espace de l'équipe, dans Chromium, hors ligne (après le build)
+node site/prefs.mjs                # où chaque réglage de l'administration est gardé : avec le compte ou sur l'appareil (après le build)
+node site/code-salles.mjs          # le code d'accès des salles, dans Chromium, sur la même base fictive (après le build)
+node site/gestes-equipe.mjs        # les gestes de l'espace de l'équipe, que l'administration partage (après le build)
 node site/mouvement-admin.mjs      # le mouvement de l'administration, dans Chromium, sur une base fictive (après le build)
                                    # le vocabulaire de ce mouvement : site/MOUVEMENT.md
+node site/tableau.mjs              # le tableau de bord et l'en-tête de l'administration, dans Chromium, sur la même base fictive
+node site/niveau.mjs               # les dix idées de l'administration, dans Chromium, sur la même base fictive
+node site/adresses-admin.mjs       # les adresses et les garde-fous de l'administration, sur la même base fictive
+node site/tableur.mjs              # le tableur des représentations en Complet (?mode=complet), dans Chromium, sur la même base fictive (après le build)
+node site/tableur-colonnes.mjs     # les colonnes du tableur à la carte : largeur, ordre, masquées, figées, hauteur (après le build)
+node site/tableur-complet.mjs      # le tableur Complet, chaque champ atteignable : les jeux, la diffusion, Ctrl+Entrée, la période, « Détacher », l'import (après le build)
+node site/tableur-simple.mjs       # le tableur Simple, une ligne par date : les modes, les séances, la ligne vide, le temps réel, les états d'une case, la barre d'état, le calendrier, le collage, le budget (après le build)
+node site/icones.mjs               # la bibliothèque d'icônes de l'administration et ses consommateurs, dans Chromium (après le build)
+node site/cadre.mjs                # la coque, le menu latéral, ses raccourcis et ses badges, dans Chromium, sur la même base fictive (après le build)
+node site/champs.mjs               # la fiche d'une date : le schéma de ses champs, le rail d'écriture, les puces, la jauge (après le build)
+node site/vues-dates.mjs           # les trois vues de Représentations (pilule, filtres communs, ligne visée), dans Chromium (après le build)
+node site/theme.mjs                # le thème (nuit, jour, appareil) et la densité, dans Chromium, sur la même base fictive (après le build)
+node site/distribution.mjs         # la distribution à l'écran : la cellule d'une date, la fenêtre d'une case, « Étendre à… », la matrice du tableur, qui sera prévenu, la fiche, l'impact, dans Chromium (après le build)
+node site/fenetres.mjs             # les fenêtres ajustables : la poignée du tiroir, le séparateur de la liste, le coin des boîtes, les réglages du menu (après le build)
+node site/acces.mjs                # les accès rapides du menu et la recherche comme barre de commande, dans Chromium (après le build)
+node site/fenetres-2.mjs           # les fenêtres qui restent : le détail du planning, la carte, la hauteur d'une tuile, le zoom de la feuille A4 (après le build)
+node site/carte-travail.mjs        # la carte de tournée comme vue de travail : le menu des pastilles, le survol, Maj+clic, le zoom, « Voir sur la carte » (après le build)
+node site/habillage.mjs            # l'habillage final : le jeu d'états des commandes, l'étiquette, les vides, « mouvement réduit », les pages d'essai, le jour relu (après le build)
+node site/reduit.mjs               # la passe « moins d'animations » : quatre gestes au clavier, aucune animation, les valeurs finales déjà en place (après le build)
+node site/planche.mjs              # la planche de relecture, à la demande (trois minutes au calme, six sous charge) : les captures en vraies polices et planche.html, dans site/dist/shots-planche/ (après le build)
+bash site/bancs-admin.sh           # le build, puis tous les bancs de l'administration l'un après l'autre ; --tout y joint
+                                   # ceux de l'espace de l'équipe (sinon, seulement si gestes.js, planning.js ou feuille.js changent) ;
+                                   # --planche y ajoute, à la fin, la planche de relecture (jamais lancée sans cette option)
 node site/reactivite.mjs /tmp/x index --strict  # les budgets de réactivité du site, au bureau et au téléphone ralenti ×4
 AXE=<axe.min.js> node site/passe-site.mjs       # la passe finale : axe, 360 px, erreurs, nuit, sur chaque route
 python3 data/site_crescite.py      # relève de nouveau le texte de l'ancien crescite.fr (data/site-crescite.json)
@@ -223,8 +249,9 @@ réservation, les vidéos, la nuit seule, la troupe, les couleurs de la saison, 
 L'administration, l'espace de l'équipe, l'espace des salles et la page de réponse ont les polices du site (Ubuntu, Open
 Sans, Raleway pour les étiquettes), ses neutres (le papier `#1b1117`, la carte `#2e2128`, l'encre `#f3eee9`…) et sa nuit
 par défaut, quel que soit l'appareil : `data-theme="nuit"` sur `<html>` dans la page même, `theme-color` et manifeste de
-nuit ; les palettes de jour restent dans les feuilles de style, sous `data-theme="jour"` seulement (aucun bouton), et ce
-qui testait le thème en script lit cet attribut (le planning se redessine quand il change). Leur accent n'est plus le
+nuit ; les palettes de jour restent dans les feuilles de style, sous `data-theme="jour"` ; l'équipe, les salles et la page
+de réponse n'ont aucun bouton pour y passer, l'administration a sa pilule au menu (« L'apparence », plus bas) ; ce qui
+testait le thème en script lit cet attribut (le planning se redessine quand il change). Leur accent n'est plus le
 magenta : c'est la couleur de la saison (règle 22). Les sources n'en ont qu'un gris neutre (`--saison-*` par défaut) ;
 `build.py` porte ce qu'il faut de `themeSaison` (`theme(complet=True)` : la couleur, la vive, le porteur d'un texte
 blanc, le texte lisible le jour et la nuit, leurs nuances) et `poser_saison` l'écrit dans un `<style id="couleurs-saison">`
@@ -325,7 +352,8 @@ compte du projet inscrit dans `crescite_admins`.
   propositions de dates ; les séances d'atelier à venir ; les dernières modifications (chacune vers sa fiche) ; les
   spectacles et un mémo (masqués d'office). Une tuile dont la base n'a pas les tables ne se montre pas.
   - **Entièrement personnalisable**, « Personnaliser » : l'ordre (glisser une tuile par son titre, ou ← →), sa largeur
-    (une colonne, deux, ou toute la largeur), masquer ou remettre une tuile, la réduire (le chevron) ; les réglages de
+    (une colonne, deux, ou toute la largeur), sa hauteur (une poignée basse, à l'ordinateur : la tuile garde au plus cette
+    hauteur et son corps défile ; elle se retient avec la disposition et les vues nommées, et ne s'applique pas au téléphone ni au doigt), masquer ou remettre une tuile, la réduire (le chevron) ; les réglages de
     chaque tuile (le rouage : la période, le nombre de lignes, ce qu'elle suit, les actions montrées) ; les colonnes de
     la grille (auto, 2, 3 ou 4) ; la page d'ouverture de l'administration (le tableau de bord, ou Représentations) ;
     « Réinitialiser ». Tout est gardé avec le compte (`crescite_preferences`, clé `accueil.tableau`, le script 6) : on
@@ -335,12 +363,20 @@ compte du projet inscrit dans `crescite_admins`.
     traiter » (ou « Traiter… » du clic droit) ouvre une feuille de modification en place (`GESTES.formulaire`) :
     confirmer une option, fixer les horaires, suivre le contrat, publier ou composer la feuille de route, valider ou
     refuser une note de frais, répondre à un devis, relancer, clore une proposition, prolonger une invitation, noter
-    un accord de portrait ; la base écrite, l'état se relit et la ligne disparaît. (2) **La file au clavier** : J et K
+    un accord de portrait ; la base écrite, l'état se relit et la ligne disparaît. Les trois feuilles qui touchent une
+    date (confirmer une option, fixer les horaires, suivre le contrat) écrivent par le même chemin que la fiche
+    (`ecrireChamps`, voir « La fiche d'une date » plus bas) : la date entière part à la base, jamais un envoi partiel, et
+    l'annonce porte « Annuler » ; le montant de cession peut maintenant s'y effacer. Les horaires envoient toutes les
+    séances de la date (voir le Journal, plus bas). (2) **La file au clavier** : J et K
     parcourent les lignes à traiter, Entrée ouvre la feuille de la ligne, Échap la referme et rend le focus ; une ligne
     traitée, la suivante prend le focus. (3) **La barre de commande** (Ctrl K, la loupe) cherche aussi les actions
     (« nouvelle date », « briefing », « personnaliser »), les vues, ce qui est à traiter (Entrée le traite sur place),
     les notes de frais, les devis, la diffusion, les propositions, les séances ; le genre compte dans les mots (« frais
-    Camille », « lieu Le Volcan »). (4) **Des vues nommées** (« Lundi matin », « Veille de tournée »…) : chacune garde
+    Camille », « lieu Le Volcan »). Elle propose aussi les commandes du menu latéral, chacune avec sa touche, écrite à côté
+    de son genre : « Replier le menu » (ou « Déplier le menu ») **Alt M**, « Vue liste » **V L**, « Vue tableur » **V T**,
+    « Vue carte » **V C**, et les douze rubriques avec leur séquence (« Représentations » **G D**…) ; sans rien taper, elle
+    montre les fiches ouvertes en dernier, puis les prochaines dates (voir « La recherche rapide »). (4) **Des vues nommées**
+    (« Lundi matin », « Veille de tournée »…) : chacune garde
     une disposition (tuiles, ordre, tailles, réglages, colonnes), choisie dans l'en-tête ; une vue peut s'ouvrir
     d'elle-même certains jours, le matin ou l'après-midi, ou quand une date confirmée est dans les trois jours (un choix
     fait à la main tient six heures) ; « Vue par défaut » rend la disposition d'avant. (5) **Un ordre des urgences qui
@@ -361,18 +397,108 @@ compte du projet inscrit dans `crescite_admins`.
   - Le temps réel de la base redessine les tuiles (un mémo en cours d'écriture n'est pas touché) ; le journal se relit
     alors. Fait pour l'écran d'ordinateur (trois ou quatre colonnes à 1 600 px, `.tb-grille`), une colonne au téléphone,
     en sombre comme en clair. `node site/tableau.mjs` le vérifie dans Chromium, hors ligne, sur une base fictive
-    (115 vérifications : les tuiles et leurs comptes, les liens visés, la personnalisation et sa persistance, le repli sur
+    (161 vérifications : les tuiles et leurs comptes, les liens visés, la personnalisation et sa persistance, le repli sur
     l'appareil sans le script 6, les menus (clic droit, appui long, Maj+F10) et leurs actions directes, les flèches,
-    précédent / suivant, le Kanban glissé, le téléphone, le sombre ; captures dans `site/dist/shots-tableau/`).
+    précédent / suivant, le Kanban glissé, le téléphone, le sombre, les repères de la page ; captures dans `site/dist/shots-tableau/`).
 - **L'habillage** (`admin/habillage.js`, chargé en dernier : rien que l'apparence) : les polices du site (Ubuntu pour
   les titres, Open Sans pour le texte, Raleway pour les étiquettes en capitales espacées, rangées à côté du site dans
-  `polices/` ; sans elles, le système), les neutres du site et la couleur de la saison, un en-tête de nuit (la pieuvre et la rubrique
+  `polices/` ; sans elles, le système), les neutres du site et la couleur de la saison, un en-tête et un menu latéral de nuit (la pieuvre et la rubrique
   courante à la couleur de la saison), des cartes douces et un dégradé de la saison pour ce qui s'enregistre, chaque tuile du tableau
   de bord avec son icône et sa couleur (corail pour ce qui attend, ambre pour la tournée, indigo pour les dates, sauge
   pour les chiffres, prune pour l'équipe, ciel pour la diffusion), un bandeau du jour en tête du tableau (bonjour, le
   prénom, ce qui attend, la prochaine date, trois chiffres, une tentacule en filigrane), les jours des listes en petits
-  calendriers, les colonnes du Kanban colorées ; la nuit par défaut, le jour sous `data-theme="jour"`. `site/tableau.mjs` en garde des captures de chaque
-  page (`habillage-*.png`).
+  calendriers, les colonnes du Kanban colorées ; la nuit par défaut, le jour sous `data-theme="jour"` (un choix du menu : voir
+  « L'apparence », plus bas ; la densité compacte y est aussi, dans les dernières règles du fichier). `site/tableau.mjs` en garde des captures de chaque
+  page, de nuit puis de jour (`habillage-<page>-nuit.png`, `habillage-<page>-jour.png`), `site/theme.mjs` des mêmes pages en jour (`jour-*.png`). Les icônes n'y sont dessinées qu'une fois : `admin/icones.js` (chargé avant les gestes) est la
+  bibliothèque, un nom par dessin (`ICONES.svg('calendrier', { taille: 22 })`), que l'en-tête, la barre du téléphone, les
+  tuiles, les menus et le planning de l'administration reprennent ; l'espace de l'équipe garde ses tracés. La page
+  `#/essai/icones` les montre toutes en grille, le nom sous chacune (hors du menu et de la recherche).
+  - *Les états.* Chaque commande (bouton, bouton des feuilles, segment, puce, outil des tuiles, lien du menu, pilule des
+    vues, flèches du petit calendrier) réagit de la même façon, par un seul jeu de règles écrit dans `habillage.js` : au repos, la
+    carte et son trait ; au survol, le bord et un fond doux teintés de la saison ; pressée, elle s'enfonce de 3 % ;
+    au clavier, un anneau de 3 px à la couleur de la saison (en dedans, à 3 px, dans un segment et dans la pilule des vues,
+    qui rognent leur contenu) ; désactivée, elle est à moitié transparente ; occupée (`aria-busy`, sur un bouton seulement),
+    son libellé s'efface sous un petit anneau qui tourne (fixe sous « réduire les animations »). Ce qui est choisi, un bouton
+    principal ou désactivé ne change pas au survol ; la poignée (`fenetres.js`) a le sien (sa ligne). La barre du bas du
+    téléphone garde les siens : rien n'y change. Les boutons des feuilles (`gestes.js`, partagé avec l'espace de l'équipe) ne sont
+    habillés que dans l'administration. Les outils des tuiles font 32 px à la souris et 44 px au doigt.
+  - *L'étiquette.* Les titres de section (« NOVEMBRE », « À TRAITER », « DATE » du tiroir, les en-têtes du tableur, les
+    étiquettes de la recherche) parlent d'une seule voix, en capitales espacées de 11 px (classe `.etiquette` pour un nouvel
+    élément, `.mois.accent` pour celle qui prend la couleur de la saison).
+  - *Les vides.* Une liste sans résultat (liste, tableur, tuile du tableau de bord, carte) montre la tentacule en filigrane
+    (`ICONES.ornementVide`), la phrase, puis le geste utile ; le « tout est à jour » du tableau de bord reste nu.
+  - *Mouvement réduit.* Sous `prefers-reduced-motion: reduce`, une seule règle d'`habillage.js` met à zéro les durées de
+    transition et d'animation de toute la page (`?anim=0` fait de même, par `html.still`).
+  - *Les pages d'essai.* `#/essai/etats` dessine les six états (repos, survol, pressé, clavier, désactivé, occupé) sur six
+    commandes, avec les règles mêmes de l'habillage (le survol, le pressé et le clavier y sont posés par `data-etat`) ;
+    `#/essai/icones` montre les icônes. Ni l'une ni l'autre n'est dans le menu ni dans la recherche.
+  - `node site/habillage.mjs` garde tout cela (72 vérifications, moins de 20 s) : le focus et son décalage dans les segments, un
+    bouton occupé (curseur, opacité, anneau, blanc sur le menu), les champs, les outils de 32 et de 44 px, la règle des étiquettes
+    sur chacun de ses porteurs (dont les titres « À venir » des deux listes et le mois d'une date à précision « mois »), la
+    tentacule des vides (liste, tableur, carte), les deux pages d'essai (chaque état lu dans le style calculé, au repos comme à la
+    souris), « mouvement réduit », et le jour relu (les contrastes à 4,5:1 et 3:1 des états, du menu, de la recherche, du tableur,
+    de la matrice) ; captures dans `site/dist/shots-habillage/` (`etats.png`, `icones.png`, `vide.png`, `menu-jour.png`,
+    `tableur-jour.png`, `matrice-jour.png`).
+  - *La passe « moins d'animations ».* `node site/reduit.mjs` (24 vérifications, moins de 10 s) ouvre l'administration avec
+    « moins d'animations » et joue quatre gestes au clavier : replier le menu (Alt+M), ouvrir une fiche en tiroir (Entrée sur une
+    ligne), remettre les poignées (Entrée sur « Disposition d'origine »), passer le tableur de Simple à Complet. Après chacun,
+    aucune animation à durée non nulle ni aucune transition lancée, et les valeurs finales (la largeur du menu, la place du
+    tiroir, la largeur des listes, le mode du tableur) déjà en place tout de suite puis 50 ms plus tard : l'immobilité est une
+    arrivée instantanée, pas une absence d'arrivée. Une contre-épreuve, sans « moins d'animations », montre qu'avec les animations permises
+    le menu et le tiroir glissent bien. Captures dans `site/dist/shots-reduit/`.
+  - *La planche de relecture.* `node site/planche.mjs` (environ trois minutes au calme, jusqu'à six sous charge, à la demande :
+    ce n'est pas un banc qui garde le code, la chaîne ordinaire ne le lance pas ; `bash site/bancs-admin.sh --planche` le lance à la fin de la chaîne)
+    photographie dix pages de l'administration (le tableau de bord, la liste des dates, le tableur en Simple, en Complet et en
+    Distribution, la carte, une fiche en tiroir, le planning, l'équipe, la diffusion), à 1 280, 1 600 et 1 920 px, en nuit et en
+    jour, le menu déplié puis replié, plus les pages d'essai des états et des icônes : 122 captures. Ouvrir
+    `site/dist/shots-planche/planche.html` : une grille de vignettes sur trois colonnes, une table des matières, et sous chaque
+    vignette sa légende (la page, la largeur, le thème, le menu, le lot du plan, la police effective), avec en tête la date et la
+    version du code (l'identifiant court du commit, « + modifications locales » s'il n'est pas propre, et la branche). Un clic sur
+    une vignette l'ouvre en grand. Les polices du site (Ubuntu, Open Sans, Raleway, rangées dans `polices/`) sont servies ;
+    sans elles, ce sont celles du système, et chaque légende le dit (« polices du système »). Rien de cela n'est commité.
+- **Les fenêtres ajustables** (`admin/fenetres.js`, chargé avant le tiroir) : à l'ordinateur, le bord d'une surface se tire.
+  Une poignée est une bande invisible de 6 px au bord ; au survol ou au clavier, une ligne de 2 px à la couleur de la
+  saison paraît, et le curseur dit le sens. Le bord gauche du tiroir se tire (de 480 px à l'écran moins 80 px : le voile
+  reste cliquable) ; un bouton « ⋯ » dans son en-tête, ou le clic droit, propose « Taille d'origine », « Plus large » et
+  « Pleine page ». Entre la liste et la fiche (Représentations, Lieux, Équipe, Ateliers, Textes, Espace pro, Demandes de
+  devis, Planning › propositions), un séparateur règle la largeur de la liste, la même pour ces huit pages (de 340 px à
+  55 % du contenu). Double-clic ou Entrée sur la poignée : la taille d'origine, en un cinquième de seconde (rien ne bouge
+  si l'appareil demande moins d'animations) ; au clavier, ← → règlent de 16 px (Maj : 64 px), Début et Fin vont aux deux
+  bouts. La taille se garde avec le compte, une clé par surface (`fenetres.tiroir`, `fenetres.liste`,
+  `fenetres.tableur-h`…), écrite une seule fois, au relâchement ; sur un écran plus petit, elle est ramenée dans ce
+  qu'il permet. Le tableur s'en sert aussi : le bord droit de chaque en-tête (la largeur de la colonne), une poignée
+  sous son cadre (sa hauteur), le coin des fenêtres du lieu et de la distribution ouvertes sur une case, et la zone de
+  texte des notes (voir Le tableur). Rien de tout cela au
+  téléphone ni au doigt (la poignée n'existe qu'à partir de 641 px avec un pointeur précis), ni dans l'espace de
+  l'équipe, ni à l'impression. Pendant le geste, rien d'autre ne bouge (les lignes d'une liste ne glissent pas, le pied de
+  la fiche ne se remesure pas). `node site/fenetres.mjs` le vérifie dans Chromium, hors ligne, sur une base fictive
+  (201 vérifications : la poignée et ses valeurs, un glisser qui n'écrit qu'une fois, la taille retrouvée et bornée à
+  l'écran, le double-clic, les flèches, le bouton « ⋯ », le recul des tiroirs empilés, le séparateur de la liste sur les
+  huit pages et après un enregistrement, le squelette du chargement, la remise de toutes les tailles et son « Annuler »,
+  le téléphone et le tactile, l'impression, les coins de chaque boîte et la taille qu'ils gardent, la feuille et son piège de
+  Tab, les fenêtres de la diffusion et leurs fermetures, « Pleine largeur » et « Disposition d'origine », aucune tâche de
+  plus de 200 ms à `CPU=4` ; captures dans `site/dist/shots-fenetres/`).
+  Les boîtes de dialogue ont, en bas à droite, un coin qui se tire dans les deux sens : la recherche, « Étendre »,
+  « Importer », « Choisir dans la troupe », le briefing de la semaine, l'aide « ? », la feuille de modification et les
+  deux fenêtres de la diffusion (l'opportunité, le courriel de relance). Chacune garde sa taille, une clé par famille
+  (`fenetres.recherche`, `.tab-dialogue`, `.tab-dialogue-large`, `.crm`, `.tb-brief`, `.gq-aide`, `.gf`), toujours bornée à
+  l'écran moins 24 px ; double-clic sur le coin, ou Entrée quand il a le focus : la taille d'origine. Les deux petites
+  questions de l'équipe (la période, le retrait) n'en ont pas. L'opportunité et le courriel de relance sont désormais
+  des fenêtres comme les autres (`boiteCrm`, dans `admin/index.html`) : posées sur la page, elles survivent à un redessin
+  en direct de la Diffusion, et l'opportunité garde sa question « Fermer sans enregistrer ? » quand une saisie est
+  commencée. Deux réglages au bas du menu latéral : « Pleine largeur » (le contenu et le pied de page ne plafonnent plus à
+  1 500 px ; clé `fenetres.pleine`) et « Disposition d'origine » (efface d'un coup toutes les tailles gardées, celles du tableur
+  comprises, la pleine largeur, le zoom de la page A4, les colonnes du tableur et le choix du menu replié, remet aussitôt
+  ce qu'on voit, et l'annonce porte « Annuler » ; la hauteur d'une tuile, elle, revient par le « Réinitialiser » du tableau
+  de bord). À l'impression, ni poignée ni coin, et le briefing imprimé ignore la taille tirée.
+  Le même outil règle trois surfaces de plus (`node site/fenetres-2.mjs`, 115 vérifications) : **le planning**, où la
+  colonne du détail d'un jour se tire par son bord gauche (de 240 à 560 px, `fenetres.pl-detail`) et, au-dessus de
+  1 200 px, le détail se met aussi à côté de la grille en vue Équipe une fois un jour choisi ; **la carte de tournée**,
+  dont une poignée entre la carte et les étapes règle la largeur de la carte (de 360 px à la largeur de la grille moins
+  338 px : les étapes gardent leurs 320 px, `fenetres.tn`) ; **le tableau de bord en « Personnaliser »**, où chaque tuile a
+  une poignée basse qui règle sa hauteur (de 160 à 1 200 px : le corps défile ; gardée avec la disposition, pas dans
+  `fenetres.*`). Aucune de ces poignées n'existe sous 900 px, au téléphone, au doigt, à l'impression, ni dans l'espace de
+  l'équipe (`planning.js` ne sait rien d'elles : la page d'administration lui donne `options.detail.poignee`).
 - **Le niveau supérieur** (dix modules chargés après les menus, chacun dans son fichier) :
   - **Les fiches en tiroir** (`admin/tiroir.js`) : une date, un lieu, une personne, une demande de devis ou une piste de
     diffusion s'ouvrent dans un panneau qui glisse à droite, depuis n'importe où (le tableau de bord, le Kanban, le
@@ -381,6 +507,8 @@ compte du projet inscrit dans `crescite_admins`.
     place (ses enregistrements redessinent le tiroir, ses suppressions le ferment). Dans sa rubrique (Représentations,
     Lieux, Équipe), une fiche s'ouvre à côté de sa liste, comme avant. L'adresse `#/diffusion/piste/3` ouvre le Kanban
     puis la piste ; une carte du Kanban cliquée fait de même.
+    Son bord gauche se tire (voir « Les fenêtres ajustables ») ; quand le tiroir du dessus est plus large, celui qu'il
+    couvre recule d'autant.
   - **La sélection multiple** (`admin/selection.js`) : Maj+clic (ou « Sélectionner » dans les filtres, ou la barre
     d'espace) sur des dates, des personnes, des lieux, des cartes du Kanban ou des notes de frais, puis une barre
     flottante : statut, publier ou masquer, écrire aux contacts, exporter en CSV, dupliquer vers…, devis, supprimer
@@ -391,6 +519,54 @@ compte du projet inscrit dans `crescite_admins`.
     confirmée, contrat (à envoyer, envoyé, signé), lieu complet (adresse, contact), équipe (qui part, les téléphones),
     feuille de route (composée, publiée), bilan (les spectateurs, après la date) ; chaque étape dit où elle en est et
     s'ouvre là où on la complète. Dans les listes et les prochaines dates du tableau de bord, des points colorés.
+  - **La fiche d'une date : chaque champ décrit une fois, un seul chemin d'écriture** (`SCHEMA_DATE`, `ecrireChamps` et
+    `bandeauAilleurs` dans `admin/index.html`, `COMPLETUDE` dans `admin/parcours.js`). *Le schéma* : une entrée par colonne
+    des cinq tables d'une date (la date, ses séances, son suivi, ses chiffres, son équipe) dit où le champ vit dans la base,
+    son niveau, son libellé et son aide, la raison quand la base le calcule toute seule, et de quoi le lire, l'écrire et le
+    montrer ; la fiche en tire ses libellés et ses aides, le tableau de bord ses feuilles, et le tableur y a déjà ses 22
+    colonnes (il garde sa propre déclaration jusqu'à ce qu'elle disparaisse). Le contrat d'un champ est le commentaire de
+    `SCHEMA_DATE`. *Ce que la base calcule* : sous l'aperçu « Sur le site », des puces grises, la raison en infobulle
+    (« Saison 2026-2027 : déduite du 18 déc. », « Début et fin : suivent les séances », « Public : mixte, d'après les
+    séances », « Masquée : une répétition ne va jamais sur le site »). *La jauge* : sous le titre, « 8 champs sur 10 » (le
+    compte roule quand il change) et « Compléter », qui vise le premier champ vide ; elle compte la date, les séances (un
+    jour, l'heure de chacune), la billetterie d'une date publiable et confirmée, le suivi (organisateur, contact, contrat,
+    cession), les spectateurs d'une date passée, l'équipe : ce qui ne s'applique pas à la date ne compte pas. *La piste de
+    diffusion* : quand une piste a donné la date, un bloc en lecture seule (son étape, son dernier contact, sa prochaine
+    relance, un lien vers elle ; « jamais publié, jamais exporté sans le demander ») ; le suivi commercial vit sur la
+    piste depuis le script 22, plus sur la date, dont il ne reste que le montant de cession, toujours dans « Suivi
+    interne ». « Les chiffres » dit d'où ils viennent (la source). *Un seul chemin d'écriture* : `ecrireChamps(date,
+    champs)` part de la date entière, y pose chaque champ par son geste du schéma, puis la fait passer par `ecrireDate`
+    (l'enregistrement de la date, ses chiffres, le montant de cession, l'équipe, la relecture) : les mêmes règles,
+    déclencheurs, notifications et journal que la fiche, et jamais d'envoi partiel.
+    *Un appel, ou quatre* : au chargement, l'administration demande à la base ce qu'elle sait faire
+    (`crescite_capacites()`, le vingt-quatrième script ; `lireCapacites` dans `admin/index.html`). Avec ce script, la
+    date, son montant de cession, ses chiffres et son équipe partent dans un seul appel (`chargeDate`, l'équipe calculée
+    par `equipeVoulue`, `admin/equipe.js`) : tout passe ou rien, « La date est enregistrée, mais pas ses chiffres » ne
+    peut plus arriver, et la date relue rapporte aussi ses chiffres et son équipe. Sans lui (la fonction n'existe pas),
+    les quatre écritures d'avant et leurs messages. Si la question posée à la base échoue autrement (le réseau, la
+    base), la relecture échoue : l'administration ne conclut jamais que le script manque, elle garde ce qu'elle savait.
+    Un champ de séance sans séance est refusé (il en créerait une fantôme), « Annuler » rejoue l'état d'avant. Deux
+    écritures restent hors de ce chemin, par choix : la sélection groupée (`selection.js`) et la pose d'un contrat
+    « envoyé » quand un document est émis (`modeles.js`).
+    *« Modifiée à 14h32 par Barbara »* : si un autre compte enregistre la date qu'on a sous les yeux, un bandeau le dit,
+    en tête de la fiche (sale ou non), avec « Recharger » et « Garder mes changements » ; le dernier qui enregistre
+    l'emporte. Le bandeau ne voit que la ligne de la date elle-même : les écritures du suivi, des chiffres et de
+    l'équipe ne le déclenchent pas. Avec le vingt-quatrième script, la ligne de la date n'est touchée que si la date
+    elle-même change : un autre compte qui n'a changé que le suivi, le montant, les chiffres ou l'équipe ne fait donc
+    pas paraître le bandeau, et la fiche ouverte reste ce qu'elle était (son enregistrement suivant renvoie alors ces
+    valeurs et écrase le travail de l'autre).
+    `node site/champs.mjs` vérifie tout cela, dans Chromium sur la base fictive : « aucun champ oublié » (chaque colonne
+    de `supabase/tests/champs-date.json` a son champ ou une raison d'être écartée ; l'essai sait échouer), la feuille
+    « Horaires » du tableau de bord (un seul enregistrement de la date, le lien de billetterie gardé, « Annuler » qui
+    remet une séance retirée), le rail (un seul enregistrement, jamais un envoi partiel, le montant après lui, un
+    montant qui s'efface, le refus sans séance, l'échec de l'équipe ou du montant dit sans rouvrir la feuille), les
+    puces, la jauge et « Compléter » (même sur une date neuve), la piste, la source des chiffres, le bandeau (pas de
+    bandeau sans auteur) ; puis, avec le vingt-quatrième script (la base fictive répond `crescite_capacites` sans rien
+    écrire), un seul appel par geste (la fiche, un geste qui mêle date, équipe, montant et chiffres, la feuille
+    « Horaires », une case du tableur), une source de chiffres gardée même sans nombre, la question posée à la base qui
+    échoue sans jamais valoir « sans le script », la fonction absente qui ramène aux quatre écritures, la base qui
+    refuse ; enfin, que les 34 colonnes du tableur sont portées par le schéma et que chacune a son en-tête en « Jeu :
+    Tout » : 86 vérifications, des captures dans `site/dist/shots-champs/`.
   - **Annuler plutôt que confirmer** (`admin/corbeille.js`) : plus de « Êtes-vous sûr ? » pour supprimer (une date, un
     lieu, une séance, un atelier, une piste, une demande de devis, une alerte, un document, une invitation, du matériel,
     une note) ni pour revenir sur une ligne du journal : c'est fait tout de suite, et l'annonce porte « Annuler » (ou
@@ -404,10 +580,21 @@ compte du projet inscrit dans `crescite_admins`.
     un contrat signé pour une option, une option déjà passée ; dans la fenêtre d'une piste : une cession confirmée sans
     montant, une relance passée, un doublon. Rien ne bloque ; chaque alerte mène où il faut.
   - **La carte de tournée** (`#/representations/carte`, `admin/tournee.js`, le fond et la projection du site dans
-    `admin/fond-carte.js`, écrit par `site/build.py`) : les lieux de la saison (ou d'un spectacle, ou à venir) sur la
+    `admin/fond-carte.js`, écrit par `site/build.py`) : les lieux des dates à venir (toutes saisons : la période, la
+    saison, le spectacle et les autres filtres sont ceux des trois vues de Représentations, communs, voir plus bas) sur la
     carte de France, une pastille par lieu avec ses dates, le trajet dans l'ordre, et la tournée étape par étape avec la
     distance à vol d'oiseau et le délai entre deux dates ; les enchaînements serrés se signalent ; « Autour des dates »
-    resserre le cadre ; une pastille ouvre le lieu en tiroir ; les lieux sans position sont listés.
+    resserre le cadre ; à l'ordinateur, la largeur de la carte se tire entre elle et la colonne des étapes ; une pastille
+    ouvre son menu : ses dates en tiroir (la carte reste là), nouvelle date ici, itinéraire, fiche du lieu (au doigt, le
+    toucher garde le lieu en tiroir et l'appui long ouvre le menu) ; Maj+clic sélectionne les dates du lieu (la barre
+    d'actions des dates paraît) ; survoler ou focaliser une pastille allume ses étapes à droite, et inversement ; + − ⌂ en
+    coin de carte, Ctrl+molette et le glisser règlent la vue (le cadre dure le temps où la carte reste ouverte — un
+    redessin, un enregistrement, un filtre le gardent —, jamais dans l'adresse, et la carte s'ouvre toujours recadrée ; « Autour
+    des dates » ou ⌂ le remet) ; les étapes portent les badges de la
+    liste et les points du parcours ; la fiche d'un lieu placé propose « Voir sur la carte » ; les lieux sans position sont
+    listés. Les répétitions n'y sont pas (sauf si on choisit la nature « Répétitions »), les dates annulées ou reportées non
+    plus (sauf si on choisit ce statut). Sans date à venir, la carte le dit et propose « Toutes les périodes ».
+    Le banc `node site/carte-travail.mjs` (106 vérifications) regarde tout cela.
   - **Les documents générés** (`admin/modeles.js`) : un devis, un contrat de cession, une facture, une fiche technique
     d'accueil, depuis une date (ses séances, son lieu, son équipe en tournée) ou une piste (sa structure, son contact), à
     partir des modèles de la compagnie (Textes du site → « Modèle : devis »…, créés avec un texte de départ à la première
@@ -436,7 +623,7 @@ compte du projet inscrit dans `crescite_admins`.
     préremplissent une nouvelle date.
   - **Le téléphone** (`admin/mobile.js`, sous 640 px) : une barre d'onglets en bas (Tableau, Dates, Planning, Équipe,
     Plus : les autres rubriques, la carte, la corbeille, la recherche), un bouton « + » flottant (une date, une fiche, un
-    lieu, une opportunité, une proposition, une séance), les rubriques de l'en-tête masquées, les fiches en plein écran,
+    lieu, une opportunité, une proposition, une séance), le menu latéral masqué, les fiches en plein écran,
     leur pied et les annonces au-dessus de la barre. L'administration **s'installe sur le téléphone** comme l'espace de
     l'équipe (`admin/manifest.webmanifest`, `admin/sw.js`, ses icônes) : « Installer », en tête de « Plus », donne
     l'invite du navigateur, ou sur l'iPhone la marche à suivre dans Safari ; installée, elle s'ouvre en plein écran
@@ -447,8 +634,229 @@ compte du projet inscrit dans `crescite_admins`.
     propose les fiches) et la base le prévient dans son espace ; épingler, modifier, supprimer avec « Annuler » ; une
     pièce jointe dans le stockage privé de l'équipe (`notes/`). Le journal garde tout.
   - `node site/niveau.mjs` vérifie les dix idées dans Chromium, hors ligne, sur la base fictive commune
-    (`site/admin-fictif.mjs`, partagée avec `tableau.mjs`) : 57 vérifications, des captures dans
+    (`site/admin-fictif.mjs`, partagée avec `tableau.mjs`) : 65 vérifications, des captures dans
     `site/dist/shots-niveau/`.
+  - `node site/adresses-admin.mjs` vérifie, sur la même base fictive, qu'on ne perd rien en partant et que chaque chose a
+    son adresse : une fiche, un tiroir, une feuille de modification ou une note commencés posent la question dans la boîte
+    de la charte (jamais `confirm()`) quand on change de rubrique, revient en arrière, annule ou appuie sur Échap, et ne
+    la posent pas quand rien n'a changé ; un tiroir a son adresse (`?tiroir=…`) que le précédent, le suivant et un
+    rechargement respectent ; le fil d'Ariane d'une fiche ; l'état d'une liste (`?statut=…&q=…`) gardé dans l'adresse ; la
+    liste vide qui propose « Effacer les filtres » ; les titres (mois, jour, colonnes du Kanban) qui restent en vue ; le
+    témoin de la connexion (« À jour », « Hors ligne · lu à l'instant ») ; l'aide « ? » : 116 vérifications, des
+    captures dans `site/dist/shots-adresses/`.
+  - `node site/tableur.mjs` garde le tableur des représentations (`?mode=complet#/representations/tableur`, le Complet)
+    tel qu'il est, avant comme après sa sortie d'`admin/index.html` vers `admin/tableur.js` : il n'ouvre que la page,
+    jamais le source. Le rendu (une ligne par séance, les rôles et les
+    comptes de la grille, les colonnes vides repliées, Jour et Spectacle collées à gauche quand on défile, la case d'une
+    date répétée sur ses séances), les filtres et le tri, le clavier (flèches, Ctrl+flèches, Maj+flèches, Ctrl+A, Tab,
+    Entrée, F2, Échap, taper pour écrire), une case qui vaut pour toute la date (la date est enregistrée une fois avec
+    ses séances, les deux lignes se marquent), le collage d'un texte de tableur et Ctrl+C, Ctrl+Z, la fenêtre de la
+    distribution et « Étendre à… » (son aperçu, son application, leur annulation), l'import, l'export CSV et Excel :
+    86 vérifications, des captures dans `site/dist/shots-tableur/` (`tableur-1600.png`, `tableur-1280.png`).
+  - `node site/tableur-colonnes.mjs` garde les colonnes à la carte du tableur : une poignée par en-tête au pointeur fin
+    et au-dessus de 700 px seulement (aucune à 390 px, ni au doigt), le glisser (une seule écriture de `tableur.colonnes`,
+    au relâchement), les flèches, le double-clic qui ajuste au contenu, la largeur retrouvée et bornée (48 à 640 px),
+    l'ancienne forme plate de la préférence ; le menu d'un en-tête (Maj+F10, le focus tournant des en-têtes) : masquer
+    (le CSV et l'Excel suivent les colonnes montrées), figer jusqu'ici (les bords gauche cumulés, la case visée jamais
+    sous les colonnes figées), Alt+← et Alt+→ (aussi depuis la poignée et le bouton du tri), « Colonnes d'origine » et son
+    « Annuler » ; la fenêtre « Colonnes… » (cocher, ↑ ↓, glisser ; des cibles de 44 px au doigt) ; la hauteur du cadre
+    (la place qui reste, le menu latéral, la poignée du bas) ; le coin des fenêtres du lieu et de la distribution (largeur
+    et hauteur, et le double-clic qui rend la taille d'origine) et la taille de la zone de texte des notes ; le « +n » de la
+    distribution ; un changement qui arrive pendant un glisser, l'impression, l'aide « ? » ; aucune tâche de plus de
+    200 ms à `CPU=4`, geste par geste, mais sur une trentaine de lignes seulement (voir `site/MOUVEMENT.md`) :
+    118 vérifications, des captures dans `site/dist/shots-tableur-colonnes/` (`colonnes.png`, `colonnes-menu.png`,
+    `colonnes-fenetre.png`, `distribution-plus.png`).
+  - `node site/tableur-complet.mjs` garde le tableur Complet, chaque champ atteignable : le menu « Jeu » (la disposition
+    d'origine inchangée et terminée par l'icône « fiche », puis chacun des six jeux : les colonnes exactes, vides comprises, la
+    préférence qui les retient, « Colonnes… » qui montre une colonne nouvelle sans jeu) ; les colonnes nouvelles lues dans
+    leurs cases (la ligne du site, « 2 précisions », la précision en toutes lettres, la saison et la feuille de route en
+    lecture seule avec leur lien, « Modifié » et la source) ; la diffusion (le montant visible avec son cadenas, sa bande
+    `--ciel-doux` et « confidentiel » en `.sr`, l'étape de la piste en `aria-readonly`, « 1 200 » écrit dans le montant, ce que
+    rend `TABLEUR.tableau({ confidentiel })`, le CSV sans puis avec la case « Inclure la diffusion (confidentiel) », décochée
+    à chaque fois) ; l'icône « fiche » et Ctrl+Entrée (le tiroir, le champ visé de la colonne : le contrat, l'heure de la
+    bonne séance, le début d'une période, les précisions du site ; l'adresse sans `?champ=` ; la grille qui se redessine
+    derrière après un enregistrement ; le focus qui revient à la case) ; le garde-fou d'une date « période » (le menu, « Ajouter une
+    séance ce jour », « Déplacer le début » et son retour par Ctrl+Z, la saisie qui reprend avec le caractère tapé, le
+    collage et Suppr qui n'écrivent rien, la case « annulée ») ; « Détacher cette séance dans sa propre date » (la
+    confirmation, deux enregistrements, le suivi sans le montant, l'équipe avec la fonction et la note de chacun, un seul
+    « Annuler ») ; ce que les colonnes écrivent ou refusent (une ligne du site posée puis vidée, la billetterie de la
+    séance, le nombre de représentations et la fin figés avec une date à séances, une fin avant le début refusée, la
+    précision) ; l'import (les en-têtes d'un export reconnus, la jauge, la ligne du site, les précisions, les chiffres et leur
+    source appliqués, l'aperçu qui nomme les colonnes lues, la ligne qui rejoint une date existante, l'avertissement sous un
+    jeu, une colonne montrée sans titre qui garde sa place, « Montant (EUR) » reconnu) ; le menu « Jeu » qui dit le jeu retenu après un passage du Simple au Complet ; l'impression sans la colonne de l'icône « fiche » ; « Détacher » dont la seconde écriture est refusée (la date neuve est retirée) ; les précisions du site copiées puis collées, toujours séparées ; 390 px et « moins d'animations » : 119 vérifications, une quinzaine de secondes, des captures dans
+    `site/dist/shots-tableur-complet/` (`complet-jeux.png`, `complet-diffusion.png`, `tiroir-depuis-grille.png`).
+  - `node site/tableur-simple.mjs` garde le tableur Simple (une ligne par date) : le rendu (six colonnes, le petit calendrier
+    du jour, le liseré de la couleur du spectacle, les pastilles d'heures, le statut en badge, le lieu sur deux lignes, les
+    lignes de 44 px, la ligne vide du bas) ; le segment « Simple · Complet · Distribution » (le compte le retient, `?mode=complet` ne
+    s'écrit que sur le tableur, un compte réglé sur Complet l'ouvre en Complet et `?mode=simple` s'écrit pour lui, une adresse qui dit son mode n'écrit rien
+    dans le compte) ; la fenêtre des séances (retirer, ajouter, une heure illisible, Échap, Tab circulaire, « Annuler »
+    qui recrée la séance retirée) ; décaler le jour d'une date (ses séances suivent, jamais une séance de plus ; une
+    période garde sa longueur) ; le statut qui passe « en cours » puis « enregistré » ; la ligne vide du bas et « ＋ Date »
+    (une date neuve, jamais fusionnée avec sa voisine) ; le collage des séances (appariées, retirées, ignorées) et des jours
+    (« l'équipe de 2 dates est prévenue »), le collage sur la ligne vide du bas ; le rendu par ligne du temps réel (une seule ligne refaite pour une séance ou
+    une date, les lignes du lieu pour un lieu, rien pour une table que le tableur ne lit pas, la saisie qui attend) ; les états
+    d'une case (l'anneau qui tourne, la coche, la base qui refuse puis « Reprendre » ou « Réessayer », sans animation sous
+    « moins d'animations ») ; la barre d'état collée sous le cadre (contre le bas de la fenêtre, menu latéral replié ou
+    non, au-dessus de la barre du téléphone) ; le petit calendrier du jour (au clavier, à la souris, en tapant, au doigt) ;
+    les lecteurs de jours et d'heures ; les cases ignorées d'un collage (surlignées vingt secondes, « Voir », même pour les lignes que les tranches n'ont pas encore posées) ; le budget : trois
+    cents dates de deux séances, à `CPU=4`, aucune tâche de plus de 200 ms à l'ouverture, au temps réel (y compris un lieu qui
+    change dans la première seconde, pendant que les tranches se posent), à `rafraichirListes()`, au changement de mode (pour le tenir, le cadre du
+    tableau est dessiné à part et ses cases ne défilent pas chacune : sans cela, passer du Complet au Simple sur une saison
+    entière dépassait les 200 ms) et à une
+    écriture, et la date créée par la ligne vide du bas ou par « ＋ Date » sur une saison entière (une requête, « Nouvelle date »,
+    aucune erreur) ; 1 280 px, 390 px et l'impression : 195 vérifications, une minute et quart environ, des captures dans
+    `site/dist/shots-tableur-simple/` (`tableur-simple.png`, `tableur-jour.png`, `tableur-complet.png`, `fenetre-seances.png`,
+    `calendrier.png`, `erreur.png`, `cases-ignorees.png`, `tableur-1280.png`, `tableur-telephone.png`).
+  - `node site/icones.mjs` garde la bibliothèque d'icônes (`admin/icones.js`) et ce qui la lit : aucun doublon de tracé,
+    les 26 noms de l'ancien GESTES.ICO, chaque svg de la bibliothèque en 24 × 24 et `aria-hidden` sur l'accueil, Représentations
+    et le planning, la barre du téléphone (22 px, trait 1,9) et la tuile Équipe qui partagent un dessin, les dessins du
+    téléphone et du planning comparés à un tableau en dur, les tailles d'avant (le fil d'Ariane 18 px, les tuiles 15 px,
+    le témoin), l'espace de l'équipe qui garde ses tracés, la vue d'essai `#/essai/icones` : 45 vérifications, une capture
+    dans `site/dist/shots-icones/` (`icones.png`).
+  - `node site/vues-dates.mjs` garde les trois vues de Représentations : la pilule (trois liens à icônes, le nom masqué
+    sous 1 100 px sans quitter le lien, 44 px), la barre commune (les mêmes identifiants et un compte par vue), les
+    filtres qui suivent d'une vue à l'autre et que l'adresse porte (aussi nature, département, contrat, du … au), la
+    période de la liste, les annulées et les reportées sur la carte, « Effacer les filtres », l'ancien `?tri=desc` et
+    les anciens états du tableur et de la carte, le fondu entre les vues, le focus et l'annonce après un changement de
+    vue, « Voir dans le tableur » qui arrive sur sa ligne, la vue retenue (écrite à l'ordinateur, jamais au téléphone ;
+    lue par le lien du menu et par la page d'ouverture ; l'adresse nue reste la liste ; une fiche ouverte depuis la
+    carte ne la change pas) et les touches V puis L / T / C (y compris leur silence dans un champ et dans la grille du
+    tableur) : 111 vérifications, des captures dans `site/dist/shots-vues-dates/` (`vue-liste.png`, `vue-tableur.png`,
+    `vue-carte.png`, `selecteur-1000.png`).
+  - `node site/distribution.mjs` garde la distribution à l'écran (`admin/distribution.js`) : la cellule d'une date rendue à part
+    (pastilles rondes aux initiales, jamais de photo, liseré du métier tenu à 3:1 la nuit comme le jour, anneau pointillé d'un
+    renfort, barré pour qui ne part pas, « −n », « +n », aucune animation, le HTML de 120 dates de huit personnes en moins de 100 ms et un écran de 30 dates posé
+    dans la page en moins de 100 ms à `CPU=4` ; un portrait public n'entre jamais dans la grille), qui sera prévenu (un
+    compte, une date à venir, une présence qui change), `GARDEFOUS.indisposDe`, la fiche d'une date (la tournée par métier, la
+    fonction et la note de chacun, « Remplace X » en lien qui disparaît de l'écran dès qu'une fonction est saisie et revient si on la vide,
+    le résumé, l'enregistrement) et l'impact dans Spectacles → Distribution (une seule boîte, limiter à aujourd'hui, renoncer, l'ordre
+    des écritures, par « Ajouter quelqu'un de la troupe » comme depuis la fiche d'une personne, pour ajouter comme pour retirer) ;
+    puis, dans le tableur : la cellule branchée dans la colonne Distribution (Simple et Complet), la fenêtre d'une case (ses
+    deux blocs, les puces de métier, « Remplace X » qui vise la personne décochée à l'instant, qui sera prévenu, l'écriture
+    et son Ctrl+Z, une tournée de dix personnes dans un écran de 640 px), « Étendre à… » (la portée « au même lieu », la
+    fusion qui garde la ligne à fonction, le nombre de personnes prévenues), le mode Distribution (une colonne par personne,
+    un clic, Espace et Entrée qui basculent, la case qui saute, le point d'indisponibilité, la date annulée grisée, le menu
+    ⋯ « Régler sa période », la plage et « Étendre à… », un groupe de lignes par spectacle, le bas du tableau, rien qui bouge
+    sous « moins d'animations » ni avec `?anim=0`) et son budget (120 dates de dix personnes, 300 dates de douze personnes, 300 dates de deux spectacles sans filtre (une vingtaine de colonnes) : aucune tâche de plus de
+    200 ms à `CPU=4`, à l'ouverture depuis le Simple comme après un clic de case ; chaque budget repart des préférences vides, la matrice s'ouvre donc toujours depuis le Simple ;
+    mesuré sur trois passages, la plus longue tâche : de 99 à 191 ms à l'ouverture, de 116 à 130 ms après un clic) ; le double-clic qui ne bascule qu'une fois, Suppr qui dit qui est prévenu,
+    les dates annulées jamais écrites par « Étendre à… », les boutons ⋯ absents à l'impression) : 171 vérifications, des captures dans
+    `site/dist/shots-distribution/` (`distribution-cellule.png`, `distribution-fiche.png`, `distribution-impact.png`,
+    `distribution-fenetre.png`, `distribution-matrice.png`).
+- **Le cadre et le menu latéral** (`admin/cadre.js` ; la coque elle-même, `poserCoque` et `cadre`, est dans
+  `admin/index.html`) : l'en-tête tient sur une ligne, à toutes les largeurs ; ce qui n'y tient pas se replie, dans cet
+  ordre (l'adresse du compte, le mot « Rechercher », les mots longs, les liens du compte, qui passent alors dans « Plus »,
+  « Administration » sous le nom, la loupe seule). Les rubriques sont à gauche, dans une bande de nuit de 240 px qui
+  prolonge l'en-tête : douze lignes de 44 px (onze tant que la Diffusion n'est pas installée), chacune avec son icône et son
+  nom en petites capitales, la rubrique où l'on est en blanc avec un filet à la couleur de la saison. La bande reste collée
+  sous l'en-tête quand la page défile. En bas, « ‹ Replier » : le menu passe à 64 px d'icônes (le nom en infobulle, et dit
+  par les lecteurs d'écran), le contenu s'élargit, et la colonne glisse d'une largeur à l'autre (rien ne bouge si l'appareil
+  demande moins d'animations). Sous lui, les réglages : « Pleine largeur » et « Disposition d'origine » (voir « Les
+  fenêtres ajustables » ; sur un écran bas ils tiennent sur une rangée d'icônes), puis l'apparence (voir « L'apparence »).
+  Les flèches ↑ ↓ passent d'une rubrique à l'autre. Les annonces et la barre de sélection se centrent sur le contenu, non
+  sur la fenêtre.
+  - **Les raccourcis.** **Alt+M** replie ou déplie le menu (Option+M sur un Mac). **G puis une lettre** va à une
+    rubrique : G puis T le Tableau de bord, D les Représentations (les dates), P le Planning, F les Feuilles de route, S les
+    Spectacles, E l'Équipe, C la Diffusion (seulement quand la base l'a), O l'Espace pro, A les Ateliers, L les Lieux, X les
+    Textes du site, J le Journal. Après G, un petit « G… » en bas à gauche du contenu dit qu'on attend la lettre ; il
+    s'efface au bout d'une seconde, ou si la lettre ne mène nulle part. Rien ne part quand on écrit dans un champ, dans une
+    case du tableur, dans une boîte ouverte (l'aide, une question, le briefing, la recherche) ou dans un menu ouvert, ni
+    pendant qu'on dispose les tuiles du tableau de bord (« Personnaliser »). La séquence s'écrit dans
+    l'infobulle de chaque lien du menu (« Représentations (G puis D) ») et dans l'aide : « **?** » les liste, sous « Partout »
+    (Alt+M) et « Aller à une rubrique ». Elles sont déclarées une fois, dans un registre (`RACCOURCIS`, dans le script
+    principal d'`admin/index.html`) qu'un seul écouteur du clavier lit ; l'aide (`admin/menus.js`) en tire ses lignes, et un
+    module qui veut un raccourci le déclare là (`RACCOURCIS.declarer({ id, touches, groupe, d, quand, faire })`) au lieu
+    d'écouter le clavier de son côté. Seul le bouton de repli porte `aria-keyshortcuts="Alt+M"` : une suite de touches n'est
+    pas un raccourci de rechange pour les lecteurs d'écran, la séquence va dans l'infobulle et dans l'aide. Dans la
+    rubrique Représentations, **V puis L / T / C** choisit la liste, le tableur ou la carte (voir Représentations).
+  - **Les accès rapides.** Entre les rubriques et le bouton « Replier », sous l'étiquette « ACCÈS RAPIDES » : un bouton
+    **« ＋ Créer »** au dégradé de la saison, les accès **épinglés**, puis les **récents**.
+    « Créer » ouvre un menu à côté du bouton (↑ ↓ Entrée Échap, comme tous les menus de l'administration) : Nouvelle date,
+    Proposer des dates, Nouvelle fiche, Nouveau lieu, Séance d'atelier, Inviter une salle, Opportunité de diffusion
+    (chacune avec son icône, et seulement celles que la base permet : la fiche d'équipe et les propositions veulent
+    l'équipe, l'invitation d'une salle le quatrième script, l'opportunité la Diffusion). Un second clic sur « Créer » referme son
+    menu. « Opportunité de diffusion » mène à la Diffusion puis ouvre la fenêtre de la nouvelle piste ; il le fait aussi quand on y est déjà, et la
+    tuile « actions » du tableau de bord comme la barre de commande en profitent (avant, le clic restait sans effet sur la
+    Diffusion même). Les **épinglés** sont des liens avec leur icône et leur nom : par défaut le tableur, les feuilles de route, le
+    planning, les demandes de devis, les notes de frais, le journal et le site (ceux que la base permet : sept quand la
+    Diffusion et l'équipe sont installées) ; ce ne sont pas des rubriques (ni la classe de la navigation ni `aria-current`),
+    et un épinglé qui a l'adresse d'une rubrique, comme les feuilles, le planning ou le journal, ne la remplace pas : il se
+    garde, c'est une liste à soi. Le **clic droit** (ou **Maj+F10**) sur un épinglé propose Ouvrir, Ouvrir dans un nouvel
+    onglet, **Retirer du menu**, **Monter**, **Descendre** ; le clic droit sur une action de la tuile « actions » du
+    tableau de bord propose **Mettre dans le menu** (ou « Retirer du menu » si elle y est déjà : la tuile et le menu ont
+    chacun leur liste, la tuile est une page d'ouverture, le menu un raccourci permanent ; les « ＋ » et la recherche ne
+    s'épinglent pas). Chaque geste est gardé aussitôt avec le compte (`menu.epingles`, au plus douze, voir « Les
+    préférences ») et dit avec « Annuler ». Les **récents** sont les cinq dernières fiches ouvertes (une date, un lieu, une
+    personne, un spectacle, un devis, une piste, une séance…), avec leur genre : « Date · Bérénice, 5 nov. » ; une fiche qu'on
+    vient de créer en fait partie, une fiche supprimée disparaît, un nom changé se relit. C'est la liste que la recherche
+    propose champ vide (celle de l'appareil, `crescite-admin-recentes`) : elle est donc partagée entre les onglets du même
+    navigateur, pas propre à l'onglet. **Replié**, il ne reste que « ＋ » et les icônes des épinglés (le nom en infobulle et
+    pour les lecteurs d'écran) ; les récents s'effacent. Quand la colonne manque de hauteur, « Créer » reste toujours entier à
+    l'écran (sur un écran de moins de 780 px de haut, à la souris, les rubriques se resserrent un peu) et ce sont les épinglés et
+    les récents qui défilent d'eux-mêmes, jusqu'à une ligne, pour que le repli et les réglages restent au pied de l'écran ; sur
+    un écran plus bas encore (et replié, dès 900 px de haut : ses six réglages s'empilent, les deux des fenêtres puis les quatre de l'apparence), c'est le menu entier qui défile.
+    Un épinglé qui arrive
+    saute, un récent neuf se pose ; rien ne bouge si l'appareil demande moins d'animations. L'aide « **?** » les décrit sous
+    « Les accès rapides ». Au téléphone, rien n'a changé : « + » de la barre du bas garde sa liste.
+  - **Les badges.** Trois rubriques disent ce qui attend, par une pastille corail (un point sur l'icône quand le menu est
+    replié) : le **Tableau de bord** (le nombre de lignes « à traiter » de la tuile, hors reportées : le même que la tuile),
+    la **Diffusion** (les demandes de devis nouvelles) et l'**Équipe** (les notes de frais en attente). La Diffusion et
+    l'Équipe comptent leurs catégories quels que soient les réglages de la tuile « À traiter ». Le lien du menu dit son
+    compte aux lecteurs d'écran (« Diffusion CRM, 3 devis à traiter »). Le compte se fait quand la page est au repos (jamais
+    pendant qu'une vue se dessine), se garde 30 secondes, et se refait un instant après un changement reçu en direct, un
+    report, un épinglage ou une relecture de la base : le badge suit la tuile sans attendre les 30 secondes.
+  - **Où le choix est gardé.** À partir de 1 340 px de large, le menu naît déplié. En dessous, il naît replié sans que ce soit
+    retenu comme un choix. Dès qu'on le replie ou le déplie soi-même sur un grand écran, il reste comme on l'a laissé : le
+    choix est gardé avec le compte (`menu.replie`, voir « Les préférences »), retrouvé sur les autres appareils et au
+    premier dessin de la page (un petit script du `<head>` le lit dans la copie de l'appareil avant que rien ne paraisse), et
+    un second onglet se replie avec le premier ; l'annonce dit une fois où le choix est gardé. Sous 1 340 px, déplier le
+    menu ne vaut que pour l'onglet (il est oublié à la fermeture), et rien n'est écrit dans le compte.
+  - **Le téléphone** (640 px et moins) n'a pas de menu latéral : la barre du bas en tient lieu, et rien n'a bougé. Le
+    compte, le mot de passe, l'aide et la déconnexion restent dans l'en-tête.
+  - **À l'impression**, seul le contenu sort (ni l'en-tête, ni le menu, ni le pied).
+  - **L'apparence : la nuit, le jour, l'appareil, la densité.** En bas du menu, sous « Replier », une pilule de trois petites
+    icônes (la lune, le soleil, le moniteur) et une quatrième icône pour la densité, chacune de 44 px, avec son nom en
+    infobulle et pour les lecteurs d'écran ; menu replié, les quatre font une colonne. Le **jour** met le contenu des pages
+    sur du papier clair ; l'en-tête et le menu restent de nuit, dans les deux thèmes. **Appareil** suit le réglage du système
+    (clair ou sombre) et le suit tout seul quand il change. La **nuit** est le réglage de départ, quel que soit l'appareil ;
+    le téléphone (640 px et moins), qui n'a pas ce menu, reste toujours de nuit, comme avant.
+    Les flèches passent d'une icône de la pilule à l'autre et choisissent ; la recherche (**Ctrl K**) offre les mêmes
+    gestes : « Mode jour », « Mode nuit », « Compact ». La **densité compacte** resserre les lignes (celles du menu passent de 44 à 36 px),
+    les champs (d'environ 40 à 32 px) et le texte courant (de 15 à 14 px) : à la souris seulement, jamais au doigt, où rien ne
+    change (les cibles gardent leurs 44 px) ; les titres, les étiquettes et les feuilles de gestes ne bougent pas.
+    Le choix est gardé avec le compte (`theme`, `densite`, voir « Les préférences ») et sur l'appareil, et posé par un petit
+    script du `<head>` avant le premier dessin : en jour, la page ne clignote pas en sombre à la réouverture. Une
+    annonce le dit (« Thème : jour. », puis, la première fois, où le réglage est gardé). Le changement est instantané (aucune
+    transition de couleur : un fondu sur toute la page coûterait cher), seule l'icône choisie saute ; le planning se redessine
+    seul, la tentacule de la page remonte à la couleur du nouveau thème (sous « moins d'animations », elle garde ses couleurs
+    jusqu'à la prochaine arrivée : rien ne bouge). Les valeurs de la densité (`--pas`, `--h-champ`,
+    `--pad-champ`, `--h-ligne-menu`) sont déclarées dans le `:root` d'`admin/index.html`, la compacte dans `admin/habillage.js`,
+    et les composants qui suivent (le tableur Simple, par exemple) les lisent. `node site/theme.mjs` vérifie tout cela (la nuit
+    par défaut, la pilule et son contraste, le jour, le rechargement sans clignotement, « appareil » qui suit le système, la
+    compacte à la souris et sans effet au doigt, un second onglet, la première ouverture sur un appareil, sans le sixième script,
+    la recherche, le menu replié, « moins d'animations », `CPU=4`, le jour sur sept pages et le tableau de bord ;
+    captures `jour.png`, `nuit.png`, `compacte.png` et `jour-*.png` dans `site/dist/shots-theme/`).
+  - `node site/cadre.mjs` vérifie tout cela dans Chromium, hors ligne, sur la base fictive commune : l'en-tête sur une
+    ligne et le menu déplié à 1 440 px, le menu collé au défilement, les annonces centrées, la coque construite une seule
+    fois (et de nouveau après l'écran du mot de passe), le repli d'office à 1 280 px sans rien écrire, le repli et le dépli
+    (la colonne qui s'anime, la clé écrite, l'état retrouvé dès le premier dessin, le second onglet, sans le sixième script,
+    sous « moins d'animations »), le téléphone tel qu'avant, l'impression et l'ordre du clavier, puis les raccourcis (Alt+M au
+    Mac comme au clavier français, les douze « G puis une lettre », le témoin, ce qui les fait dormir, dont les boîtes
+    natives sans `aria-modal` (la question, le briefing), la file J / K du tableau de bord qui ne bouge pas, l'aide « ? »)
+    et les badges (les comptes, ce que lisent les lecteurs d'écran, le point du menu replié, le mémo de 30 s, le calcul
+    différé, un changement en direct, une ligne reportée que le badge suit sans attendre, des catégories imposées, aucune
+    tâche de plus de 200 ms à `CPU=4`) : 120 vérifications, des captures dans `site/dist/shots-cadre/`.
+  - `node site/acces.mjs` garde les accès rapides et la barre de commande : « Créer » (ses sept créations avec leur icône, Entrée,
+    Échap, le second clic qui referme, un autre menu qu'il remplace, l'opportunité qui marche aussi sur la Diffusion), les
+    sept épinglés d'office (ni `.nav` ni `aria-current`, leur infobulle, une condition qui change, une clé mal formée ou
+    vide), leurs flèches ↑ ↓ jusqu'aux récents, leur menu (Maj+F10 : retirer, monter, descendre, « Annuler » ; le clic droit sur la tuile : « Mettre dans le
+    menu », qui laisse les dix actions de la tuile), les récents (le lieu avant la date, une fiche créée, supprimée,
+    renommée, un autre onglet, un tiroir), la recherche (« replier », « vue carte », les douze rubriques avec leur séquence, la
+    touche à côté du genre et jamais dedans, les récents sans saisie), le menu replié, un écran bas (« Créer »
+    entier à 720 et 768 px de haut), le téléphone (aucune touche), le mouvement (l'arrivée
+    d'un épinglé et d'un récent, rien sous « moins d'animations »), l'aide « ? », et sans le
+    script SQL 6 : 108 vérifications, des captures dans `site/dist/shots-acces/` (`acces.png`, `acces-replie.png`,
+    `recherche-commandes.png`).
 - **Les gestes** (`admin/gestes.js`, commun avec l'espace de l'équipe ; `admin/menus.js` pour ce que l'administration en
   fait) : un **clic droit**, un **appui long** (au doigt, avec une courte vibration) ou **Maj+F10** sur une ligne, une
   carte ou une tuile ouvrent ce qu'on peut en faire sans ouvrir la fiche, près du pointeur à l'ordinateur, en feuille
@@ -471,51 +879,220 @@ compte du projet inscrit dans `crescite_admins`.
 - **La recherche rapide** : Ctrl K (⌘K sur un Mac), ou la loupe de l'en-tête (au téléphone, au bout de la ligne du
   logo). Une date se trouve par son spectacle, son lieu, sa commune ou son jour (« 21 oct », « mardi », « 21/10 »),
   comme une personne, un lieu, un spectacle, une feuille de route ou une rubrique ; ↑ ↓ choisissent, Entrée ouvre,
-  Échap ferme ; sans rien taper, les prochaines dates. Tout se cherche dans ce que l'administration a déjà chargé :
-  aucune requête à la frappe.
+  Échap ferme ; sans rien taper, les fiches ouvertes en dernier (les mêmes que « Récents » dans le menu), puis les
+  prochaines dates. Tout se cherche dans ce que l'administration a déjà chargé : aucune requête à la frappe. C'est aussi une
+  barre de commande : « replier » ou « déplier » trouve « Replier le menu » (**Alt M**), « vue carte » la carte de tournée
+  (**V C**), et chaque rubrique montre sa séquence (« Planning » **G P**) ; la touche s'écrit à côté du genre de l'entrée.
+  Au téléphone, il n'y a pas de menu à replier : la commande n'y est pas, et sans clavier (écran tactile, téléphone) aucune
+  touche ne s'écrit. Les trois vues (**V L**, **V T**, **V C**) n'agissent que dans Représentations : l'infobulle le dit.
 - **À compléter avant la tournée**, en tête de Représentations (repliable, et repliée elle le reste) : pour les dates
   confirmées des 60 prochains jours (30 ou 90 au choix), les personnes de l'équipe de tournée sans téléphone, les lieux
   sans adresse ou sans contact (ou la date sans lieu), les dates sans feuille de route ou dont la feuille a encore du
   gris. Chaque ligne mène là où on le complète, le curseur dans le champ (la fiche, le lieu, la feuille sur sa liste
   « À compléter ») ; la liste se vide à mesure.
 - **Représentations**, présentée comme l'agenda du site : les prochaines dates en haut, puis les saisons passées,
-  fermées sauf la saison en cours (« Aller à une saison… »), avec les filtres par spectacle, public et statut. On y
-  ajoute une date, on y modifie une date passée. Une date porte autant de représentations qu'il en faut, le même
+  fermées sauf la saison en cours (« Aller à une saison… »). Trois vues, une pilule à trois icônes à côté du titre
+  (Liste, Tableur, Carte ; la vue ouverte en dégradé de la saison ; sous 1 100 px l'icône seule, le nom en infobulle) :
+  ce sont des liens, donc Ctrl+clic, le précédent et l'adresse marchent ; après un changement de vue, le focus reste sur
+  le lien de la vue ouverte et les lecteurs d'écran l'entendent (« Vue tableur »). **Les trois vues ont les mêmes
+  filtres**, dans une même barre : la recherche, À venir / Passées / Toutes (À venir d'office : le bloc des dates à
+  venir puis les saisons passées fermées ; Passées : les saisons passées seules ; Toutes : tout ouvert), la saison, le
+  statut, le public, les puces colorées des spectacles (elles servent aussi de légende), et, sous « Plus de filtres »,
+  la nature, le département, le contrat et du … au ; le compte dit ce que la vue montre. La recherche n'est pas la
+  même partout, et son texte d'aide le dit : la liste et la carte cherchent le lieu, la commune, le spectacle,
+  l'intitulé, l'organisateur et le contact ; le tableur cherche aussi les notes, le statut et l'équipe. À droite, ce
+  qui est propre à la vue : « Aller à une saison… » (la liste), « Colonnes vides » (le tableur), « Autour des dates »
+  (la carte) ; le tri du tableur reste dans l'en-tête de sa colonne « Jour ». Changer de vue garde les filtres ;
+  l'adresse les porte (`?q=caen&periode=toutes` : seul ce qui diffère de la valeur d'office s'y écrit), donc un
+  rechargement, le précédent du navigateur et un lien partagé rouvrent la même chose ; « Effacer les filtres » remet
+  tout d'office et rend le focus à la recherche. Le tri du tableur, « Autour des dates » et les saisons ouvertes de la
+  liste ne vont pas dans l'adresse (un ancien lien `?tri=desc` est encore lu) ; les colonnes du tableur, « Colonnes
+  vides » comprises, sont une préférence du compte. « Voir dans le
+  tableur » (le menu d'une date : clic droit, Maj+F10) ouvre le tableur sur la ligne de cette date : case active, en
+  vue, cerclée un instant (si un filtre la cachait, il est relâché ; si l'appareil demande moins d'animations, la ligne
+  est marquée sans mouvement, le temps qu'on la repère). Les trois vues lisent les filtres de la même façon ; passer de
+  l'une à l'autre est un fondu. **La dernière vue est retenue** : à l'ordinateur, chaque fois qu'on ouvre la liste, le
+  tableur ou la carte, elle est gardée avec le compte (`representations.vue`, sur tous les appareils), et le lien
+  « Représentations » du menu latéral, comme la page d'ouverture si c'est elle qui est choisie, rouvre cette vue-là. Une
+  adresse écrite dit toujours sa vue : `#/representations` nu reste la liste, et un lien partagé ne change pas. Au
+  téléphone, rien n'est retenu ni appliqué : l'onglet Dates mène à la liste. Au clavier, **V puis L**, **V puis T** ou
+  **V puis C** ouvre la liste, le tableur ou la carte (tant qu'on est dans la rubrique, hors d'un champ et hors d'une boîte
+  ouverte ; l'aide « ? » les montre sous « Les représentations », l'infobulle de la pilule aussi). Dans la grille du
+  tableur, une lettre ouvre la case : « V » n'y change donc pas de vue, on sort de la grille en cliquant ailleurs (le
+  titre, un espace vide), ou l'on clique la pilule. Ouvrir une fiche ou « ＋ Nouvelle date » depuis la carte
+  ou le tableur ne change pas la vue retenue : « Représentations » y rouvre celle où l'on travaillait.
+  On y ajoute une date, on y modifie une date passée. Une date porte autant de représentations qu'il en faut, le même
   jour ou non, chacune avec son heure, son public et sa billetterie. L'aperçu montre la ligne telle que le site
   l'affichera. Sous son lieu, la date montre ce que la fiche du lieu en sait (adresse et itinéraire, contact, jauge,
   plateau, ou ce qui manque) et mène à elle ; son équipe donne le téléphone de chacun (« téléphone ? » mène à la fiche).
   Le pied de la date tient sur une rangée : quand tout n'y tient pas (au téléphone, dans une colonne étroite), Feuille
   de route, Prévenir l'équipe, Dupliquer et Supprimer passent dans un menu « Plus » (↑ ↓, Échap rend le focus) ; seul
   « Enregistrer » reste à côté.
-- **Le tableur** (Représentations → Tableur) : une ligne par séance, comme le tableur où la compagnie récapitule ses
-  représentations ; les séances d'une même date se suivent, en bande. Colonnes : jour, spectacle, heure et fin, lieu,
-  commune, public, statut, nature, distribution, billetterie, précisions, organisateur, contact, contrat, notes, séance
-  annulée, site. Ce qui est vide reste vide, et une colonne vide sur toute la vue se replie (« Colonnes vides » la
-  montre). Filtres : saison, spectacle, à venir ou passées, recherche ; tri par date.
+- **Le tableur** (Représentations → Tableur ; `admin/tableur.js`, chargé après le tableau de bord) : une ligne par
+  date (**Simple**) ou par séance (**Complet**), comme le tableur où la compagnie récapitule ses représentations, ou la
+  matrice des dates et des personnes (**Distribution**). Trois boutons à icônes en tête, « Simple », « Complet » et
+  « Distribution », choisissent : Simple est le réglage d'office, le dernier choix est
+  gardé avec le compte (`tableur.mode`, sur tous les appareils) et dit dans l'adresse (`?mode=complet`, `?mode=distribution`) sur le tableur
+  seulement, jamais sur la liste, la carte ni une fiche ; sans `?mode=` dans l'adresse, c'est le réglage du compte qui
+  décide (`?mode=simple` s'écrit donc pour un compte réglé sur Complet : sans lui, le lien rouvrirait le Complet), et une adresse qui le dit l'emporte, sans rien changer au compte. Filtres : ceux de la barre commune des
+  trois vues (voir Représentations) ; tri par date.
+  - **Simple** : une ligne de 44 px par date, six colonnes de grandes cases. Le jour est un petit calendrier (« JEU 5
+    NOV », une période se lit « → 7 » dessous) sous un bandeau de la couleur du spectacle, et toute la ligne porte ce
+    liseré à gauche, comme les lignes de la liste. Les séances sont des pastilles d'heures (« 15h », « 20h30 », barrée
+    si elle est annulée, bleutée si elle est scolaire, un « + » en bout) : Entrée sur la case (ou un clic) ouvre une
+    petite fenêtre qui liste les séances de la date (le jour, l'heure, la fin, ✕ pour en retirer une, « ＋ Séance » pour
+    en ajouter ; Entrée ou « Enregistrer » écrit la liste d'un coup, Échap renonce) ; pour une date qui n'est qu'une
+    période, la fenêtre dit qu'ajouter une séance la fixe au jour. Puis le spectacle (avec sa pastille), le lieu (le nom,
+    la commune dessous), le statut en badge (option ambre, confirmée sauge, annulée corail, reportée indigo, et « masquée »
+    en second) et la distribution en pastilles rondes aux initiales. Écrire un autre jour sur une date la décale : sa fin et chacune de ses
+    séances suivent (jamais une séance de plus) ; pour une date à venir, la base prévient l'équipe (« Date déplacée »), et
+    l'état le dit avant de coller plusieurs jours (« l'équipe de n dates est prévenue »). Une ligne vide au bas de la
+    grille reçoit une nouvelle date, comme dans un tableur : on y écrit le jour, le spectacle et, si l'on veut, le lieu, et
+    la date se crée dès que le jour et le spectacle y sont (« Annuler » la reprend). En collant « 15h · 20h30 » ou « 15h,
+    20h30 » dans la case des séances, chaque heure retrouve la séance de la date qui l'a déjà (son public, sa fin, sa note
+    sont gardés), les autres naissent au jour de la date, et celles qu'on ne cite plus sont retirées (l'état dit « n
+    séances retirées »). En Simple, il n'y a ni « Colonnes… », ni « Colonnes vides », ni colonnes à déplacer : seules les
+    largeurs se règlent et se retiennent.
+  - **Distribution** (le troisième bouton) : qui part sur chaque date, d'un coup d'œil. Une ligne par date (comme le
+    Simple, avec le même jour figé), une colonne par personne : pour le spectacle filtré, celles de sa tournée puis les
+    renforts rencontrés sur ses dates, groupées par métier (un bandeau de la couleur du métier, son portrait, son prénom,
+    son rôle dessous, « téléphone ? » quand il manque) ; sans spectacle filtré, un groupe de lignes par spectacle (la
+    colonne du spectacle s'ajoute, figée, et le premier de chaque groupe porte un trait net). Chaque case est un bouton :
+    **✓** elle part, **✕** elle ne part pas, **⟳** remplaçante ou renfort ; un clic, Espace ou Entrée la bascule (✓ ↔ ✕
+    pour qui est de la tournée, rien ↔ ⟳ pour les autres), Ctrl+Z défait, et la phrase d'état dit qui sera prévenu (la
+    règle de la base : une date à venir, un compte, une présence qui change). Une ligne qui porte une fonction ou une note
+    n'est jamais effacée d'un clic. Un point corail signale une indisponibilité à venir de quelqu'un qui part ; une date
+    annulée ou reportée est une ligne de cases grisées qu'on n'écrit pas. Maj+flèches (ou Maj+clic) choisit une plage,
+    Suppr rend la case à la distribution (la barre d'état dit qui sera prévenu, comme pour un clic ; un double-clic ne bascule
+    qu'une fois), le collage et la copie disent « part », « ne part pas », « remplaçant ou
+    renfort ». Le bouton ⋯ d'une colonne (ou le clic droit, Maj+F10) offre « Régler sa période » ; le bas du tableau
+    compte les dates de chacun ; « Étendre à… », sous le cadre ou au menu d'une case, pose l'équipe de la date active sur
+    d'autres dates (les lignes choisies avec la plage ; une date annulée ou reportée n'est jamais comptée ni écrite). Ni ligne vide au bas, ni colonnes à déplacer : seules les
+    largeurs du jour, du spectacle et du lieu se retiennent, avec celles du Simple.
+  - **Complet** : une ligne par séance ; les séances d'une même date se suivent, en bande. Colonnes : jour, spectacle,
+    heure et fin, lieu, commune, public, statut, nature, distribution, billetterie, « Note de séance » (la précision
+    publique d'une séance : « complet », « audiodécrite »), organisateur, contact, contrat, montant de cession, notes,
+    chiffres, séance annulée, site (les colonnes se tirent du schéma de la date). Ce qui est vide reste vide, et une
+    colonne vide sur toute la vue se replie (« Colonnes vides » la montre). Chaque en-tête porte l'icône de son type.
+    Chaque ligne finit par une icône « fiche », nommée, qui ouvre la date dans le tiroir.
+  - **Chaque champ d'une date est atteignable** (Complet, à l'ordinateur). Douze colonnes de plus, hors de la disposition
+    d'origine (la grille de tous les jours ne change pas) : la **ligne du site** (le texte que le site affiche à la place
+    de celui qu'il compose), les **précisions du site** (la case dit « n précisions » ; elles s'écrivent dans la fiche,
+    où l'on les met en forme : Entrée ouvre le tiroir sur elles ; collées ou importées, une par ligne), la **billetterie
+    de la séance** (distincte de la billetterie de la date), le **nombre de représentations**, la **précision** (jour,
+    période, mois ou saison), la **fin de période**, la **saison** (en lecture seule), la **feuille de route** (en lecture
+    seule : à composer, brouillon ou publiée v2, un lien vers sa page), « **Modifié** » (quand et par qui, en lecture
+    seule), la **source de la date** et la **source des chiffres**, et l'**étape de la piste** de diffusion (en lecture
+    seule : la piste porte le suivi commercial depuis le vingt-deuxième script). La fin de période, la précision et le
+    nombre de représentations ne s'écrivent que pour une date sans séance : dès qu'elle en a, la case est grise et son
+    infobulle dit pourquoi (la base les déduit des séances) ; une fin ne passe pas avant le début. La fonction et la note
+    d'un remplaçant ne sont pas des colonnes (une ligne est une séance, une date a plusieurs personnes) : elles restent
+    dans le tiroir et dans la fenêtre de distribution. Le **menu « Jeu »** de la tête montre d'un coup toutes les colonnes
+    d'un sujet, vides comprises, et masque les autres : *Site* (ce que le site dit), *Tournée* (lieu, heures, distribution,
+    feuille de route), *Suivi* (organisateur, contact, contrat, notes, dernière modification), *Bilan* (saison, montant,
+    chiffres et leurs sources), *Diffusion* (le montant de cession et l'étape de la piste), *Tout* ; « Disposition
+    d'origine » rend les colonnes d'avant. Le choix est gardé avec le compte (`tableur.colonnes`, par mode : `jeu`,
+    `masquees`, et `montrees` pour les colonnes nouvelles qu'on a montrées une à une par « Colonnes… »).
+  - **La diffusion est confidentielle** : le montant de cession HT (script de la compagnie idéale) reste visible quand il est
+    rempli, mais son en-tête porte un cadenas (« confidentiel » pour les lecteurs d'écran) et une bande bleutée, comme
+    l'étape de la piste, et ni l'un ni l'autre ne sortent du tableur sans la case **« Inclure la diffusion
+    (confidentiel) »** du menu Exporter : décochée à chaque fois, jamais mémorisée, et la barre d'état dit ce qui est resté
+    de côté. L'organisateur, le contact, le contrat et les notes du suivi s'exportent comme avant.
+  - **La date dans le tiroir, sur le champ de la case** : l'icône « fiche » en bout de ligne et **Ctrl+Entrée** (listé par
+    l'aide « ? ») ouvrent la date dans le tiroir à droite, le focus sur le champ de la colonne (le contrat, l'heure de cette
+    séance, le début d'une période), qui s'allume ; la page garde son adresse, le tiroir y ajoute `?tiroir=representations/101`
+    comme partout. Quand on enregistre dans la fiche, la grille se met à jour derrière, sans attendre le direct ; à la
+    fermeture, le focus revient à la case. L'icône n'existe pas au téléphone ; Ctrl+Entrée (et « Ouvrir la date dans le tiroir » du clic droit) marche aussi en Simple, ce que l'aide du Simple dit.
+  - **Une date « période »** (une résidence, une répétition : des jours, aucune séance) : écrire dans une case de séance
+    (l'heure, le public, la note, la billetterie, « annulée ») créerait une séance sans le dire, et la période deviendrait
+    un jour. La case demande donc d'abord, dans un menu : « Ajouter une séance ce jour » (la période devient un jour) ;
+    pour le jour, aussi « Déplacer le début » (la fin suit si elle passait avant) ; ou « Annuler ». Le collage et Suppr
+    n'y créent rien : la case est signalée en ambre (« cette date est une période : Entrée sur la case pour choisir »).
+  - **Détacher une séance** : le menu d'une ligne (clic droit, Maj+F10) propose « Détacher cette séance dans sa propre
+    date » : une date neuve, au même lieu et au même statut, avec le suivi (organisateur, contact, contrat, notes ; le
+    montant de cession reste à la date d'origine) et l'équipe (avec la fonction et la note de chacun), puis la séance
+    quitte l'ancienne. Une confirmation le dit : l'équipe reçoit la notification « Nouvelle date ». Un seul « Annuler »
+    rend tout. Si la base refuse la seconde écriture, la date neuve est retirée et la barre dit que la séance est restée sur
+    sa date.
+  - Les colonnes du Complet sont à la carte, à l'ordinateur : le bord droit de chaque en-tête se tire (un double-clic l'ajuste à
+    son contenu ; la poignée se règle aussi aux flèches, ← →) ; un clic droit sur un en-tête, ou Maj+F10 (les en-têtes
+    se parcourent aux flèches ← →), propose Masquer, Figer jusqu'ici, Ajuster la largeur, Avancer, Reculer (Alt+← et
+    Alt+→ au clavier), Trier (le jour) et Colonnes d'origine ; le bouton « Colonnes… » ouvre la liste de toutes les
+    colonnes, à cocher, à réordonner par ↑ ↓ ou en les glissant. Le jour ne se masque pas. Le jour et le spectacle sont
+    figés d'office ; figer jusqu'ici en fige autant qu'on veut, de la première à celle-ci. Tout est retenu avec le
+    compte (la préférence `tableur.colonnes`, par mode : l'ordre, les colonnes masquées, le nombre de colonnes figées,
+    les largeurs, « Colonnes vides », le jeu choisi, les colonnes nouvelles qu'on a montrées), et « Colonnes d'origine » l'oublie avec un « Annuler ». Les largeurs ne se
+    règlent qu'au pointeur fin et au-dessus de 700 px : le téléphone garde les siennes. Une poignée sous le cadre en
+    règle la hauteur (`fenetres.tableur-h`) ; sans elle, le cadre prend la place qui reste sous lui, et suit le menu
+    latéral qui se replie ou se déplie. La fenêtre du lieu ou de la distribution, ouverte sur une case, retient sa taille
+    (son coin se tire), et la zone de texte des notes aussi.
+  - **Le jour, un petit calendrier** (Simple et Complet, à l'ordinateur) : Entrée (ou un clic) sur la case du jour pose un
+    calendrier sous la case, « ‹ Novembre 2026 › », lundi en premier, aujourd'hui cerclé, le jour choisi en couleur, les jours
+    des mois voisins à demi effacés. Il se pilote depuis le champ, qui garde le focus : ← → changent de jour, ↑ ↓ de semaine,
+    Page ↑ et Page ↓ de mois, Entrée écrit, Échap renonce ; à la souris, un clic sur un jour l'écrit, ‹ › changent de mois.
+    On peut aussi taper : « 5/11 », « 05-11-2026 », « 2026/11/05 », « 5 nov 26 », « jeu. 5 nov. 2026 » sont lus (le calendrier
+    suit ce qu'on tape), et pour une heure « 20h », « 20 h », « 20h30 », « 20:30:00 » (les secondes sont ignorées), « 2030 ».
+    Un intervalle (« du 5 au 7 nov ») n'est pas un jour : la saisie le refuse et le dit. Au doigt, la case garde le champ de
+    date du téléphone. Les mêmes formes sont lues au collage et à l'import.
+  - **Les états d'une case** : en cours d'enregistrement elle passe en italique avec un petit anneau qui tourne dans le
+    coin ; enregistrée, elle s'encadre de vert et une coche paraît dans le coin puis s'efface ; refusée par la base, elle
+    est cerclée de rouge, garde ce qu'on y avait écrit, et le message de la base est son infobulle. Sous « moins
+    d'animations » (ou `?anim=0`), l'anneau reste fixe et la coche ne paraît pas : la barre d'état dit la même chose.
+    **La barre d'état** est collée sous le cadre, contre le bas de la fenêtre : le compte (« 6 dates · 4 séances »), une icône
+    et la phrase (« Enregistré : … » avec « Annuler Ctrl Z »), puis « Supprimer… » à droite. Quand la base refuse, elle dit
+    « Pas enregistré : … » avec « Reprendre » (les cases refusées reprennent leur valeur d'avant, rien n'est écrit) et
+    « Réessayer » (la même écriture est rejouée, avec sa phrase : celle d'un collage garde « l'équipe de n dates est prévenue ») ;
+    les deux restent dans la barre, même derrière une autre phrase (« Copié »), tant que des cases sont cerclées de rouge ; Ctrl+Z n'y
+    servirait à rien : il défairait l'écriture d'avant, qui avait réussi. Au téléphone, elle reste au-dessus de la barre du bas.
+  - **Coller depuis Excel** : les cases que le tableur ne comprend pas (une valeur illisible, une case en lecture seule, une
+    répétition qui n'a pas de site) ne s'écrivent pas : elles se surlignent en ambre vingt secondes, avec la raison en
+    infobulle, et la barre d'état le dit (« 2 cases ignorées, surlignées en ambre ») avec « Voir », qui va à la première.
   - Branché sur la base dans les deux sens. Écrire dans une case enregistre aussitôt, par le même chemin que la fiche
-    d'une date (`crescite_enregistrer_date`, puis l'équipe : les mêmes déclencheurs, notifications et journal) ; l'état
-    le dit, « Annuler » ou Ctrl+Z le reprend. Ce qui change ailleurs (une autre administratrice, la fiche d'une date, le
+    d'une date (`crescite_enregistrer_date` ; avec le vingt-quatrième script, les chiffres et l'équipe dans le même appel,
+    sinon l'équipe ensuite : les mêmes déclencheurs, notifications et journal) ; l'état
+    le dit, « Annuler » ou Ctrl+Z le reprend. Une saison entière (trois cents dates) se pose par tranches (les premières
+    lignes d'abord, le reste de tâche en tâche) pour que la page reste fluide. Ce qui change ailleurs (une autre administratrice, la fiche d'une date, le
     site en édition) arrive en direct, et la case clignote. Une case de la date (spectacle, lieu, statut, nature,
     distribution, billetterie, suivi) vaut pour toutes ses séances : les autres lignes la répètent en gris et s'éclairent
     avec elle.
   - Au clavier comme dans un tableur : flèches, Entrée ou F2 (ou taper directement), Échap, Tab, Maj+flèches pour choisir
     des cases, Ctrl+C et Ctrl+V (des cases venues d'Excel ou de Google Sheets), Suppr pour vider, Ctrl+Suppr pour
-    supprimer la séance (après confirmation ; à la souris ou au doigt, le bouton « Supprimer la séance du … » dit
-    laquelle), Ctrl+Z. L'en-tête reste en haut, le jour et le spectacle à gauche ; au téléphone, le tableau défile sous
-    les doigts.
-  - « ＋ Séance » : le jour, l'heure, le spectacle, le lieu (la recherche des lieux) ; une date du même spectacle au
-    même lieu qui touche ce jour (le même, la veille ou le lendemain) reçoit la séance, sinon une date se crée, et le
-    tableur dit ce qu'il a fait ; un filtre qui la cacherait se relâche.
-  - La distribution : l'équipe de la date (la distribution « en tournée » par défaut ; une équipe explicite ne s'écrit
-    que si on la change), en pastilles qu'on retire et qu'on ajoute, au clavier aussi. « Étendre à… » la pose sur les
-    dates du même spectacle de la saison, de l'année civile ou des lignes choisies (les passées si on le veut), après un
-    aperçu du nombre de dates qui changeront ; les remplaçants posés à la main sont signalés avant d'être remplacés.
-  - Exporter les lignes et les colonnes de la vue : Excel (un .xlsx écrit par l'administration elle-même, sans
-    bibliothèque : de vraies dates et heures, l'en-tête figé et filtrable), CSV (points-virgules, pour Excel en
-    français), Google Sheets (le tableau copié, une feuille vierge sheets.new s'ouvre : on colle). « Importer » : des
-    lignes copiées d'un tableur (les titres de colonnes reconnus, ou l'ordre de l'export) deviennent des séances, après
-    un aperçu ligne par ligne ; « Annuler » reprend tout l'import. Le tableur ne montre ni n'exporte rien des colonnes de
-    diffusion du suivi (ni montant ni prix de cession).
+    supprimer la séance (en Simple, la date et ses séances ; à la souris ou au doigt, le bouton « Supprimer la séance du … »
+    dit laquelle), Ctrl+Z. L'en-tête reste en haut, les colonnes figées (le jour et le spectacle d'office) à gauche ; au
+    téléphone, le tableau défile sous les doigts.
+  - « ＋ Séance » (Complet) : le jour, l'heure, le spectacle, le lieu (la recherche des lieux) ; une date du même
+    spectacle au même lieu qui touche ce jour (le même, la veille ou le lendemain) reçoit la séance, sinon une date se
+    crée, et le tableur dit ce qu'il a fait ; un filtre qui la cacherait se relâche. En Simple, le bouton est « ＋ Date » (le
+    jour, le spectacle, le lieu, sans heure) et crée toujours une date neuve, même à côté d'une date du même spectacle au
+    même lieu ; l'import, lui, garde sa règle.
+  - La distribution : l'équipe de la date (la distribution « en tournée » par défaut ; une équipe explicite ne
+    s'écrit que si on la change). Dans la case, des pastilles rondes de 24 px aux initiales de chacun, qui se chevauchent,
+    rangées par métier avec un liseré de sa couleur (jeu prune, création indigo, technique ambre, production sauge), le
+    rôle en infobulle (« Camille Essai · Bérénice ») ; un remplaçant ou un renfort a un anneau pointillé ambre, qui ne part
+    pas est gris et barré, « −n » (corail) compte ceux de la tournée qui ne partent pas et « +n » ceux que la place
+    (la largeur qu'on a donnée à la colonne) ne laisse pas voir ; jamais de portrait dans la grille. Entrée sur la case
+    ouvre une fenêtre à deux blocs : « En tournée » (une case par personne, avec son portrait, sa fonction, son
+    téléphone, et sa fonction et sa note pour cette date seule) et « Remplaçants et renforts » (« Remplace Jean Durand »
+    en lien pour la personne qu'on vient de décocher, une fiche créée au vol) ; des puces de métier filtrent ; en pied,
+    « 2 personnes seront prévenues » dit qui reçoit « vous partez » ou « vous ne partez plus ». Elle défile en dedans
+    quand la tournée est longue, et se tire par son coin. « Étendre à… » pose l'équipe sur les dates du même spectacle de
+    la saison, de l'année civile, de cette date et des suivantes au même lieu, ou des lignes choisies (les passées si on
+    le veut ; jamais une date annulée ou reportée), après un aperçu du nombre de dates qui changeront et de personnes qui seront prévenues : c'est une fusion,
+    la ligne d'une date qui porte une fonction ou une note est gardée telle quelle, et les autres remplaçants posés à la
+    main sont signalés avant d'être remplacés.
+  - Exporter les lignes et les colonnes de la vue (celles qu'on montre, dans l'ordre où on les montre ; une colonne
+    masquée n'est pas exportée, « Colonnes vides » les rend) : Excel (un .xlsx écrit par l'administration elle-même,
+    sans bibliothèque : de vraies dates et heures, l'en-tête filtrable, autant de colonnes figées que dans la vue),
+    CSV (points-virgules, pour Excel en français), Google Sheets (le tableau copié, une feuille vierge sheets.new
+    s'ouvre : on colle). Les colonnes de la diffusion n'en font partie qu'avec la case « Inclure la diffusion
+    (confidentiel) » du menu Exporter. « Importer » : des lignes copiées d'un tableur deviennent des séances, après un
+    aperçu ligne par ligne ; « Annuler » reprend tout l'import. Il lit toutes les colonnes qu'il reconnaît par leur
+    titre (ceux d'un export aussi : « Cession HT (€) », « Jauge », « Spectateurs », « Heures d'ateliers »…) : le site, le
+    statut, la nature, la ligne et les précisions du site, la billetterie de la date et celle de la séance, les
+    chiffres et leur source, le suivi, le montant ; « Précisions » désigne la note de séance, « Précisions du site » les
+    précisions sous la ligne. Sans ligne de titres, les colonnes sont celles que le tableau montre (l'aperçu les nomme, et
+    demande une ligne de titres quand le tableau montre un jeu, des colonnes masquées ou des colonnes ajoutées). L'aperçu montre chaque colonne
+    lue ; une ligne qui rejoint une date qui existe déjà n'y ajoute que sa séance, et l'aperçu le dit.
 - **Spectacles** : toute la fiche, l'univers (avec le contrôle des contrastes) et les photos (allégées avant l'envoi).
 - **Ateliers** : le catalogue publié et les séances dans les établissements, avec le total des heures par saison.
 - **Lieux** : avec la recherche de commune (geo.api.gouv.fr), la fusion des doublons, et ses dates (à venir, puis
@@ -526,19 +1103,22 @@ compte du projet inscrit dans `crescite_admins`.
   ou une table, un auteur, une période : aujourd'hui, 7 ou 30 jours, ou deux dates) et se cherche (un nom, un numéro,
   un champ, jusque dans les valeurs changées), au téléphone comme à l'ordinateur ; il lit les 300 dernières
   modifications, « Lire 300 modifications plus anciennes » remonte plus loin (et la liste dit quand ce qui est lu ne
-  remonte pas assez).
+  remonte pas assez). Enregistrer les horaires d'une date (la fiche, le tableur, le tableau de bord) écrit une ligne du
+  Journal par séance, même pour celles qui n'ont pas changé : le vingt-quatrième script (l'enregistrement en une fois) y met bon ordre.
 - **Modifier sur le site ↗** ouvre le site en mode édition : les mêmes droits, dans la page publique.
 
 **Son mouvement.** L'administration s'ouvre sur un squelette qui luit le temps de lire la base, puis le contenu paraît.
 Les vues s'enchaînent (les View Transitions : la fiche glisse vers la gauche en s'ouvrant, la liste
-revient par la droite, une autre rubrique arrive en fondu ; l'en-tête et les annonces restent en place : `changerVueAdmin`,
+revient par la droite, une autre rubrique arrive en fondu ; l'en-tête, le menu latéral et les annonces restent en place : `changerVueAdmin`,
 `sensVue`) ; au premier rendu d'une vue, ses lignes, ses cartes et ses blocs arrivent l'un après l'autre (`main.entree`,
 retiré au bout d'une seconde : les rafraîchissements du temps réel ne rejouent rien) ; le pied d'une fiche dit l'état
 d'une barre, ambre quand elle est modifiée, verte un instant quand elle est enregistrée ; « À compléter avant la tournée »
 se vide à mesure : ce qui vient d'être complété reste un instant en vert, « complété », puis se retire
 (`listeQuiSeVide`) ; la recherche rapide s'ouvre et ses premiers résultats arrivent l'un après l'autre ; la pastille
-« direct » bat quand un changement arrive ; dans le tableur, la case qu'on vient d'écrire s'encadre de vert ; l'onglet
-choisi d'un spectacle arrive ; une connexion refusée secoue le formulaire ; les annonces s'en vont en douceur ; les
+« direct » bat quand un changement arrive ; dans le tableur, la case qu'on écrit prend un petit anneau qui tourne, puis
+s'encadre de vert avec une coche qui s'efface, et le petit calendrier du jour se pose ; l'onglet
+choisi d'un spectacle arrive ; une connexion refusée secoue le formulaire ; les annonces s'en vont en douceur ; le menu latéral se replie en
+glissant d'une largeur à l'autre (la colonne elle-même s'anime, le contenu suit) ; les
 compteurs « n à compléter » et le badge d'une feuille publiée sautent ; dans le planning, aujourd'hui se pose ; une liste
 qui se redessine (le temps réel, un enregistrement) glisse ses lignes à leur nouvelle place (`glisserVers`) ; le champ
 visé par un lien « à compléter » s'allume (`visee`) ; une séance ou une précision ajoutée se pose ; la cloche de « Prévenir
@@ -581,7 +1161,9 @@ script, `supabase/migrations/20261021_crescite_equipe.sql`, s'exécute après le
 Une personne connectée ne lit que sa fiche, ses dates (options comprises), les documents de ses spectacles et les
 feuilles de route publiées de ses dates ; un fichier privé ne s'ouvre que par un lien signé, si son document se lit. Le
 public ne lit que les fiches publiées et la distribution des spectacles publiés. Les règles sont vérifiées par 37 essais
-sur PostgreSQL (`supabase/tests/` : `npm install`, puis `node base.mjs`, `node equipe.mjs` et `node notifications.mjs`). Le script se termine par
+sur PostgreSQL (`supabase/tests/` : `npm install`, puis `node base.mjs`, `node equipe.mjs` et `node notifications.mjs` ; `node champs.mjs` y
+écrit les colonnes d'une date dans `champs-date.json`, que `site/champs.mjs` compare au schéma de la date ; l'enregistrement d'une
+date en une seule fois, avec le vingt-quatrième script, a les siens : `node enregistrer3.mjs`). Le script se termine par
 une vérification : les tables du projet, hors compagnie, qu'un compte connecté pourrait lire. Les comptes de ce projet
 sont aussi ceux du site adrienvada.fr.
 
@@ -610,9 +1192,27 @@ Bérénice dans le stockage privé. L'import n'écrase jamais le travail de l'ad
   date, jusqu'à la dernière) écrit d'un coup les écarts des dates qu'elle change, avec un aperçu (combien de dates, dont
   combien à venir, dont la personne sera prévenue) et « Annuler » ; « Quelqu'un qui a joué avant » fait de même pour une
   personne qui n'est plus dans la distribution. Retirer de la distribution quelqu'un qui a joué des dates passées
-  demande si elles le gardent. La fiche de la personne dit aussi ce qu'elle a joué, et quand. Rien ne change dans la
-  base : ce sont les écarts de `crescite_equipes`, comme ceux de l'historique importé. **Dans chaque date** : son équipe (la distribution « en tournée » cochée ; on décoche qui ne part pas, on ajoute un
-  remplaçant).
+  demande si elles le gardent : c'est le même choix que celui de l'impact. **L'impact** : avant d'ajouter quelqu'un à la
+  distribution (sur un spectacle, ou depuis sa fiche), de la retirer, ou de cocher ou décocher sa case « en tournée » (ce qui change
+  l'équipe de toutes les dates où rien n'est dit pour elle, à venir comme passées), une seule boîte dit « 2 dates à venir
+  changent d'équipe (dont 1 représentation confirmée) » (les dates annulées ou reportées ne comptent pas ; les options et les
+  répétitions comptent, la base les change aussi) et propose, coché d'office, de « limiter à partir d'aujourd'hui » : les dates
+  passées ne changent pas (celui qu'on retire y reste, celui qu'on ajoute n'y est pas). On peut renoncer
+  (« Annuler », Échap) : rien ne change et la case revient. Rien ne surveille la distribution : **personne n'est prévenu
+  automatiquement**, la boîte le dit, et « Prévenir l'équipe », dans la fiche de chaque date, le fait à la main. Les écarts des
+  dates passées sont écrits avant le retrait (ou après l'ajout) : jamais de « Vous partez » envoyé à tort. La fiche de la personne
+  dit aussi ce qu'elle a joué, et quand. Rien ne change dans la base : ce sont les écarts de `crescite_equipes`, comme ceux de
+  l'historique importé. **Dans chaque date** : son équipe (la distribution « en tournée » cochée ; on décoche qui ne part pas,
+  on ajoute un remplaçant ou un renfort) ; chacun y a son portrait rond au liseré de son métier (jeu prune, création indigo,
+  technique ambre, production sauge), rangé par métier, avec sa fonction (« Jeu (Bérénice) »), son téléphone, un champ fonction
+  et un champ note pour cette date seule ; quand on décoche quelqu'un, le renfort propose « Remplace Jean Durand », un lien qui
+  remplit sa fonction (il vise la dernière personne décochée) ; et un résumé dit qui sera prévenu à l'enregistrement : « 1 personne
+  sera prévenue (Jean Durand : « vous partez »). » : les personnes dont la présence change sur une date à venir et qui ont un compte
+  (un changement de fonction ou de note ne prévient personne ; sur une date qu'on crée, qui ne part pas n'est pas prévenu). Le
+  module `admin/distribution.js` (`DISTRIBUTION`) porte cette règle, l'impact, la cellule d'une date (des pastilles rondes de
+  24 px aux initiales, jamais de photo dans une grille : la colonne Distribution du tableur la montre telle quelle), la
+  fenêtre d'une case du tableur et la matrice du mode Distribution (voir Le tableur) ; `GARDEFOUS.indisposDe(pid, jours)`
+  donne les indisponibilités à venir d'une personne sur des jours (le point corail de la matrice).
 - **Ce que la base sait, montré là où l'on agit** (l'audit du 27 octobre 2026) : la fiche d'un lieu fait son bilan (les
   représentations jouées, depuis quand, les spectateurs, le remplissage, les cessions ; saison par saison ; ses
   organisateurs successifs ; les pistes et les demandes de devis du lieu ou de sa commune) et montre toutes ses dates ;
@@ -641,7 +1241,10 @@ Bérénice dans le stockage privé. L'import n'écrase jamais le travail de l'ad
   feuilles de la compagnie (le logo rond noir, la police FdR Sans, dérivée de Carlito et métriquement identique à
   Calibri, les jours en gras, les personnes surlignées en jaune, les alertes en rouge). La barre d'outils est courte :
   Rubrique, Jour, Ligne, Puce, Gras, Rouge, Surligner, Surligner les noms, Saut de page, Annuler. Un collage depuis
-  Word ou Writer est ramené à ces formes.
+  Word ou Writer est ramené à ces formes. **Le zoom de la page** : « − », « 100 % », « + » (de 50 à 200 %, par 10 %),
+  « Ajuster » (la page tient dans la largeur, comme avant) et Ctrl + molette sur la zone grise ; agrandie, la page défile
+  dans cette zone ; le zoom se retient avec le compte (`fenetres.a4-zoom`), la pagination, l'impression et le PDF ne
+  changent pas. Au téléphone et au doigt, la page reste ajustée : ni le groupe de zoom ni Ctrl + molette.
   - « Composer » écrit la page à partir de la base : l'en-tête, le planning jour par jour (le déroulé type placé autour
     des représentations : le montage passe la veille plutôt que la nuit, un repas ne tombe qu'aux heures de repas, le
     départ est calculé d'après la route, et rien n'est posé avant 6h), les répétitions, les adresses et les contacts.
@@ -749,7 +1352,7 @@ range en colonne à gauche. On y trouve :
   à chaque écriture et prévient l'équipe (`crescite_feuilles_avant`, `crescite_notif_feuilles`).
   Les écritures passent par les mêmes tables et les mêmes règles RLS que l'administration ; une erreur se lit dans la
   feuille, sans rien perdre de la saisie.
-  `node site/gestes-equipe.mjs` le vérifie dans Chromium (48 vérifications : hors ligne, puis sur une base
+  `node site/gestes-equipe.mjs` le vérifie dans Chromium (100 vérifications : hors ligne, puis sur une base
   simulée en lecture-écriture, stockage compris, où le compte administre : la date, un horaire, une présence, le lieu,
   prévenir, une notification, un document modifié puis un fichier ajouté, une ligne de feuille de route, la mise à
   jour depuis la base, le brouillon, la publication, la composition), après `python3 site/build.py`.
@@ -827,7 +1430,8 @@ indisponibilités de chacun (à la main, ou lues dans son agenda relié par son 
 jamais), le planning commun (toute l'équipe voit les heures de tous, le motif reste à la personne et à
 l'administration ; d'un agenda relié, aucun titre n'est gardé), et les propositions de dates de l'administration, avec
 une réponse par jour. Dans l'administration, la rubrique Planning montre le planning de toute l'équipe (vue Équipe et
-vue Mois, motifs et conflits compris), propose des dates en montrant qui n'est pas libre pendant le choix, et suit
+vue Mois, motifs et conflits compris ; à l'ordinateur, le détail d'un jour se tire de 240 à 560 px à côté de la grille, et en
+vue Équipe, au-dessus de 1 200 px, il se met à côté une fois un jour choisi), propose des dates en montrant qui n'est pas libre pendant le choix, et suit
 chaque proposition (réponses par jour, état des courriels, renvoyer, relancer, clore). Chaque jour proposé donne
 « Créer la date » : le formulaire d'une nouvelle date s'ouvre pré-rempli (le spectacle, le jour et ses heures, le lieu
 quand la proposition le nomme ou qu'elle est liée à une date, la nature d'après le titre — des répétitions ne vont
@@ -859,12 +1463,44 @@ fait de même quand le compte connecté administre. Trois fonctions, à déploye
   courriels (`node courriel.mjs`), 39 du flux d'agenda (`node agenda.mjs` : les dates inchangées, les propositions,
   l'échappement et le pliage des lignes).
 
-**Les préférences.** Le sixième script, `supabase/migrations/20261025_crescite_preferences.sql`, s'exécute après les cinq
-autres, de la même façon, et peut être relancé. Il ajoute `crescite_preferences` : ce que chacun règle une fois et
+**Les préférences.** Le sixième script, `supabase/migrations/20261025_crescite_preferences.sql`, s'exécute après les
+cinq autres, de la même façon, et peut être relancé. Il ajoute `crescite_preferences` : ce que chacun règle une fois et
 retrouve sur tous ses appareils, une valeur par compte et par clé. Chacun ne lit et n'écrit que les siennes,
-l'administration comprise ; le public n'y a aucun droit. Pour commencer, une clé : `planning.masques`, les personnes
-masquées du planning. Tant que le script n'est pas passé, la liste reste sur l'appareil (sans message) ; elle passe dans
-la base à la première ouverture du planning qui suit. 22 essais (`node preferences.mjs`).
+l'administration comprise ; le public n'y a aucun droit. Voici les clés d'aujourd'hui : `accueil.tableau` (la
+disposition du tableau de bord), `planning.masques` (les personnes masquées du planning, en liste brute, que lit aussi
+l'espace de l'équipe), `representations.avant` (le panneau « À compléter avant la tournée » : ouvert ou fermé, 30, 60 ou
+90 jours), `menu.replie` (le menu latéral de l'administration, replié ou déplié : vrai ou faux, absente tant qu'on ne
+l'a pas choisi ; elle ne se garde que sur un grand écran, voir « Le cadre et le menu latéral »), `representations.vue`
+(la dernière vue de Représentations, `liste`, `tableur` ou `carte` : écrite à l'ordinateur seulement, voir
+Représentations), `menu.epingles` (les accès épinglés du menu latéral : la liste des clés d'action, au plus douze,
+écrite aussitôt ; absente tant qu'on n'a rien changé, le menu montre alors le tableur, les feuilles de route, le
+planning, les devis, les frais, le journal et le site, voir « Le cadre et le menu latéral »), `theme` (`nuit`, `jour` ou
+`appareil` ; la nuit tant qu'on n'a pas choisi) et `densite` (`confortable` ou `compacte` ; voir « L'apparence »), puis
+`tableur.colonnes` (les colonnes du tableur à la carte, par mode : ordre, masquées, colonnes figées, largeurs,
+« Colonnes vides », jeu choisi, colonnes montrées ; voir Représentations), `tableur.mode` (le mode du tableur, `simple`, `complet` ou
+`distribution` ; absente : Simple ; voir Représentations), puis `fenetres.tiroir` (la largeur du tiroir, en pixels), `fenetres.liste` (la
+largeur de la colonne de la liste à côté d'une fiche, en pixels), `fenetres.pl-detail` (la colonne du détail d'un jour
+du planning), `fenetres.tn` (la colonne de la carte de tournée) et `fenetres.a4-zoom` (le zoom de la page A4 : un
+pourcentage de 50 à 200, ou `auto` pour « Ajuster ») ; pour le tableur, `fenetres.tableur-h` (la hauteur de son cadre),
+`fenetres.tab-pop-lieu` et `fenetres.tab-pop-distribution` (la taille des fenêtres posées sur une case) et
+`fenetres.tab-ed-notes` (la zone de texte des notes) ; toutes absentes tant qu'on ne les a pas réglées, ramenées dans ce
+que l'écran permet à chaque lecture (voir « Les fenêtres ajustables »), puis `fenetres.pleine` (le contenu sur toute la
+largeur : vrai, ou absente) et une clé par famille de boîtes de dialogue (`fenetres.recherche`, `.tab-dialogue`,
+`.tab-dialogue-large`, `.crm`, `.tb-brief`, `.gq-aide`, `.gf` : la taille `{ l, h }` qu'on leur a donnée). La hauteur
+d'une tuile du tableau de bord se garde dans `accueil.tableau` (`tuiles[i].hauteur`). Une clé nouvelle se nomme
+`rubrique.reglage`, en minuscules, et sa valeur garde la même forme d'une version à l'autre. Tous les modules passent
+par un seul outil, `admin/prefs.js` (`PREFS`), qui lit le compte en une requête à l'ouverture, répond ensuite sans
+attendre, et écrit sans faire attendre : le réglage est gardé sur l'appareil tout de suite (sous
+`crescite-prefs:<compte>` : une copie par compte, rien ne se mélange sur un ordinateur partagé), puis envoyé à la base
+un instant après le dernier geste (immédiatement pour un clic) ; fermer la page envoie ce qui reste. Deux onglets du
+même navigateur se préviennent, sauf pendant une saisie. Quand l'appareil et la base ne disent pas la même chose, ce qui
+n'est pas encore parti l'emporte, sinon la base. Les anciennes clés de l'appareil (`crescite-admin-tableau`,
+`crescite-planning-masques`, `crescite-admin-avant`) passent dans la base à l'ouverture qui suit, puis s'effacent. Tant
+que le script n'est pas passé, rien ne s'affiche à l'écran de travers : les réglages restent sur l'appareil (la liste
+des personnes masquées dans `crescite-planning-masques`, que partage l'espace de l'équipe) et le panneau du tableau de
+bord le dit. Une seule annonce par session dit où un réglage est gardé (« Gardé avec votre compte » ou « Gardé sur cet
+appareil »), au premier réglage hors du tableau de bord. 56 vérifications (`node site/prefs.mjs`, captures dans
+`site/dist/shots-prefs/`) ; les 22 essais du script restent `node preferences.mjs` (dans `supabase/tests/`).
 
 **« Compagnie Idéale » (lancé le 25 octobre 2026).** Le septième script, `supabase/migrations/20261026_crescite_ideale.sql`,
 s'exécute après les six autres et peut être relancé. Il ajoute les alertes de tournée et les demandes de devis (le public
@@ -1033,7 +1669,8 @@ base : leur adresse est écrite dans quatre fonctions (`crescite_notif_envoyer`,
 `crescite_renvoyer_courriel`, `crescite_alertes_demander`) et deux tâches planifiées (`crescite-agendas`,
 `crescite-alertes`). Le script les réécrit à l'identique, l'adresse remplacée (mêmes droits, mêmes noms, mêmes horaires),
 puis dit ce qui reste. Les scripts 3, 5 et 11 portent déjà la nouvelle adresse : une base neuve n'en a pas besoin.
-9 essais (`node projet.mjs` : les quinze scripts tels que recopiés, puis lui, deux fois).
+9 essais (`node projet.mjs` : les quinze scripts tels que recopiés, puis lui, deux fois). Il n'y a pas de seizième
+script : le fichier 20261104 n'a jamais existé, et le dix-septième suit directement le quinzième.
 
 **Les textes du site d'aujourd'hui (pas encore lancé).** Le dix-huitième script,
 `supabase/migrations/20261106_crescite_textes.sql`, se lance dans le projet de la compagnie et peut être relancé. Il
@@ -1089,6 +1726,39 @@ l'administration ne propose pas ces liens et marche comme avant.
 `crescite_membre_date` (qui lit quoi) la lisent désormais, sans rien changer à ce qu'elles rendent. Les tables
 `crescite_contacts` et `crescite_hebergements` (le carnet des lieux) ne se lisent que dans l'administration et vont au
 journal. 21 essais (`node carnet.mjs`). Sans lui, la fiche d'un lieu dit que le carnet attend son script.
+
+**L'enregistrement d'une date en une seule fois (pas encore lancé).** Le vingt-quatrième script,
+`supabase/migrations/20261111_crescite_enregistrer_date_3.sql`, se lance dans le projet de la compagnie après les
+précédents et peut être relancé ; il ne change aucune table. `crescite_enregistrer_date`, que la fiche d'une date et le tableur appellent, garde désormais
+ce qu'on ne lui envoie pas : avant, une clé absente effaçait la valeur (l'édition sur place du site public, qui ne
+renvoie pas l'heure de fin des séances, la faisait disparaître) ; maintenant une clé absente ne change rien. Deux
+familles de colonnes. Celles qui peuvent rester vides (le lieu, la fin, l'intitulé, le lien, le nombre de séances ; dans
+une séance, l'heure, la fin, le lien, la note) : clé absente = gardée, clé présente à vide = effacée. Celles qui ne le
+peuvent pas (le spectacle, le début, la précision, la saison, le public, le statut, la case « visible », les précisions,
+la nature ; dans une séance, le public et « annulée ») : clé absente ou vide = gardée ; elles ne sont obligatoires qu'à la
+création d'une date. La liste des séances, quand elle est envoyée, remplace toutes les séances de la date (dans chacune,
+seul le jour est obligatoire) ; absente, les séances restent. Ce qui n'a pas changé n'est pas réécrit : ni ligne de
+journal pour rien, ni fausse notification « Date déplacée » (la date elle-même non plus : un enregistrement qui ne change
+que son suivi, ses chiffres ou son équipe ne la touche pas, et le bandeau « Modifiée ailleurs », qui suit la ligne de la
+date, ne le voit donc pas). Trois clés neuves, écrites dans le même appel donc dans la
+même transaction (tout passe, ou rien : « La date est enregistrée, mais pas ses chiffres » ne peut plus arriver) :
+`suivi.montant_cession` (le montant de cession, qui s'ajoute à l'organisateur, au contact, au contrat et aux notes ; il ne
+se lit que dans l'administration), `chiffres` (`jauge`, `spectateurs`, `heures_ateliers`, `source` ; la ligne est
+supprimée quand la jauge, les spectateurs, les heures et la source sont vides, comme dans l'administration) et `equipe` (`[{ personne_id, present, fonction,
+note }]`, la liste voulue pour la date : les autres personnes en sont retirées). Les quatre colonnes de diffusion du suivi
+(`etape_crm`, `date_dernier_contact`, `date_prochaine_relance`, `notes_diffusion`) ne sont pas touchées : la piste de
+diffusion porte ce suivi. Le script ajoute aussi `crescite_capacites()`, que l'administration interroge au chargement :
+`{ enregistrer_date: 3 ou 2, montant_cession, equipe, chiffres }`. Le « 3 » est lu dans le texte de la fonction
+d'enregistrement, jamais fixé : **relancer le troisième script (`20261022_crescite_notifications.sql`) remet la version 2
+de l'enregistrement, et aussi les anciennes fonctions de notification du vingt-et-unième script et la lecture de
+l'équipe d'une date du vingt-troisième ; il faut alors relancer ensuite le vingt-et-unième, le vingt-troisième et celui-ci.**
+Le script se termine par un état qui le dit (« à refaire : relancez ce script »). Sans lui, tout marche comme avant :
+la base est seulement écrite en quatre fois (la date, son suivi, ses chiffres, son équipe) au lieu d'une. 53 essais
+(`node enregistrer3.mjs` : les vingt-deux scripts, le vingt-quatrième deux fois ; une clé absente qui garde la fin d'une
+date, ses séances, le spectacle, le début et la case « visible » ; deux enregistrements identiques et le journal ; le
+montant de cession et ses droits ; les chiffres et l'équipe dans la transaction ; les essais de `base.mjs` et de
+`notifications.mjs` rejoués sur la version 3 ; puis les scripts 1, 2, 3, 7, 10 et 14 relancés après lui, la sonde qui dit
+2, et le vingt-quatrième relancé qui remet 3).
 
 **Écrire dans la base.** `python3 supabase/ecrire.py` est le seul outil par lequel Claude modifie la base quand on le lui
 demande : les tables `crescite_` et les stockages de la compagnie seulement (les tables d'adrienvada.fr restent hors

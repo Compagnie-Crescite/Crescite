@@ -6,14 +6,54 @@
 -- Ce que le script ajoute :
 --   crescite_preferences    une préférence par compte et par clé, sa valeur en JSON. Chacun ne lit et n'écrit que les
 --                           siennes, l'administration comprise ; le public n'y a aucun droit.
--- Les clés en usage :
+-- Les clés en usage (toutes passent par admin/prefs.js, PREFS) :
 --   planning.masques        [id…] les personnes masquées du planning par une administratrice (dans l'administration, et
---                           dans l'espace de l'équipe quand son compte administre) ; « Masquées » les fait revenir.
---                           Avant ce script, la liste reste sur l'appareil ; elle passe dans la base à la première
---                           ouverture du planning qui suit.
+--                           dans l'espace de l'équipe quand son compte administre) ; « Masquées » les fait revenir. Sa
+--                           forme est celle d'une liste brute : l'espace de l'équipe la lit telle quelle.
+--                           Avant ce script, la liste reste sur l'appareil, dans crescite-planning-masques (la clé que
+--                           partagent l'administration et l'espace de l'équipe) ; elle passe dans la base à la première
+--                           ouverture qui suit, et l'administration efface alors la clé de l'appareil.
 --   accueil.tableau         la disposition du tableau de bord de l'administration (admin/tableau.js) : l'ordre, la
 --                           taille et les réglages des tuiles, les colonnes, la page d'ouverture, le mémo. Avant ce
---                           script, elle reste sur l'appareil ; elle passe dans la base à la première ouverture qui suit.
+--                           script, elle reste sur l'appareil (crescite-prefs:<compte>, et l'ancienne clé
+--                           crescite-admin-tableau) ; elle passe dans la base à la première ouverture qui suit.
+--   representations.avant   le panneau « À compléter avant la tournée » de la rubrique Représentations : { ouvert, jours }
+--                           (ouvert ou fermé, 30, 60 ou 90 jours). Avant ce script, sur l'appareil, comme les autres ;
+--                           l'ancienne clé de l'appareil (crescite-admin-avant) passe dans la base puis s'efface.
+--   menu.replie             true ou false : le menu latéral de l'administration (admin/cadre.js) replié ou déplié, choisi sur un
+--                           écran de 1 340 px et plus (absente tant qu'on n'a pas choisi : le menu suit la largeur). Avant ce script,
+--                           sur l'appareil, comme les autres.
+--   representations.vue     'liste', 'tableur' ou 'carte' : la dernière vue de la rubrique Représentations, retenue à chaque
+--                           route à l'ordinateur seulement (jamais au téléphone) ; lue par le lien « Représentations » du menu
+--                           latéral et par la page d'ouverture (admin/index.html). Absente tant qu'on n'a pas ouvert le tableur
+--                           ou la carte : l'adresse nue #/representations reste la liste. Avant ce script, sur l'appareil.
+--   menu.epingles           [clé d'action…] : les accès épinglés du menu latéral (admin/cadre.js), sous « ＋ Créer », dans l'ordre
+--                           voulu, douze au plus (les clés de TABLEAU.ACTIONS : tableur, feuilles, planning, devis, frais, journal,
+--                           site, editer ; jamais les créations « ＋ » ni la recherche). Écrite aussitôt à chaque geste (retirer,
+--                           monter, descendre, « Mettre dans le menu » depuis la tuile des actions rapides). Absente tant qu'on n'a
+--                           rien changé : le menu montre alors les sept d'office. Avant ce script, sur l'appareil, comme les autres.
+--   theme                   'nuit' (par défaut), 'jour' ou 'appareil' : le thème de l'administration (admin/cadre.js). Le jour ne
+--                           change que le contenu des pages ; « appareil » suit le réglage du système. Avant ce script, sur
+--                           l'appareil seulement (crescite-admin-apparence:<compte>, que lit la page avant son premier dessin).
+--   densite                 'confortable' (par défaut) ou 'compacte' : la densité de l'administration à l'ordinateur (lignes, champs et
+--                           texte resserrés, à la souris seulement). Sur l'appareil avant ce script, comme le thème.
+--   fenetres.tiroir         la largeur du tiroir de l'administration (admin/fenetres.js), en pixels, tirée à son bord gauche (absente
+--                           tant qu'on ne l'a pas tirée) ; ramenée dans les bornes de l'écran à chaque lecture.
+--   fenetres.liste          la largeur de la colonne de la liste à côté d'une fiche (huit pages à deux colonnes), en pixels, même forme.
+--   fenetres.pl-detail, fenetres.tn
+--                           la colonne du détail d'un jour du planning, la colonne de la carte de tournée : en pixels, même forme.
+--   fenetres.a4-zoom        le zoom de la page A4 d'une feuille de route (admin/equipe.js) : un pourcentage de 50 à 200, ou 'auto'.
+--   fenetres.pleine         true ou absente : le contenu sur toute la largeur (« Pleine largeur » du menu).
+--   fenetres.<boîte>        { l, h } : la taille d'une famille de boîtes de dialogue (recherche, tab-dialogue, tab-dialogue-large, crm,
+--                           tb-brief, gq-aide, gf), tirée par son coin.
+--   fenetres.tableur-h, .tab-pop-lieu, .tab-pop-distribution, .tab-ed-notes
+--                           la hauteur du cadre du tableur ; la taille des fenêtres posées sur une case et de la zone des notes.
+--   tableur.colonnes        { complet: { ordre, masquees, figees, largeurs, vides, jeu, montrees }, simple: { … } } : les colonnes du
+--                           tableur à la carte, par mode (admin/tableur.js) ; absente tant qu'on n'a rien changé. « Disposition
+--                           d'origine » (le menu) efface toutes les clés fenetres.*, celle-ci et menu.replie, avec « Annuler ».
+--   tableur.mode            'simple', 'complet' ou 'distribution' : le mode du tableur (admin/tableur.js), écrit aussitôt au clic
+--                           du segment ; absente : Simple.
+-- Rien à migrer dans la base : les clés sont des lignes, pas des colonnes.
 
 begin;
 

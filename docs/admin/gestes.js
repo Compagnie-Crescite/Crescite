@@ -5,7 +5,9 @@
      touche Menu sur un élément ouvrent ses actions, celles que chaque interface déclare (fournisseurs : une cible CSS,
      des actions pour l'élément). Près du pointeur à l'ordinateur ; en feuille, depuis le bas, au téléphone. Au clavier :
      ↑ ↓ Début Fin, Entrée, Échap (le focus revient à l'élément) ; un clic à côté, le défilement, un changement de page
-     le ferment. Un élément [data-gestes-menu] (un bouton « ⋯ ») ouvre le menu de la cible qui le contient.
+     le ferment (chaque fermeture émet sur document l'événement « gestes:menu-ferme » ; detail.el : l'élément dont le menu
+     s'était ouvert).
+     Un élément [data-gestes-menu] (un bouton « ⋯ ») ouvre le menu de la cible qui le contient.
    - Les flèches (GESTES.fleches) : dans une liste, ↑ ↓ (← → aussi) passent d'une ligne à l'autre, Début et Fin aux bouts.
    - Le balayage (GESTES.glisser) : au doigt, vers la gauche ou la droite (le suivant, le précédent), jamais sur un cadre
      qui défile de côté.
@@ -15,6 +17,9 @@
    - Le formulaire (GESTES.formulaire) : une feuille de modification, depuis le bas au téléphone, au centre à
      l'ordinateur, avec ses champs, Annuler, Enregistrer ; ce que l'espace de l'équipe ouvre d'un appui long pour
      modifier une date, ses horaires, son lieu, son équipe, son suivi, une note de frais…
+     Dans l'administration seule (html.admin, posé par index.html : l'espace de l'équipe ne le pose jamais), la feuille a, à
+     l'ordinateur, un coin en bas à droite qui se tire (FENETRES.equiperDialog, admin/fenetres.js, repéré à son apparition) ; le piège
+     de Tab de la feuille y compte cette poignée. Ni option d'appel, ni rien à faire pour les appelants.
    - Ne rien perdre (GESTES.garder, GESTES.saisie, GESTES.quitter, GESTES.oublier) : une saisie commencée (une feuille du
      formulaire changée, un formulaire gardé : une note, une fenêtre) ne se perd pas en silence ; la question se pose dans
      une boîte de la charte (« Rester », « Quitter sans enregistrer »), jamais par confirm(), et seulement si quelque chose
@@ -37,7 +42,9 @@ const GESTES = (() => {
   // gestes qui mènent ailleurs (← →, le balayage) dorment ; ils ne changeraient pas la page derrière, en fermant la boîte
   const modaleOuverte = () => !!document.querySelector('[aria-modal="true"]');
   const ico = d => `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
-  const ICO = {
+  // les icônes : celles de la bibliothèque (admin/icones.js) quand elle est chargée ; l'espace de l'équipe ne la charge pas et garde
+  // ses tracés d'ici (le cercle aux huit rayons pour les réglages, entre autres)
+  const ICO = (typeof ICONES !== 'undefined' && ICONES.ICO) || {
     haut: ico('<path d="m6 15 6-6 6 6"/>'), bas: ico('<path d="m6 9 6 6 6-6"/>'), gauche: ico('<path d="m15 6-6 6 6 6"/>'), droite: ico('<path d="m9 6 6 6-6 6"/>'),
     points: ico('<circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/>'),
     ouvrir: ico('<path d="M5 12h14M13 6l6 6-6 6"/>'), externe: ico('<path d="M14 4h6v6M20 4l-9 9M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/>'),
@@ -143,6 +150,9 @@ const GESTES = (() => {
     const o = ouvert;
     ouvert = null;
     o.m.remove();
+    // (le menu n'a pas d'autre signal de fermeture : un bouton qui l'a ouvert, comme « ＋ Créer » du menu latéral, en lit celui-ci ;
+    // el est l'élément dont le menu s'est ouvert, pour que chacun reconnaisse le sien — rendre() ferme le précédent avant d'ouvrir le suivant)
+    document.dispatchEvent(new CustomEvent('gestes:menu-ferme', { detail: { el: o.el } }));
     if (rendreFocus && o.declencheur && o.declencheur.isConnected && typeof o.declencheur.focus === 'function' && !o.declencheur.closest('.gm')) o.declencheur.focus({ preventScroll: true });
   }
   // un clic ou un appui à côté, le défilement, un changement de taille ou de page ferment le menu
@@ -409,7 +419,7 @@ const GESTES = (() => {
       });
       form.addEventListener('keydown', e => {
         if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); abandonner(); return; }
-        if (e.key === 'Tab') { const xs = $$('input:not([type=hidden]), select, textarea, button', form).filter(x => !x.disabled && x.offsetParent !== null); if (!xs.length) return; const i = xs.indexOf(document.activeElement); if (e.shiftKey && (i <= 0)) { e.preventDefault(); xs[xs.length - 1].focus(); } else if (!e.shiftKey && i === xs.length - 1) { e.preventDefault(); xs[0].focus(); } }
+        if (e.key === 'Tab') { const xs = $$('input:not([type=hidden]), select, textarea, button, .poignee', form).filter(x => !x.disabled && x.offsetParent !== null); if (!xs.length) return; const i = xs.indexOf(document.activeElement); if (e.shiftKey && (i <= 0)) { e.preventDefault(); xs[xs.length - 1].focus(); } else if (!e.shiftKey && i === xs.length - 1) { e.preventDefault(); xs[0].focus(); } }
       });
       // le premier champ prend le focus, sauf si un doigt (ou le clavier) en a déjà choisi un : on ne le lui reprend pas
       requestAnimationFrame(() => { if (form.contains(document.activeElement)) return; ($('input:not([type=hidden]):not([type=checkbox]), select, textarea, [data-gf-seg] button[aria-pressed="true"], input[type=checkbox]', form) || $('button[type=submit]', form))?.focus({ preventScroll: true }); });
@@ -656,5 +666,5 @@ html.gf-ouvert { overflow: hidden; }
 @media (hover: hover) and (pointer: fine) { .gps-touche { display: inline-block; } }
 </style>`);
 
-  return { menu, ouvrir, fermer, fleches, glisser, precSuiv, clavierPrecSuiv, formulaire, fermerFormulaire, garder, saisie, quitter, confirmer, aide, toucheAide, oublier, vibrer, reduit, tactile, etroit, ICO, ouvert: () => !!ouvert, question: () => !!question };
+  return { menu, ouvrir, fermer, fleches, glisser, precSuiv, clavierPrecSuiv, formulaire, fermerFormulaire, garder, saisie, quitter, confirmer, aide, toucheAide, oublier, vibrer, reduit, tactile, etroit, ICO, dansChamp, modaleOuverte, ouvert: () => !!ouvert, question: () => !!question };
 })();

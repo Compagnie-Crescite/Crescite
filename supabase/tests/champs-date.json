@@ -1,0 +1,396 @@
+{
+ "tables": [
+  "crescite_dates",
+  "crescite_representations",
+  "crescite_dates_suivi",
+  "crescite_dates_chiffres",
+  "crescite_equipes"
+ ],
+ "colonnes": [
+  {
+   "table": "crescite_dates",
+   "colonne": "id",
+   "type": "bigint",
+   "nul": false,
+   "defaut": null
+  },
+  {
+   "table": "crescite_dates",
+   "colonne": "spectacle_id",
+   "type": "bigint",
+   "nul": false,
+   "defaut": null
+  },
+  {
+   "table": "crescite_dates",
+   "colonne": "lieu_id",
+   "type": "bigint",
+   "nul": true,
+   "defaut": null
+  },
+  {
+   "table": "crescite_dates",
+   "colonne": "debut",
+   "type": "date",
+   "nul": false,
+   "defaut": null
+  },
+  {
+   "table": "crescite_dates",
+   "colonne": "fin",
+   "type": "date",
+   "nul": true,
+   "defaut": null
+  },
+  {
+   "table": "crescite_dates",
+   "colonne": "precision",
+   "type": "text",
+   "nul": false,
+   "defaut": "'jour'::text"
+  },
+  {
+   "table": "crescite_dates",
+   "colonne": "saison",
+   "type": "text",
+   "nul": false,
+   "defaut": null
+  },
+  {
+   "table": "crescite_dates",
+   "colonne": "public",
+   "type": "text",
+   "nul": false,
+   "defaut": "'tout_public'::text"
+  },
+  {
+   "table": "crescite_dates",
+   "colonne": "statut",
+   "type": "text",
+   "nul": false,
+   "defaut": "'confirmee'::text"
+  },
+  {
+   "table": "crescite_dates",
+   "colonne": "visible",
+   "type": "boolean",
+   "nul": false,
+   "defaut": "true"
+  },
+  {
+   "table": "crescite_dates",
+   "colonne": "intitule",
+   "type": "text",
+   "nul": true,
+   "defaut": null
+  },
+  {
+   "table": "crescite_dates",
+   "colonne": "details",
+   "type": "jsonb",
+   "nul": false,
+   "defaut": "'[]'::jsonb"
+  },
+  {
+   "table": "crescite_dates",
+   "colonne": "lien",
+   "type": "text",
+   "nul": true,
+   "defaut": null
+  },
+  {
+   "table": "crescite_dates",
+   "colonne": "nb_representations",
+   "type": "smallint",
+   "nul": true,
+   "defaut": null
+  },
+  {
+   "table": "crescite_dates",
+   "colonne": "source",
+   "type": "text",
+   "nul": true,
+   "defaut": null
+  },
+  {
+   "table": "crescite_dates",
+   "colonne": "modifie_le",
+   "type": "timestamp with time zone",
+   "nul": false,
+   "defaut": "now()"
+  },
+  {
+   "table": "crescite_dates",
+   "colonne": "modifie_par",
+   "type": "uuid",
+   "nul": true,
+   "defaut": null
+  },
+  {
+   "table": "crescite_dates",
+   "colonne": "nature",
+   "type": "text",
+   "nul": false,
+   "defaut": "'representations'::text"
+  },
+  {
+   "table": "crescite_dates_chiffres",
+   "colonne": "date_id",
+   "type": "bigint",
+   "nul": false,
+   "defaut": null
+  },
+  {
+   "table": "crescite_dates_chiffres",
+   "colonne": "jauge",
+   "type": "integer",
+   "nul": true,
+   "defaut": null
+  },
+  {
+   "table": "crescite_dates_chiffres",
+   "colonne": "spectateurs",
+   "type": "integer",
+   "nul": true,
+   "defaut": null
+  },
+  {
+   "table": "crescite_dates_chiffres",
+   "colonne": "heures_ateliers",
+   "type": "numeric",
+   "nul": true,
+   "defaut": null
+  },
+  {
+   "table": "crescite_dates_chiffres",
+   "colonne": "source",
+   "type": "text",
+   "nul": true,
+   "defaut": null
+  },
+  {
+   "table": "crescite_dates_chiffres",
+   "colonne": "modifie_le",
+   "type": "timestamp with time zone",
+   "nul": false,
+   "defaut": "now()"
+  },
+  {
+   "table": "crescite_dates_chiffres",
+   "colonne": "modifie_par",
+   "type": "uuid",
+   "nul": true,
+   "defaut": null
+  },
+  {
+   "table": "crescite_dates_suivi",
+   "colonne": "date_id",
+   "type": "bigint",
+   "nul": false,
+   "defaut": null
+  },
+  {
+   "table": "crescite_dates_suivi",
+   "colonne": "organisateur",
+   "type": "text",
+   "nul": true,
+   "defaut": null
+  },
+  {
+   "table": "crescite_dates_suivi",
+   "colonne": "contact",
+   "type": "text",
+   "nul": true,
+   "defaut": null
+  },
+  {
+   "table": "crescite_dates_suivi",
+   "colonne": "contrat",
+   "type": "text",
+   "nul": true,
+   "defaut": null
+  },
+  {
+   "table": "crescite_dates_suivi",
+   "colonne": "notes",
+   "type": "text",
+   "nul": true,
+   "defaut": null
+  },
+  {
+   "table": "crescite_dates_suivi",
+   "colonne": "modifie_le",
+   "type": "timestamp with time zone",
+   "nul": false,
+   "defaut": "now()"
+  },
+  {
+   "table": "crescite_dates_suivi",
+   "colonne": "modifie_par",
+   "type": "uuid",
+   "nul": true,
+   "defaut": null
+  },
+  {
+   "table": "crescite_dates_suivi",
+   "colonne": "etape_crm",
+   "type": "text",
+   "nul": false,
+   "defaut": "'option_posee'::text"
+  },
+  {
+   "table": "crescite_dates_suivi",
+   "colonne": "montant_cession",
+   "type": "numeric",
+   "nul": true,
+   "defaut": null
+  },
+  {
+   "table": "crescite_dates_suivi",
+   "colonne": "date_dernier_contact",
+   "type": "date",
+   "nul": true,
+   "defaut": null
+  },
+  {
+   "table": "crescite_dates_suivi",
+   "colonne": "date_prochaine_relance",
+   "type": "date",
+   "nul": true,
+   "defaut": null
+  },
+  {
+   "table": "crescite_dates_suivi",
+   "colonne": "notes_diffusion",
+   "type": "text",
+   "nul": true,
+   "defaut": null
+  },
+  {
+   "table": "crescite_equipes",
+   "colonne": "date_id",
+   "type": "bigint",
+   "nul": false,
+   "defaut": null
+  },
+  {
+   "table": "crescite_equipes",
+   "colonne": "personne_id",
+   "type": "bigint",
+   "nul": false,
+   "defaut": null
+  },
+  {
+   "table": "crescite_equipes",
+   "colonne": "present",
+   "type": "boolean",
+   "nul": false,
+   "defaut": "true"
+  },
+  {
+   "table": "crescite_equipes",
+   "colonne": "fonction",
+   "type": "text",
+   "nul": true,
+   "defaut": null
+  },
+  {
+   "table": "crescite_equipes",
+   "colonne": "note",
+   "type": "text",
+   "nul": true,
+   "defaut": null
+  },
+  {
+   "table": "crescite_equipes",
+   "colonne": "modifie_le",
+   "type": "timestamp with time zone",
+   "nul": false,
+   "defaut": "now()"
+  },
+  {
+   "table": "crescite_equipes",
+   "colonne": "modifie_par",
+   "type": "uuid",
+   "nul": true,
+   "defaut": null
+  },
+  {
+   "table": "crescite_representations",
+   "colonne": "id",
+   "type": "bigint",
+   "nul": false,
+   "defaut": null
+  },
+  {
+   "table": "crescite_representations",
+   "colonne": "date_id",
+   "type": "bigint",
+   "nul": false,
+   "defaut": null
+  },
+  {
+   "table": "crescite_representations",
+   "colonne": "jour",
+   "type": "date",
+   "nul": false,
+   "defaut": null
+  },
+  {
+   "table": "crescite_representations",
+   "colonne": "heure",
+   "type": "time without time zone",
+   "nul": true,
+   "defaut": null
+  },
+  {
+   "table": "crescite_representations",
+   "colonne": "public",
+   "type": "text",
+   "nul": false,
+   "defaut": "'tout_public'::text"
+  },
+  {
+   "table": "crescite_representations",
+   "colonne": "annulee",
+   "type": "boolean",
+   "nul": false,
+   "defaut": "false"
+  },
+  {
+   "table": "crescite_representations",
+   "colonne": "lien",
+   "type": "text",
+   "nul": true,
+   "defaut": null
+  },
+  {
+   "table": "crescite_representations",
+   "colonne": "note",
+   "type": "text",
+   "nul": true,
+   "defaut": null
+  },
+  {
+   "table": "crescite_representations",
+   "colonne": "modifie_le",
+   "type": "timestamp with time zone",
+   "nul": false,
+   "defaut": "now()"
+  },
+  {
+   "table": "crescite_representations",
+   "colonne": "modifie_par",
+   "type": "uuid",
+   "nul": true,
+   "defaut": null
+  },
+  {
+   "table": "crescite_representations",
+   "colonne": "fin",
+   "type": "time without time zone",
+   "nul": true,
+   "defaut": null
+  }
+ ]
+}

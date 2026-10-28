@@ -230,8 +230,10 @@ const attendre = (page, fn, ms = 6000) => page.waitForFunction(fn, null, { timeo
   await page.waitForTimeout(200);
   ok('6 · « Autour des dates » resserre le cadre', await page.$eval('.tn-svg', e => e.getAttribute('viewBox') !== '0 0 800 780'));
   await page.click('.tn-svg .tn-pin[data-tn-lieu="5"]');
+  await attendre(page, () => document.querySelector('.gm-boite'));
+  await page.click('.gm-boite >> text=Ouvrir la fiche');
   await attendre(page, () => document.querySelector('.tiroir.la #ed-lieu'));
-  ok('6 · une pastille ouvre le lieu en tiroir', (await compte(page, '.tiroir #ed-lieu')) === 1 && /Caen/.test(await texte(page, '.tiroir-titre')));
+  ok('6 · une pastille ouvre son menu, dont « Ouvrir la fiche » ouvre le lieu en tiroir', (await compte(page, '.tiroir #ed-lieu')) === 1 && /Caen/.test(await texte(page, '.tiroir-titre')));
   ok('6 · aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();
 }
@@ -241,7 +243,7 @@ const attendre = (page, fn, ms = 6000) => page.waitForFunction(fn, null, { timeo
   const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 390, hauteur: 844 });
   await page.waitForSelector('.ob-barre', { timeout: 15000 });
   const onglets = await page.$$eval('.ob-barre [data-ob]', xs => xs.map(x => x.textContent.trim()));
-  ok('9 · au téléphone, une barre d’onglets en bas : Tableau, Dates, Planning, Équipe, Plus ; la rubrique courante marquée ; les rubriques du haut masquées', onglets.join(',') === 'Tableau,Dates,Planning,Équipe,Plus' && (await texte(page, '.ob-barre [aria-current="page"]')) === 'Tableau' && await page.$eval('.barre .nav', e => getComputedStyle(e).display === 'none'), onglets.join(','));
+  ok('9 · au téléphone, une barre d’onglets en bas : Tableau, Dates, Planning, Équipe, Plus ; la rubrique courante marquée ; les rubriques du haut masquées', onglets.join(',') === 'Tableau,Dates,Planning,Équipe,Plus' && (await texte(page, '.ob-barre [aria-current="page"]')) === 'Tableau' && await page.evaluate(() => { const nav = document.querySelector('nav[aria-label="Rubriques"]'); return !nav || nav.getClientRects().length === 0; }), onglets.join(','));
   ok('9 · le bouton « + » flotte au-dessus de la barre', await page.$eval('.ob-plus', e => !e.hidden && getComputedStyle(e).position === 'fixed'));
   await calme(page);
   await page.screenshot({ path: `${CAPT}/telephone.png`, fullPage: false });

@@ -93,7 +93,7 @@ const CORBEILLE = (() => {
     cadre('journal', `<div class="tete"><h1>Corbeille</h1><span class="compte">Ce qui a été supprimé ces ${JOURS} derniers jours. « Rétablir » le remet en place.</span><a class="btn" href="#/journal">Le journal</a></div>
       <div class="bloc" style="padding:0" data-liste id="l-corbeille">${typeof attenteLignes === 'function' ? attenteLignes(5, 58) : '<p class="vide">Chargement…</p>'}</div><p class="j-plus" id="cb-plus"></p>`);
     const zone = $('#l-corbeille');
-    const qui = id => { const a = E.admins.find(x => x.user_id === id); return a?.nom || (id ? 'un compte' : 'import'); };
+    const qui = id => (typeof nomAdmin === 'function' ? nomAdmin(id) : (E.admins.find(x => x.user_id === id)?.nom || (id ? 'un compte' : 'import')));   // (nomAdmin : le script principal)
     const quand = t => new Date(t).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' });
     const dessiner = () => {
       const xs = entrees();
