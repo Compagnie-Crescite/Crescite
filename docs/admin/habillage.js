@@ -241,12 +241,13 @@ dialog.recherche, dialog.tab-dialogue, dialog.tb-brief { border-radius: var(--ra
    les liens posés seuls sur leur ligne (une personne ou un lieu à compléter, un téléphone, une feuille de route, un
    spectacle d'une fiche) prennent la hauteur d'un doigt. Les liens dans une phrase restent dans leur phrase. */
 @media (pointer: coarse) {
-  .btn, .seg > button, .puce, .onglets-ed button, .outils-riche button, .tb-ico, .tb-traiter, .a4-b, .a4-vues button, .tab-tri, .tab-col-nom, select, .avant > summary { min-height: 44px; }
+  .btn, .seg > button, .puce, .onglets-ed button, .outils-riche button, .tb-ico, .tb-traiter, .a4-b, .a4-vues button, .tab-tri, .tab-col-nom, .dfn-puce, .mat-case, .mat-menu, select, .avant > summary { min-height: 44px; }
+  .mat-menu { min-width: 44px; }
   .btn.petit, .outils-riche button, .tb-ico, .tb-traiter, .a4-b, .tb-lien { min-width: 44px; }
   .tb-lien { justify-content: center; }
   .avant-fenetre select { min-height: 44px; min-width: 64px; }
   .btn.petit, .tb-ico, .tb-traiter { display: inline-flex; align-items: center; justify-content: center; }
-  .tb-lien, .tb-cat a, .avant-corps a, a.coord, a.manque-tel, a.eq-feuille, .liste-simple a, .sous-champ a, .lieu-resume a, .eq-date a, .acces a { display: inline-flex; align-items: center; min-height: 44px; }
+  .tb-lien, .tb-cat a, .avant-corps a, a.coord, a.manque-tel, a.eq-feuille, .liste-simple a, .sous-champ a, .lieu-resume a, .eq-date a, .dfn-ligne a, .acces a { display: inline-flex; align-items: center; min-height: 44px; }
   .doc-boutons, .crm-carte-actions { gap: 8px; }
 }
 
@@ -302,7 +303,7 @@ html.bascule *, html.bascule *::before, html.bascule *::after { transition: none
   /* le tableur imprimé : toutes ses lignes, sans la hauteur ni le défilement du cadre (les poignées des en-têtes et du bas sont déjà masquées) */
   #vue .tab-cadre { max-height: none !important; height: auto !important; overflow: visible !important; }
   /* le mode Simple : le segment des modes est dans la tête (masquée) ; l'état de la ligne ne garde que le compte « n dates · m séances » */
-  #vue .tab-modes, #vue .tab-etat, #vue .tab-suppr, #vue .tableur .c-fiche { display: none !important; }
+  #vue .tab-modes, #vue .tab-etat, #vue .tab-suppr, #vue .tableur .c-fiche, #vue .mat-menu { display: none !important; }
   #vue .tab-ligne-etat { position: static !important; }
   #vue .tab-jj::before { background: #000 !important; height: 2px; }
   #vue .tableur tr.tab-neuve { display: none !important; }

@@ -1,4 +1,4 @@
-// La distribution à l'écran, première moitié (admin/distribution.js, et ce qu'il touche : admin/equipe.js, admin/gardefous.js,
+// La distribution à l'écran (admin/distribution.js, et ce qu'il touche : admin/equipe.js, admin/gardefous.js, admin/tableur.js,
 // admin/habillage.js), vérifiée dans Chromium, hors ligne, sur la base fictive commune (admin-fictif.mjs).
 //   node site/distribution.mjs
 // Ce que le banc regarde : la cellule d'une date (DISTRIBUTION.cellule, rendue à part : des pastilles rondes aux initiales,
@@ -9,13 +9,21 @@
 // venir, une présence qui change) ; GARDEFOUS.indisposDe ; la fiche d'une date (la tournée rangée par métier, la fonction
 // et la note de chacun, « Remplace X » en lien qui vise la personne décochée à l'instant, le résumé des personnes
 // prévenues, l'enregistrement) ; l'impact d'un changement de distribution dans Spectacles → Distribution (une seule boîte,
-// les dates qui changent, « limiter à partir d'aujourd'hui », renoncer, l'ordre des écritures). La matrice, la fenêtre d'une
-// case et « Étendre à… » viennent avec le tableur (sous-lot suivant). Les lignes ajoutées à la base fictive le sont avant
+// les dates qui changent, « limiter à partir d'aujourd'hui », renoncer, l'ordre des écritures) ; puis, dans le tableur :
+// la cellule branchée dans la colonne Distribution (Simple et Complet), la fenêtre d'une case (« En tournée », « Remplaçants et
+// renforts », « Remplace X », les puces de métier, qui sera prévenu, l'écriture, une tournée de dix personnes dans un écran
+// court), « Étendre à… » (la fusion qui garde les lignes à fonction, la portée « au même lieu », le nombre de personnes
+// prévenues), le mode Distribution (la matrice : une colonne par personne, ✓ / ✕ / ⟳ au clic et à Espace, Ctrl+Z, le point
+// d'indisponibilité, les dates annulées grisées et jamais écrites par « Étendre à… », le double-clic qui ne bascule qu'une fois, Suppr qui
+// dit qui est prévenu, le menu ⋯ « Régler sa période » (absent à l'impression), la plage et « Étendre à… », un groupe de lignes par
+// spectacle, le bas du tableau) et son budget (à CPU=4, aucune tâche de plus de 200 ms à l'ouverture ni après un clic de case : 120 dates
+// de dix personnes, 300 dates de douze personnes, 300 dates de deux spectacles sans filtre, soit une vingtaine de colonnes ; le clic est
+// celui d'une main : la souris se pose, le bouton descend, puis remonte). Les lignes ajoutées à la base fictive le sont avant
 // chaque bloc et retirées à la fin : la base commune n'est pas touchée. Les captures vont dans site/dist/shots-distribution/.
 // Sort en erreur si une vérification manque.
 import fs from 'node:fs';
 import path from 'node:path';
-import { chromium, ICI, plus, DB, MODIFS, ok, calme, ouvrir, texte, compte, bilan } from './admin-fictif.mjs';
+import { chromium, ICI, plus, DB, MODIFS, ECRITURES, ok, calme, ouvrir, texte, compte, bilan } from './admin-fictif.mjs';
 
 const CAPT = path.join(ICI, 'dist', 'shots-distribution');
 const navigateur = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined });
@@ -23,7 +31,7 @@ fs.mkdirSync(CAPT, { recursive: true });
 const attendre = (page, fn, arg = null, ms = 6000) => page.waitForFunction(fn, arg, { timeout: ms }).then(() => true, () => false);
 
 // ---- la base du banc : une quatrième personne, un compte, des écarts sans identifiant (la clé de crescite_equipes est composite)
-const TOUCHEES = ['crescite_personnes', 'crescite_personnes_privees', 'crescite_equipes', 'crescite_distributions'];
+const TOUCHEES = ['crescite_personnes', 'crescite_personnes_privees', 'crescite_equipes', 'crescite_distributions', 'crescite_dates'];
 const AVANT = Object.fromEntries(TOUCHEES.map(t => [t, structuredClone(DB[t])]));
 function garnir() {
   for (const t of TOUCHEES) DB[t] = structuredClone(AVANT[t]);
@@ -413,6 +421,371 @@ const jour = n => plus(n);
   ok('7 · aucune erreur de script (fiche)', erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();
 }
+
+// ================================================================================ 8 · la cellule branchée dans le tableur
+const CASE = (l, k) => `#tab-corps tr[data-l="${l}"] td.c-${k}`;
+const ecritures = (n, table = 'crescite_equipes') => MODIFS.slice(n).filter(m => m.table === table);
+const termine = page => attendre(page, () => /^(Enregistré|Annulé|Pas enregistré|Retour impossible|Distribution posée)/.test(document.querySelector('#tab-etat')?.textContent || ''), null, 8000);
+const lireCellule = (page, l) => page.$eval(CASE(l, 'distribution'), td => ({ initiales: [...td.querySelectorAll('.avatar.mini')].map(a => a.textContent), classes: [...td.querySelectorAll('.avatar.mini')].map(a => a.className), titres: [...td.querySelectorAll('.avatar.mini')].map(a => a.title),
+  moins: td.querySelector('.dist-moins')?.textContent || '', anciennes: td.querySelectorAll('.tab-pastille, .tab-pastilles-ligne').length, photos: td.querySelectorAll('img, [style*="background-image"]').length, lu: td.querySelector('.sr')?.textContent || '' }));
+for (const [mode, hash] of [['Simple', '#/representations/tableur'], ['Complet', '?mode=complet#/representations/tableur']]) {
+  garnir();
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1600, hauteur: 1000, hash });
+  await page.waitForSelector('#tab-corps tr[data-l]', { timeout: 15000 });
+  const l103 = mode === 'Simple' ? 2 : 3;   // (en Complet, la date 103 a deux séances : sa première ligne est la quatrième)
+  const c101 = await lireCellule(page, 0), c103 = await lireCellule(page, l103);
+  ok(`8 · ${mode} : la colonne Distribution montre la cellule de DISTRIBUTION, deux pastilles rondes aux initiales (Camille, Jean) et « −1 » pour Jean qui ne part pas, plus aucune pastille de prénom`, c101.initiales.join() === 'CE,JD' && c101.moins === '−1' && c101.anciennes === 0, JSON.stringify(c101));
+  ok(`8 · ${mode} : Jean, qui ne part pas, est gris et barré ; l’infobulle dit le rôle (« Camille Essai · Bérénice ») et « ne part pas »`, /\babsent\b/.test(c101.classes[1]) && !/\babsent\b/.test(c101.classes[0]) && c101.titres[0] === 'Camille Essai · Bérénice' && c101.titres[1] === 'Jean Durand · ne part pas', JSON.stringify(c101.titres));
+  ok(`8 · ${mode} : la date 103 montre Léa en renfort (régie) avec l’anneau pointillé, rangée avec la technique`, c103.initiales.join() === 'CE,JD,LM' && /\bremplacant\b/.test(c103.classes[2]) && /\bm-technique\b/.test(c103.classes[2]), JSON.stringify(c103));
+  ok(`8 · ${mode} : aucune photo dans la grille (initiales seulement), et le texte pour les lecteurs d’écran dit tout le monde`, c101.photos === 0 && c103.photos === 0 && /Jean Durand \(ne part pas\)/.test(c101.lu) && /Léa Martin \(remplaçant ou renfort : régie\)/.test(c103.lu), c103.lu);
+  ok(`8 · ${mode} : aucune erreur de script`, erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+
+// ================================================================================ 9 · la fenêtre d'une case
+{
+  garnir();
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1600, hauteur: 1000, hash: '#/representations/tableur' });
+  await page.waitForSelector('#tab-corps tr[data-l]', { timeout: 15000 });
+  await page.click(CASE(0, 'distribution'));
+  await page.keyboard.press('Enter');
+  await page.waitForSelector('.tab-pop.distribution', { timeout: 4000 });
+  const vu = await page.evaluate(() => { const p = document.querySelector('.tab-pop.distribution'); return { role: p.getAttribute('role'), nom: p.getAttribute('aria-labelledby'), titres: [...p.querySelectorAll('h4')].map(h => h.textContent), largeur: Math.round(p.getBoundingClientRect().width),
+    membres: [...p.querySelectorAll('[data-eqd-part]')].map(i => `${i.parentNode.textContent.trim()}${i.checked ? '+' : '-'}`), puces: [...p.querySelectorAll('.dfn-puce')].map(b => b.textContent), coords: [...p.querySelectorAll('.coord, .manque-tel')].map(a => a.textContent.trim()), pied: p.querySelector('#dfn-prevenus').textContent, focus: document.activeElement === p.querySelector('#dfn-combo input') }; });
+  ok('9 · Entrée sur la case ouvre la fenêtre de la distribution (.tab-pop.distribution, 520 px, une boîte de dialogue nommée) avec ses deux blocs « En tournée » et « Remplaçants et renforts »', vu.role === 'dialog' && !!vu.nom && vu.titres.join() === 'En tournée,Remplaçants et renforts' && vu.largeur === 520, JSON.stringify(vu));
+  const pose = await page.$eval('.tab-pop.distribution', p => { const s = getComputedStyle(p); return { nom: s.animationName, duree: s.animationDuration }; });
+  ok('9 · la fenêtre se pose en 150 ms (ad-arrive)', pose.nom === 'ad-arrive' && pose.duree === '0.15s', JSON.stringify(pose));
+  ok('9 · « En tournée » : une case par personne (Camille part, Jean ne part pas), son téléphone ou « téléphone ? », et des puces de métier (Tous, Jeu, Technique)', vu.membres.join() === 'Camille Essai+,Jean Durand-' && vu.coords.length === 1 && /06 12 34 56 78/.test(vu.coords[0]) && vu.puces.join() === 'Tous,Jeu,Technique', JSON.stringify(vu));
+  ok('9 · le focus est dans le champ « Ajouter quelqu’un », et le pied dit que rien ne change tant qu’on n’a rien touché', vu.focus && /Rien ne change/.test(vu.pied), vu.pied);
+  // Jean repart (il a un compte), Camille ne part plus (elle n'en a pas)
+  await page.check('.tab-pop [data-eqd-part="2"]');
+  const apresJean = await texte(page, '#dfn-prevenus');
+  ok('9 · cocher Jean (qui ne partait pas, et a un compte) : « 1 personne sera prévenue (Jean Durand : « vous partez »)  »', /^1 personne sera prévenue \(Jean Durand : « vous partez »\)/.test(apresJean), apresJean);
+  await page.uncheck('.tab-pop [data-eqd-part="1"]');
+  const apresCamille = await texte(page, '#dfn-prevenus');
+  ok('9 · décocher Camille (sans compte) : elle ne s’ajoute pas aux personnes prévenues, et la phrase le dit', /^1 personne sera prévenue/.test(apresCamille) && /Camille Essai n’a pas de compte/.test(apresCamille), apresCamille);
+  await page.click('.tab-pop #dfn-combo input');
+  await page.keyboard.type('Noé');
+  await attendre(page, () => document.querySelector('.tab-pop .suggestions:not([hidden]) button[data-p="4"]'));
+  await page.keyboard.press('Enter');
+  await page.waitForSelector('.tab-pop [data-eqd-ajout="4"]', { timeout: 4000 });
+  const lien = () => page.$eval('.tab-pop [data-eqd-ajout="4"] [data-eqd-remplace]', b => ({ texte: b.textContent.trim(), visible: getComputedStyle(b).display !== 'none' && b.offsetParent !== null, cible: b.dataset.eqdRemplace }));
+  const l1 = await lien();
+  ok('9 · Noé (régisseur) est ajouté dans « Remplaçants et renforts », rangé avec la technique ; le texte d’attente « Remplace Camille Essai » vise la personne décochée à l’instant (pas Jean, ni la première)', l1.texte === 'Remplace Camille Essai' && l1.cible === '1' && l1.visible && await page.$eval('.tab-pop [data-eqd-ajout="4"] .eq-av', e => e.classList.contains('m-technique')), JSON.stringify(l1));
+  await page.click('.tab-pop [data-eqd-ajout="4"] [data-eqd-remplace]');
+  ok('9 · le lien remplit le champ fonction (« Remplace Camille Essai ») et disparaît', await page.$eval('.tab-pop [data-eqd-ajout="4"] [data-eqd-fonction]', e => e.value === 'Remplace Camille Essai') && !(await lien().then(l => l.visible)));
+  await page.fill('.tab-pop [data-eqd-ajout="4"] [data-eqd-fonction]', 'régie');
+  await page.fill('.tab-pop [data-eqd-note="4"]', 'train de 14h12');
+  // les puces de métier : « Technique » ne laisse que Jean et Noé
+  await page.click('.tab-pop [data-dfn-metier="technique"]');
+  const filtre = await page.evaluate(() => ({ visibles: [...document.querySelectorAll('.tab-pop .dfn-ligne:not([hidden])')].map(l => l.dataset.cat).join(), pressee: document.querySelector('.tab-pop [data-dfn-metier="technique"]').getAttribute('aria-pressed') }));
+  ok('9 · la puce « Technique » (aria-pressed) ne laisse voir que Jean et Noé ; une seconde fois, elle rend tout le monde', filtre.visibles === 'technique,technique' && filtre.pressee === 'true', JSON.stringify(filtre));
+  await page.click('.tab-pop [data-dfn-metier="technique"]');
+  ok('9 · … Camille est de retour', await page.$$eval('.tab-pop .dfn-ligne:not([hidden])', xs => xs.length) === 3);
+  await calme(page);
+  await page.screenshot({ path: `${CAPT}/distribution-fenetre.png`, fullPage: false });
+  const n = MODIFS.length;
+  await page.click('.tab-pop [data-eq-ok]');
+  await termine(page);
+  const equipes = ecritures(n).filter(m => m.post);
+  ok('9 · Enregistrer écrit la date par le chemin du tableur : Noé est posé sur la 101 avec sa fonction « régie » (upsert de crescite_equipes sur date_id, personne_id), et Camille ne part pas', MODIFS.slice(n).some(m => m.table === 'crescite_equipes' && m.post && m.conflit.join(',') === 'date_id,personne_id' && m.post.some(r => r.date_id === 101 && r.personne_id === 4 && r.fonction === 'régie')) && equipes.some(m => m.post.some(r => r.personne_id === 1 && r.present === false)), JSON.stringify(equipes));
+  ok('9 · … la ligne « ne part pas » de Jean s’efface (il repart avec la distribution)', ecritures(n).some(m => m.delete) && !DB.crescite_equipes.some(r => r.date_id === 101 && r.personne_id === 2));
+  const etat = await texte(page, '#tab-etat');
+  ok('9 · la phrase d’état dit qui est prévenu (1 personne : Jean)', /1 personne sera prévenue \(Jean Durand/.test(etat), etat);
+  const c = await lireCellule(page, 0);
+  ok('9 · la case montre Camille (grise, barrée), Jean et Noé (l’anneau pointillé), et « −1 »', c.initiales.join() === 'CE,JD,NP' && /\babsent\b/.test(c.classes[0]) && /\bremplacant\b/.test(c.classes[2]) && c.moins === '−1', JSON.stringify(c));
+  ok('9 · le focus revient sur la case, la fenêtre est fermée', (await compte(page, '.tab-pop')) === 0 && await page.evaluate(() => document.activeElement?.matches('#tab-corps td.c-distribution')));
+  // Ctrl+Z défait l'écriture de la fenêtre (la pile du tableur)
+  await page.keyboard.press('Control+z');
+  await termine(page);
+  await attendre(page, () => !E.equipes.some(x => x.date_id === 101 && x.personne_id === 4));
+  ok('9 · Ctrl+Z rend la fenêtre d’avant : Noé n’est plus sur la date, Jean ne part plus', !DB.crescite_equipes.some(r => r.date_id === 101 && r.personne_id === 4) && DB.crescite_equipes.some(r => r.date_id === 101 && r.personne_id === 2 && !r.present), JSON.stringify(DB.crescite_equipes));
+  ok('9 · aucune erreur de script (la fenêtre)', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+// une tournée de dix personnes dans un écran court : la fenêtre défile en dedans, ses boutons restent à l'écran
+{
+  garnir();
+  DB.crescite_personnes.push(...[11, 12, 13, 14, 15, 16, 17, 18].map(id => ({ id, slug: `p${id}`, prenom: `Prénom${id}`, nom: 'Essai', metiers: ['comédien'], photo: null, photo_publique: false, publie: true, ordre: id })));
+  DB.crescite_distributions.push(...[11, 12, 13, 14, 15, 16, 17, 18].map((p, i) => ({ id: 800 + i, spectacle_id: 1, personne_id: p, categorie: 'jeu', fonction: '', en_tournee: true, publie: true, ordre: 30 + i })));
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1440, hauteur: 640, hash: '#/representations/tableur' });
+  await page.waitForSelector('#tab-corps tr[data-l]', { timeout: 15000 });
+  await page.click(CASE(0, 'distribution'));
+  await page.keyboard.press('Enter');
+  await page.waitForSelector('.tab-pop.distribution', { timeout: 4000 });
+  await calme(page);   // (la fenêtre se pose en 150 ms : on la mesure posée)
+  const m = await page.evaluate(() => { const p = document.querySelector('.tab-pop.distribution'), r = p.getBoundingClientRect(), corps = p.querySelector('#dfn-corps'), ok = p.querySelector('[data-eq-ok]').getBoundingClientRect();
+    return { haut: Math.round(r.top), bas: Math.round(r.bottom), ecran: innerHeight, defile: corps.scrollHeight > corps.clientHeight, overflow: getComputedStyle(corps).overflowY, bouton: Math.round(ok.bottom), n: p.querySelectorAll('[data-eqd-part]').length }; });
+  ok('9 · une tournée de dix personnes dans un écran de 640 px : la fenêtre tient dans l’écran (max-height : 100vh − 16 px), son corps défile, et « Enregistrer » reste visible', m.n === 10 && m.bas <= m.ecran - 8 && m.haut >= 0 && m.defile && m.overflow === 'auto' && m.bouton <= m.ecran, JSON.stringify(m));
+  ok('9 · aucune erreur de script (la tournée longue)', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+
+// ================================================================================ 10 · « Étendre à… »
+{
+  garnir();
+  // une autre date de Bérénice au même lieu que la 101 (Caen), avec une ligne à fonction posée à la main (Léa : « Remplace Jean Durand »)
+  DB.crescite_dates.push({ ...structuredClone(DB.crescite_dates.find(d => d.id === 101)), id: 108, debut: jour(40), fin: jour(40), saison: DB.crescite_dates.find(d => d.id === 101).saison });
+  DB.crescite_equipes.push({ date_id: 108, personne_id: 3, present: true, fonction: 'Remplace Jean Durand', note: null });
+  // la 109 : au même lieu, dans la saison, mais annulée — « Étendre à… » ne la compte ni ne l'écrit, quelle que soit la portée
+  DB.crescite_dates.push({ ...structuredClone(DB.crescite_dates.find(d => d.id === 101)), id: 109, debut: jour(50), fin: jour(50), statut: 'annulee', saison: DB.crescite_dates.find(d => d.id === 101).saison });
+  DB.crescite_equipes.splice(0, 1);   // (Jean part à Caen : on étend l'équipe complète de la 101)
+  DB.crescite_equipes.push({ date_id: 101, personne_id: 4, present: true, fonction: 'régie', note: null });   // Noé en renfort régie sur la 101
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1600, hauteur: 1000, hash: '#/representations/tableur' });
+  await page.waitForSelector('#tab-corps tr[data-l]', { timeout: 15000 });
+  await page.click(CASE(0, 'distribution'));
+  await page.keyboard.press('Enter');
+  await page.waitForSelector('.tab-pop.distribution [data-eq-etendre]', { timeout: 4000 });
+  await page.click('.tab-pop [data-eq-etendre]');
+  await page.waitForSelector('dialog.tab-dialogue[open] #tab-et-ok', { timeout: 4000 });
+  const portees = await page.$$eval('dialog.tab-dialogue input[name=portee]', xs => xs.map(x => `${x.value}${x.checked ? '*' : ''}`));
+  const libelles = await page.$$eval('dialog.tab-dialogue fieldset label', xs => xs.map(x => x.textContent.trim()));
+  ok('10 · « Étendre à… » propose la saison, l’année, et « cette date et les suivantes au même lieu » (Théâtre de Caen), pas « les lignes choisies » sans plage', portees.join() === 'saison*,annee,lieu' && /cette date et les suivantes au même lieu \(Théâtre de Caen/.test(libelles[2]), JSON.stringify({ portees, libelles }));
+  // la portée « saison » (cochée d'office) : toutes les dates à venir de Bérénice qui ne sont ni annulées ni reportées, la 109 exclue
+  const vivantes = await page.evaluate(() => { const sa = E.dates.find(d => d.id === 101).saison; return E.dates.filter(d => d.spectacle_id === 1 && d.saison === sa && !['annulee', 'reportee'].includes(d.statut) && (d.fin || d.debut) >= AUJ).length; });
+  const apercuSaison = await texte(page, '#tab-et-apercu');
+  const comptees = (/(\d+) dates? chang/.exec(apercuSaison)?.[1] | 0) + (/(\d+) dates? (?:sont|est) déjà à jour/.exec(apercuSaison)?.[1] | 0);
+  ok('10 · la portée « saison » ne compte pas la date annulée (109) : autant de dates que de dates à venir ni annulées ni reportées', comptees === vivantes && vivantes > 0, `${comptees} / ${vivantes} · ${apercuSaison}`);
+  await page.check('dialog.tab-dialogue input[value=lieu]');
+  await attendre(page, () => /changera/.test(document.querySelector('#tab-et-apercu')?.textContent || ''));
+  const apercu = await texte(page, '#tab-et-apercu');
+  ok('10 · la portée « au même lieu » ne touche que la 108 (la 101 est déjà à jour) : « 1 date changera ; 1 date est déjà à jour »', /1 date changera/.test(apercu) && /1 date est déjà à jour/.test(apercu), apercu);
+  ok('10 · l’aperçu garde la ligne à fonction de la 108 (Léa, « Remplace Jean Durand ») et le dit', /elles sont gardées/.test(apercu) && /Léa Martin \(Remplace Jean Durand\)/.test(apercu), apercu);
+  ok('10 · l’aperçu dit combien de personnes seront prévenues (la règle du déclencheur : un compte, une date à venir, une présence qui change) : ici, personne', /Personne ne sera prévenu/.test(apercu), apercu);
+  await calme(page);
+  const n = MODIFS.length;
+  await page.click('#tab-et-ok');
+  await termine(page);
+  const posees = ecritures(n).filter(m => m.post).flatMap(m => m.post);
+  ok('10 · « Appliquer » pose Noé (« régie ») sur la 108', posees.some(r => r.date_id === 108 && r.personne_id === 4 && r.fonction === 'régie'), JSON.stringify(posees));
+  ok('10 · … la date annulée (109), au même lieu, n’est pas écrite', !MODIFS.slice(n).some(m => (m.post || []).some(r => r.date_id === 109) || (m.corps?.p_id === 109 || m.corps?.id === 109)), JSON.stringify(MODIFS.slice(n).map(m => m.rpc || m.table)));
+  ok('10 · … et ne touche pas à la ligne à fonction de Léa : elle n’est ni supprimée ni réécrite', !ecritures(n).some(m => m.delete) && !posees.some(r => r.date_id === 108 && r.personne_id === 3) && DB.crescite_equipes.some(r => r.date_id === 108 && r.personne_id === 3 && r.fonction === 'Remplace Jean Durand'));
+  ok('10 · l’état dit « Distribution posée sur 1 date »', /Distribution posée sur 1 date/.test(await texte(page, '#tab-etat')));
+  ok('10 · aucune erreur de script (Étendre)', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+
+// ================================================================================ 11 · le mode Distribution : la matrice
+{
+  garnir();
+  DB.crescite_equipes.length = 0;
+  DB.crescite_equipes.push({ date_id: 103, personne_id: 3, present: true, fonction: 'régie', note: null });   // Léa en renfort régie à Paris ; Jean part à Caen (et sera indisponible ce jour-là)
+  DB.crescite_dates.find(d => d.id === 105).statut = 'annulee';   // la 105 est annulée : une ligne de cases grisées
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1600, hauteur: 1000, hash: '?mode=distribution&spectacle=1#/representations/tableur' });
+  await page.waitForSelector('#tab-corps tr[data-l]', { timeout: 15000 });
+  await attendre(page, () => document.querySelector('#tab-corps .mat-alerte'));
+  const vu = await page.evaluate(() => ({ modes: [...document.querySelectorAll('.tab-modes button')].map(b => `${b.textContent.trim()}${b.getAttribute('aria-pressed') === 'true' ? '*' : ''}`).join(), classes: document.querySelector('#tab').className, role: document.querySelector('#tab').getAttribute('role'),
+    ths: [...document.querySelectorAll('#tab-tete th')].map(t => t.dataset.k).join(), lignes: document.querySelectorAll('#tab-corps tr[data-l]').length, neuve: document.querySelectorAll('#tab-corps tr[data-neuve]').length,
+    p1: document.querySelector('#tab-tete th[data-k="p1"]').textContent.replace(/\s+/g, ' ').trim(), p2: document.querySelector('#tab-tete th[data-k="p2"]').textContent.replace(/\s+/g, ' ').trim(), compte: document.querySelector('#tab-compte').textContent }));
+  ok('11 · le troisième bouton du tableur est « Distribution » (enfoncé en ?mode=distribution) ; la table est une grille (role=grid), sans ligne vide au bas', vu.modes === 'Simple,Complet,Distribution*' && vu.role === 'grid' && /\bmatrice\b/.test(vu.classes) && vu.neuve === 0, JSON.stringify(vu));
+  ok('11 · pour le spectacle filtré : le jour, le lieu, puis une colonne par personne en tournée (Camille, Jean) et par renfort rencontré (Léa) ; une ligne par date (101, 103, 105 annulée)', vu.ths === 'jour,lieu,p1,p2,p3' && vu.lignes === 3 && /^3 dates · 3 personnes/.test(vu.compte), JSON.stringify(vu));
+  ok('11 · l’en-tête d’une colonne : le prénom et son rôle dessous (« Camille » / « Bérénice »), et « téléphone ? » pour Jean qui n’en a pas', /Camille/.test(vu.p1) && /Bérénice/.test(vu.p1) && !/téléphone/.test(vu.p1) && /Jean/.test(vu.p2) && /téléphone \?/.test(vu.p2), `${vu.p1} | ${vu.p2}`);
+  const cases = await page.evaluate(() => Object.fromEntries([[0, 'p1'], [0, 'p2'], [1, 'p3'], [2, 'p1'], [1, 'p1']].map(([l, k]) => { const td = document.querySelector(`#tab-corps tr[data-l="${l}"] td.c-${k}`), b = td.querySelector('.mat-case'); return [`${l}${k}`, { classe: b.className, label: b.getAttribute('aria-label'), pressed: b.getAttribute('aria-pressed'), alerte: !!td.querySelector('.mat-alerte'), lecture: td.getAttribute('aria-readonly') }]; })));
+  ok('11 · chaque case est un bouton à l’état dit (aria-pressed, aria-label « Camille Essai · … : part »), ✓ pour qui part, ⟳ pour la renfort (Léa)', cases['0p1'].pressed === 'true' && /^Camille Essai · .+ : part$/.test(cases['0p1'].label) && /remplaçant ou renfort/.test(cases['1p3'].label) && /remplacant/.test(cases['1p3'].classe), JSON.stringify(cases));
+  ok('11 · un point corail signale l’indisponibilité de Jean sur la 101 (le label le dit : « indisponible (Tournage) »), pas sur les autres cases', cases['0p2'].alerte && /indisponible \(Tournage\)/.test(cases['0p2'].label) && !cases['1p1'].alerte && !cases['0p1'].alerte, JSON.stringify(cases['0p2']));
+  ok('11 · la date annulée (105) est une ligne de cases grisées non cliquables (aria-readonly, pas de bouton)', await page.$eval('#tab-corps tr[data-l="2"] td.c-p1', td => td.getAttribute('aria-readonly') === 'true' && !td.querySelector('button') && !!td.querySelector('.mat-case.grise')));
+  const pied = await page.$$eval('#tab-pied td', xs => xs.map(x => x.textContent.trim()).join('|'));
+  ok('11 · le bas du tableau compte les dates de chacun (Camille 2, Jean 2, Léa 1)', /2 dates\|2 dates\|1 date$/.test(pied), pied);
+  await calme(page);
+  await page.screenshot({ path: `${CAPT}/distribution-matrice.png`, fullPage: false });
+  // un clic bascule ✓ → ✕, par ecrire() du tableur : une écriture de crescite_equipes (Camille, sans compte, ne part plus : personne n'est prévenu)
+  let n = MODIFS.length;
+  await page.click('#tab-corps tr[data-l="1"] td.c-p1 .mat-case');
+  await termine(page);
+  const ecrit = ecritures(n).filter(m => m.post);
+  ok('11 · un clic sur la case de Camille à Paris la fait passer de ✓ à ✕ : l’écart « ne part pas » est écrit (crescite_equipes, date_id,personne_id)', ecrit.length === 1 && ecrit[0].conflit.join(',') === 'date_id,personne_id' && ecrit[0].post.some(r => r.date_id === 103 && r.personne_id === 1 && r.present === false), JSON.stringify(ecrit));
+  ok('11 · la case est ✕ (gris, barré), le bouton dit « ne part pas », et l’état annonce « Annuler » avec la règle de qui est prévenu (Camille n’a pas de compte)', await page.$eval('#tab-corps tr[data-l="1"] td.c-p1 .mat-case', b => b.classList.contains('absent') && /ne part pas/.test(b.getAttribute('aria-label')) && b.getAttribute('aria-pressed') === 'false') && /Camille Essai n’a pas de compte/.test(await texte(page, '#tab-etat')) && (await compte(page, '#tab-annuler')) === 1, await texte(page, '#tab-etat'));
+  const saut = await page.$eval('#tab-corps tr[data-l="1"] td.c-p1 .mat-case', b => { const s = getComputedStyle(b); return { classe: b.className, nom: s.animationName, duree: s.animationDuration, courbe: s.animationTimingFunction }; });
+  ok('11 · la case qui vient de basculer saute : ad-pop, 450 ms, le ressort (cubic-bezier(.3, 1.6, .5, 1))', /\bsaute\b/.test(saut.classe) && saut.nom === 'ad-pop' && saut.duree === '0.45s' && /cubic-bezier\(0\.3, 1\.6, 0\.5, 1\)/.test(saut.courbe), JSON.stringify(saut));
+  await page.keyboard.press('Control+z');
+  await attendre(page, () => /^Annulé/.test(document.querySelector('#tab-etat')?.textContent || ''), null, 8000);
+  await attendre(page, () => document.querySelector('#tab-corps tr[data-l="1"] td.c-p1 .mat-case')?.classList.contains('part'));
+  ok('11 · Ctrl+Z remet la case à ✓ (la ligne d’écart est retirée de la base, la distribution suffit)', await page.$eval('#tab-corps tr[data-l="1"] td.c-p1 .mat-case', b => b.classList.contains('part')) && !DB.crescite_equipes.some(r => r.date_id === 103 && r.personne_id === 1), JSON.stringify(DB.crescite_equipes));
+  // Jean, qui a un compte, à Caen : ✕ est annoncé (« 1 personne sera prévenue »)
+  await page.click('#tab-corps tr[data-l="0"] td.c-p2 .mat-case');
+  await termine(page);
+  const t = await texte(page, '#tab-etat');
+  ok('11 · cliquer Jean à Caen (il a un compte, la date est à venir) : « 1 personne sera prévenue (Jean Durand : « vous ne partez plus ») »', /1 personne sera prévenue \(Jean Durand : « vous ne partez plus »\)/.test(t), t);
+  ok('11 · … et l’indisponibilité n’est plus un souci : le point corail s’en va avec la présence', (await compte(page, '#tab-corps tr[data-l="0"] td.c-p2 .mat-alerte')) === 0);
+  await page.keyboard.press('Control+z');
+  await attendre(page, () => document.querySelector('#tab-corps tr[data-l="0"] td.c-p2 .mat-case')?.classList.contains('part'));
+  // un double-clic bascule une fois, pas trois : une seule écriture de l'équipe, une seule entrée « Annuler »
+  n = MODIFS.length;
+  await page.dblclick('#tab-corps tr[data-l="1"] td.c-p1 .mat-case');
+  await termine(page);
+  await page.waitForTimeout(500);
+  const dbl = MODIFS.slice(n);
+  ok('11 · un double-clic sur une case ne bascule qu’une fois : une seule écriture de la date et de son équipe (✕), pas trois', dbl.filter(m => m.rpc === 'crescite_enregistrer_date').length === 1 && ecritures(n).filter(m => m.post).length === 1 && await page.$eval('#tab-corps tr[data-l="1"] td.c-p1 .mat-case', b => b.classList.contains('absent')), JSON.stringify(dbl.map(m => m.rpc || m.table)));
+  await page.keyboard.press('Control+z');
+  await attendre(page, () => /^Annulé/.test(document.querySelector('#tab-etat')?.textContent || ''), null, 8000);
+  await attendre(page, () => document.querySelector('#tab-corps tr[data-l="1"] td.c-p1 .mat-case')?.classList.contains('part'));
+  ok('11 · … et un seul Ctrl+Z la remet à ✓ (une seule entrée dans la pile)', await page.$eval('#tab-corps tr[data-l="1"] td.c-p1 .mat-case', b => b.classList.contains('part')) && !DB.crescite_equipes.some(r => r.date_id === 103 && r.personne_id === 1 && r.present === false));
+  // Suppr rend la case à la distribution : Jean (un compte) revient à Caen, et l'état dit qui est prévenu
+  await page.click('#tab-corps tr[data-l="0"] td.c-p2 .mat-case');
+  await termine(page);
+  await page.keyboard.press('Delete');
+  await attendre(page, () => /prévenue/.test(document.querySelector('#tab-etat')?.textContent || '') && /: part/.test(document.querySelector('#tab-etat')?.textContent || ''), null, 8000);
+  const tSuppr = await texte(page, '#tab-etat');
+  ok('11 · Suppr sur la case de Jean (✕ → ✓, il a un compte, la date est à venir) dit « 1 personne sera prévenue »', /1 personne sera prévenue/.test(tSuppr) && await page.$eval('#tab-corps tr[data-l="0"] td.c-p2 .mat-case', b => b.classList.contains('part')), tSuppr);
+  // Espace bascule au clavier (la case active), Entrée aussi
+  await page.click('#tab-corps tr[data-l="1"] td.c-lieu');
+  await page.keyboard.press('ArrowRight');   // (le lieu, puis la colonne de Camille)
+  n = MODIFS.length;
+  await page.keyboard.press('Space');
+  await termine(page);
+  ok('11 · Espace sur la case active la bascule (Camille à Paris : ✕), comme un clic', ecritures(n).some(m => m.post?.some(r => r.date_id === 103 && r.personne_id === 1 && r.present === false)) && await page.$eval('#tab-corps tr[data-l="1"] td.c-p1 .mat-case', b => b.classList.contains('absent')));
+  await page.keyboard.press('Enter');
+  await attendre(page, () => document.querySelector('#tab-corps tr[data-l="1"] td.c-p1 .mat-case')?.classList.contains('part'));
+  ok('11 · Entrée la rebascule (✓) ; la case garde le focus', await page.$eval('#tab-corps tr[data-l="1"] td.c-p1 .mat-case', b => b.classList.contains('part')) && await page.evaluate(() => document.activeElement?.matches('#tab-corps td.c-p1')));
+  // une date annulée ne s'écrit pas
+  n = MODIFS.length;
+  await page.click('#tab-corps tr[data-l="2"] td.c-p1');
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(300);
+  ok('11 · la case d’une date annulée ne bascule pas : rien n’est écrit, l’état dit pourquoi', MODIFS.length === n && /annulée/.test(await texte(page, '#tab-etat')), await texte(page, '#tab-etat'));
+  // le menu ⋯ d'une colonne : « Régler sa période »
+  await page.click('#tab-tete th[data-k="p1"] .mat-menu');
+  await page.waitForSelector('[data-gm]', { timeout: 4000 });
+  const menu = await page.$$eval('[data-gm]', xs => xs.map(x => x.textContent.trim().replace(/\s+/g, ' ')));
+  ok('11 · le bouton ⋯ d’une colonne ouvre son menu : « Régler sa période »', menu.some(x => /^Régler sa période/.test(x)), JSON.stringify(menu));
+  await page.click('[data-gm]:has-text("Régler sa période")');
+  await page.waitForSelector('#periode-choix[open]', { timeout: 4000 });
+  ok('11 · … qui ouvre la boîte de la période de Camille dans Bérénice', /Camille Essai dans Bérénice/.test(await texte(page, '#periode-choix h2')));
+  await page.keyboard.press('Escape');
+  await attendre(page, () => !document.querySelector('#periode-choix'));
+  // une plage au clavier, puis « Étendre à… » : les lignes choisies et le même lieu
+  await page.click('#tab-corps tr[data-l="0"] td.c-jour');
+  await page.keyboard.press('Shift+ArrowDown');
+  await page.click('#tab-etendre');
+  await page.waitForSelector('dialog.tab-dialogue[open] #tab-et-ok', { timeout: 4000 });
+  const libs = await page.$$eval('dialog.tab-dialogue fieldset label', xs => xs.map(x => x.textContent.trim()));
+  ok('11 · Maj+↓ sur deux lignes, puis « Étendre à… » : la portée « les lignes choisies (2 dates) » est proposée, cochée, et « au même lieu » aussi', libs.some(x => /les lignes choisies \(2 dates\)/.test(x)) && libs.some(x => /au même lieu/.test(x)) && await page.$eval('dialog.tab-dialogue input[value=lignes]', i => i.checked), JSON.stringify(libs));
+  await page.click('#tab-et-non');
+  await attendre(page, () => !document.querySelector('dialog.tab-dialogue'));
+  // la plage traverse la date annulée (105, la troisième ligne) : « Étendre à… » ne la compte pas parmi les lignes choisies
+  await page.click('#tab-corps tr[data-l="0"] td.c-jour');
+  await page.keyboard.press('Shift+ArrowDown');
+  await page.keyboard.press('Shift+ArrowDown');
+  await page.click('#tab-etendre');
+  await page.waitForSelector('dialog.tab-dialogue[open] #tab-et-ok', { timeout: 4000 });
+  const libs3 = await page.$$eval('dialog.tab-dialogue fieldset label', xs => xs.map(x => x.textContent.trim()));
+  ok('11 · une plage de trois lignes qui traverse la date annulée : « les lignes choisies (2 dates) », la 105 n’en est pas', libs3.some(x => /les lignes choisies \(2 dates\)/.test(x)), JSON.stringify(libs3));
+  await page.click('#tab-et-non');
+  await attendre(page, () => !document.querySelector('dialog.tab-dialogue'));
+  // à l'impression, les boutons ⋯ des colonnes ne s'impriment pas (le bouton « Étendre à… » non plus)
+  await page.emulateMedia({ media: 'print' });
+  const imprime = await page.evaluate(() => ({ menus: [...document.querySelectorAll('.mat-menu')].map(b => getComputedStyle(b).display), etendre: getComputedStyle(document.querySelector('#tab-etendre')).display }));
+  await page.emulateMedia({ media: 'screen' });
+  ok('11 · à l’impression, les boutons ⋯ des colonnes sont cachés (comme « Étendre à… »)', imprime.menus.length > 0 && imprime.menus.every(d => d === 'none') && imprime.etendre === 'none', JSON.stringify(imprime));
+  ok('11 · aucune erreur de script (la matrice)', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+// sans spectacle filtré : un groupe de lignes par spectacle
+{
+  garnir();
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1600, hauteur: 1000, hash: '?mode=distribution#/representations/tableur' });
+  await page.waitForSelector('#tab-corps tr[data-l]', { timeout: 15000 });
+  const g = await page.evaluate(() => ({ ths: [...document.querySelectorAll('#tab-tete th')].map(t => t.dataset.k).join(), figees: [...document.querySelectorAll('#tab-tete th.figee')].map(t => t.dataset.k).join(), groupes: [...document.querySelectorAll('#tab-corps tr.debut-groupe')].map(tr => tr.querySelector('td.c-spectacle')?.textContent.trim()).join('|'),
+    suite: [...document.querySelectorAll('#tab-corps tr[data-l]')].map(tr => tr.querySelector('td.c-spectacle')?.textContent.trim()).join('|') }));
+  ok('11 · sans spectacle filtré : la colonne du spectacle s’ajoute (figée avec le jour) et chaque spectacle forme un groupe de lignes, le premier de chacun marqué (Bérénice, puis La Folle Idée…)', /^jour,spectacle,lieu,/.test(g.ths) && g.figees === 'jour,spectacle' && /^Bérénice\|La Folle Idée/.test(g.groupes) && g.suite.startsWith('Bérénice|Bérénice|Bérénice|La Folle Idée'), JSON.stringify(g));
+  // les colonnes sont celles des personnes de tous les spectacles à l'écran : Léa (La Folle Idée) y est, avec sa case à Paris vide pour Bérénice
+  const cols = await page.$$eval('#tab-tete th[data-k^="p"]', xs => xs.map(t => t.dataset.k).join());
+  ok('11 · les colonnes des personnes sont celles de tous les spectacles à l’écran, par métier : le jeu (Camille, Léa de La Folle Idée), puis la technique (Jean)', cols === 'p1,p3,p2', cols);
+  ok('11 · aucune erreur de script (les groupes)', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+
+// le mode se garde avec le compte et se dit dans l'adresse
+{
+  garnir();
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1600, hauteur: 1000, hash: '#/representations/tableur' });
+  await page.waitForSelector('#tab-corps tr[data-l]', { timeout: 15000 });
+  await page.click('.tab-modes [data-mode="distribution"]');
+  await page.waitForSelector('#tab-corps td.mat', { timeout: 8000 });
+  await attendre(page, () => /mode=distribution/.test(location.search));
+  const cle = () => ECRITURES.filter(e => e.cle === 'tableur.mode').at(-1)?.valeur;
+  for (let i = 0; i < 40 && cle() !== 'distribution'; i++) await page.waitForTimeout(50);
+  ok('11 · le bouton « Distribution » écrit le mode dans le compte (tableur.mode) et dans l’adresse (?mode=distribution), sur le tableur seulement', cle() === 'distribution' && /mode=distribution/.test(await page.evaluate(() => location.search + location.hash)), `${cle()} · ${await page.evaluate(() => location.search + location.hash)}`);
+  ok('11 · le bouton « Étendre à… » n’est montré qu’en Distribution, la ligne vide du bas n’y est pas', await page.$eval('#tab-etendre', b => !b.hidden) && (await compte(page, '#tab-corps tr[data-neuve]')) === 0);
+  await page.click('.tab-modes [data-mode="simple"]');
+  await page.waitForSelector('#tab-corps tr[data-neuve]', { timeout: 8000 });
+  ok('11 · de retour en Simple : plus de colonnes de personnes, « Étendre à… » caché, le bas du tableau vidé, la ligne vide revient', (await compte(page, '#tab-tete th.mat')) === 0 && await page.$eval('#tab-etendre', b => b.hidden) && (await page.$eval('#tab-pied', p => p.textContent)) === '');
+  ok('11 · aucune erreur de script (le segment des modes)', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+// rien ne bouge sous « moins d'animations » ni avec ?anim=0 : la case qui bascule ne saute pas, la fenêtre ne se pose pas en fondu
+for (const [nom, options] of [['« moins d’animations »', { reduit: true, hash: '?mode=distribution&spectacle=1#/representations/tableur' }], ['?anim=0', { hash: '?anim=0&mode=distribution&spectacle=1#/representations/tableur' }]]) {
+  garnir();
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1600, hauteur: 1000, ...options });
+  await page.waitForSelector('#tab-corps tr[data-l]', { timeout: 15000 });
+  await page.click('#tab-corps tr[data-l="1"] td.c-p1 .mat-case');
+  await termine(page);
+  await page.waitForTimeout(200);
+  const fixe = await page.$eval('#tab-corps tr[data-l="1"] td.c-p1 .mat-case', b => ({ nom: getComputedStyle(b).animationName, absent: b.classList.contains('absent') }));
+  ok(`12 · ${nom} : la case bascule (✕) sans sauter (aucune animation)`, fixe.absent && fixe.nom === 'none', JSON.stringify(fixe));
+  await page.click('.tab-modes [data-mode="simple"]');
+  await page.click(CASE(0, 'distribution'));
+  await page.keyboard.press('Enter');
+  await page.waitForSelector('.tab-pop.distribution', { timeout: 4000 });
+  ok(`12 · ${nom} : la fenêtre de la distribution paraît sans animation`, await page.$eval('.tab-pop.distribution', p => getComputedStyle(p).animationName === 'none'));
+  ok(`12 · ${nom} : aucune erreur de script`, erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+
+// ================================================================================ 13 · le budget de la matrice, à CPU=4
+// trois grandeurs : 120 dates de dix personnes (le spectacle filtré), 300 dates de douze personnes (la base réelle en compte déjà environ 230),
+// et 300 dates de deux spectacles sans filtre (ce que donne le bouton Distribution quand aucun spectacle n'est choisi : une vingtaine de colonnes)
+async function budget({ nom, dates, parSpectacle, deux = false, filtre = true }) {
+  garnir();
+  DB.crescite_equipes.length = 0;   // (Léa en renfort ferait une colonne de plus : le compte des personnes est celui qu'on pose ici)
+  const sps = deux ? [1, 2] : [1];
+  sps.forEach((sp, r) => {
+    const nouveaux = Array.from({ length: parSpectacle }, (_, k) => (sp === 1 ? 11 : 111) + k);
+    DB.crescite_personnes.push(...nouveaux.map(id => ({ id, slug: `p${id}`, prenom: `Prénom${id}`, nom: 'Essai', metiers: ['comédien'], photo: null, photo_publique: false, publie: true, ordre: id })));
+    DB.crescite_distributions.push(...nouveaux.map((p, i) => ({ id: 800 + 100 * r + i, spectacle_id: sp, personne_id: p, categorie: 'jeu', fonction: '', en_tournee: true, publie: true, ordre: 30 + i })));
+  });
+  const modele = DB.crescite_dates.find(d => d.id === 101);
+  for (let i = 0; i < dates; i++) DB.crescite_dates.push({ ...structuredClone(modele), id: 1000 + i, spectacle_id: sps[i % sps.length], debut: plus(i), fin: plus(i), saison: modele.saison });
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1600, hauteur: 1000, hash: '#/representations/tableur', cpu: 4, longues: true });
+  await page.waitForSelector('#tab-corps tr[data-l]', { timeout: 30000 });
+  const nbLignes = () => page.evaluate(() => document.querySelectorAll('#tab-corps tr[data-l]').length);
+  if (filtre) {
+    await page.click('.puce[data-sp="1"]');
+    await attendre(page, n => document.querySelectorAll('#tab-corps tr[data-l]').length > n, deux ? dates / 2 : dates, 20000);
+  } else await attendre(page, n => document.querySelectorAll('#tab-corps tr[data-l]').length > n, dates, 20000);
+  await page.waitForTimeout(800);
+  const attendues = await nbLignes();
+  await page.evaluate(() => { window.__longues.length = 0; window.__pret = performance.now(); });
+  await page.click('.tab-modes [data-mode="distribution"]');
+  await attendre(page, n => document.querySelectorAll('#tab-corps tr[data-l]').length >= n && document.querySelector(`#tab-corps tr[data-l="${n - 1}"] td.mat`), attendues, 30000);
+  await page.waitForTimeout(600);
+  const ouverture = await page.evaluate(() => window.__longues.slice());
+  const dim = await page.evaluate(() => ({ lignes: document.querySelectorAll('#tab-corps tr[data-l]').length, cases: document.querySelectorAll('#tab-corps .mat-case').length, colonnes: document.querySelectorAll('#tab-tete th.mat').length }));
+  console.log(`tâches longues à l’ouverture de la matrice (${nom} : ${dim.lignes} lignes, ${dim.colonnes} colonnes) à CPU=4 (ms) : ${JSON.stringify(ouverture)}`);
+  ok(`13 · ${nom} : toutes les cases sont posées (une case par date et par personne)`, dim.lignes >= Math.min(dates, attendues) && dim.colonnes >= parSpectacle && dim.cases >= dim.lignes * parSpectacle, JSON.stringify(dim));
+  ok(`13 · ${nom} : aucune tâche > 200 ms à l’ouverture de la matrice, à CPU=4`, ouverture.every(d => d < 200), JSON.stringify(ouverture));
+  // un clic comme le fait une main : la case est amenée à l'écran, la souris s'y pose, le bouton descend, puis remonte (le « click » de Playwright
+  // enchaîne tout dans une même tâche et fait ses propres sondages de la page, qui comptent à CPU=4 : ce n'est pas le geste de quelqu'un)
+  const milieu = Math.floor(dim.lignes / (deux ? 4 : 2)), cible = `#tab-corps tr[data-l="${milieu}"] td.c-p11 .mat-case`;   // (sans filtre, les lignes du premier spectacle viennent d'abord : la colonne de Prénom11 en est)
+  await page.evaluate(sel => document.querySelector(sel).scrollIntoView({ block: 'center', inline: 'center' }), cible);
+  await page.waitForTimeout(500);
+  const boite = await (await page.$(cible)).boundingBox();
+  await page.mouse.move(boite.x + boite.width / 2, boite.y + boite.height / 2);
+  await page.evaluate(() => { window.__longues.length = 0; window.__pret = performance.now(); });
+  await page.mouse.down();
+  await page.waitForTimeout(80);
+  await page.mouse.up();
+  await termine(page);
+  await page.waitForTimeout(400);
+  const clic = await page.evaluate(() => window.__longues.slice());
+  console.log(`tâches longues après un clic de case (${nom}) à CPU=4 (ms) : ${JSON.stringify(clic)}`);
+  ok(`13 · ${nom} : un clic de case écrit et redessine la ligne, aucune tâche > 200 ms, à CPU=4`, clic.every(d => d < 200) && await page.$eval(`#tab-corps tr[data-l="${milieu}"] td.c-p11 .mat-case`, b => b.classList.contains('absent')), JSON.stringify(clic));
+  ok(`13 · ${nom} : aucune erreur de script`, erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+await budget({ nom: '120 dates, 10 personnes', dates: 120, parSpectacle: 8 });
+await budget({ nom: '300 dates, 12 personnes, un spectacle', dates: 300, parSpectacle: 10 });
+await budget({ nom: '300 dates de deux spectacles, sans filtre', dates: 300, parSpectacle: 9, deux: true, filtre: false });
 
 retirer();
 bilan(CAPT);

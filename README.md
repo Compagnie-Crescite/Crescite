@@ -43,7 +43,7 @@ node site/cadre.mjs                # la coque, le menu latéral, ses raccourcis 
 node site/champs.mjs               # la fiche d'une date : le schéma de ses champs, le rail d'écriture, les puces, la jauge (après le build)
 node site/vues-dates.mjs           # les trois vues de Représentations (pilule, filtres communs, ligne visée), dans Chromium (après le build)
 node site/theme.mjs                # le thème (nuit, jour, appareil) et la densité, dans Chromium, sur la même base fictive (après le build)
-node site/distribution.mjs         # la distribution à l'écran : la cellule d'une date, qui sera prévenu, la fiche, l'impact, dans Chromium (après le build)
+node site/distribution.mjs         # la distribution à l'écran : la cellule d'une date, la fenêtre d'une case, « Étendre à… », la matrice du tableur, qui sera prévenu, la fiche, l'impact, dans Chromium (après le build)
 node site/fenetres.mjs             # les fenêtres ajustables : la poignée du tiroir, le séparateur de la liste, le coin des boîtes, les réglages du menu (après le build)
 node site/acces.mjs                # les accès rapides du menu et la recherche comme barre de commande, dans Chromium (après le build)
 node site/fenetres-2.mjs           # les fenêtres qui restent : le détail du planning, la carte, la hauteur d'une tuile, le zoom de la feuille A4 (après le build)
@@ -607,7 +607,7 @@ compte du projet inscrit dans `crescite_admins`.
     `site/dist/shots-tableur-complet/` (`complet-jeux.png`, `complet-diffusion.png`, `tiroir-depuis-grille.png`).
   - `node site/tableur-simple.mjs` garde le tableur Simple (une ligne par date) : le rendu (six colonnes, le petit calendrier
     du jour, le liseré de la couleur du spectacle, les pastilles d'heures, le statut en badge, le lieu sur deux lignes, les
-    lignes de 44 px, la ligne vide du bas) ; le segment « Simple · Complet » (le compte le retient, `?mode=complet` ne
+    lignes de 44 px, la ligne vide du bas) ; le segment « Simple · Complet · Distribution » (le compte le retient, `?mode=complet` ne
     s'écrit que sur le tableur, un compte réglé sur Complet l'ouvre en Complet et `?mode=simple` s'écrit pour lui, une adresse qui dit son mode n'écrit rien
     dans le compte) ; la fenêtre des séances (retirer, ajouter, une heure illisible, Échap, Tab circulaire, « Annuler »
     qui recrée la séance retirée) ; décaler le jour d'une date (ses séances suivent, jamais une séance de plus ; une
@@ -620,7 +620,9 @@ compte du projet inscrit dans `crescite_admins`.
     non, au-dessus de la barre du téléphone) ; le petit calendrier du jour (au clavier, à la souris, en tapant, au doigt) ;
     les lecteurs de jours et d'heures ; les cases ignorées d'un collage (surlignées vingt secondes, « Voir », même pour les lignes que les tranches n'ont pas encore posées) ; le budget : trois
     cents dates de deux séances, à `CPU=4`, aucune tâche de plus de 200 ms à l'ouverture, au temps réel (y compris un lieu qui
-    change dans la première seconde, pendant que les tranches se posent), à `rafraichirListes()`, au changement de mode et à une
+    change dans la première seconde, pendant que les tranches se posent), à `rafraichirListes()`, au changement de mode (pour le tenir, le cadre du
+    tableau est dessiné à part et ses cases ne défilent pas chacune : sans cela, passer du Complet au Simple sur une saison
+    entière dépassait les 200 ms) et à une
     écriture, et la date créée par la ligne vide du bas ou par « ＋ Date » sur une saison entière (une requête, « Nouvelle date »,
     aucune erreur) ; 1 280 px, 390 px et l'impression : 195 vérifications, une minute et quart environ, des captures dans
     `site/dist/shots-tableur-simple/` (`tableur-simple.png`, `tableur-jour.png`, `tableur-complet.png`, `fenetre-seances.png`,
@@ -648,9 +650,18 @@ compte du projet inscrit dans `crescite_admins`.
     compte, une date à venir, une présence qui change), `GARDEFOUS.indisposDe`, la fiche d'une date (la tournée par métier, la
     fonction et la note de chacun, « Remplace X » en lien qui disparaît de l'écran dès qu'une fonction est saisie et revient si on la vide,
     le résumé, l'enregistrement) et l'impact dans Spectacles → Distribution (une seule boîte, limiter à aujourd'hui, renoncer, l'ordre
-    des écritures, par « Ajouter quelqu'un de la troupe » comme depuis la fiche d'une personne, pour ajouter comme pour retirer) :
-    82 vérifications, des captures dans
-    `site/dist/shots-distribution/` (`distribution-cellule.png`, `distribution-fiche.png`, `distribution-impact.png`).
+    des écritures, par « Ajouter quelqu'un de la troupe » comme depuis la fiche d'une personne, pour ajouter comme pour retirer) ;
+    puis, dans le tableur : la cellule branchée dans la colonne Distribution (Simple et Complet), la fenêtre d'une case (ses
+    deux blocs, les puces de métier, « Remplace X » qui vise la personne décochée à l'instant, qui sera prévenu, l'écriture
+    et son Ctrl+Z, une tournée de dix personnes dans un écran de 640 px), « Étendre à… » (la portée « au même lieu », la
+    fusion qui garde la ligne à fonction, le nombre de personnes prévenues), le mode Distribution (une colonne par personne,
+    un clic, Espace et Entrée qui basculent, la case qui saute, le point d'indisponibilité, la date annulée grisée, le menu
+    ⋯ « Régler sa période », la plage et « Étendre à… », un groupe de lignes par spectacle, le bas du tableau, rien qui bouge
+    sous « moins d'animations » ni avec `?anim=0`) et son budget (120 dates de dix personnes, 300 dates de douze personnes, 300 dates de deux spectacles sans filtre (une vingtaine de colonnes) : aucune tâche de plus de
+    200 ms à `CPU=4`, à l'ouverture comme après un clic de case ; au-delà, vers trente colonnes sans filtre de spectacle, la matrice frôle les 200 ms ; le double-clic qui ne bascule qu'une fois, Suppr qui dit qui est prévenu,
+    les dates annulées jamais écrites par « Étendre à… », les boutons ⋯ absents à l'impression) : 171 vérifications, des captures dans
+    `site/dist/shots-distribution/` (`distribution-cellule.png`, `distribution-fiche.png`, `distribution-impact.png`,
+    `distribution-fenetre.png`, `distribution-matrice.png`).
 - **Le cadre et le menu latéral** (`admin/cadre.js` ; la coque elle-même, `poserCoque` et `cadre`, est dans
   `admin/index.html`) : l'en-tête tient sur une ligne, à toutes les largeurs ; ce qui n'y tient pas se replie, dans cet
   ordre (l'adresse du compte, le mot « Rechercher », les mots longs, les liens du compte, qui passent alors dans « Plus »,
@@ -837,9 +848,10 @@ compte du projet inscrit dans `crescite_admins`.
   de route, Prévenir l'équipe, Dupliquer et Supprimer passent dans un menu « Plus » (↑ ↓, Échap rend le focus) ; seul
   « Enregistrer » reste à côté.
 - **Le tableur** (Représentations → Tableur ; `admin/tableur.js`, chargé après le tableau de bord) : une ligne par
-  date (**Simple**) ou par séance (**Complet**), comme le tableur où la compagnie récapitule ses représentations. Deux
-  boutons à icônes en tête, « Simple » et « Complet », choisissent : Simple est le réglage d'office, le dernier choix est
-  gardé avec le compte (`tableur.mode`, sur tous les appareils) et dit dans l'adresse (`?mode=complet`) sur le tableur
+  date (**Simple**) ou par séance (**Complet**), comme le tableur où la compagnie récapitule ses représentations, ou la
+  matrice des dates et des personnes (**Distribution**). Trois boutons à icônes en tête, « Simple », « Complet » et
+  « Distribution », choisissent : Simple est le réglage d'office, le dernier choix est
+  gardé avec le compte (`tableur.mode`, sur tous les appareils) et dit dans l'adresse (`?mode=complet`, `?mode=distribution`) sur le tableur
   seulement, jamais sur la liste, la carte ni une fiche ; sans `?mode=` dans l'adresse, c'est le réglage du compte qui
   décide (`?mode=simple` s'écrit donc pour un compte réglé sur Complet : sans lui, le lien rouvrirait le Complet), et une adresse qui le dit l'emporte, sans rien changer au compte. Filtres : ceux de la barre commune des
   trois vues (voir Représentations) ; tri par date.
@@ -851,7 +863,7 @@ compte du projet inscrit dans `crescite_admins`.
     en ajouter ; Entrée ou « Enregistrer » écrit la liste d'un coup, Échap renonce) ; pour une date qui n'est qu'une
     période, la fenêtre dit qu'ajouter une séance la fixe au jour. Puis le spectacle (avec sa pastille), le lieu (le nom,
     la commune dessous), le statut en badge (option ambre, confirmée sauge, annulée corail, reportée indigo, et « masquée »
-    en second) et la distribution en pastilles. Écrire un autre jour sur une date la décale : sa fin et chacune de ses
+    en second) et la distribution en pastilles rondes aux initiales. Écrire un autre jour sur une date la décale : sa fin et chacune de ses
     séances suivent (jamais une séance de plus) ; pour une date à venir, la base prévient l'équipe (« Date déplacée »), et
     l'état le dit avant de coller plusieurs jours (« l'équipe de n dates est prévenue »). Une ligne vide au bas de la
     grille reçoit une nouvelle date, comme dans un tableur : on y écrit le jour, le spectacle et, si l'on veut, le lieu, et
@@ -860,6 +872,22 @@ compte du projet inscrit dans `crescite_admins`.
     sont gardés), les autres naissent au jour de la date, et celles qu'on ne cite plus sont retirées (l'état dit « n
     séances retirées »). En Simple, il n'y a ni « Colonnes… », ni « Colonnes vides », ni colonnes à déplacer : seules les
     largeurs se règlent et se retiennent.
+  - **Distribution** (le troisième bouton) : qui part sur chaque date, d'un coup d'œil. Une ligne par date (comme le
+    Simple, avec le même jour figé), une colonne par personne : pour le spectacle filtré, celles de sa tournée puis les
+    renforts rencontrés sur ses dates, groupées par métier (un bandeau de la couleur du métier, son portrait, son prénom,
+    son rôle dessous, « téléphone ? » quand il manque) ; sans spectacle filtré, un groupe de lignes par spectacle (la
+    colonne du spectacle s'ajoute, figée, et le premier de chaque groupe porte un trait net). Chaque case est un bouton :
+    **✓** elle part, **✕** elle ne part pas, **⟳** remplaçante ou renfort ; un clic, Espace ou Entrée la bascule (✓ ↔ ✕
+    pour qui est de la tournée, rien ↔ ⟳ pour les autres), Ctrl+Z défait, et la phrase d'état dit qui sera prévenu (la
+    règle de la base : une date à venir, un compte, une présence qui change). Une ligne qui porte une fonction ou une note
+    n'est jamais effacée d'un clic. Un point corail signale une indisponibilité à venir de quelqu'un qui part ; une date
+    annulée ou reportée est une ligne de cases grisées qu'on n'écrit pas. Maj+flèches (ou Maj+clic) choisit une plage,
+    Suppr rend la case à la distribution (la barre d'état dit qui sera prévenu, comme pour un clic ; un double-clic ne bascule
+    qu'une fois), le collage et la copie disent « part », « ne part pas », « remplaçant ou
+    renfort ». Le bouton ⋯ d'une colonne (ou le clic droit, Maj+F10) offre « Régler sa période » ; le bas du tableau
+    compte les dates de chacun ; « Étendre à… », sous le cadre ou au menu d'une case, pose l'équipe de la date active sur
+    d'autres dates (les lignes choisies avec la plage ; une date annulée ou reportée n'est jamais comptée ni écrite). Ni ligne vide au bas, ni colonnes à déplacer : seules les
+    largeurs du jour, du spectacle et du lieu se retiennent, avec celles du Simple.
   - **Complet** : une ligne par séance ; les séances d'une même date se suivent, en bande. Colonnes : jour, spectacle,
     heure et fin, lieu, commune, public, statut, nature, distribution, billetterie, « Note de séance » (la précision
     publique d'une séance : « complet », « audiodécrite »), organisateur, contact, contrat, montant de cession, notes,
@@ -957,11 +985,20 @@ compte du projet inscrit dans `crescite_admins`.
     jour, le spectacle, le lieu, sans heure) et crée toujours une date neuve, même à côté d'une date du même spectacle au
     même lieu ; l'import, lui, garde sa règle.
   - La distribution : l'équipe de la date (la distribution « en tournée » par défaut ; une équipe explicite ne
-    s'écrit que si on la change), en pastilles qu'on retire et qu'on ajoute, au clavier aussi ; dans la case, les
-    pastilles tiennent sur une ligne, et ce qui ne tient pas se compte en « +n » (selon la largeur qu'on a donnée à la
-    colonne). « Étendre à… » la pose sur les dates du même spectacle de la saison, de l'année civile ou des lignes
-    choisies (les passées si on le veut), après un aperçu du nombre de dates qui changeront ; les remplaçants posés à
-    la main sont signalés avant d'être remplacés.
+    s'écrit que si on la change). Dans la case, des pastilles rondes de 24 px aux initiales de chacun, qui se chevauchent,
+    rangées par métier avec un liseré de sa couleur (jeu prune, création indigo, technique ambre, production sauge), le
+    rôle en infobulle (« Camille Essai · Bérénice ») ; un remplaçant ou un renfort a un anneau pointillé ambre, qui ne part
+    pas est gris et barré, « −n » (corail) compte ceux de la tournée qui ne partent pas et « +n » ceux que la place
+    (la largeur qu'on a donnée à la colonne) ne laisse pas voir ; jamais de portrait dans la grille. Entrée sur la case
+    ouvre une fenêtre à deux blocs : « En tournée » (une case par personne, avec son portrait, sa fonction, son
+    téléphone, et sa fonction et sa note pour cette date seule) et « Remplaçants et renforts » (« Remplace Jean Durand »
+    en lien pour la personne qu'on vient de décocher, une fiche créée au vol) ; des puces de métier filtrent ; en pied,
+    « 2 personnes seront prévenues » dit qui reçoit « vous partez » ou « vous ne partez plus ». Elle défile en dedans
+    quand la tournée est longue, et se tire par son coin. « Étendre à… » pose l'équipe sur les dates du même spectacle de
+    la saison, de l'année civile, de cette date et des suivantes au même lieu, ou des lignes choisies (les passées si on
+    le veut ; jamais une date annulée ou reportée), après un aperçu du nombre de dates qui changeront et de personnes qui seront prévenues : c'est une fusion,
+    la ligne d'une date qui porte une fonction ou une note est gardée telle quelle, et les autres remplaçants posés à la
+    main sont signalés avant d'être remplacés.
   - Exporter les lignes et les colonnes de la vue (celles qu'on montre, dans l'ordre où on les montre ; une colonne
     masquée n'est pas exportée, « Colonnes vides » les rend) : Excel (un .xlsx écrit par l'administration elle-même,
     sans bibliothèque : de vraies dates et heures, l'en-tête filtrable, autant de colonnes figées que dans la vue),
@@ -1091,9 +1128,10 @@ Bérénice dans le stockage privé. L'import n'écrase jamais le travail de l'ad
   remplit sa fonction (il vise la dernière personne décochée) ; et un résumé dit qui sera prévenu à l'enregistrement : « 1 personne
   sera prévenue (Jean Durand : « vous partez »). » : les personnes dont la présence change sur une date à venir et qui ont un compte
   (un changement de fonction ou de note ne prévient personne ; sur une date qu'on crée, qui ne part pas n'est pas prévenu). Le
-  module `admin/distribution.js` (`DISTRIBUTION`) porte cette règle, l'impact et la cellule d'une date (des pastilles rondes de
-  24 px aux initiales, jamais de photo dans une grille : le tableur s'y branchera) ; `GARDEFOUS.indisposDe(pid, jours)` donne les
-  indisponibilités à venir d'une personne sur des jours.
+  module `admin/distribution.js` (`DISTRIBUTION`) porte cette règle, l'impact, la cellule d'une date (des pastilles rondes de
+  24 px aux initiales, jamais de photo dans une grille : la colonne Distribution du tableur la montre telle quelle), la
+  fenêtre d'une case du tableur et la matrice du mode Distribution (voir Le tableur) ; `GARDEFOUS.indisposDe(pid, jours)`
+  donne les indisponibilités à venir d'une personne sur des jours (le point corail de la matrice).
 - **Ce que la base sait, montré là où l'on agit** (l'audit du 27 octobre 2026) : la fiche d'un lieu fait son bilan (les
   représentations jouées, depuis quand, les spectateurs, le remplissage, les cessions ; saison par saison ; ses
   organisateurs successifs ; les pistes et les demandes de devis du lieu ou de sa commune) et montre toutes ses dates ;

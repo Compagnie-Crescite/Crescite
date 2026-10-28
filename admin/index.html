@@ -670,8 +670,15 @@ html.ob-actif .tab-ligne-etat { bottom: calc(64px + env(safe-area-inset-bottom, 
 .btn.tab-suppr[hidden] { display: none; }
 .tab-zone { position: relative; }
 .tab-cadre { position: relative; overflow: auto; overscroll-behavior: contain; max-height: 70vh; border: 1px solid var(--trait); border-radius: var(--rayon); background: var(--carte); }
+/* le cadre est une couche à lui (will-change: transform) : sans cela, chaque case figée (position: sticky) est une couche de peinture de la page entière, et
+   le moindre pointeur posé n'importe où, même loin du tableau, les parcourt toutes pour savoir s'il les touche (vingt à trente millisecondes à CPU=4 pour les
+   douze cents cases figées du Complet, trois ou quatre fois par clic) ; avec elle, le pointeur qui n'est pas sur le cadre l'écarte d'un coup. Rien ne change à l'écran.
+   Elle fait aussi du cadre le bloc conteneur de ce qui y serait en position: fixed : rien ne l'est (les fenêtres posées et le petit calendrier vont dans body). */
+@media screen and (min-width: 641px) { .tab-cadre { will-change: transform; } }
 table.tableur { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; font-size: 13.5px; }
-.tableur th, .tableur td { box-sizing: border-box; padding: 6px 9px; border-bottom: 1px solid var(--trait); border-right: 1px solid var(--trait); text-align: left; vertical-align: top; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* (overflow: clip, pas hidden : la même coupe et les mêmes points de suspension, mais la case n'est pas un conteneur qui défile, donc ni couche de
+   peinture ni zone de défilement à elle seule, par case : défaire ou survoler les douze mille cases du Complet en pèse un peu moins) */
+.tableur th, .tableur td { box-sizing: border-box; padding: 6px 9px; border-bottom: 1px solid var(--trait); border-right: 1px solid var(--trait); text-align: left; vertical-align: top; white-space: nowrap; overflow: hidden; overflow: clip; text-overflow: ellipsis; }
 .tableur thead th { position: sticky; top: 0; z-index: 3; background: var(--doux); color: var(--gris); font-size: 12.5px; font-weight: 750; }
 /* l'en-tête d'une colonne : une étiquette (Raleway, capitales) précédée de l'icône de son type, 14 px (le libellé est à côté : l'icône est aria-hidden) */
 .tableur thead th { font-family: var(--etiq); font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase; }
@@ -691,7 +698,7 @@ table.tableur { border-collapse: separate; border-spacing: 0; width: max-content
 .tableur tbody tr.b1 td { background: color-mix(in srgb, var(--doux) 40%, var(--carte)); }
 .tableur tbody tr.premier:not(:first-child) td { border-top: 1px solid color-mix(in srgb, var(--gris) 45%, transparent); }
 .tableur td.repete { color: color-mix(in srgb, var(--gris) 90%, var(--carte)); }
-.tableur td.repete .pastille, .tableur td.repete .badge, .tableur td.repete .tab-pastille { opacity: .72; }
+.tableur td.repete .pastille, .tableur td.repete .badge { opacity: .72; }
 .tableur td.choisie { background: var(--accent-doux) !important; }
 .tableur td.meme-date { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent); }
 .tableur td.figee.derniere.meme-date { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent), 2px 0 0 var(--trait); }
@@ -709,19 +716,11 @@ html.still .tableur td.visee { background-color: var(--accent-doux); box-shadow:
 .tableur tr.barree td.c-jour, .tableur tr.barree td.c-heure { text-decoration: line-through; }
 .tableur .pastille { margin-right: 6px; vertical-align: 1px; }
 .tableur .badge { font-size: 11px; }
-.tab-pastille { display: inline-flex; align-items: center; gap: 4px; margin: 0 4px 2px 0; padding: 1px 8px; border-radius: 999px; background: var(--accent-doux); color: var(--encre); font-size: 12.5px; font-weight: 600; }
 .tab-gris { color: var(--gris); font-style: italic; }
 .tableur td.tab-vide { padding: 30px; text-align: center; color: var(--gris); white-space: normal; }
 .tab-ed { position: absolute; left: 0; top: 0; z-index: 6; width: max(100%, 190px); min-height: 100%; padding: 4px 8px; border: 2px solid var(--accent); border-radius: 4px; background: var(--carte); color: var(--encre); font-size: 14px; box-shadow: 0 6px 18px rgba(20, 10, 20, .2); }
 select.tab-ed { width: max(100%, 200px); }
 textarea.tab-ed { width: max(100%, 320px); min-height: 130px; resize: both; }
-/* les pastilles d'une case de distribution tiennent sur une ligne que la case rogne ; ce qui ne tient pas se compte (data-plus, posé par tableur.js
-   après le dessin) et s'écrit en « +n » dans le coin ; la place du « +n » se réserve à droite */
-.tab-pastilles-ligne { display: flex; flex-wrap: nowrap; overflow: hidden; }
-.tab-pastilles-ligne .tab-pastille { flex: none; }
-.tableur td.c-distribution[data-plus] { padding-right: 30px; }
-.tableur td.c-distribution[data-plus]:not(.figee) { position: relative; }
-.tableur td.c-distribution[data-plus]::after { content: '+' attr(data-plus); position: absolute; right: 6px; top: 6px; padding: 1px 7px; border: 1px solid var(--trait); border-radius: 999px; background: var(--carte); color: var(--gris); font-size: 12px; font-weight: 600; line-height: 1.25; }
 /* la cellule Distribution (admin/distribution.js) : des pastilles rondes de 24 px aux initiales, qui se chevauchent ; le
    liseré est celui du métier (les couleurs vont avec les jetons, dans habillage.js), un anneau pointillé pour un remplaçant
    ou un renfort, gris et barré pour qui ne part pas ; « −n » et « +n » en bout de rangée ; rien n'y bouge */
@@ -753,16 +752,6 @@ textarea.tab-ed { width: max(100%, 320px); min-height: 130px; resize: both; }
 .tab-pop-titre small { color: var(--gris); font-weight: 500; }
 .tab-pop .aide { margin: 8px 0 0; font-size: 12.5px; color: var(--gris); }
 .tab-pop-pied { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-.tab-pastilles { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; padding: 0; list-style: none; }
-.tab-pastilles .tab-pastille { margin: 0; padding: 2px 4px 2px 10px; font-size: 13.5px; }
-.tab-pastilles .tab-pastille button { border: 0; background: none; padding: 1px 5px; border-radius: 999px; color: var(--gris); cursor: pointer; font-size: 12px; }
-.tab-pastilles .tab-pastille button:hover, .tab-pastilles .tab-pastille button:focus-visible { background: var(--carte); color: var(--alerte); }
-.tab-eq-ajout { position: relative; }
-.tab-eq-liste { position: absolute; left: 0; right: 0; top: calc(100% + 2px); z-index: 2; max-height: 230px; margin: 0; padding: 4px; overflow: auto; list-style: none; background: var(--carte); border: 1px solid var(--trait); border-radius: 10px; box-shadow: 0 8px 24px rgba(20, 10, 20, .18); }
-.tab-eq-liste[hidden] { display: none; }
-.tab-eq-liste [role=option] { display: flex; justify-content: space-between; gap: 8px; padding: 6px 8px; border-radius: 7px; cursor: pointer; }
-.tab-eq-liste [role=option][aria-selected=true] { background: var(--accent-doux); }
-.tab-eq-liste small { color: var(--gris); text-align: right; }
 dialog.tab-dialogue { width: min(560px, calc(100% - 24px)); max-width: none; padding: 0; border: 1px solid var(--trait); border-radius: 14px; background: var(--carte); color: var(--encre); box-shadow: 0 18px 60px rgba(20, 10, 20, .3); }
 dialog.tab-dialogue.large { width: min(900px, calc(100% - 24px)); }
 dialog.tab-dialogue::backdrop { background: rgba(23, 15, 26, .4); }
@@ -819,7 +808,72 @@ dialog.tab-dialogue::backdrop { background: rgba(23, 15, 26, .4); }
 .tab-lieu2 small { color: var(--gris); font-size: 12px; line-height: 1.2; }
 .tableur.simple .badge { font-size: 12px; }
 .tableur.simple .badge + .badge { margin-left: 4px; }
-.tableur.simple td.c-distribution[data-plus] { padding-right: 36px; }
+/* le mode Distribution : la matrice des dates (en lignes) et des personnes (en colonnes). Une colonne par personne, 96 px : son bandeau de
+   métier, son portrait, son prénom, son rôle dessous, « téléphone ? » quand il manque, le bouton ⋯ de son menu. Chaque case est un bouton à
+   plat : ✓ elle part, ✕ elle ne part pas (gris, barré), ⟳ remplaçante ou renfort (anneau pointillé ambre), rien d'autre ; un point corail
+   signale une indisponibilité à venir ; une date annulée ou reportée est une case grisée qu'on ne clique pas. Le premier spectacle d'un
+   groupe de lignes (sans spectacle filtré) porte un trait net et son nom en gras. Le bas du tableau compte les dates de chacun. */
+.tableur.matrice th.mat, .tableur.matrice td.mat { width: 96px; min-width: 96px; max-width: 96px; padding: 0; text-align: center; overflow: visible; }
+.tableur.matrice td.mat.mat-debut, .tableur.matrice th.mat.mat-debut { border-left: 2px solid var(--m, var(--trait)); }
+.tableur.matrice thead th.mat { vertical-align: top; text-transform: none; letter-spacing: 0; white-space: normal; font-family: inherit; color: var(--encre); }
+.tableur.matrice thead th.mat:not(.figee) { position: sticky; }
+.mat-tete { position: relative; display: grid; justify-items: center; gap: 1px; padding: 9px 4px 6px; }
+.mat-bandeau { position: absolute; left: 0; right: 0; top: 0; height: 4px; background: var(--m, var(--gris)); }
+.mat-nom { max-width: 88px; overflow: hidden; text-overflow: ellipsis; font-weight: 700; font-size: 13px; line-height: 1.2; }
+.mat-role { max-width: 88px; overflow: hidden; text-overflow: ellipsis; color: var(--gris); font-size: 11.5px; font-weight: 500; line-height: 1.2; }
+.mat-tel { font-size: 11px; font-weight: 500; }
+.mat-menu { position: absolute; right: 0; top: 4px; min-width: 24px; min-height: 24px; padding: 0 5px; border: 0; border-radius: 6px; background: none; color: var(--gris); font: 700 16px/1 var(--titres); cursor: pointer; }
+.mat-menu:hover, .mat-menu:focus-visible { background: var(--accent-doux); color: var(--encre); }
+.mat-case { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; min-height: calc(var(--pas, 10px) * 2 + 23px); padding: 0; border: 0; background: none; color: var(--encre); font: inherit; font-size: 17px; line-height: 1; cursor: pointer; }
+.mat-case.part { color: var(--ok); font-weight: 700; }
+.mat-case.absent { color: var(--gris); text-decoration: line-through; opacity: .8; }
+.mat-case.remplacant { color: var(--ambre); }
+.mat-case.remplacant > span { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border: 2px dashed var(--ambre); border-radius: 50%; font-size: 14px; }
+.mat-case.vide { color: transparent; }
+.mat-case.vide:hover { color: var(--gris); }
+.mat-case.vide:hover > span::before { content: '·'; }
+.mat-case.grise { background: repeating-linear-gradient(135deg, transparent 0 6px, color-mix(in srgb, var(--gris) 14%, transparent) 6px 7px); cursor: not-allowed; }
+.mat-case:focus-visible { outline: none; }
+.mat-alerte { position: absolute; right: 10px; top: 8px; width: 9px; height: 9px; border-radius: 50%; background: var(--corail); box-shadow: 0 0 0 2px var(--carte); }
+.tableur.matrice td.mat.en-cours::before { right: 4px; top: 4px; }
+.tableur.matrice tr.debut-groupe:not(:first-child) td { border-top: 2px solid var(--c, var(--accent)); }
+.tableur.matrice tr.debut-groupe td.mat-spectacle, .tableur.matrice tr.debut-groupe td.c-spectacle { font-weight: 750; }
+.tableur.matrice tr:not(.debut-groupe) td.mat-spectacle { color: var(--gris); }
+.tableur.matrice tfoot td { position: sticky; bottom: 0; z-index: 2; padding: 6px 4px; border-top: 2px solid var(--trait); background: var(--doux); color: var(--gris); font-size: 12px; font-weight: 650; text-align: center; }
+.tableur.matrice tfoot td.c-jour { text-align: left; padding-left: 12px; }
+.tableur.matrice tfoot td.figee { z-index: 3; }
+.tableur:not(.matrice) tfoot { display: none; }
+.btn.tab-etendre[hidden] { display: none; }
+@media (prefers-reduced-motion: no-preference) { .mat-case.saute { animation: ad-pop .45s cubic-bezier(.3, 1.6, .5, 1); } }   /* la case qui vient de basculer saute (le ressort) ; ad-pop est plus bas, dans le bloc des animations */
+/* la fenêtre d'une case de distribution (DISTRIBUTION.fenetre) : 520 px, au plus la hauteur de l'écran, un corps qui défile (une tournée de dix
+   personnes dépasse l'écran) ; deux blocs, des puces de métier au-dessus, qui sera prévenu en pied */
+.tab-pop.distribution { display: flex; flex-direction: column; width: min(520px, calc(100vw - 16px)); max-height: calc(100vh - 16px); }
+.tab-pop.distribution > * { flex: none; }
+.tab-pop.distribution > .tab-pop-corps { flex: 1 1 auto; min-height: 60px; overflow: auto; overscroll-behavior: contain; }
+.dfn-puces { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+.dfn-puces[hidden] { display: none; }
+.dfn-puce { min-height: 28px; padding: 2px 12px; border: 1.5px solid var(--m, var(--trait)); border-radius: 999px; background: none; color: var(--encre); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.dfn-puce[aria-pressed="true"] { background: var(--m-doux, var(--accent-doux)); }
+.dfn-puce:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.tab-pop.distribution h4.lib { margin: 10px 0 4px; font-weight: 700; font-size: 13.5px; }
+.tab-pop.distribution h4.lib:first-child { margin-top: 0; }
+.dfn-liste { display: grid; gap: 4px; margin: 0 0 6px; padding: 0; list-style: none; }
+.dfn-ligne { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 6px 10px; border-radius: 9px; background: var(--doux); }
+.dfn-ligne[hidden] { display: none; }
+.dfn-ligne.absent .case { color: var(--gris); text-decoration: line-through; }
+.dfn-ligne.absent .compte { color: var(--option); font-weight: 600; }
+.dfn-ligne .eq-badge { font-size: 12.5px; }
+.dfn-ligne .coord, .dfn-ligne .manque-tel { margin-left: auto; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.dfn-ligne .manque-tel { color: var(--gris); font-style: italic; font-weight: 500; }
+.dfn-ligne .eq-fonction, .dfn-ligne .eq-note, .dfn-ligne [data-eqd-fonction] { flex: 1 1 200px; min-width: 0; min-height: 32px; padding: 4px 8px; font-size: 13px; }
+.dfn-ligne .eq-nom { font-weight: 700; color: var(--encre); text-decoration: none; }
+.dfn-ligne .eq-nom:hover { text-decoration: underline; }
+.dfn-ligne .eq-fonction-zone { display: grid; flex: 1 1 200px; gap: 2px; min-width: 0; }
+.dfn-ligne .eq-fonction-zone input { width: 100%; box-sizing: border-box; }
+.dfn-ajout { margin: 8px 0 0; }
+.dfn-ajout .lib { font-weight: 650; font-size: 13.5px; }
+.dfn-prevenus:empty { display: none; }
+.dfn-prevenus { margin: 8px 0 0; font-weight: 600; }
 /* la ligne vide du bas : « Nouvelle date… » reçoit le jour, le spectacle et le lieu ; la date se crée quand le jour et le spectacle y sont */
 .tableur tr.tab-neuve td { background: transparent; color: var(--gris); }
 .tableur tr.tab-neuve td.neuve-vide { background: color-mix(in srgb, var(--doux) 50%, transparent); }
@@ -977,7 +1031,7 @@ html.still *, html.still *::before, html.still *::after { animation: none !impor
   @keyframes visee-ligne { 0%, 35% { background-color: var(--accent-doux); box-shadow: inset 0 2px 0 var(--accent), inset 0 -2px 0 var(--accent); } }
   .ad-neuf, .ailleurs { animation: ad-arrive .3s cubic-bezier(.2, .8, .2, 1) both; }
   .btn.sonne { transform-origin: 50% 0; animation: sonne .8s ease-in-out; }
-  .suggestions, .tab-export:not([hidden]), .tab-pop.seances, .tab-cal, .pied-ed.a-plus.replie .pied-autres.ouvert { animation: ad-arrive .15s ease-out both; }   /* les menus se posent (la fenêtre des séances et le petit calendrier du tableur aussi) */
+  .suggestions, .tab-export:not([hidden]), .tab-pop.seances, .tab-pop.distribution, .tab-cal, .pied-ed.a-plus.replie .pied-autres.ouvert { animation: ad-arrive .15s ease-out both; }   /* les menus se posent (la fenêtre des séances et le petit calendrier du tableur aussi) */
   details[open] > :not(summary) { animation: ad-paraitre .22s ease-out both; }   /* ce qu'un pli ouvre paraît (sans transform : la liste qui glisse mesure ses lignes) */
   @keyframes sonne { 15% { transform: rotate(-8deg); } 30% { transform: rotate(7deg); } 45% { transform: rotate(-5deg); } 60% { transform: rotate(3deg); } }
 }
@@ -1007,7 +1061,7 @@ html.still *, html.still *::before, html.still *::after { animation: none !impor
    l'équipe, adresses et contacts des lieux, feuilles de route, pour les prochaines dates confirmées). Un lien peut viser
    le champ à remplir dans ce qu'il ouvre (data-viser). Le pied d'une date replie ses actions dans « Plus » quand elles
    ne tiennent pas sur une rangée (ajusterPied). Le Journal se filtre (rubrique ou table, auteur, période) et se cherche.
-   Représentations → Tableur (TABLEUR, dans admin/tableur.js) : une ligne par date (Simple) ou par séance (Complet), branché sur la base dans les deux
+   Représentations → Tableur (TABLEUR, dans admin/tableur.js) : une ligne par date (Simple), par séance (Complet) ou une colonne par personne (Distribution), branché sur la base dans les deux
    sens, par le même chemin que la fiche d'une date (chargeDate, ecrireDate, effacerDate) ; exports Excel, CSV, Google
    Sheets ; import.
    La diffusion, les notes de frais et le matériel (le script « Compagnie Idéale ») se masquent quand la base n'a pas
@@ -1111,7 +1165,7 @@ const garderFiltres = () => { try { sessionStorage.setItem('crescite-admin-filtr
 // [l'adresse de la liste et de ses fiches, sa clé dans session, ce qui va dans l'adresse avec sa valeur d'office]
 const FILTRES_DATES_ADRESSE = { q: '', saison: '', spectacle: '', periode: 'avenir', statut: '', public: '', nature: '', dep: '', contrat: '', du: '', au: '' };
 // quatrième élément (facultatif) : ce que la lecture met à la place de la valeur d'office quand la clé manque dans l'adresse. Le mode du
-// tableur (?mode=complet) n'existe que sur #/representations/tableur, sous la même clé de session que la liste et la carte : sa valeur
+// tableur (?mode=complet, ?mode=distribution) n'existe que sur #/representations/tableur, sous la même clé de session que la liste et la carte : sa valeur
 // d'office, celle qui ne s'écrit pas dans l'adresse, est « simple » ; sans ?mode=, la préférence tableur.mode (prefs.js) décide ; ?mode=simple s'écrit donc pour un compte réglé sur Complet (sans lui, le lien rouvrirait le Complet)
 const LISTES_ADRESSE = [
   [/^#\/representations\/tableur$/, 'dates', { ...FILTRES_DATES_ADRESSE, mode: 'simple' }, { mode: () => (typeof PREFS !== 'undefined' && PREFS.lire('tableur.mode', null)) || 'simple' }],
@@ -2878,7 +2932,7 @@ function vueDates(param) {
   // elle s'ouvre depuis la liste, le tableur ou la carte, et « Représentations » doit y rouvrir celle où l'on travaillait)
   if (!param || param === 'tableur' || param === 'carte') retenirVueDates(param === 'tableur' || (param === 'carte' && typeof TOURNEE !== 'undefined') ? param : 'liste');
   const f = etatDates();
-  if (param === 'tableur') return TABLEUR.vue(f);   // le tableur : une ligne par date (Simple) ou par séance (Complet), branché sur la base
+  if (param === 'tableur') return TABLEUR.vue(f);   // le tableur : une ligne par date (Simple), par séance (Complet) ou une colonne par personne (Distribution), branché sur la base
   if (param === 'carte') { if (typeof TOURNEE !== 'undefined') return TOURNEE.vue(f); location.replace('#/representations'); return; }   // la carte de tournée (tournee.js)
   const v = etatVue('liste'), saisons = [...new Set(E.dates.map(d => d.saison))].sort().reverse();
   cadre('representations', `<div class="tete"><h1>Représentations</h1>${choixVueDates('liste')}<a class="btn principal" href="#/representations/nouvelle">＋ Nouvelle date</a></div>
@@ -3325,9 +3379,8 @@ const SCHEMA_DATE = (() => {
     // ———— l'équipe (crescite_equipes) : ce qui change de la distribution en tournée, pour cette date
     { k: 'distribution', l: 'Distribution', miroir: 'equipe', niveau: 'date', type: 'equipe', jeux: ['tournee'], colonne: { rang: 100, largeur: 250, icone: 'equipe' }, entetes: /^(distribution|comediens|comediennes|equipe|artistes|interpretes)$/, viser: '#d-equipe', si: () => E.equipeInstallee, val: x => equipeIds(x.d),
       texte: x => equipeIds(x.d).map(id => nomDe(personne(id))).filter(Boolean).join(', '),
-      // toutes les pastilles sur une ligne que la case rogne (le CSS) ; le « +n » de ce qui ne tient pas est posé après coup, sur la case
-      // en place (data-plus : TABLEUR, compterPlus), d'après la largeur qu'elle a vraiment
-      html: x => { const ns = prenoms(equipeIds(x.d)); return ns.length ? `<span class="tab-pastilles-ligne">${ns.map(n => `<span class="tab-pastille">${esc(n)}</span>`).join('')}</span>` : ''; },
+      // des pastilles rondes aux initiales, rangées par métier (DISTRIBUTION.cellule, admin/distribution.js) ; le tableur lui donne la place de sa colonne
+      html: x => DISTRIBUTION.cellule(x.d),
       lire: t => (String(t ?? '').trim() ? TABLEUR.lecteurs.personnes(t) : []), vider: true, ecrire: (F, x, v) => { F.equipe = ecartsPour({ ...x.d, spectacle_id: F.spectacle_id }, v, F.spectacle_id); } },
     { k: 'equipe-present', l: 'Part sur cette date', aide: 'Faux : la personne ne part pas sur cette date (remplacée).', table: 'equipes', col: 'present', niveau: 'equipe', type: 'case', jeux: ['tournee'], si: () => E.equipeInstallee,
       val: x => ecartVal(x, 'present') !== false, texte: x => (ecartVal(x, 'present') === false ? 'ne part pas' : 'part'), ecrire: (F, x, v) => { const e = ecartDe(F, x); if (e) e.present = !!v; } },

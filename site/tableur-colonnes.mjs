@@ -438,10 +438,10 @@ const annonces = page => page.$$eval('.annonce', xs => xs.map(x => x.textContent
   // la distribution a sa propre clé
   await page.click('#tab-corps tr[data-l="0"] td.c-distribution');
   await page.keyboard.press('Enter');
-  await page.waitForSelector('.tab-pop #tab-eq-q', { timeout: 4000 });
+  await page.waitForSelector('.tab-pop.distribution #dfn-combo input', { timeout: 4000 });
   const d0 = await page.$eval('.tab-pop', p => Math.round(p.getBoundingClientRect().width));
   await tirer(page, '.tab-pop > .poignee-coin', 60, 0);
-  ok('9 · la fenêtre de la distribution (430 px) a sa clé : fenetres.tab-pop-distribution, indépendante du lieu', d0 === 430 && (await page.$eval('.tab-pop', p => Math.round(p.getBoundingClientRect().width))) === 490 && ECRITURES.some(e => e.cle === 'fenetres.tab-pop-distribution' && e.valeur.l === 490) && ECRITURES.find(e => e.cle === 'fenetres.tab-pop-lieu').valeur.l === 420);
+  ok('9 · la fenêtre de la distribution (520 px) a sa clé : fenetres.tab-pop-distribution, indépendante du lieu', d0 === 520 && (await page.$eval('.tab-pop', p => Math.round(p.getBoundingClientRect().width))) === 580 && ECRITURES.some(e => e.cle === 'fenetres.tab-pop-distribution' && e.valeur.l === 580) && ECRITURES.find(e => e.cle === 'fenetres.tab-pop-lieu').valeur.l === 420);
   await page.keyboard.press('Escape');
   await pause(page, 100);
 
@@ -474,24 +474,22 @@ const annonces = page => page.$$eval('.annonce', xs => xs.map(x => x.textContent
   repartir();
   const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1600, hauteur: 1000, hash: '#/representations/tableur' });
   await page.waitForSelector('#tab-corps tr[data-l]', { timeout: 15000 });
-  const plus = () => page.$eval('#tab-corps tr[data-l="0"] td.c-distribution', td => td.dataset.plus ?? null);
-  ok('10 · deux personnes tiennent dans les 250 px d’aujourd’hui : la case de la date 101 n’a pas de data-plus (549)', (await plus()) === null && (await compte(page, '#tab-corps tr[data-l="0"] .tab-pastilles-ligne .tab-pastille')) === 2);
-  // la colonne ramenée à 60 px : une pastille tient, l'autre se compte (le cadre défile jusqu'à elle : la poignée est à l'écran)
+  const plus = () => page.$eval('#tab-corps tr[data-l="0"] td.c-distribution', td => td.querySelector('.dist-plus')?.textContent ?? null);
+  const pastilles = () => compte(page, '#tab-corps tr[data-l="0"] td.c-distribution .avatar.mini');
+  ok('10 · deux personnes tiennent dans les 250 px d’aujourd’hui : la case de la date 101 montre deux pastilles et pas de « +n »', (await plus()) === null && (await pastilles()) === 2);
+  // la colonne ramenée à 60 px : une pastille tient, l'autre se compte (la cellule se refait au relâchement : elle compte d'après la largeur de la colonne)
   await page.evaluate(() => { const c = document.getElementById('tab-cadre'); c.scrollLeft = c.scrollWidth; });
-  let observe = null;
-  await tirer(page, poignee('distribution'), -190, 0, { lacher: false });
-  observe = await attendre(page, () => document.querySelector('#tab-corps tr[data-l="0"] td.c-distribution')?.dataset.plus === '1');
-  await page.mouse.up();
-  await pause(page, 250);
+  await tirer(page, poignee('distribution'), -190, 0);
+  await attendre(page, () => document.querySelector('#tab-corps tr[data-l="0"] td.c-distribution .dist-plus')?.textContent === '+1');
   const w = await largeurDe(page, 'distribution');
-  ok('10 · la poignée de « Distribution » tirée jusqu’à 60 px : la case de la date 101 porte data-plus="1" (une pastille tient, une se compte)', observe && w === 60 && (await plus()) === '1', `${w} px · plus=${await plus()}`);
-  ok('10 · … le « +1 » s’écrit par CSS dans le coin de la case (::after), la case réserve sa place à droite', await page.$eval('#tab-corps tr[data-l="0"] td.c-distribution', td => { const a = getComputedStyle(td, '::after'); return a.content.replace(/["']/g, '') === '+1' && a.position === 'absolute' && parseFloat(getComputedStyle(td).paddingRight) === 30; }));
+  ok('10 · la poignée de « Distribution » tirée jusqu’à 60 px : la case de la date 101 montre une pastille et « +1 » (une pastille tient, une se compte)', w === 60 && (await plus()) === '+1' && (await pastilles()) === 1, `${w} px · plus=${await plus()} · ${await pastilles()} pastille(s)`);
+  ok('10 · … le « +1 » est un badge de la cellule (.dist-plus) dont l’infobulle nomme la personne cachée, et le texte pour les lecteurs d’écran les garde toutes', await page.$eval('#tab-corps tr[data-l="0"] td.c-distribution', td => /Jean Durand/.test(td.querySelector('.dist-plus').title) && /Camille Essai/.test(td.querySelector('.sr').textContent) && /Jean Durand/.test(td.querySelector('.sr').textContent)));
   await calme(page);
   await page.screenshot({ path: `${CAPT}/distribution-plus.png`, fullPage: false });
   await page.evaluate(() => { const c = document.getElementById('tab-cadre'); c.scrollLeft = c.scrollWidth; });
   await tirer(page, poignee('distribution'), 190, 0);
-  await attendre(page, () => document.querySelector('#tab-corps tr[data-l="0"] td.c-distribution')?.dataset.plus === undefined);
-  ok('10 · la remettre à 250 px : l’attribut tombe', (await plus()) === null && (await largeurDe(page, 'distribution')) === 250, `${await largeurDe(page, 'distribution')} px · plus=${await plus()}`);
+  await attendre(page, () => !document.querySelector('#tab-corps tr[data-l="0"] td.c-distribution .dist-plus'));
+  ok('10 · la remettre à 250 px : le « +n » tombe', (await plus()) === null && (await largeurDe(page, 'distribution')) === 250 && (await pastilles()) === 2, `${await largeurDe(page, 'distribution')} px · plus=${await plus()}`);
   ok('10 · aucune erreur de script (le « +n »)', erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();
 }

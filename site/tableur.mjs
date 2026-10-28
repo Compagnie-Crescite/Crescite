@@ -57,7 +57,7 @@ const jjmmaaaa = iso => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4
   ok('1 · la commune vient du lieu : lecture seule (aria-readonly)', (await page.$eval(CASE(0, 'commune'), td => td.getAttribute('aria-readonly'))) === 'true' && (await cases(page, 0, 'commune')) === 'Caen (14)');
   ok('1 · une période (répétitions) s’écrit « jour → jour » dans la colonne Jour', /→/.test(await cases(page, 5, 'jour')));
   ok('1 · une seule case porte tabindex 0 (la case active, la première), et elle est marquée .actif', await page.evaluate(() => document.querySelectorAll('#tab-corps td[tabindex="0"]').length === 1 && document.querySelector('#tab-corps td[tabindex="0"]').classList.contains('actif')));
-  ok('1 · la distribution s’affiche en pastilles (Camille, Jean pour la première séance)', await page.$$eval(`${CASE(0, 'distribution')} .tab-pastille`, xs => xs.map(x => x.textContent.trim()).join(',')) === 'Camille,Jean');
+  ok('1 · la distribution s’affiche en pastilles rondes aux initiales (Camille Essai, Jean Durand pour la première séance)', await page.$$eval(`${CASE(0, 'distribution')} .avatar.mini`, xs => xs.map(x => x.textContent.trim()).join(',')) === 'CE,JD');
   // le bouton « Supprimer » dit sur quoi il agit, et son raccourci
   ok('1 · « Supprimer la séance du … » annonce son raccourci (aria-keyshortcuts)', (await page.$eval('#tab-suppr', b => b.getAttribute('aria-keyshortcuts'))) === 'Control+Delete' && /^Supprimer la séance du/.test(await texte(page, '#tab-suppr')));
   await calme(page);
@@ -229,21 +229,21 @@ const jjmmaaaa = iso => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4
   await aller(page, 4, 'distribution');
   await page.keyboard.press('Enter');
   await page.waitForSelector('.tab-pop[role=dialog]', { timeout: 4000 });
-  const pop = await page.evaluate(() => ({ pastilles: [...document.querySelectorAll('.tab-pop .tab-pastille')].map(x => x.textContent.replace('✕', '').trim()), combo: document.querySelector('.tab-pop [role=combobox]')?.getAttribute('aria-expanded'), nom: document.querySelector('.tab-pop').getAttribute('aria-labelledby') }));
-  ok('6 · Entrée sur la distribution ouvre une fenêtre nommée : les pastilles de qui part (Camille Essai, Jean Durand), un champ combobox refermé', pop.pastilles.join(',') === 'Camille Essai,Jean Durand' && pop.combo === 'false' && !!pop.nom, JSON.stringify(pop));
+  const pop = await page.evaluate(() => ({ membres: [...document.querySelectorAll('.tab-pop.distribution [data-eqd-part]')].map(x => x.parentNode.textContent.trim()), champ: document.activeElement === document.querySelector('.tab-pop.distribution #dfn-combo input'), nom: document.querySelector('.tab-pop').getAttribute('aria-labelledby') }));
+  ok('6 · Entrée sur la distribution ouvre une fenêtre nommée : « En tournée » liste qui part (Camille Essai, Jean Durand), le focus est dans le champ d’ajout', pop.membres.join(',') === 'Camille Essai,Jean Durand' && pop.champ && !!pop.nom, JSON.stringify(pop));
   await page.keyboard.type('Lé');
-  await attendre(page, () => document.querySelector('.tab-pop [role=listbox]:not([hidden]) [role=option]'));
-  const liste = await page.evaluate(() => ({ ouvert: document.querySelector('.tab-pop [role=combobox]').getAttribute('aria-expanded'), options: [...document.querySelectorAll('.tab-pop [role=option]')].map(o => o.textContent.replace(/\s+/g, ' ').trim()), actif: !!document.querySelector('.tab-pop [role=combobox]').getAttribute('aria-activedescendant') }));
-  ok('6 · taper « Lé » déroule la liste (aria-expanded) : Léa Martin, « hors distribution »', liste.ouvert === 'true' && liste.options.length === 1 && /Léa Martin/.test(liste.options[0]) && /hors distribution/.test(liste.options[0]) && liste.actif, JSON.stringify(liste));
+  await attendre(page, () => document.querySelector('.tab-pop .suggestions:not([hidden]) button[data-p]'));
+  const liste = await page.evaluate(() => ({ options: [...document.querySelectorAll('.tab-pop .suggestions button[data-p]')].map(o => o.textContent.replace(/\s+/g, ' ').trim()) }));
+  ok('6 · taper « Lé » propose Léa Martin, et elle seule', liste.options.length === 1 && /Léa Martin/.test(liste.options[0]), JSON.stringify(liste));
   await page.keyboard.press('Enter');
-  ok('6 · Entrée l’ajoute : trois pastilles, le champ se vide', (await compte(page, '.tab-pop .tab-pastille')) === 3 && (await page.$eval('.tab-pop [role=combobox]', q => q.value)) === '');
+  ok('6 · Entrée l’ajoute : Léa est dans « Remplaçants et renforts », le champ se vide', (await compte(page, '.tab-pop [data-eqd-ajout="3"]')) === 1 && (await page.$eval('.tab-pop #dfn-combo input', q => q.value)) === '');
   await calme(page);
   await page.screenshot({ path: `${CAPT}/tableur-distribution.png`, fullPage: false });
   await page.click('.tab-pop [data-eq-ok]');
   await enregistre(page);
   const equipes = MODIFS.slice(n4).filter(m => m.table === 'crescite_equipes' && m.post);
   ok('6 · Enregistrer : la date est écrite, puis l’équipe (crescite_equipes upsert : Léa présente sur la date 105)', ecrit(n4, 'crescite_enregistrer_date').length === 1 && equipes.length === 1 && equipes[0].conflit.join() === 'date_id,personne_id' && equipes[0].post.some(r => r.date_id === 105 && r.personne_id === 3 && r.present === true), JSON.stringify(equipes));
-  ok('6 · la fenêtre se ferme, la case montre Camille, Jean et Léa', (await compte(page, '.tab-pop')) === 0 && (await page.$$eval(`${CASE(4, 'distribution')} .tab-pastille`, xs => xs.map(x => x.textContent.trim()).join(','))) === 'Camille,Jean,Léa');
+  ok('6 · la fenêtre se ferme, la case montre Camille, Léa (le jeu) puis Jean (la technique), par leurs initiales', (await compte(page, '.tab-pop')) === 0 && (await page.$$eval(`${CASE(4, 'distribution')} .avatar.mini`, xs => xs.map(x => x.textContent.trim()).join(','))) === 'CE,LM,JD');
   ok('6 · l’équipe est poussée dans l’état de la page : la base fictive la porte', DB.crescite_equipes.some(r => r.date_id === 105 && r.personne_id === 3 && r.present));
   // « Étendre à… »
   await aller(page, 4, 'distribution');
@@ -268,12 +268,12 @@ const jjmmaaaa = iso => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4
   await attendre(page, () => !document.querySelector('dialog.tab-dialogue') && /Distribution posée/.test(document.querySelector('#tab-etat')?.textContent || ''), 10000);
   const posees = MODIFS.slice(n5).filter(m => m.table === 'crescite_equipes' && m.post).flatMap(m => m.post.filter(r => r.personne_id === 3 && r.present).map(r => r.date_id)).sort();
   ok('6 · « Appliquer » pose Léa sur les deux autres dates de Bérénice (101 et 103), l’état dit « Distribution posée sur 2 dates »', posees.join() === '101,103' && /Distribution posée sur 2 dates/.test(await etat(page)), `${posees} · ${await etat(page)}`);
-  ok('6 · les trois dates de Bérénice montrent Léa', (await page.$$eval(`${CASE(0, 'distribution')} .tab-pastille`, xs => xs.map(x => x.textContent.trim()).join(','))) === 'Camille,Jean,Léa' && (await page.$$eval(`${CASE(2, 'distribution')} .tab-pastille`, xs => xs.length)) === 3);
+  ok('6 · les trois dates de Bérénice montrent Léa', (await page.$$eval(`${CASE(0, 'distribution')} .avatar.mini`, xs => xs.map(x => x.textContent.trim()).join(','))) === 'CE,LM,JD' && (await page.$$eval(`${CASE(2, 'distribution')} .avatar.mini`, xs => xs.length)) === 3);
   await page.keyboard.press('Control+z');
   await attendre(page, () => /^Annulé/.test(document.querySelector('#tab-etat')?.textContent || ''), 10000);
   await page.keyboard.press('Control+z');
-  await attendre(page, s => [...document.querySelectorAll(s)].map(x => x.textContent.trim()).join() === 'Camille,Jean', 10000, `${CASE(4, 'distribution')} .tab-pastille`);
-  ok('6 · deux fois Ctrl+Z : l’extension puis l’ajout se défont, plus personne en renfort dans la base fictive', !DB.crescite_equipes.some(r => r.personne_id === 3 && r.present) && (await page.$$eval(`${CASE(4, 'distribution')} .tab-pastille`, xs => xs.map(x => x.textContent.trim()).join(','))) === 'Camille,Jean', JSON.stringify(DB.crescite_equipes));
+  await attendre(page, s => [...document.querySelectorAll(s)].map(x => x.textContent.trim()).join() === 'CE,JD', 10000, `${CASE(4, 'distribution')} .avatar.mini`);
+  ok('6 · deux fois Ctrl+Z : l’extension puis l’ajout se défont, plus personne en renfort dans la base fictive', !DB.crescite_equipes.some(r => r.personne_id === 3 && r.present) && (await page.$$eval(`${CASE(4, 'distribution')} .avatar.mini`, xs => xs.map(x => x.textContent.trim()).join(','))) === 'CE,JD', JSON.stringify(DB.crescite_equipes));
   ok('6 · aucune erreur de script (distribution)', erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();
 }
