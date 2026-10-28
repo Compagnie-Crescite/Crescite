@@ -12,7 +12,8 @@ script fait de même pour ceux qui y sont déjà.
                                               l'instantané de docs/ pointe encore vers les anciens noms)
 
 Un nouveau nom plutôt que le même : le CDN de Supabase garde l'ancien fichier une heure sous son adresse. Les écritures
-passent par supabase/ecrire.py (ses contrôles, sa clé : SUPABASE_CLE_SERVICE) ; à la première erreur, tout s'arrête, et
+passent par supabase/ecrire.py (ses contrôles, sa clé : SUPABASE_CLE_SERVICE, ou celle que le proxy de la session ajoute) ;
+à la première erreur, tout s'arrête, et
 une fiche ne pointe vers le nouveau fichier qu'une fois celui-ci déposé.
 """
 import io
@@ -52,8 +53,6 @@ def base36(n):
 
 def main(args):
     essai, effacer = "--essai" in args, "--effacer" in args
-    if not essai and not ecrire.CLE:
-        sys.exit("Manque SUPABASE_CLE_SERVICE (la clé service du projet de la compagnie) ; --essai pour voir sans écrire")
     personnes = lire(f"{BASE}/rest/v1/crescite_personnes?select=id,slug,photo&photo_publique=is.true"
                      "&photo=like.equipe/*&order=id.asc", json_=True)
     avant = apres = 0

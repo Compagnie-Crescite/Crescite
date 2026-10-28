@@ -38,7 +38,7 @@ node site/reactivite.mjs /tmp/x index --strict  # les budgets de réactivité du
 AXE=<axe.min.js> node site/passe-site.mjs       # la passe finale : axe, 360 px, erreurs, nuit, sur chaque route
 python3 data/site_crescite.py      # relève de nouveau le texte de l'ancien crescite.fr (data/site-crescite.json)
 python3 scripts/polices.py         # télécharge de nouveau les polices dans site/polices/ (seulement pour en ajouter une)
-python3 supabase/portraits.py --essai  # réduit à 800 px les portraits déjà déposés (sans --essai : SUPABASE_CLE_SERVICE)
+python3 supabase/portraits.py --essai  # réduit à 800 px les portraits déjà déposés (sans --essai : la clé service du projet de la compagnie)
 ```
 
 **Les polices** sont rangées dans le site (`site/polices/` : woff2, latin et latin étendu, avec leurs licences ; le build
