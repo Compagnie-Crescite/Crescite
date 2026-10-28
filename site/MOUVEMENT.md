@@ -84,8 +84,10 @@ la barre d'état sous le cadre dit la même chose en mots (« Enregistrement… 
 ## Les règles
 
 - **Rien ne bouge si l'appareil demande moins d'animations** (`prefers-reduced-motion: reduce`), ni avec `?anim=0`
-  (`html.still`, qui arrête aussi la feuille de style) : le menu latéral se replie alors d'un coup (`cadre.mjs` y regarde). La teinte du spectacle sur la page d'une date reste : ce n'est pas
-  du mouvement.
+  (`html.still`, qui arrête aussi la feuille de style) : le menu latéral se replie alors d'un coup (`cadre.mjs` y regarde).
+  Pour l'administration, `reduit.mjs` prouve la règle globale « moins d'animations » sur quatre gestes (le menu, le tiroir,
+  les poignées, le passage de Simple à Complet) ; `mouvement-admin.mjs` garde ses blocs « réduit » et `?anim=0`. La teinte
+  du spectacle sur la page d'une date reste : ce n'est pas du mouvement.
 - **Une entrée ne se rejoue pas** quand la page se redessine après une lecture de la base : `main.entree` (administration)
   ne dure qu'une seconde, `main.rafraichi` (équipe) garde la page immobile, les saisons passées n'arrivent en cascade qu'à
   l'ouverture de leur pli (`.saison-corps.neuve`).
@@ -119,15 +121,24 @@ la barre d'état sous le cadre dit la même chose en mots (« Enregistrement… 
 python3 site/build.py        # d'abord : site/dist/equipe et site/dist/admin
 node site/mouvement-equipe.mjs        # l'espace de l'équipe, hors ligne, sur une saison fictive (51 vérifications)
 node site/mouvement-admin.mjs         # l'administration, sur une base fictive (34 vérifications)
+node site/reduit.mjs                  # l'immobilité de l'administration sous « moins d'animations » : quatre gestes au clavier (24 vérifications)
 CPU=4 node site/mouvement-equipe.mjs  # la même chose sur un téléphone quatre fois plus lent (le budget du contrat)
 bash site/bancs-admin.sh              # le build, puis tous les bancs de l'administration, dont mouvement-admin.mjs
 ```
 
 Chacun des deux bancs du mouvement ouvre l'application dans Chromium sans toucher à la vraie base (la session est
 gardée dans le navigateur ; les lectures de tables reçoivent des lignes inventées ; les écritures répondent vide ou sont
-coupées), au téléphone et à l'ordinateur, à une heure figée, puis avec le mouvement réduit et avec `?anim=0`. Les
-captures vont dans `site/dist/shots-equipe/` et `site/dist/shots-admin/`. Un banc sort en erreur dès qu'une vérification
-manque.
+coupées), au téléphone et à l'ordinateur, à une heure figée, puis avec le mouvement réduit et avec `?anim=0` (pour
+l'administration, `reduit.mjs` y ajoute la règle globale, sur quatre gestes : voir plus bas). Les captures vont dans
+`site/dist/shots-equipe/`, `site/dist/shots-admin/` et `site/dist/shots-reduit/`. Un banc sort en erreur dès qu'une
+vérification manque.
+
+`reduit.mjs` ouvre l'administration avec « moins d'animations » et joue au clavier quatre gestes (Alt+M, Entrée sur une ligne qui ouvre
+un tiroir, Entrée sur « Disposition d'origine », Simple → Complet) : après chacun, `document.getAnimations()` (hors transitions à durée nulle)
+est vide, aucune transition ne s'est lancée, et les valeurs finales (`--large-menu`, la place du tiroir, la largeur des listes, la classe du mode)
+sont déjà posées à 0 puis à 50 ms. Un témoin sans « moins d'animations » montre qu'avec les animations permises le menu et le tiroir glissent bien.
+`planche.mjs`, lui, n'est pas un banc de non-régression : c'est la planche de relecture d'Adrien (122 captures en vraies polices, en nuit et en
+jour, à trois largeurs, le menu déplié et replié), lancée à la demande par `bash site/bancs-admin.sh --planche` ou seule.
 
 `bash site/bancs-admin.sh` enchaîne aussi `prefs.mjs` (où chaque réglage est gardé : avec le compte ou sur
 l'appareil), `tableur.mjs` (le tableur des représentations, en Complet), `tableur-complet.mjs` (le tableur Complet,

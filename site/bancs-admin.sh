@@ -2,7 +2,8 @@
 # Tous les bancs de l'administration, l'un après l'autre : le filet à passer avant de rendre un lot.
 #   bash site/bancs-admin.sh            construit, vérifie les modules, lance les bancs de l'administration
 #   bash site/bancs-admin.sh --tout     … et, toujours, ceux de l'espace de l'équipe (gestes-equipe, mouvement-equipe)
-#   bash site/bancs-admin.sh --planche  réservée (la planche de contrôle du lot 17) : sans effet aujourd'hui
+#   bash site/bancs-admin.sh --planche  … et, à la toute fin, la planche de relecture (site/planche.mjs : 5 à 6 minutes,
+#                                       site/dist/shots-planche/planche.html) ; sans cette option, elle n'est jamais lancée
 #   BASE=<réf> bash site/bancs-admin.sh la référence du diff (par défaut origin/ccr-ab0239c0-lqdc60)
 #
 # Ce que fait le script, dans l'ordre :
@@ -16,6 +17,8 @@
 #      absent est rouge ;
 #   4. les bancs de l'espace de l'équipe (BANCS_EQUIPE), quand le diff contre BASE touche admin/gestes.js,
 #      admin/planning.js ou admin/feuille.js — modules que l'équipe partage — ou toujours avec --tout ;
+#      avec --planche, la planche de relecture vient après tout cela, une seule fois, sans relance (un outil de relecture,
+#      pas un banc de non-régression) ;
 #   5. un résumé : chaque banc, son compte, sa durée.
 # Pour ajouter le banc d'un lot : une ligne dans BANCS (ou BANCS_EQUIPE), en queue de liste. Sort en erreur au premier banc
 # rouge (après sa relance), ou si un module manque.
@@ -23,18 +26,19 @@ set -u
 cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit 2
 
 # ---- la liste des bancs (site/<nom>.mjs) : les lots suivants y ajoutent les leurs
-BANCS=(tableau niveau adresses-admin mouvement-admin prefs tableur code-salles icones cadre champs vues-dates theme distribution fenetres acces fenetres-2 carte-travail tableur-colonnes tableur-simple tableur-complet habillage)
+BANCS=(tableau niveau adresses-admin mouvement-admin prefs tableur code-salles icones cadre champs vues-dates theme distribution fenetres acces fenetres-2 carte-travail tableur-colonnes tableur-simple tableur-complet habillage reduit)
 # ---- ceux de l'espace de l'équipe, lancés quand un module partagé change
 BANCS_EQUIPE=(gestes-equipe mouvement-equipe)
 PARTAGES='^admin/(gestes|planning|feuille)\.js$'
 BASE="${BASE:-origin/ccr-ab0239c0-lqdc60}"
 
 TOUT=0
+PLANCHE=0
 for arg in "$@"; do
   case "$arg" in
     --tout) TOUT=1 ;;
-    --planche) echo "(--planche : réservée à la planche de contrôle, sans effet pour l'instant)" ;;
-    -h|--aide) sed -n '2,21p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    --planche) PLANCHE=1 ;;
+    -h|--aide) sed -n '2,24p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "option inconnue : $arg (voir --aide)" >&2; exit 2 ;;
   esac
 done
@@ -86,10 +90,11 @@ lancer() {
     return 1
   fi
   debut=$(date +%s)
-  for essai in 1 2; do
+  local essais=2; [ "$nom" = planche ] && essais=1   # (la planche dure plusieurs minutes : pas de relance)
+  for essai in $(seq 1 "$essais"); do
     node "$fichier" > "$TMP" 2>&1; rc=$?
     [ "$rc" -eq 0 ] && break
-    if [ "$essai" -eq 1 ]; then echo "  rouge au premier passage, relancé une fois"; relance=" (relancé)"; grep -E '^\s+✗' "$TMP" | head -n 8; fi
+    if [ "$essai" -lt "$essais" ]; then echo "  rouge au premier passage, relancé une fois"; relance=" (relancé)"; grep -E '^\s+✗' "$TMP" | head -n 8; fi
   done
   fin=$(date +%s)
   local derniere; derniere="$(grep -v '^\s*$' "$TMP" | tail -n 1 | sed 's/ · captures dans.*//')"
@@ -116,6 +121,7 @@ else
   LISTE+=("${BANCS_EQUIPE[@]}")
 fi
 
+[ "$PLANCHE" -eq 1 ] && LISTE+=(planche)
 for nom in "${LISTE[@]}"; do
   if ! lancer "$nom"; then ROUGE="$nom"; break; fi
 done
