@@ -334,26 +334,25 @@ fs.mkdirSync(CAPT, { recursive: true });
   ok('le bandeau du jour : bonjour, le prénom, trois chiffres, le titre de la page', /Bonjour|Bonsoir/.test(await texte(page, '.tb-bonjour')) && /Adrien/.test(await texte(page, '.tb-bonjour')) && (await compte(page, '.tb-salut-chiffres li')) === 3 && (await texte(page, 'main h1')) === 'Tableau de bord', await texte(page, '.tb-salut'));
   ok('chaque tuile a son icône et sa couleur', (await compte(page, '.tb-tuile .tb-ico-t svg')) >= 10 && await page.$eval(tuile('urgent'), e => getComputedStyle(e).borderTopColor !== getComputedStyle(document.querySelector('.tb-tuile[data-k="prochaines"]')).borderTopColor));
   ok('l’en-tête est de nuit, la rubrique courante à la couleur de la saison', await page.$eval('.barre', e => getComputedStyle(e).backgroundImage !== 'none') && await page.$eval('.nav a[aria-current="page"]', e => getComputedStyle(e).color === 'rgb(255, 255, 255)'));
-  await calme(page); await page.screenshot({ path: `${CAPT}/habillage-tableau.png`, fullPage: false });
-  for (const [h, nom, attendre] of [['#/representations', 'representations', '.ligne'], ['#/representations/101', 'date', '#ed-date'], ['#/equipe', 'equipe', '.ligne, .bloc'], ['#/diffusion', 'diffusion', '.crm-colonne'], ['#/feuilles', 'feuilles', '.ligne, .bloc'], ['#/planning', 'planning', '.pl, .bloc'], ['#/journal', 'journal', '.journal-ligne, .vide']]) {
-    await page.goto(`${URL0}${h}`);
-    await page.waitForSelector(attendre, { timeout: 15000 }).catch(() => {});
-    await page.waitForTimeout(700);
-    await calme(page); await page.screenshot({ path: `${CAPT}/habillage-${nom}.png`, fullPage: false });
+  // les mêmes pages, de nuit (le thème d'office) puis de jour (data-theme="jour", posé après chaque arrivée : le thème n'est pas dans l'adresse) :
+  // habillage-<page>-nuit.png et habillage-<page>-jour.png
+  const PAGES = [['#/accueil', 'tableau', `${tuile('journal')} .tb-l`], ['#/representations', 'representations', '.ligne'], ['#/representations/101', 'date', '#ed-date'], ['#/equipe', 'equipe', '.ligne, .bloc'], ['#/diffusion', 'diffusion', '.crm-colonne'], ['#/feuilles', 'feuilles', '.ligne, .bloc'], ['#/planning', 'planning', '.pl, .bloc'], ['#/journal', 'journal', '.journal-ligne, .vide']];
+  for (const theme of ['nuit', 'jour']) {
+    for (const [h, nom, attendre] of PAGES) {
+      await page.goto(`${URL0}${h}`);
+      await page.waitForSelector(attendre, { timeout: 15000 }).catch(() => {});
+      await page.waitForTimeout(700);
+      await page.evaluate(t => document.documentElement.setAttribute('data-theme', t), theme); await page.waitForTimeout(150);
+      await calme(page); await page.screenshot({ path: `${CAPT}/habillage-${nom}-${theme}.png`, fullPage: false });
+    }
+    await page.goto(`${URL0}#/accueil`); await page.waitForSelector(`${tuile('journal')} .tb-l`, { timeout: 15000 });
+    await page.evaluate(t => document.documentElement.setAttribute('data-theme', t), theme);
+    await page.keyboard.press('Control+k'); await page.waitForSelector('#recherche[open]', { timeout: 3000 }); await page.fill('#rch-q', 'bérénice'); await page.waitForTimeout(200);
+    await page.screenshot({ path: `${CAPT}/habillage-recherche-${theme}.png`, fullPage: false });
+    await page.keyboard.press('Escape');
+    ok(`habillage de ${theme} · aucune erreur de script`, erreurs.length === 0, erreurs.join(' / '));
   }
-  await page.goto(`${URL0}#/accueil`); await page.waitForSelector(`${tuile('journal')} .tb-l`, { timeout: 15000 });
-  await page.keyboard.press('Control+k'); await page.waitForSelector('#recherche[open]', { timeout: 3000 }); await page.fill('#rch-q', 'bérénice'); await page.waitForTimeout(200);
-  await page.screenshot({ path: `${CAPT}/habillage-recherche.png`, fullPage: false });
-  await page.keyboard.press('Escape');
-  ok('habillage · aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();
-  const s2 = await ouvrir(navigateur, { largeur: 1440, hauteur: 900, sombre: true });
-  await s2.page.waitForSelector(`${tuile('journal')} .tb-l`, { timeout: 15000 });
-  await calme(s2.page); await s2.page.screenshot({ path: `${CAPT}/habillage-sombre.png`, fullPage: false });
-  await s2.page.goto(`${URL0}#/representations/101`); await s2.page.waitForSelector('#ed-date', { timeout: 15000 }).catch(() => {}); await s2.page.waitForTimeout(600);
-  await calme(s2.page); await s2.page.screenshot({ path: `${CAPT}/habillage-date-sombre.png`, fullPage: false });
-  ok('habillage sombre · aucune erreur de script', s2.erreurs.length === 0, s2.erreurs.join(' / '));
-  await s2.ctx.close();
 }
 
 // ================================================================================ les dix idées : traiter sur place, la file, la palette, les vues,

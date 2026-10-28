@@ -57,7 +57,8 @@ const TABLEAU = (() => {
     d.nature && d.nature !== 'representations' && `<span class="badge">${esc((NATURES_DATE.find(x => x[0] === d.nature) || [])[1] || d.nature)}</span>`].filter(Boolean).join('');
   // une ligne du tableau : ce qui est à gauche (le jour, un avatar), le titre et son sous-titre, ce qui est à droite
   const ligne = ({ href, viser, couleur, gauche, titre, sous, droite, classe, externe, attrs = '' }) => `<a class="tb-l${gauche ? '' : ' sans-gauche'}${classe ? ` ${classe}` : ''}" href="${esc(href)}"${viser ? ` data-viser="${esc(viser)}"` : ''}${externe ? ' target="_blank" rel="noopener"' : ''}${couleur ? ` style="--c:${esc(couleur)}"` : ''}${attrs ? ` ${attrs}` : ''}>${gauche || ''}<span class="tb-l-corps"><span class="tb-l-t">${titre}</span>${sous ? `<span class="tb-l-s">${sous}</span>` : ''}</span>${droite ? `<span class="tb-l-d">${droite}</span>` : ''}</a>`;
-  const rien = (texte, ok = false) => `<p class="tb-rien${ok ? ' ok' : ''}">${texte}</p>`;
+  // une phrase pour une tuile vide ; hors du « tout est à jour » (vert, nu), la tentacule en filigrane vient avant la phrase
+  const rien = (texte, ok = false) => `${ok ? '' : ICONES.ornementVide}<p class="tb-rien${ok ? ' ok' : ''}">${texte}</p>`;
   const plus = (n, href, texte = 'Tout voir') => (n > 0 ? `<a class="tb-plus" href="${esc(href)}">${n > 1 ? `Et ${n} autres` : 'Et une autre'} · ${texte} →</a>` : '');
   // l'auteur d'une modification : celui du journal (nomAdmin, dans le script principal : un administrateur, une personne de
   // l'équipe qui a modifié depuis son espace, le compte connecté, sinon un import)
@@ -458,7 +459,7 @@ const TABLEAU = (() => {
     }).join('');
   }
   function corpsDe(k) {
-    try { return TUILES[k].corps(valeurs(k)); } catch (e) { console.error(e); return { html: rien('Cette tuile n’a pas pu se dessiner.') }; }
+    try { return TUILES[k].corps(valeurs(k)); } catch (e) { console.error(e); return { html: '<p class="tb-rien">Cette tuile n’a pas pu se dessiner.</p>' }; }
   }
   function badgeDe(c) { return c.n ? `<span class="badge ${c.ok ? 'ok' : 'option'}">${c.n}</span>` : c.ok ? '<span class="badge ok">Rien</span>' : ''; }
   function htmlTuile(t, i, n) {
@@ -1323,8 +1324,9 @@ const TABLEAU = (() => {
 .tb-lien:hover { background: var(--doux); }
 @container (max-width: 430px) { .tb-lien .mot { display: none; } .tb-lien { padding: 2px 4px; } }
 .tb-ico { display: inline-grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 1px solid transparent; border-radius: 7px; background: none; color: var(--gris); cursor: pointer; font-weight: 700; }
-.tb-ico:hover, .tb-ico[aria-expanded="true"] { background: var(--doux); color: var(--encre); }
-.tb-ico[disabled] { opacity: .35; cursor: default; background: none; }
+.tb-ico[aria-expanded="true"] { background: var(--doux); color: var(--encre); }      /* (survol, pressé, désactivé, occupé : le jeu d'états, habillage.js) */
+/* à la souris, 32 px (la rangée d'outils d'une tuile ne tient pas en 44 px) ; au doigt, 44 px (habillage.js) */
+@media (pointer: fine) { .tb-ico { width: 32px; height: 32px; } }
 .tb-replier svg { transition: transform .15s; }
 .tb-tuile.replie .tb-replier svg { transform: rotate(-90deg); }
 .tb-tuile.replie .tb-corps, .tb-tuile.replie .tb-reglages { display: none; }
@@ -1356,7 +1358,7 @@ const TABLEAU = (() => {
 .tb-rien.ok { color: var(--ok); font-weight: 600; }
 .tb-note { margin: 2px 2px 0; font-size: 12.5px; color: var(--gris); }
 .tb-cat { display: grid; gap: 5px; }
-.tb-cat h3 { display: flex; align-items: center; gap: 8px; margin: 6px 2px 0; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--gris); }
+.tb-cat h3 { display: flex; align-items: center; gap: 8px; margin: 6px 2px 0; color: var(--gris); }      /* (sa police : la règle des étiquettes, habillage.js) */
 .tb-cat:first-child h3 { margin-top: 0; }
 .tb-cat h3 a { color: inherit; text-decoration: none; }
 .tb-cat h3 a:hover { text-decoration: underline; }

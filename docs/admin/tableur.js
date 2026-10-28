@@ -649,7 +649,7 @@ const TABLEUR = (() => {
         premieres = Math.min(total, Math.max(PREMIERES, active + 1, Math.ceil((avant.haut + cadreT.clientHeight) / pas) + 1));
       }
       for (let i = 0; i < premieres; i++) faire(i);
-      corps.innerHTML = `${T.lignes.length ? '' : `<tr role="row"><td role="gridcell" colspan="${T.cols.length}" class="tab-vide">${E.dates.length ? `${modeSimple() ? 'Aucune date' : 'Aucune séance'} ne correspond.${filtresActifs(T.f) ? '<br><button type="button" class="btn" data-effacer-filtres>Effacer les filtres</button>' : ''}` : `Aucune date pour l’instant : « ${libelleAjout()} » en ajoute une.`}</td></tr>`}${htmls.slice(0, premieres).join('')}`;
+      corps.innerHTML = `${T.lignes.length ? '' : `<tr role="row"><td role="gridcell" colspan="${T.cols.length}" class="tab-vide">${ICONES.ornementVide}${E.dates.length ? `${modeSimple() ? 'Aucune date' : 'Aucune séance'} ne correspond.${filtresActifs(T.f) ? '<br><button type="button" class="btn" data-effacer-filtres>Effacer les filtres</button>' : ''}` : `Aucune date pour l’instant : « ${libelleAjout()} » en ajoute une.`}</td></tr>`}${htmls.slice(0, premieres).join('')}`;
       T.htmls = T.lignes.length ? htmls : null; T.rendues = premieres;
       if (T.htmls && premieres < total) lancerTranches(corps);
     }

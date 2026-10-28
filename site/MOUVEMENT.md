@@ -11,6 +11,8 @@ Quatre durées, trois courbes, et rien qui bouge sans raison.
 | Geste | Durée | Courbe | Où |
 | --- | --- | --- | --- |
 | Paraître (un bloc, un menu, un contenu lu après la page, la fenêtre posée sur une case du tableur : les séances, la distribution) | 150 à 450 ms | `cubic-bezier(.2, .8, .2, 1)`, le « doux » | `monte`, `ad-arrive`, `arrive`, `ad-neuf`, `neuve` |
+| Répondre (le survol et la pression d'une commande : un bouton, un segment, une puce, un outil de tuile, un lien du menu ; le bouton s'enfonce de 3 %) | 120 ms | le doux (`cubic-bezier(.2, .8, .2, 1)`) pour le déplacement, la courbe par défaut (`ease`) pour les couleurs | le jeu d'états d'`habillage.js` |
+| Tourner (le petit anneau d'un bouton occupé, le même mouvement que le témoin du direct) | 0,9 s, en boucle | linéaire, `transform` seulement : un tour sans fin | `temoin-tourne` (l'anneau `::after` de `[aria-busy="true"]`) |
 | Sauter (un compte, un badge, une coche, un bouton qui a réussi, l'icône du thème ou de la densité qu'on vient de choisir, la case de la matrice de distribution qu'on vient de basculer) | 450 ms | `cubic-bezier(.3, 1.6, .5, 1)`, le ressort | `pop`, `ad-pop`, `fait`, `.mat-case.saute` |
 | Glisser à sa place (une ligne, un billet, une carte qui change de rang) | 380 à 420 ms | le doux, par l'API Web Animations (FLIP) | `glisserVers`, `reperer` |
 | Suivre le doigt ou le pointeur (le retour, une notification, tirer pour rafraîchir, le bord d'une fenêtre qu'on tire) | le temps du geste, puis 180 à 300 ms ; la remise d'une fenêtre à sa taille d'origine, 220 ms | linéaire sous le doigt ou le pointeur (une mise à jour par image, jamais un transform), le doux pour revenir | `brancherRetour`, `brancherGlisserNotif`, `brancherTirer`, `FENETRES.poignee` |
@@ -24,7 +26,7 @@ Quatre durées, trois courbes, et rien qui bouge sans raison.
 
 Entre la liste, le tableur et la carte de Représentations (une même page, trois vues : même rubrique, même profondeur) le
 passage est un fondu, jamais un glissement (`sensVue`) ; le sélecteur de vues (la pilule) ne glisse pas, il est redessiné
-avec la vue ; sous `prefers-reduced-motion` ou `?anim=0` rien ne bouge, la ligne visée est seulement marquée un instant (un cadre et un fond fixes, 1,8 s).
+avec la vue ; sous `prefers-reduced-motion` une seule règle d'`habillage.js` met à zéro toutes les durées de transition et d'animation (l'anneau occupé reste là, fixe), `?anim=0` en fait autant (`html.still`) : rien ne bouge, la ligne visée est seulement marquée un instant (un cadre et un fond fixes, 1,8 s).
 
 Ce qui bouge en continu ne touche que `transform` et `opacity` (le compositeur) ; une boîte qui change de taille
 s'anime par l'API, jamais par une transition de hauteur en continu (seule exception : le repli du menu latéral, un geste

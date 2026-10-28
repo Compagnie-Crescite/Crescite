@@ -95,7 +95,7 @@ const TIROIR = (() => {
     el.className = 'tiroir'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', f.nom);
     el.style.setProperty('--tiroir-largeur', FEN() ? `${FENETRES.taille('tiroir') ?? defaut()}px` : LARGEUR);
     el.innerHTML = `<header class="tiroir-tete"><button type="button" class="btn petit" data-tiroir-fermer title="Fermer (Échap)" aria-label="Fermer">←</button>
-      <span class="tiroir-fil"><span class="tiroir-genre"><span class="tg-nom">${esc(f.nom)}</span>${filDe(f, id)}</span><span class="tiroir-titre"></span></span>
+      <span class="tiroir-fil"><span class="tiroir-genre etiquette"><span class="tg-nom">${esc(f.nom)}</span>${filDe(f, id)}</span><span class="tiroir-titre"></span></span>
       <a class="btn petit" data-tiroir-pleine href="${esc((f.pleine || f.href)(id))}" title="Ouvrir à sa place, dans sa rubrique">Pleine page</a>${FEN() ? `
       <button type="button" class="btn petit" data-gestes-menu aria-haspopup="menu" title="Taille du tiroir"><span aria-hidden="true">⋯</span><span class="sr">Taille du tiroir</span></button>` : ''}
       <button type="button" class="btn petit" data-tiroir-fermer aria-label="Fermer">✕</button></header>
@@ -315,7 +315,7 @@ const TIROIR = (() => {
 .tiroir[aria-hidden="true"] { filter: brightness(.92); }
 .tiroir-tete { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--carte); border-bottom: 1px solid var(--trait); }
 .tiroir-fil { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.2; }
-.tiroir-genre { font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.tiroir-genre { color: var(--accent); }      /* (sa police : la règle des étiquettes, habillage.js) */
 .tiroir-genre .tg-nom { display: none; }
 .tg-fil { display: flex; flex-wrap: wrap; align-items: center; gap: 0 6px; }
 .tg-fil a { color: var(--accent); text-decoration: none; border-radius: 4px; }

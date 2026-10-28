@@ -48,6 +48,7 @@ node site/fenetres.mjs             # les fenêtres ajustables : la poignée du t
 node site/acces.mjs                # les accès rapides du menu et la recherche comme barre de commande, dans Chromium (après le build)
 node site/fenetres-2.mjs           # les fenêtres qui restent : le détail du planning, la carte, la hauteur d'une tuile, le zoom de la feuille A4 (après le build)
 node site/carte-travail.mjs        # la carte de tournée comme vue de travail : le menu des pastilles, le survol, Maj+clic, le zoom, « Voir sur la carte » (après le build)
+node site/habillage.mjs            # l'habillage final : le jeu d'états des commandes, l'étiquette, les vides, « mouvement réduit », les pages d'essai, le jour relu (après le build)
 bash site/bancs-admin.sh           # le build, puis tous les bancs de l'administration l'un après l'autre ; --tout y joint
                                    # ceux de l'espace de l'équipe (sinon, seulement si gestes.js, planning.js ou feuille.js changent)
 node site/reactivite.mjs /tmp/x index --strict  # les budgets de réactivité du site, au bureau et au téléphone ralenti ×4
@@ -372,10 +373,35 @@ compte du projet inscrit dans `crescite_admins`.
   prénom, ce qui attend, la prochaine date, trois chiffres, une tentacule en filigrane), les jours des listes en petits
   calendriers, les colonnes du Kanban colorées ; la nuit par défaut, le jour sous `data-theme="jour"` (un choix du menu : voir
   « L'apparence », plus bas ; la densité compacte y est aussi, dans les dernières règles du fichier). `site/tableau.mjs` en garde des captures de chaque
-  page (`habillage-*.png`), `site/theme.mjs` des mêmes pages en jour (`jour-*.png`). Les icônes n'y sont dessinées qu'une fois : `admin/icones.js` (chargé avant les gestes) est la
+  page, de nuit puis de jour (`habillage-<page>-nuit.png`, `habillage-<page>-jour.png`), `site/theme.mjs` des mêmes pages en jour (`jour-*.png`). Les icônes n'y sont dessinées qu'une fois : `admin/icones.js` (chargé avant les gestes) est la
   bibliothèque, un nom par dessin (`ICONES.svg('calendrier', { taille: 22 })`), que l'en-tête, la barre du téléphone, les
   tuiles, les menus et le planning de l'administration reprennent ; l'espace de l'équipe garde ses tracés. La page
   `#/essai/icones` les montre toutes en grille, le nom sous chacune (hors du menu et de la recherche).
+  - *Les états.* Chaque commande (bouton, bouton des feuilles, segment, puce, outil des tuiles, lien du menu, pilule des
+    vues, flèches du petit calendrier) réagit de la même façon, par un seul jeu de règles écrit dans `habillage.js` : au repos, la
+    carte et son trait ; au survol, le bord et un fond doux teintés de la saison ; pressée, elle s'enfonce de 3 % ;
+    au clavier, un anneau de 3 px à la couleur de la saison (en dedans, à 3 px, dans un segment et dans la pilule des vues,
+    qui rognent leur contenu) ; désactivée, elle est à moitié transparente ; occupée (`aria-busy`, sur un bouton seulement),
+    son libellé s'efface sous un petit anneau qui tourne (fixe sous « réduire les animations »). Ce qui est choisi, un bouton
+    principal ou désactivé ne change pas au survol ; la poignée (`fenetres.js`) a le sien (sa ligne). La barre du bas du
+    téléphone n'a que le pressé et le focus. Les boutons des feuilles (`gestes.js`, partagé avec l'espace de l'équipe) ne sont
+    habillés que dans l'administration. Les outils des tuiles font 32 px à la souris et 44 px au doigt.
+  - *L'étiquette.* Les titres de section (« NOVEMBRE », « À TRAITER », « DATE » du tiroir, les en-têtes du tableur, les
+    étiquettes de la recherche) parlent d'une seule voix, en capitales espacées de 11 px (classe `.etiquette` pour un nouvel
+    élément, `.mois.accent` pour celle qui prend la couleur de la saison).
+  - *Les vides.* Une liste sans résultat (liste, tableur, tuile du tableau de bord, carte) montre la tentacule en filigrane
+    (`ICONES.ornementVide`), la phrase, puis le geste utile ; le « tout est à jour » du tableau de bord reste nu.
+  - *Mouvement réduit.* Sous `prefers-reduced-motion: reduce`, une seule règle d'`habillage.js` met à zéro les durées de
+    transition et d'animation de toute la page (`?anim=0` fait de même, par `html.still`).
+  - *Les pages d'essai.* `#/essai/etats` dessine les six états (repos, survol, pressé, clavier, désactivé, occupé) sur six
+    commandes, avec les règles mêmes de l'habillage (le survol, le pressé et le clavier y sont posés par `data-etat`) ;
+    `#/essai/icones` montre les icônes. Ni l'une ni l'autre n'est dans le menu ni dans la recherche.
+  - `node site/habillage.mjs` garde tout cela (71 vérifications, moins de 20 s) : le focus et son décalage dans les segments, un
+    bouton occupé (curseur, opacité, anneau, blanc sur le menu), les champs, les outils de 32 et de 44 px, la règle des étiquettes sur chacun de ses
+    porteurs (dont les titres « À venir » des deux listes et le mois d'une date à précision « mois »), la tentacule des vides (liste, tableur, carte), les deux pages d'essai (chaque état lu dans le style calculé, au repos comme à la souris),
+    « mouvement réduit », et le jour relu (les contrastes à 4,5:1 et 3:1 des états, du menu, de la recherche, du tableur, de la
+    matrice) ; captures dans `site/dist/shots-habillage/` (`etats.png`, `icones.png`, `vide.png`, `menu-jour.png`,
+    `tableur-jour.png`, `matrice-jour.png`).
 - **Les fenêtres ajustables** (`admin/fenetres.js`, chargé avant le tiroir) : à l'ordinateur, le bord d'une surface se tire.
   Une poignée est une bande invisible de 6 px au bord ; au survol ou au clavier, une ligne de 2 px à la couleur de la
   saison paraît, et le curseur dit le sens. Le bord gauche du tiroir se tire (de 480 px à l'écran moins 80 px : le voile

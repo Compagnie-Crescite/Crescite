@@ -88,6 +88,17 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .essai-icones { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
 .essai-icones li { display: grid; justify-items: center; gap: 8px; padding: 14px 6px 10px; border: 1px solid var(--trait); border-radius: var(--rayon); background: var(--carte); color: var(--encre); }
 .essai-icones code { max-width: 100%; overflow-wrap: anywhere; text-align: center; font-size: 12px; color: var(--gris); }
+/* la petite vue d'essai des états (#/essai/etats) : une commande par ligne, un état par colonne */
+.essai-etats-cadre { overflow-x: auto; border: 1px solid var(--trait); border-radius: var(--rayon); background: var(--carte); }
+.essai-etats { border-collapse: collapse; width: 100%; min-width: 800px; }
+.essai-etats th, .essai-etats td { padding: 14px 10px; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--trait); }
+.essai-etats tbody tr:last-child > * { border-bottom: 0; }
+.essai-etats thead th { color: var(--gris); }
+.essai-etats tbody th code { font-size: 13px; color: var(--encre); }
+.essai-sans { font-size: 12.5px; color: var(--gris); }
+.menu.essai-menu { position: static; grid-column: auto; grid-row: auto; width: 170px; min-height: 0; max-height: none; padding: 4px 0; overflow: visible; container: none; border-radius: 12px; }
+.essai-menu .nav { padding: 0; }
+.essai-poignee { position: relative; display: block; width: 56px; height: 40px; border: 1px dashed var(--trait); border-radius: 8px; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 /* le lien d'évitement, comme sur le site et dans l'équipe : hors de l'écran, il paraît au premier Tab */
 .evitement { position: absolute; left: 8px; top: -80px; z-index: 90; padding: 10px 14px; border-radius: 10px; background: var(--encre); color: var(--carte); font-weight: 600; text-decoration: none; }
@@ -192,7 +203,7 @@ html.menu-replie { --large-menu: 64px; }
 .menu { grid-column: 1; grid-row: 1; position: sticky; top: var(--haut-barre, 0px); z-index: 10; align-self: start; display: flex; flex-direction: column;
   min-height: calc(100vh - var(--haut-barre, 0px)); max-height: calc(100vh - var(--haut-barre, 0px)); overflow: auto; overscroll-behavior: contain; scrollbar-width: none; container: menu / inline-size; }
 .menu .nav { display: flex; flex-direction: column; gap: 2px; flex: none; padding: 10px 0 6px; }
-.menu .nav a { position: relative; display: flex; align-items: center; gap: 12px; min-height: var(--h-ligne-menu); margin: 0 8px; padding: 0 12px; border-radius: 10px; text-decoration: none; color: var(--gris); font-weight: 600; white-space: nowrap; transition: background-color .15s, color .15s; }
+.menu .nav a { position: relative; display: flex; align-items: center; gap: 12px; min-height: var(--h-ligne-menu); margin: 0 8px; padding: 0 12px; border-radius: 10px; text-decoration: none; color: var(--gris); font-weight: 600; white-space: nowrap; }
 .menu .nav a .ico { --ico: 20px; }
 .menu-l { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; transition: opacity .12s linear; }
 .menu-badge { flex: none; }
@@ -208,8 +219,6 @@ html.menu-replie { --large-menu: 64px; }
 .reg-apparence { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
 .reg-theme { display: inline-flex; border-radius: 999px; }
 .reg-theme button, .reg-densite { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 44px; min-height: 44px; padding: 0; border: 0; border-radius: 999px; background: none; font: inherit; cursor: pointer; }
-.reg-theme button:focus-visible, .reg-densite:focus-visible { outline: 2px solid currentColor; outline-offset: -2px; }
-.menu a:focus-visible, .menu-replier:focus-visible, .menu-creer:focus-visible { outline: 2px solid currentColor; outline-offset: -2px; }
 /* les accès rapides (cadre.js), entre les rubriques et le bouton de repli : l'étiquette et « ＋ Créer » ne défilent jamais (la zone ne
    descend pas sous leur hauteur : sur un écran bas, c'est le menu entier qui défile), les épinglés et les récents (.menu-defile)
    prennent la place qui reste, une ligne au moins, et défilent d'eux-mêmes : le bouton de repli et les réglages restent au pied
@@ -222,7 +231,7 @@ html.menu-replie { --large-menu: 64px; }
 .menu-creer { display: flex; align-items: center; gap: 12px; width: calc(100% - 16px); min-height: 44px; margin: 4px 8px 6px; padding: 0 12px; border: 0; border-radius: 10px; background: var(--accent); color: var(--sur-accent); font: inherit; font-weight: 700; text-align: left; white-space: nowrap; cursor: pointer; }
 .menu-creer .ico { --ico: 20px; }
 .menu-epingles { display: flex; flex-direction: column; gap: 1px; }
-.menu-epingle, .menu-recent { position: relative; display: flex; align-items: center; gap: 12px; min-height: 36px; margin: 0 8px; padding: 0 12px; border-radius: 10px; color: var(--gris); font-size: 13.5px; font-weight: 600; text-decoration: none; white-space: nowrap; transition: background-color .15s, color .15s; }
+.menu-epingle, .menu-recent { position: relative; display: flex; align-items: center; gap: 12px; min-height: 36px; margin: 0 8px; padding: 0 12px; border-radius: 10px; color: var(--gris); font-size: 13.5px; font-weight: 600; text-decoration: none; white-space: nowrap; }
 .menu-epingle .ico { --ico: 20px; }
 .menu-epingle:hover, .menu-recent:hover { background: var(--doux); color: var(--encre); }
 .menu-recents[hidden] { display: none; }
@@ -258,7 +267,7 @@ dialog.recherche::backdrop { background: rgba(23, 15, 26, .4); }
 .rch-tete:focus-within { border-bottom-color: var(--accent); }
 .rch-tete svg { flex: none; color: var(--gris); }
 .rch-tete input[type=text] { flex: 1; min-width: 0; border: 0; background: none; font-size: 17px; padding: 6px 0; min-height: 42px; box-shadow: none; }
-.rch-entete { margin: 0; padding: 10px 18px 4px; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--gris); }
+.rch-entete { margin: 0; padding: 10px 18px 4px; color: var(--gris); }      /* (sa police : la règle des étiquettes, habillage.js) */
 .rch-liste { list-style: none; margin: 0; padding: 2px 8px 8px; overflow: auto; overscroll-behavior: contain; flex: 1; min-height: 0; }
 .rch-liste [role=option] { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 9px; cursor: pointer; }
 .rch-liste [role=option][aria-selected=true] { background: var(--accent-doux); }
@@ -282,13 +291,11 @@ dialog.recherche::backdrop { background: rgba(23, 15, 26, .4); }
 
 /* boutons et champs */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; border-radius: 9px; border: 1px solid var(--trait); background: var(--carte); cursor: pointer; font-weight: 600; text-decoration: none; color: var(--encre); white-space: nowrap; }
-.btn:hover { border-color: var(--gris); }
 .btn.principal { background: var(--accent); border-color: var(--accent); color: var(--sur-accent, #fff); }
 .btn.principal:hover { background: var(--accent-fonce); }
 .btn.danger { color: var(--alerte); }
 .btn.petit { padding: 4px 9px; font-size: 13px; border-radius: 7px; }
 .btn.lien { border: 0; background: none; color: var(--accent); padding: 4px 6px; }
-.btn[disabled] { opacity: .5; cursor: default; }
 .champ { display: grid; gap: 5px; margin: 0 0 14px; }
 .champ > label, .champ > .lib { font-weight: 650; font-size: 13.5px; }
 .champ .aide { color: var(--gris); font-size: 12.5px; }
@@ -297,7 +304,7 @@ input[type=text], input[type=email], input[type=password], input[type=url], inpu
 textarea { min-height: 76px; resize: vertical; }
 .riche { min-height: 60px; line-height: 1.55; }
 .riche:empty::before { content: attr(data-vide); color: var(--gris); }
-input:focus, select:focus, textarea:focus, .riche:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-doux); }
+input:focus, select:focus, textarea:focus, .riche:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-doux); }      /* (le outline: none : habillage.js) */
 .case { display: flex; align-items: center; gap: 9px; font-weight: 600; cursor: pointer; }
 .case input { width: 18px; height: 18px; accent-color: var(--accent); }
 .rangee { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
@@ -333,7 +340,7 @@ html.pleine-largeur .coque + .pied-espace { --marge-pied: 0px; }
 .puces { display: flex; flex-wrap: wrap; gap: 6px; }
 .puce { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--trait); background: var(--carte); cursor: pointer; font-size: 13px; font-weight: 600; color: var(--gris); }
 .puce[aria-pressed="true"] { border-color: var(--c, var(--accent)); color: var(--encre); background: color-mix(in srgb, var(--c, var(--accent)) 14%, var(--carte)); }
-.mois { margin: 14px 4px 6px; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--gris); }
+.mois { margin: 14px 4px 6px; color: var(--gris); }      /* (sa police : la règle des étiquettes, habillage.js ; .mois.accent : à la couleur de la saison) */
 /* au bureau, une longue liste qui défile à côté de sa fiche garde en vue l'en-tête de ce qu'on parcourt : le mois (ou « À
    venir »), collé en haut de la liste jusqu'au suivant */
 @media (min-width: 1101px) { .deux > .liste .mois { position: sticky; top: 0; z-index: 2; margin: 0 0 6px; padding: 10px 4px 6px; background: color-mix(in srgb, var(--fond) 92%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); } }
@@ -545,7 +552,7 @@ table.simple tr.cliquable:hover td { background: var(--doux); }
 .avant-fenetre { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin: 0 2px; font-size: 13px; color: var(--gris); }
 .avant-fenetre select { width: auto; min-height: 30px; padding: 2px 6px; }
 .avant-rien { margin: 2px; color: var(--ok); font-weight: 600; font-size: 14px; }
-.avant h3 { margin: 6px 2px 0; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--gris); }
+.avant h3 { margin: 6px 2px 0; color: var(--gris); }
 .avant ul { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
 .avant li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; padding: 6px 9px; border-radius: 8px; background: var(--doux); font-size: 14px; }
 .avant li a { font-weight: 650; }
@@ -631,11 +638,9 @@ table.simple tr.cliquable:hover td { background: var(--doux); }
 .tete .vues { margin-right: auto; }
 .tete h1:has(+ .vues) { margin-right: 0; }
 .seg.vues { padding: 3px; gap: 2px; border-radius: 999px; background: color-mix(in srgb, var(--encre) 6%, var(--carte)); overflow: visible; }
-.vues a { display: inline-flex; align-items: center; gap: 7px; min-height: 38px; padding: 0 14px; border-radius: 999px; font-weight: 600; font-size: .92rem; color: var(--gris); text-decoration: none; transition: background .2s, color .2s; }
+.vues a { display: inline-flex; align-items: center; gap: 7px; min-height: 38px; padding: 0 14px; border-radius: 999px; font-weight: 600; font-size: .92rem; color: var(--gris); text-decoration: none; }
 .vues a:hover { color: var(--encre); }
 .vues a[aria-current="page"] { background: var(--accent); color: var(--sur-accent, #fff); }
-.vues a:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; }
-.vues a[aria-current="page"]:focus-visible { outline-color: var(--sur-accent, #fff); }
 @media (max-width: 1100px) { .vues .mot { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } .vues a { padding: 0 13px; } }
 @media (pointer: coarse) { .vues a { min-height: 44px; } }
 /* la barre de filtres commune à la liste, au tableur et à la carte (filtresDates) */
@@ -679,9 +684,8 @@ table.tableur { border-collapse: separate; border-spacing: 0; width: max-content
 /* (overflow: clip, pas hidden : la même coupe et les mêmes points de suspension, mais la case n'est pas un conteneur qui défile, donc ni couche de
    peinture ni zone de défilement à elle seule, par case : défaire ou survoler les douze mille cases du Complet en pèse un peu moins) */
 .tableur th, .tableur td { box-sizing: border-box; padding: 6px 9px; border-bottom: 1px solid var(--trait); border-right: 1px solid var(--trait); text-align: left; vertical-align: top; white-space: nowrap; overflow: hidden; overflow: clip; text-overflow: ellipsis; }
-.tableur thead th { position: sticky; top: 0; z-index: 3; background: var(--doux); color: var(--gris); font-size: 12.5px; font-weight: 750; }
-/* l'en-tête d'une colonne : une étiquette (Raleway, capitales) précédée de l'icône de son type, 14 px (le libellé est à côté : l'icône est aria-hidden) */
-.tableur thead th { font-family: var(--etiq); font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase; }
+.tableur thead th { position: sticky; top: 0; z-index: 3; background: var(--doux); color: var(--gris); }
+/* l'en-tête d'une colonne : une étiquette (sa police : la règle des étiquettes, habillage.js) précédée de l'icône de son type, 14 px (le libellé est à côté : l'icône est aria-hidden) */
 .tableur thead th .tab-th, .tableur .tab-tri { display: inline-flex; align-items: center; gap: 6px; }
 .tableur thead th .ico { width: 14px; height: 14px; opacity: .8; }
 .tableur .tab-tri { border: 0; background: none; padding: 0; font: inherit; color: inherit; cursor: pointer; }
@@ -718,6 +722,7 @@ html.still .tableur td.visee { background-color: var(--accent-doux); box-shadow:
 .tableur .badge { font-size: 11px; }
 .tab-gris { color: var(--gris); font-style: italic; }
 .tableur td.tab-vide { padding: 30px; text-align: center; color: var(--gris); white-space: normal; }
+.tableur td.tab-vide .vide-orne { margin: 0 auto 10px; }
 .tab-ed { position: absolute; left: 0; top: 0; z-index: 6; width: max(100%, 190px); min-height: 100%; padding: 4px 8px; border: 2px solid var(--accent); border-radius: 4px; background: var(--carte); color: var(--encre); font-size: 14px; box-shadow: 0 6px 18px rgba(20, 10, 20, .2); }
 select.tab-ed { width: max(100%, 200px); }
 textarea.tab-ed { width: max(100%, 320px); min-height: 130px; resize: both; }
@@ -904,7 +909,6 @@ dialog.tab-dialogue::backdrop { background: rgba(23, 15, 26, .4); }
 .tab-cal { position: fixed; z-index: 41; box-sizing: border-box; width: 246px; padding: 10px; background: var(--carte); border: 1px solid var(--trait); border-radius: 12px; box-shadow: 0 14px 40px rgba(20, 10, 20, .28); user-select: none; }
 .tab-cal-tete { display: flex; align-items: center; justify-content: space-between; margin: 0 0 6px; font: 600 15px/1.2 var(--titres); }
 .tab-cal-tete button { width: 32px; height: 32px; border: 0; border-radius: 8px; background: none; color: var(--encre); font-size: 18px; line-height: 1; cursor: pointer; }
-.tab-cal-tete button:hover { background: var(--doux); }
 .tab-cal-rang { display: grid; grid-template-columns: repeat(7, 32px); }
 .tab-cal-sem span { height: 22px; font: 700 10.5px/22px var(--etiq); letter-spacing: .05em; text-transform: uppercase; text-align: center; color: var(--gris); }
 .tab-cal-j { display: block; width: 32px; height: 32px; border-radius: 50%; font-size: 13.5px; line-height: 32px; text-align: center; cursor: pointer; }
@@ -945,7 +949,6 @@ html.still *, html.still *::before, html.still *::after { animation: none !impor
 .carte-sp .img::after { transition: height .2s; }
 .carte-sp:hover .img::after { height: 9px; }
 .ligne { transition: box-shadow .15s, border-color .15s; }
-.seg button, .puce { transition: background-color .2s, color .2s, border-color .2s; }
 .champ input, .champ select, .champ textarea, .riche, input[type=search], .filtres input, .filtres select { transition: border-color .15s, box-shadow .15s; }
 /* le squelette du chargement (squeletteAdmin) : l'en-tête tel qu'il sera, puis la vue à sa forme, aux mesures de la page
    (le titre et ses boutons de 41 px, le bandeau du tableau de bord, les lignes d'une liste, les cartes…), qui luisent ; le
@@ -979,7 +982,7 @@ html.still *, html.still *::before, html.still *::after { animation: none !impor
 .sq-colonnes { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
 .sq-colonne { height: 480px; border-radius: var(--rayon); }
 @media (max-width: 1100px) { .sq-deux { grid-template-columns: 1fr; } .sq-fiche { display: none; } .sq-tuiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 760px) { .sq-tuiles, .sq-kpi, .sq-colonnes { grid-template-columns: 1fr; } .sq-tuile-m { grid-column: auto; } .sq-salut { height: 283px; } .sq-tuile-g { height: 591px; } .sq-filtres { height: 243px; } .sq-colonne { height: 220px; } }.btn:active:not([disabled]) { transform: scale(.97); }
+@media (max-width: 760px) { .sq-tuiles, .sq-kpi, .sq-colonnes { grid-template-columns: 1fr; } .sq-tuile-m { grid-column: auto; } .sq-salut { height: 283px; } .sq-tuile-g { height: 591px; } .sq-filtres { height: 243px; } .sq-colonne { height: 220px; } }
 @media (prefers-reduced-motion: no-preference) {
   ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .22s; animation-timing-function: cubic-bezier(.2, .8, .2, 1); }
   html[data-sens="avant"]::view-transition-old(root) { animation-name: ad-sort-gauche; }
@@ -1210,11 +1213,12 @@ function lireFiltres() {
 }
 // Les listes vides disent pourquoi, en une phrase, et proposent le geste utile : filtrée (filtree vrai) et sans résultat,
 // « Effacer les filtres » ; encore vide, ce qui l'ouvre (ajouter : [l'adresse, le libellé], ou rien quand la liste se
-// remplit d'ailleurs : les demandes de devis viennent du site). balise : 'li' dans une liste <ul>.
+// remplit d'ailleurs : les demandes de devis viennent du site). balise : 'li' dans une liste <ul>. La tentacule en filigrane
+// (ICONES.ornementVide, aria-hidden) vient avant la phrase.
 function listeVide(filtree, { rien, aucun, ajouter = null, balise = 'div' }) {
   const geste = filtree ? '<button type="button" class="btn" data-effacer-filtres>Effacer les filtres</button>'
     : ajouter ? `<a class="btn principal" href="${esc(ajouter[0])}">${esc(ajouter[1])}</a>` : '';
-  return `<${balise} class="vide liste-vide"><p>${esc(filtree ? rien : aucun)}</p>${geste}</${balise}>`;
+  return `<${balise} class="vide liste-vide">${ICONES.ornementVide}<p>${esc(filtree ? rien : aucun)}</p>${geste}</${balise}>`;
 }
 // « Effacer les filtres » : chaque filtre de la vue reprend sa valeur d'office par son propre chemin (l'événement que la vue
 // écoute : la liste se refait, l'adresse suit), puis le focus va à la recherche. La vue d'un tiroir n'est pas touchée.
@@ -1901,6 +1905,30 @@ function vueEssaiIcones() {
   cadre('', `<div class="tete"><h1>Les icônes</h1><span class="compte">${ICONES.NOMS.length} dessins, ceux de admin/icones.js</span></div>
     <ul class="essai-icones" aria-label="Les icônes de la bibliothèque">${ICONES.NOMS.map(n => `<li>${ICONES.svg(n, { taille: 28 })}<code>${n}</code></li>`).join('')}</ul>`);
 }
+// la petite vue d'essai des états (#/essai/etats) : les six états d'une commande (au repos, au survol, pressé, au clavier,
+// désactivé, occupé) sur six commandes (un bouton, un segment, une puce, un outil de tuile, un lien du menu, une poignée),
+// dessinés par les règles mêmes d'habillage.js. Le survol, le pressé et le clavier sont posés par data-etat (que les mêmes
+// règles lisent à côté de :hover, :active et :focus-visible) ; les commandes restent des commandes, on peut y poser la
+// souris. Hors du menu et de la recherche, comme celle des icônes. « sans objet » : un lien ne s'occupe pas, une poignée
+// ne se désactive pas.
+const ETATS_ESSAI = [['repos', 'Au repos'], ['survol', 'Au survol'], ['presse', 'Pressé'], ['clavier', 'Au clavier'], ['desactive', 'Désactivé'], ['occupe', 'Occupé']];
+function vueEssaiEtats() {
+  const attr = (etat, lien = false) => ({ repos: '', survol: ' data-etat="survol"', presse: ' data-etat="presse"', clavier: ' data-etat="clavier"',
+    desactive: lien ? ' aria-disabled="true"' : ' disabled', occupe: lien ? null : ' aria-busy="true" disabled' }[etat]);
+  const COMMANDES_ESSAI = [
+    ['.btn', e => `<button type="button" class="btn"${attr(e)}>Enregistrer</button>`],
+    ['.seg', e => `<span class="seg" role="group" aria-label="Un segment"><button type="button" aria-pressed="true">Liste</button><button type="button" aria-pressed="false"${attr(e)}>Tableur</button></span>`],
+    ['.puce', e => `<button type="button" class="puce" aria-pressed="false"${attr(e)}>Confirmée</button>`],
+    ['.tb-ico', e => `<button type="button" class="tb-ico" aria-label="Réglages (exemple)"${attr(e)}>${ICONES.svg('engrenage', { taille: 18 })}</button>`],
+    ['.menu a', e => attr(e, true) === null ? null : `<div class="menu essai-menu"><div class="nav"><a href="#/essai/etats"${attr(e, true)}>${ICONES.svg('calendrier')}<span class="menu-l">Représentations</span></a></div></div>`],
+    ['.poignee', e => ['desactive', 'occupe'].includes(e) ? null : `<span class="essai-poignee"><span class="poignee poignee-droite" role="separator" aria-orientation="vertical" aria-label="Largeur (exemple)" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" tabindex="0"${attr(e)}></span></span>`],
+  ];
+  cadre('', `<div class="tete"><h1>Les états</h1><span class="compte">${ETATS_ESSAI.length} états, les mêmes pour toutes les commandes</span></div>
+    <div class="essai-etats-cadre" role="region" aria-label="Les états des commandes" tabindex="0"><table class="essai-etats">
+      <thead><tr><th scope="col"><span class="sr">Commande</span></th>${ETATS_ESSAI.map(([k, l]) => `<th scope="col" class="etiquette" data-etat-col="${k}">${l}</th>`).join('')}</tr></thead>
+      <tbody>${COMMANDES_ESSAI.map(([nom, dessin]) => `<tr><th scope="row"><code>${nom}</code></th>${ETATS_ESSAI.map(([k]) => { const h = dessin(k); return `<td data-etat-col="${k}">${h === null ? '<span class="essai-sans">sans objet</span>' : h}</td>`; }).join('')}</tr>`).join('')}</tbody>
+    </table></div>`);
+}
 const ROUTES = [
   [/^#\/accueil$/, () => vueTableau()],
   [/^#\/representations(?:\/(nouvelle|tableur|carte|\d+))?$/, m => vueDates(m[1])],
@@ -1915,6 +1943,7 @@ const ROUTES = [
   [/^#\/textes(?:\/(.+))?$/, m => vueTextes(m[1] && decodeURIComponent(m[1]))],
   [/^#\/journal$/, () => vueJournal()],
   [/^#\/essai\/icones$/, () => vueEssaiIcones()],
+  [/^#\/essai\/etats$/, () => vueEssaiEtats()],
 ];
 const APRES_CHANGEMENT = [];   // ce qui suit un changement reçu en direct (changement() : cadre.js y met les badges du menu)
 const APRES_VUE = [ecrireFiltres];   // ce qui se pose une fois la vue dessinée (ses filtres dans l'adresse ; menus.js : précédent / suivant dans les fiches)
@@ -3074,8 +3103,8 @@ function listeDates(zone, actif) {
   const saisonEnCours = AGENDA.saisonDe(AUJ);
   const saisons = [...new Set(passees.map(d => d.saison))].sort().reverse();
   if (!xs.length) { zone.innerHTML = listeVide(cherche || f.periode !== 'avenir', { rien: 'Aucune date ne correspond à ces filtres.', aucun: 'Aucune date pour l’instant.', ajouter: ['#/representations/nouvelle', '＋ Nouvelle date'] }); return; }
-  zone.innerHTML = `${f.periode === 'passees' ? '' : `<h2 class="mois" style="font-size:13px;color:var(--accent)">À venir</h2>${avenir.length ? parMois(avenir) : '<p class="vide">Aucune date à venir.</p>'}`}
-    <h2 class="mois" style="font-size:13px;color:var(--accent);margin-top:${f.periode === 'passees' ? 0 : 24}px">Dates passées</h2>
+  zone.innerHTML = `${f.periode === 'passees' ? '' : `<h2 class="mois accent">À venir</h2>${avenir.length ? parMois(avenir) : '<p class="vide">Aucune date à venir.</p>'}`}
+    <h2 class="mois accent" style="margin-top:${f.periode === 'passees' ? 0 : 24}px">Dates passées</h2>
     ${saisons.map(sa => { const ouverte = cherche || f.periode === 'toutes' || sa === saisonEnCours || v.ouvertes.includes(sa) || passees.some(d => String(d.id) === String(actif) && d.saison === sa);
       return `<details class="saison-ad" id="saison-${sa}" data-saison="${sa}"${ouverte ? ' open' : ''}><summary class="ligne" style="grid-template-columns:1fr auto;cursor:pointer;border-left-color:var(--trait)"><span class="t">Saison ${sa}</span><span class="badge">${passees.filter(d => d.saison === sa).length}</span></summary><div class="contenu-saison"></div></details>`; }).join('') || '<p class="vide">Aucune date passée.</p>'}`;
   const remplir = det => { const c = $('.contenu-saison', det); if (det.open && !c.innerHTML) c.innerHTML = parMois(passees.filter(d => d.saison === det.dataset.saison)); };

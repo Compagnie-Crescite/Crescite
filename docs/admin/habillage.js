@@ -6,8 +6,40 @@
    et des modules (equipe.js, planning.js, disponibilites.js, tableau.js, gestes.js, menus.js), qui gardent la structure
    et le comportement ; ici, rien que l'apparence, la nuit (par défaut) comme le jour (data-theme="jour"), aux couleurs
    (--accent, --carte, --trait, --doux…) que tout le monde lit. Les polices viennent de Google Fonts (index.html) ; sans
-   elles, le système. */
+   elles, le système.
+
+   Trois choses y sont écrites une fois pour toute l'administration :
+   - Le jeu d'états des commandes (boutons, boutons des feuilles, segments, puces, outils des tuiles, liens du menu, pilule
+     des vues, flèches du petit calendrier ; la barre du bas du téléphone n'a que le pressé et le focus). Au repos : la carte
+     et son trait. Au survol : le bord et un fond doux teintés de la saison (--survol-bord, --survol-fond, que le menu et
+     l'en-tête de nuit redéfinissent en blanc translucide). Pressé : la commande s'enfonce de 3 % (scale(.97)) et son fond
+     s'assombrit à peine (--presse-fond). Au clavier : un anneau de 3 px à la couleur de la saison, à 2 px (3 px en dedans
+     dans un segment et dans la pilule des vues, qui rognent leur contenu). Désactivée : à moitié transparente. Occupée
+     (aria-busy, sur un bouton seulement) : le curseur « en cours », plus de clic, le libellé s'efface sous un petit anneau
+     qui tourne (le même mouvement que le témoin du direct, temoin-tourne), fixe sous « réduire les animations » ; un
+     bouton occupé est aussi désactivé (gestes.js pose les deux) mais garde son opacité entière. Le survol et le pressé
+     ne touchent ni une commande choisie (aria-pressed, aria-current, aria-checked), ni un bouton principal, ni
+     « ＋ Créer », ni une commande désactivée. Les variantes (.principal, .danger, .lien, .petit) gardent leurs règles.
+     La poignée (fenetres.js) a le sien : sa ligne à la couleur de la saison au survol, au focus et pendant le geste.
+     Le témoin du direct, la barre de lecture du planning et le squelette ont aussi un aria-busy et leur propre
+     apparence : le jeu ne les vise pas.
+   - Les étiquettes : les titres de section en capitales espacées (11 px, .1em, Raleway) parlent d'une seule voix ;
+     .etiquette sert à les poser sur un nouvel élément, .mois.accent à la poser à la couleur de la saison.
+   - Les vides : une liste sans résultat montre la tentacule en filigrane (.vide-orne), la phrase, puis le geste utile.
+   Sous « réduire les animations », une seule règle coupe toutes les durées de transition et d'animation. */
 (() => {
+  /* les commandes du jeu d'états ; « :where(html.admin) .gf-btn » : les boutons des feuilles de gestes.js (partagé avec
+     l'espace de l'équipe) ne sont habillés que dans l'administration, sans rien ajouter à la spécificité du groupe */
+  const COMMANDES = '.btn, :where(html.admin) .gf-btn, .seg a, .seg button, .puce, .tb-ico, .menu a, .menu button, .vues a, .tab-cal button';
+  // la barre du bas du téléphone (mobile.js) : le pressé et le focus seulement, sans rien déplacer
+  const BARRE_BAS = '.ob-item, .ob-tete-btn, .ob-fermer';
+  // ce que le survol et le pressé ne recolorent pas : une commande désactivée, choisie, principale
+  const SANS_SURVOL = '[disabled], [aria-disabled="true"], [aria-pressed="true"], [aria-current="page"], [aria-checked="true"], .principal, .menu-creer';
+  // les boutons qui peuvent être occupés (aria-busy) ; le témoin, le planning et le squelette ont le leur
+  const OCCUPABLES = '.btn, :where(html.admin) .gf-btn, .seg button, .puce, .tb-ico, .menu button';
+  /* le survol, le pressé et le clavier se lisent aussi sur data-etat (la page d'essai #/essai/etats les montre sans souris
+     ni clavier : mêmes règles, un seul jeu) */
+  const SURVOL = ':is(:hover, [data-etat="survol"])', PRESSE = ':is(:active, [data-etat="presse"])', CLAVIER = ':is(:focus-visible, [data-etat="clavier"])';
   document.head.insertAdjacentHTML('beforeend', `<style id="styles-habillage">
 /* ===================================================================================================== les couleurs */
 :root {
@@ -51,7 +83,7 @@ html { min-height: 100%; }
 body { min-height: 100%; background: radial-gradient(1100px 540px at -5% -10%, color-mix(in srgb, var(--accent) 11%, transparent), transparent 60%), radial-gradient(900px 480px at 105% -5%, color-mix(in srgb, var(--ambre) 13%, transparent), transparent 55%), var(--fond); background-repeat: no-repeat; }
 
 /* ===================================================================================================== l'en-tête */
-.barre { background: var(--barre-fond); border-bottom: 0; color: #fff; box-shadow: 0 8px 28px -14px rgba(30, 10, 30, .55); }
+.barre { background: var(--barre-fond); border-bottom: 0; color: #fff; box-shadow: 0 8px 28px -14px rgba(30, 10, 30, .55); --survol-fond: rgba(255, 255, 255, .16); --survol-bord: rgba(255, 255, 255, .45); --presse-fond: rgba(255, 255, 255, .24); }
 .marque { color: #fff; font-family: var(--titres); font-weight: 700; }
 .marque small { color: rgba(255, 255, 255, .72); font-family: var(--etiq); font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
 .marque .pieuvre { color: var(--pieuvre); }
@@ -60,27 +92,26 @@ body { min-height: 100%; background: radial-gradient(1100px 540px at -5% -10%, c
 /* le menu latéral : une bande de nuit qui prolonge l'en-tête (le même fond, à la verticale, de nuit dans les deux thèmes) ;
    les rubriques en Raleway capitales, la courante en blanc sur du blanc à 14 % avec un filet à la couleur de la saison
    (comme les rubriques de la feuille du téléphone), le badge en corail ; replié, le badge devient un point sur l'icône */
-.menu { background: var(--menu-fond); color: rgba(255, 255, 255, .8); }
+.menu { background: var(--menu-fond); color: rgba(255, 255, 255, .8); --survol-fond: rgba(255, 255, 255, .12); --survol-bord: transparent; --presse-fond: rgba(255, 255, 255, .2); }
 .menu .nav { gap: 0; }
 .menu .nav a, .menu-replier, .fen-reglage { color: rgba(255, 255, 255, .8); font-family: var(--etiq); font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
-.menu .nav a { margin: 2px 8px; border-radius: 10px; transition: background .15s, color .15s, box-shadow .15s; }
-.menu .nav a:hover, .menu-replier:hover, .fen-reglage:hover { background: rgba(255, 255, 255, .12); color: #fff; }
+.menu .nav a { margin: 2px 8px; border-radius: 10px; }
+.menu .nav a:hover, .menu-replier:hover, .fen-reglage:hover { color: #fff; }
 .menu .nav a[aria-current="page"] { background: rgba(255, 255, 255, .14); color: #fff; box-shadow: inset 3px 0 0 var(--saison-texte-nuit), 0 6px 16px -6px color-mix(in srgb, var(--saison) 80%, transparent); }
-.menu a:focus-visible, .menu-replier:focus-visible, .fen-reglage:focus-visible { outline-color: #fff; }
-.menu-replier { margin: auto 8px 8px; border-radius: 10px; transition: background .15s, color .15s; }
+/* (le menu rogne ses enfants : l'anneau est en dedans, blanc sur la nuit) */
+.menu :is(:focus-visible, [data-etat="clavier"]) { outline: 3px solid #fff; outline-offset: -3px; }
+.menu-replier { margin: auto 8px 8px; border-radius: 10px; }
 .reg-theme { background: rgba(255, 255, 255, .1); }
 .reg-theme button, .reg-densite { color: rgba(255, 255, 255, .72); }   /* (aucune transition de couleur : le thème change d'un coup) */
-.reg-theme button:hover, .reg-densite:hover { background: rgba(255, 255, 255, .12); color: #fff; }
+.reg-theme button:hover, .reg-densite:hover { color: #fff; }
 .reg-theme button[aria-checked="true"], .reg-densite[aria-pressed="true"], .fen-reglage[aria-pressed="true"] { background: rgba(255, 255, 255, .2); color: #fff; box-shadow: inset 0 0 0 1.5px var(--saison-texte-nuit); }
-.reg-theme button:focus-visible, .reg-densite:focus-visible { outline-color: #fff; }
 /* les accès rapides : « ＋ Créer » au dégradé de la saison, les épinglés et les récents en blanc doux sur la nuit du menu */
 .menu-etiq { color: rgba(255, 255, 255, .55); font-family: var(--etiq); }
-.menu-creer { background: var(--principal); color: #fff; font-family: var(--etiq); font-size: 12px; letter-spacing: .05em; text-transform: uppercase; box-shadow: 0 6px 16px -8px color-mix(in srgb, var(--saison) 80%, transparent); transition: filter .15s, box-shadow .15s; }
+.menu-creer { background: var(--principal); color: #fff; font-family: var(--etiq); font-size: 12px; letter-spacing: .05em; text-transform: uppercase; box-shadow: 0 6px 16px -8px color-mix(in srgb, var(--saison) 80%, transparent); }
 .menu-creer:hover, .menu-creer[aria-expanded="true"] { filter: brightness(1.14); }
 .menu-epingle, .menu-recent { color: rgba(255, 255, 255, .78); }
-.menu-epingle:hover, .menu-recent:hover { background: rgba(255, 255, 255, .12); color: #fff; }
+.menu-epingle:hover, .menu-recent:hover { color: #fff; }
 .menu-rg { color: rgba(255, 255, 255, .55); }
-.menu-creer:focus-visible { outline-color: #fff; }
 .menu-badge { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #f28a6c; color: #2a1218; font: 800 11px/18px var(--police); letter-spacing: 0; text-align: center; text-transform: none; }
 @container menu (max-width: 120px) {
   .menu-badge { position: absolute; top: 8px; right: 9px; min-width: 0; width: 8px; height: 8px; padding: 0; overflow: hidden; font-size: 0; }
@@ -88,7 +119,6 @@ body { min-height: 100%; background: radial-gradient(1100px 540px at -5% -10%, c
 .qui { color: rgba(255, 255, 255, .72); }
 .qui a { color: #fff; }
 .barre .btn { background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .22); color: #fff; }
-.barre .btn:hover { background: rgba(255, 255, 255, .16); border-color: rgba(255, 255, 255, .45); }
 .chercher { background: rgba(255, 255, 255, .09); border-color: rgba(255, 255, 255, .18); color: rgba(255, 255, 255, .86); }
 .chercher:hover { background: rgba(255, 255, 255, .15); border-color: rgba(255, 255, 255, .5); color: #fff; }
 .barre kbd { background: rgba(255, 255, 255, .12); border-color: rgba(255, 255, 255, .22); color: #fff; }
@@ -100,10 +130,13 @@ h1, h2, h3, .tete h1, .editeur h2, .bloc h3, .connexion h1, .fr-tete h1, dialog 
 .tete h1 { font-size: 27px; font-weight: 700; }
 .editeur h2 { font-size: 22px; }
 .bloc h3 { font-size: 16px; }
-.tb-cat h3, table.simple th, table.reps th, .crm-col-tete, .docs-titre, .rch-entete, .tb-pan-l .lib, .tb-kpi span, .tb-courbe-t, .dist-l.dist-entete, .tb-salut-jour, .tb-salut-chiffres span {
+/* l'étiquette : les titres de section parlent d'une seule voix, en capitales espacées de 11 px (les marges et les couleurs
+   restent à chacun ; .etiquette sert à la poser sur un nouvel élément, .mois.accent à la couleur de la saison) */
+:is(.etiquette, .mois, .tb-cat h3, .avant h3, .rch-entete, .tiroir-genre, .tableur thead th, .jeu-titre, table.simple th, table.reps th) { font: 700 11px/1.3 var(--etiq); letter-spacing: .1em; text-transform: uppercase; }
+.mois.accent { color: var(--accent); }
+/* les libellés qui gardent leur taille (légendes, chiffres, entêtes de colonnes) : la même police, le même espacement */
+.crm-col-tete, .docs-titre, .tb-pan-l .lib, .tb-kpi span, .tb-courbe-t, .dist-l.dist-entete, .tb-salut-jour, .tb-salut-chiffres span {
   font-family: var(--etiq); font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
-.tb-cat h3 { font-size: 11px; }
-table.simple th, table.reps th { font-size: 11px; }
 .champ > label, .champ > .lib { font-weight: 700; color: var(--encre); }
 .rch-type { font: 700 10px/1.5 var(--etiq); letter-spacing: .08em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: var(--doux); color: var(--gris); }
 
@@ -117,6 +150,8 @@ table.simple th, table.reps th { font-size: 11px; }
 .ligne .jj, .tb-jj, .tab-jj { position: relative; width: 42px; padding: 7px 0 4px; border-radius: 9px; overflow: hidden; background: var(--doux); font-family: var(--etiq); font-weight: 700; font-size: 10px; letter-spacing: .04em; text-transform: uppercase; color: var(--gris); text-align: center; line-height: 1.15; }
 .ligne .jj::before, .tb-jj::before, .tab-jj::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; background: var(--c, var(--accent)); }
 .ligne .jj b, .tb-jj b, .tab-jj b { display: block; font: 700 19px/1.15 var(--titres); letter-spacing: 0; color: var(--encre); }
+/* (le mois d'une date à précision « mois », dans la tuile du tableur : la règle des étiquettes le prendrait pour un titre) */
+.tab-jj b.mois { font-family: var(--titres); letter-spacing: 0; }
 .tb-jj:empty { background: none; }
 .tb-jj:empty::before { display: none; }
 .ligne .t, .tb-l-t { font-weight: 700; }
@@ -126,14 +161,18 @@ table.simple th, table.reps th { font-size: 11px; }
 :where(:root:not([data-theme="jour"])) .pastille { box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--encre) 50%, transparent); }
 .liste-simple li { background: var(--carte); border: 1px solid var(--trait); }
 .vide, .tb-rien { font-family: var(--titres); font-size: 14.5px; font-weight: 500; }
+/* la tentacule en filigrane au-dessus de la phrase d'une liste vide (ICONES.ornementVide, aria-hidden) ; dans une tuile du
+   tableau de bord, plus petite et à gauche, comme le texte */
+.vide-orne { display: block; flex: none; width: 140px; max-width: 60%; height: auto; color: var(--accent); opacity: .18; pointer-events: none; }
+.tb-corps > .vide-orne { width: 96px; justify-self: start; }
 .tb-rien.ok { color: var(--ok); }
 
 /* ===================================================================================================== les boutons, les badges, les champs */
-.btn { border-radius: 10px; border-color: var(--trait); background: var(--carte); font-weight: 600; transition: transform .12s, box-shadow .12s, border-color .12s, background .12s, filter .12s; }
-.btn:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--trait)); background: color-mix(in srgb, var(--accent-doux) 55%, var(--carte)); }
+.btn { border-radius: 10px; border-color: var(--trait); background: var(--carte); font-weight: 600; }
 .btn.principal, .gf-btn.principal, .seg button[aria-pressed="true"], .vues a[aria-current="page"], .puce[aria-pressed="true"]:not([style*="--c"]) { background: var(--principal); border-color: transparent; color: #fff; }
 .btn.principal { box-shadow: 0 8px 18px -10px color-mix(in srgb, var(--accent) 80%, transparent); }
 .btn.principal:hover, .gf-btn.principal:hover { background: var(--principal); filter: brightness(1.08); transform: translateY(-1px); color: #fff; }
+.btn.principal:active, .gf-btn.principal:active { transform: scale(.97); }
 .btn.danger:hover { border-color: var(--alerte); background: var(--alerte-doux); color: var(--alerte); }
 .btn.lien { background: none; border-color: transparent; }
 .btn.lien:hover { background: var(--accent-doux); border-color: transparent; }
@@ -143,14 +182,39 @@ table.simple th, table.reps th { font-size: 11px; }
 .badge.confirmee { background: var(--sauge-doux); color: var(--sauge); }
 .badge.reportee { background: var(--indigo-doux); color: var(--indigo); }
 .tableur .badge.annulee { background: var(--corail-doux); color: var(--corail); }
-.puce { border-radius: 999px; transition: background .12s, border-color .12s; }
-.puce:hover { border-color: var(--accent); }
+.puce { border-radius: 999px; }
 .seg { border-radius: 10px; }
-.seg button { transition: background .12s, color .12s; }
+/* ------------------------------------------------------------------------------------------------ le jeu d'états
+   Chaque état est écrit ici une fois (voir l'en-tête) ; les règles de groupe sont des :is() dont la spécificité est celle de
+   leur membre le plus précis, et les exclusions des :where() : une variante (.principal, .danger, .lien, la bande de nuit)
+   plus précise reprend la main sans avoir à les défaire. */
+:is(${COMMANDES}, ${BARRE_BAS}) { transition: transform .12s cubic-bezier(.2, .8, .2, 1), background-color .12s, border-color .12s, color .12s, box-shadow .12s, filter .12s; }
+/* (la pilule du thème et la densité : aucune transition de couleur, le thème change d'un coup) */
+.menu .reg-theme button, .menu .reg-densite { transition: none; }
+:is(${COMMANDES}):where(:not(${SANS_SURVOL}))${SURVOL} { background-color: var(--survol-fond, color-mix(in srgb, var(--accent-doux) 55%, var(--carte))); border-color: var(--survol-bord, color-mix(in srgb, var(--accent) 45%, var(--trait))); }
+:is(${COMMANDES}, ${BARRE_BAS}):where(:not([disabled], [aria-disabled="true"]))${PRESSE} { transform: scale(.97); }
+:is(${COMMANDES}):where(:not(${SANS_SURVOL}))${PRESSE} { background-color: var(--presse-fond, color-mix(in srgb, var(--accent-doux) 85%, var(--carte))); }
+/* au clavier : l'anneau commun d'index.html (3 px à la couleur de la saison, à 2 px), en dedans là où le parent rogne */
+[data-etat="clavier"] { outline: 3px solid var(--accent); outline-offset: 2px; }
+:is(.seg, .vues) ${CLAVIER}, :is(${BARRE_BAS})${CLAVIER} { outline-offset: -3px; }
+:is(.seg, .vues) :is([aria-pressed="true"], [aria-current="page"])${CLAVIER} { outline-color: var(--sur-accent, #fff); }
+.tb-ico${CLAVIER} { outline: 3px solid var(--accent); outline-offset: 2px; }
+/* la poignée (fenetres.js) : sa ligne paraît au survol, au focus et pendant le geste ; ici aussi, posée par data-etat */
+.poignee:is([data-etat="survol"], [data-etat="presse"], [data-etat="clavier"])::after { opacity: 1; }
+/* désactivée : à moitié transparente (les boutons des feuilles de gestes.js, partagé, la voulaient à .6) */
+:is(${COMMANDES})[disabled], :is(${COMMANDES})[aria-disabled="true"] { opacity: .5; cursor: default; }
+/* occupée : un petit anneau tourne à la place du libellé (qui garde sa place), le bouton ne répond plus. gestes.js pose
+   disabled et aria-busy ensemble : l'opacité reste entière, l'anneau suffit */
+:is(${OCCUPABLES})[aria-busy="true"] { position: relative; color: transparent !important; cursor: progress; pointer-events: none; }      /* (!important : un survol qui reste, « principal » en blanc, ne doit pas rendre le libellé) */
+:is(${OCCUPABLES})[aria-busy="true"][disabled] { opacity: 1; }
+:is(${OCCUPABLES})[aria-busy="true"]::after { content: ""; position: absolute; top: calc(50% - 7px); left: calc(50% - 7px); box-sizing: border-box; width: 14px; height: 14px; border: 2px solid var(--encre); border-right-color: transparent; border-radius: 50%; }
+:is(${OCCUPABLES}).principal[aria-busy="true"]::after, .menu button[aria-busy="true"]::after { border-color: #fff; border-right-color: transparent; }      /* (le menu est de nuit dans les deux thèmes : un anneau blanc) */
+@media (prefers-reduced-motion: no-preference) { :is(${OCCUPABLES})[aria-busy="true"]::after { animation: temoin-tourne .9s linear infinite; } }
+.tb-ico[aria-expanded="true"] { background: var(--doux); color: var(--encre); }
 .onglets-ed button[aria-selected="true"] { background: var(--encre); color: var(--carte); }
 input[type=text], input[type=email], input[type=tel], input[type=password], input[type=url], input[type=search], input[type=date], input[type=time], input[type=number], select, textarea, .riche { border-radius: 10px; background: var(--carte); border: 1px solid var(--bord-champ); transition: border-color .12s, box-shadow .12s; }
 ::placeholder { color: var(--indice); opacity: 1; }
-input:focus, select:focus, textarea:focus, .riche:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-doux); }
+input:focus, select:focus, textarea:focus, .riche:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 4px var(--accent-doux); }
 .case input { accent-color: var(--accent); }
 kbd { font-family: var(--etiq); }
 
@@ -229,7 +293,12 @@ dialog.recherche, dialog.tab-dialogue, dialog.tb-brief { border-radius: var(--ra
 .connexion .marque { display: flex; align-items: center; margin: 0 0 18px; color: var(--encre); }
 .connexion .marque small { color: var(--gris); }
 .connexion .marque .pieuvre { color: var(--accent); }
-@media (prefers-reduced-motion: reduce) { .ligne, .tb-l, .btn, .tb-tuile { transition: none; } .ligne:hover, .tb-l:hover, .btn.principal:hover { transform: none; } }
+/* « réduire les animations » : une seule règle pour toute la page, les durées de transition et d'animation à zéro (un état
+   change d'un coup, aucun mouvement ne dure) ; les lignes ne se soulèvent plus au survol */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0s !important; transition-delay: 0s !important; animation-duration: 0s !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; }
+  .ligne:hover, .tb-l:hover, .btn.principal:hover { transform: none; }
+}
 /* le « Rouge » de la barre de la feuille de route, la nuit : le rouge de la feuille (sur le papier blanc) ne se lit pas sur
    la carte de nuit ; l'étiquette prend le rouge clair des alertes (la feuille elle-même ne change pas) */
 :root:not([data-theme="jour"]) .a4-b .a4-rouge { color: var(--alerte); }

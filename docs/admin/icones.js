@@ -8,7 +8,7 @@
      passe par la variable --ico (style="--ico:22px"), jamais par les seuls attributs width / height : une règle CSS
      l'emporte sur eux, et la barre du téléphone n'a pas de règle pour ses svg. `classe` s'ajoute à .ico. Le trait reste
      ce qu'il était à chaque appel (1,9 au téléphone, 2,2 pour la loupe, le chevron du fil, l'actualisation et le
-     planning, 2,4 pour la croix d'annonce) : l'unification du trait est l'affaire du lot 16. Un nom inconnu lève une
+     planning, 2,4 pour la croix d'annonce) : l'unifier reste à faire (hors plan). Un nom inconnu lève une
      erreur (jamais un trou muet). Les noms de rubriques (ICONES.ALIAS : dates, planning, lieux, feuilles) mènent au
      tracé partagé.
    - ICONES.TRACES (gelé) : nom → le dedans du svg ; ICONES.NOMS = ses clés (la petite vue d'essai #/essai/icones les
@@ -16,7 +16,9 @@
    - ICONES.ICO : l'objet 16 px aux noms de GESTES.ICO (haut, bas, plus, reglages, agenda, cache…), que gestes.js reprend
      quand ICONES est chargé (menus.js lit G.ICO : rien n'y change). L'espace de l'équipe ne charge pas ce module : gestes.js
      et planning.js y gardent leurs tracés.
-   - ICONES.ornement : la tentacule en filigrane du tableau de bord (260 × 160, hors du carré 24 × 24).
+   - ICONES.ornement : la tentacule en filigrane du tableau de bord (260 × 160, hors du carré 24 × 24). ICONES.ornementVide :
+     la même, classe .vide-orne (habillage.js : 140 px, à la couleur de la saison, très pâle), au-dessus de la phrase d'une
+     liste vide.
    - ICONES.RENOMMAGE : l'ancien nom (fichier:nom) → le nom de la bibliothèque. Pour chaque doublon fusionné, le tracé du
      téléphone et du planning est celui retenu (le téléphone et le planning ne changent pas), les menus de GESTES
      prennent le leur :
@@ -31,7 +33,7 @@
      Les svg 12 × 12 et 12 × 18 (les chevrons, la croix et la poignée de tableau.js, les chevrons du pied de fiche et du
      bouton « Plus » de l'en-tête) restent dans leurs modules, hors bibliothèque, comme la pieuvre et le fond de carte.
    Chargé avant gestes.js : le script principal lit LOUPE et ICONE_ACTUALISER à son évaluation, et gestes.js son ICO.
-   API : ICONES.svg(nom, options)   ICONES.TRACES   ICONES.NOMS   ICONES.ICO   ICONES.ornement   ICONES.RENOMMAGE   ICONES.ALIAS */
+   API : ICONES.svg(nom, options)   ICONES.TRACES   ICONES.NOMS   ICONES.ICO   ICONES.ornement   ICONES.ornementVide   ICONES.RENOMMAGE   ICONES.ALIAS */
 const ICONES = (() => {
   // ------------------------------------------------------------------------------------------- les tracés
   const TRACES = Object.freeze({
@@ -146,5 +148,8 @@ const ICONES = (() => {
   // la tentacule en filigrane du tableau de bord (hors du carré 24 × 24 : 260 × 160)
   const ornement = '<svg class="tb-salut-orne" viewBox="0 0 260 160" aria-hidden="true" focusable="false"><path d="M-10 150 C 40 150, 70 60, 130 50 C 185 41, 230 70, 232 110 C 234 140, 205 150, 195 132 C 186 116, 206 104, 214 118" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round"/><g fill="currentColor"><circle cx="48" cy="118" r="5"/><circle cx="72" cy="88" r="5"/><circle cx="100" cy="64" r="5"/><circle cx="135" cy="54" r="5"/><circle cx="170" cy="56" r="5"/><circle cx="203" cy="72" r="5"/><circle cx="224" cy="97" r="4.5"/><circle cx="222" cy="128" r="4"/></g></svg>';
 
-  return { svg, TRACES, NOMS, ICO, ornement, RENOMMAGE, ALIAS };
+  // la même, pour les listes vides : la classe change (.vide-orne), le dessin reste le sien
+  const ornementVide = ornement.replace('class="tb-salut-orne"', 'class="vide-orne"');
+
+  return { svg, TRACES, NOMS, ICO, ornement, ornementVide, RENOMMAGE, ALIAS };
 })();
