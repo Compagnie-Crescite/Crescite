@@ -12425,7 +12425,8 @@ const CREATURE = (() => {
       for (const c of CAR.coeurs) { b.x0 = Math.min(b.x0, c.x - 30); b.x1 = Math.max(b.x1, c.x + 30); b.y0 = Math.min(b.y0, c.y - 30); b.y1 = Math.max(b.y1, c.y + 30); }
       // le rebond de la pose : à la relève, le corps se ramasse puis se détend, bras compris (ils ne partent qu'ensuite)
       const kp = anime && eveil !== null ? (relaye ? 1 : 1 - .05 * choc((now - eveil) / 700)) * (secousse ? 1 - .035 * choc((now - secousse) / 520) : 1) : 1, cxh = ox + bob.x + COEUR[0] * s, cyh = oy + bob.y + COEUR[1] * s;
-      const u = boite && kp === 1 ? { x0: Math.min(b.x0, boite.x0), y0: Math.min(b.y0, boite.y0), x1: Math.max(b.x1, boite.x1), y1: Math.max(b.y1, boite.y1) } : { x0: 0, y0: 0, x1: W, y1: H };
+      const kx = ca && ca.kx || 1, ky = ca && ca.ky || 1;
+      const u = boite && kp === 1 && kx === 1 && ky === 1 ? { x0: Math.min(b.x0, boite.x0), y0: Math.min(b.y0, boite.y0), x1: Math.max(b.x1, boite.x1), y1: Math.max(b.y1, boite.y1) } : { x0: 0, y0: 0, x1: W, y1: H };
       boite = b;
       const X0 = Math.max(0, Math.floor(u.x0 * dpr)), Y0 = Math.max(0, Math.floor(u.y0 * dpr)), Rw = Math.min(cv.width, Math.ceil(u.x1 * dpr)) - X0, Rh = Math.min(cv.height, Math.ceil(u.y1 * dpr)) - Y0;
       const allumes = new Set(act ? [act] : []);
@@ -12438,7 +12439,7 @@ const CREATURE = (() => {
         ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(X0, Y0, Rw, Rh);
         if (eveil !== null) {
           ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-          if (kp !== 1) { ctx.translate(cxh, cyh); ctx.scale(kp, kp); ctx.translate(-cxh, -cyh); }
+          if (kp !== 1 || kx !== 1 || ky !== 1) { ctx.translate(cxh, cyh); ctx.scale(kp * kx, kp * ky); ctx.translate(-cxh, -cyh); }
           const repere = ctx.getTransform();
           ctx.save(); ctx.transform(s, 0, 0, s, ox + bob.x, oy + bob.y);
           PIEUVRE.corpsVivant(ctx, TS, theta, dxT, dyT, ENCRE);
@@ -12570,14 +12571,19 @@ const CREATURE = (() => {
       const t = (now - CAR.t0) / 1000, d = (DUREE_C[CAR.genre] || 0) / 1000;
       if (CAR.genre < 0 || t >= d) return null;
       const u = t / d, k = 1 + .22 * Math.min(CAR.n - 1, 4), RAD = Math.PI / 180, cote = CAR.cote, env = Math.sin(Math.PI * u);
+      // (la tête ne bouge qu'à peine de plus que dans sa vie ordinaire (theta ±3°, dx ±16 unités) : plus, les boucles du logo,
+      // qui suivent leurs racines, tombent dans la découpe de la tête et s'y peignent, au premier plan. Le corps entier, lui,
+      // s'écrase et s'étire autour du cœur (kx, ky : à 7 % au plus), et les tentacules ondulent ; le reste, le mot, la lueur, les
+      // cœurs le disent)
+      const lim = r => Math.max(-1, Math.min(1, r)), q = Math.min(k, 1.5);
       switch (CAR.genre) {
-        case 0: { const e = Math.exp(-4.2 * t); return { th: 4 * k * RAD * Math.sin(t * 17) * e, dx: 6 * k * Math.sin(t * 13 + 1) * e, dy: -16 * k * Math.sin(t * 22) * e, onde: 3 * e }; }
-        case 1: return { th: cote * (7 * env + 1.6 * Math.sin(t * 10) * env) * k * RAD, dx: cote * 16 * k * env, dy: -4 * env, onde: 1.6 * env };
-        case 2: { const e = Math.sqrt(env); return { th: .8 * RAD * Math.sin(t * 61) * e, dx: 3.2 * k * Math.sin(t * 95) * e, dy: 2.4 * k * Math.sin(t * 77) * e, onde: 4 * e }; }
+        case 0: { const e = Math.exp(-4.2 * t), w = Math.sin(t * 22) * e; return { th: 2.2 * RAD * Math.sin(t * 17) * e, dx: 4 * Math.sin(t * 13 + 1) * e, dy: -8 * w, onde: 3 * e, kx: 1 + .06 * q * w, ky: 1 - .06 * q * w }; }
+        case 1: return { th: cote * 3 * RAD * env, dx: cote * 9 * env, dy: -3 * env, onde: 1.8 * env, kx: 1 + .02 * q * env * Math.sin(t * 10), ky: 1 + .02 * q * env * Math.cos(t * 10) };
+        case 2: { const e = Math.sqrt(env); return { th: .6 * RAD * Math.sin(t * 61) * e, dx: 2 * Math.sin(t * 95) * e, dy: 1.6 * Math.sin(t * 77) * e, onde: 4.5 * e, kx: 1 + .012 * q * Math.sin(t * 83) * e, ky: 1 + .012 * q * Math.sin(t * 71) * e }; }
         default: {
-          // (le bond : elle se ramasse (vers le bas), saute, retombe, rebondit deux fois en s'apaisant)
-          const dy = u < .15 ? 12 * k * (u / .15) : u < .55 ? 12 * k - (60 * k + 12 * k) * Math.sin(Math.PI * (u - .15) / .8) : -14 * k * Math.abs(Math.sin(Math.PI * (u - .55) / .225)) * (1 - u) / .45;
-          return { th: cote * 3 * RAD * env, dx: 0, dy, onde: 2.4 * env };
+          // (le bond : elle se ramasse (écrasée), s'élance (étirée), retombe, rebondit en s'apaisant ; la tête mène, de peu)
+          const z = u < .15 ? -(u / .15) : u < .55 ? Math.sin(Math.PI * (u - .15) / .4) : -.5 * Math.sin(Math.PI * (u - .55) / .225) * (1 - u) / .45;
+          return { th: cote * 2 * RAD * env, dx: 0, dy: -12 * lim(z), onde: 2.6 * env, kx: 1 - .06 * q * lim(z), ky: 1 + .07 * q * lim(z) };
         }
       }
     }
