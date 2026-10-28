@@ -14,7 +14,8 @@
      'jour' ou 'appareil') et densite ('confortable' ou 'compacte') : l'apparence, réglée dans le menu (cadre.js), dont le
      miroir de l'appareil est aussi lu par index.html,
      tableur.colonnes (les colonnes du tableur, par mode : { complet: { ordre, masquees, figees, largeurs, vides },
-     simple: { largeurs } } ; tableur.js la normalise à chaque lecture),
+     simple: { largeurs } } ; tableur.js la normalise à chaque lecture), tableur.mode (le mode du tableur : 'simple', une ligne par
+     date, ou 'complet', une ligne par séance ; tableur.js, écrite aussitôt au clic du segment des modes ; absente : Simple),
      fenetres.tiroir (la largeur du tiroir, en pixels) et fenetres.liste
      (la colonne de la liste à côté d'une fiche, en pixels), fenetres.pl-detail (la colonne du détail du planning),
      fenetres.tn (la colonne de la carte de tournée) et fenetres.a4-zoom (le zoom de la page A4 : un pourcentage, ou 'auto') :

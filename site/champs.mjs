@@ -412,7 +412,7 @@ function comparer(colonnes, champs) {
   ok('avec v3 · aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();
   // le tableur : une case de la date s'écrit aussi en un seul appel (ecrireDate est son seul chemin)
-  const tab = await ouvrir(navigateur, { hash: '#/representations/tableur', largeur: 1600, hauteur: 1000, capacites: CAP3 });
+  const tab = await ouvrir(navigateur, { hash: '?mode=complet#/representations/tableur', largeur: 1600, hauteur: 1000, capacites: CAP3 });   // (le tableur s'ouvre en Simple : la colonne Organisateur est celle du Complet)
   await tab.page.waitForSelector('table[role=grid] #tab-corps tr[data-l]', { timeout: 15000 });
   n = MODIFS.length;
   await tab.page.click('#tab-corps tr[data-l="0"] td.c-organisateur');

@@ -37,7 +37,7 @@ const jjmmaaaa = iso => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4
 
 // ================================================================================ 1 · le rendu
 {
-  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1600, hauteur: 1000, hash: '#/representations/tableur' });
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1600, hauteur: 1000, hash: '?mode=complet#/representations/tableur' });
   await page.waitForSelector('table[role=grid] #tab-corps tr[data-l]', { timeout: 15000 });
   ok('1 · la grille est une table[role=grid] nommée, avec son corps #tab-corps', (await compte(page, 'table[role=grid]#tab #tab-corps')) === 1 && /une ligne par séance/.test(await page.$eval('table[role=grid]', t => t.getAttribute('aria-label'))));
   ok('1 · sept lignes à venir, une par séance : 101, 102, 103 (deux séances), 105, 106, 107', (await lignes(page)) === 7);
@@ -99,7 +99,7 @@ const jjmmaaaa = iso => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4
 
 // ================================================================================ 3 · le clavier
 {
-  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1600, hauteur: 1000, hash: '#/representations/tableur' });
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1600, hauteur: 1000, hash: '?mode=complet#/representations/tableur' });
   await page.waitForSelector('#tab-corps tr[data-l]', { timeout: 15000 });
   const cols = await enTetes(page), derniere = cols[cols.length - 1];
   await page.click(CASE(0, 'jour'));
@@ -280,7 +280,7 @@ const jjmmaaaa = iso => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4
 
 // ================================================================================ 7 · importer, exporter
 {
-  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1600, hauteur: 1000, hash: '#/representations/tableur' });
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1600, hauteur: 1000, hash: '?mode=complet#/representations/tableur' });
   await page.waitForSelector('#tab-corps tr[data-l]', { timeout: 15000 });
   await page.click('#tab-importer');
   await page.waitForSelector('dialog[open] #tab-im-texte', { timeout: 4000 });
@@ -323,7 +323,7 @@ const jjmmaaaa = iso => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4
 
 // ================================================================================ 8 · à 1280 px : les colonnes collées
 {
-  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1280, hauteur: 800, hash: '#/representations/tableur' });
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1280, hauteur: 800, hash: '?mode=complet#/representations/tableur' });
   await page.waitForSelector('#tab-corps tr[data-l]', { timeout: 15000 });
   await page.check('#tab-vides');
   await attendre(page, () => document.querySelectorAll('#tab-tete th').length > 15, 4000);

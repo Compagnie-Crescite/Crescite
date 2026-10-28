@@ -20,6 +20,7 @@ Quatre durées, trois courbes, et rien qui bouge sans raison.
 | Allumer une pastille de la carte (le survol d'une étape, le focus) | 450 ms | le ressort, sur ses deux cercles (`scale(1.15)`, `transform-box: fill-box`), jamais sur le `<g>` qui porte son `translate` | `.tn-pin.allume` |
 | Viser une ligne (le champ qu'un lien vise, la ligne que « Voir dans le tableur » ouvre) | 1,6 s | `ease-out` | `visee`, `visee-ligne` |
 | Respirer (une lueur, une lampe, une photo qui dérive) | 1,6 à 26 s, en continu | ease-in-out | `respire`, `lampe`, `derive`, `bn-temps` |
+| Attendre (l'anneau d'une case du tableur que la base est en train d'enregistrer) | 0,9 s, en boucle | linéaire, `transform` seulement : un tour sans fin, pas de durée à suivre | `tab-tourne` |
 
 Entre la liste, le tableur et la carte de Représentations (une même page, trois vues : même rubrique, même profondeur) le
 passage est un fondu, jamais un glissement (`sensVue`) ; le sélecteur de vues (la pilule) ne glisse pas, il est redessiné
@@ -46,6 +47,24 @@ en ressort (`ad-pop`, 450 ms, par la classe `.pop`, ôtée à la fin de l'animat
 pas), ni quand un épinglé change de place (il est déplacé, pas recréé), et rien du tout sous « moins d'animations » ni avec
 `?anim=0` (`acces.mjs` le vérifie : aucune animation dans la zone, aucune classe d'arrivée ; le menu « Créer » s'ouvre en
 `gm-calme`).
+
+Le tableur Simple (une ligne par date) n'ajoute presque rien à ce vocabulaire. Passer de « Simple » à « Complet » (le
+segment de la tête) redessine la grille d'un coup, sans transition : une grille n'entre pas en cascade, ce serait
+payer cher des centaines de lignes pour rien. La fenêtre des séances d'une date, posée sous la case, paraît en 150 ms (`ad-arrive`, `ease-out`),
+comme les menus ; sous « moins d'animations » ou `?anim=0` elle est posée d'un coup. Une ligne qui se redessine parce
+que le temps réel a touché sa date ne rejoue aucune entrée (`dessinerLignes` remplace son `<tr>` seulement : les autres
+lignes, et un redessin qui ne change rien, ne touchent pas au DOM, donc à aucune mise en page) ; la case qui a changé
+clignote comme avant (`vient-d-ailleurs`, `tab-ok`). Une saison entière (trois cents dates) se pose par tranches : les
+douze premières lignes d'abord, le reste de tâche en tâche (`poserTranche`), pour qu'aucune tâche ne dépasse 200 ms à `CPU=4` ;
+un redessin qui ne change que des lignes les remplace aussi par tranches.
+
+Trois choses s'y ajoutent, toutes à `transform` ou `opacity`. Une case qu'on écrit prend un petit anneau dans le coin, qui
+tourne tant que la base répond (`tab-tourne`, 0,9 s, linéaire, en boucle, `transform` seulement : un mouvement sans durée à suivre, la
+ligne « Attendre » du tableau) ; enregistrée, elle garde le cadre vert de `tab-ok` (1,4 s) et une coche paraît dans le coin,
+tient, puis s'efface avec lui (`tab-coche`, 1,4 s, `ease-out`) ; refusée, elle est cerclée de rouge sans mouvement. Le petit calendrier
+posé sur la case du jour, comme la fenêtre des séances, paraît en 150 ms (`ad-arrive`, `ease-out`, comme les menus). Sous « moins d'animations » ou avec
+`?anim=0`, l'anneau reste là, fixe (un arc de couleur sur un cercle pâle), la coche ne paraît pas, le calendrier est posé d'un coup :
+la barre d'état sous le cadre dit la même chose en mots (« Enregistrement… », « Enregistré : … », « Pas enregistré : … »).
 
 ## Les règles
 
@@ -96,7 +115,9 @@ captures vont dans `site/dist/shots-equipe/` et `site/dist/shots-admin/`. Un ban
 manque.
 
 `bash site/bancs-admin.sh` enchaîne aussi `prefs.mjs` (où chaque réglage est gardé : avec le compte ou sur
-l'appareil), `tableur.mjs` (le tableur des représentations), `icones.mjs` (la bibliothèque d'icônes), `cadre.mjs` (la
+l'appareil), `tableur.mjs` (le tableur des représentations, en Complet), `tableur-simple.mjs` (le tableur Simple : une ligne par
+date, ses modes, la fenêtre des séances, la ligne vide, le rendu par ligne du temps réel, les états d'une case, la
+barre d'état, le petit calendrier, les lecteurs, le collage), `icones.mjs` (la bibliothèque d'icônes), `cadre.mjs` (la
 coque, le menu latéral, ses raccourcis et ses badges), `champs.mjs` (la fiche d'une date : le schéma de ses champs, la
 jauge, le bandeau « Modifiée ailleurs », qui paraît en `ad-arrive`), `vues-dates.mjs` (les trois vues de
 Représentations : la pilule, les filtres communs, le fondu, le focus, la ligne visée, la vue retenue et les touches V
@@ -129,7 +150,9 @@ CSS change) et qu'aucune tâche ne dépasse 200 ms à `CPU=4` à l'ouverture du 
 ajustement, un changement d'ordre, un masquage, « Colonnes vides » ou le repli du menu, **sur une trentaine de
 lignes** seulement (28 séances, chaque geste mesuré à part et refait une fois s'il dépasse) : avec les 230 lignes de
 la base réelle, l'ouverture coûte environ 450 ms et un cran de glisser 150 à 230 ms, donc la tenue des 200 ms n'est
-pas encore vérifiée sur des données réelles ; `acces.mjs`, les trois arrivées ci-dessus, et le silence sous « moins
+pas encore vérifiée sur des données réelles (le tableur Simple, lui, l'est sur trois cents dates de deux séances :
+`tableur-simple.mjs` mesure à `CPU=4` qu'aucune tâche ne dépasse 200 ms à l'ouverture, au temps réel d'une séance ou
+d'un lieu, à `rafraichirListes()` et à une écriture) ; `acces.mjs`, les trois arrivées ci-dessus, et le silence sous « moins
 d'animations » ; pour le reste, ils veillent à ce qu'une refonte ne casse rien. (La case de la matrice qui saute,
 `ad-pop`, vient avec le mode Distribution du tableur.)
 

@@ -114,9 +114,9 @@ table.simple th, table.reps th { font-size: 11px; }
 .ligne, .tb-l { background: var(--carte); border: 1px solid var(--trait); border-left: 4px solid var(--c, var(--trait)); box-shadow: 0 1px 2px rgba(60, 30, 50, .04); transition: transform .15s, box-shadow .15s, background .15s, border-color .15s; }
 .ligne:hover, .tb-l:hover { transform: translateY(-1px); box-shadow: var(--ombre); border-color: var(--trait); border-left-color: var(--c, var(--accent)); background: color-mix(in srgb, var(--carte) 86%, var(--c, var(--accent))); }
 .ligne[aria-current="true"] { background: color-mix(in srgb, var(--carte) 80%, var(--c, var(--accent))); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c, var(--accent)) 30%, transparent); border-color: color-mix(in srgb, var(--c, var(--accent)) 55%, var(--trait)); }
-.ligne .jj, .tb-jj { position: relative; width: 42px; padding: 7px 0 4px; border-radius: 9px; overflow: hidden; background: var(--doux); font-family: var(--etiq); font-weight: 700; font-size: 10px; letter-spacing: .04em; text-transform: uppercase; color: var(--gris); text-align: center; line-height: 1.15; }
-.ligne .jj::before, .tb-jj::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; background: var(--c, var(--accent)); }
-.ligne .jj b, .tb-jj b { display: block; font: 700 19px/1.15 var(--titres); letter-spacing: 0; color: var(--encre); }
+.ligne .jj, .tb-jj, .tab-jj { position: relative; width: 42px; padding: 7px 0 4px; border-radius: 9px; overflow: hidden; background: var(--doux); font-family: var(--etiq); font-weight: 700; font-size: 10px; letter-spacing: .04em; text-transform: uppercase; color: var(--gris); text-align: center; line-height: 1.15; }
+.ligne .jj::before, .tb-jj::before, .tab-jj::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; background: var(--c, var(--accent)); }
+.ligne .jj b, .tb-jj b, .tab-jj b { display: block; font: 700 19px/1.15 var(--titres); letter-spacing: 0; color: var(--encre); }
 .tb-jj:empty { background: none; }
 .tb-jj:empty::before { display: none; }
 .ligne .t, .tb-l-t { font-weight: 700; }
@@ -140,6 +140,9 @@ table.simple th, table.reps th { font-size: 11px; }
 .btn.petit { border-radius: 8px; }
 .badge { font: 700 11px/1.5 var(--etiq); letter-spacing: .02em; }
 .badge.sco { background: var(--indigo-doux); color: var(--indigo); }
+.badge.confirmee { background: var(--sauge-doux); color: var(--sauge); }
+.badge.reportee { background: var(--indigo-doux); color: var(--indigo); }
+.tableur .badge.annulee { background: var(--corail-doux); color: var(--corail); }
 .puce { border-radius: 999px; transition: background .12s, border-color .12s; }
 .puce:hover { border-color: var(--accent); }
 .seg { border-radius: 10px; }
@@ -298,6 +301,11 @@ html.bascule *, html.bascule *::before, html.bascule *::after { transition: none
   .poignee, .sep-v, .dlg-coin { display: none !important; }
   /* le tableur imprimé : toutes ses lignes, sans la hauteur ni le défilement du cadre (les poignées des en-têtes et du bas sont déjà masquées) */
   #vue .tab-cadre { max-height: none !important; height: auto !important; overflow: visible !important; }
+  /* le mode Simple : le segment des modes est dans la tête (masquée) ; l'état de la ligne ne garde que le compte « n dates · m séances » */
+  #vue .tab-modes, #vue .tab-etat, #vue .tab-suppr { display: none !important; }
+  #vue .tab-ligne-etat { position: static !important; }
+  #vue .tab-jj::before { background: #000 !important; height: 2px; }
+  #vue .tableur tr.tab-neuve { display: none !important; }
   html:not(.tb-impression) #imp-tete { display: block; margin: 0 0 12pt; padding: 0 0 6pt; border-bottom: 1pt solid #000; color: #000; }
   #imp-tete p { margin: 0; }
   #imp-tete .imp-quoi { font: 700 15pt/1.25 var(--titres); }

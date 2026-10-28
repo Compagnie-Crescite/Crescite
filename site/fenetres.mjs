@@ -437,7 +437,8 @@ async function ouvrirTiroir(page) {
   // « Disposition d'origine » remet aussi ce qui est gardé hors des clés fenetres.* d'ici : les fenêtres du tableur (fenetres.tableur-h),
   // ses colonnes (tableur.colonnes) et le menu replié (menu.replie) ; « Annuler » rend le tout
   repartir(); garder('fenetres.tableur-h', 520); garder('menu.replie', true);
-  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1440, hauteur: 900, hash: '#/representations/tableur' });
+  // (en Complet : le tableur s'ouvre en Simple depuis le lot 11, et les colonnes qu'on masque ici sont celles du Complet)
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1440, hauteur: 900, hash: '?mode=complet#/representations/tableur' });
   await page.waitForSelector('#tab-tete th[data-k="lieu"]', { timeout: 15000 });
   await page.evaluate(() => TABLEUR.colonnes.masquer('lieu'));
   await page.waitForTimeout(300);

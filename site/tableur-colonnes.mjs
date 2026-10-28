@@ -22,7 +22,7 @@ fs.mkdirSync(CAPT, { recursive: true });
 const attendre = (page, fn, arg = null, ms = 6000) => page.waitForFunction(fn, arg, { timeout: ms }).then(() => true, () => false);
 const ecrites = () => ECRITURES.filter(e => e.cle === 'tableur.colonnes');
 const dernieres = () => ecrites().at(-1)?.valeur;
-const repartir = () => { DB.crescite_preferences = []; ECRITURES.length = 0; };
+const repartir = () => { DB.crescite_preferences = [{ user_id: UID, cle: 'tableur.mode', valeur: 'complet' }]; ECRITURES.length = 0; };   // (le tableur s'ouvre en Simple : ces essais sont ceux du Complet)
 const garder = (cle, valeur) => DB.crescite_preferences.push({ user_id: UID, cle, valeur });
 const TETE = '#tab-tete th';
 const enTetes = page => page.$$eval(TETE, xs => xs.map(x => x.dataset.k));
@@ -357,15 +357,16 @@ const annonces = page => page.$$eval('.annonce', xs => xs.map(x => x.textContent
   repartir();
   const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1100, hauteur: 900, hash: '#/representations/tableur' });
   await page.waitForSelector('#tab-corps tr[data-l]', { timeout: 15000 });
-  const mesure = () => page.evaluate(() => { const c = document.getElementById('tab-cadre'), r = c.getBoundingClientRect(); return { haut: Math.round(r.top + scrollY), largeur: Math.round(r.width), max: parseInt(c.style.maxHeight), hauteur: Math.round(r.height), menu: ['menu-replie', 'menu-deplie'].map(c => document.documentElement.classList.contains(c)).join() }; });
+  const mesure = () => page.evaluate(() => { const c = document.getElementById('tab-cadre'), r = c.getBoundingClientRect(); return { haut: Math.round(r.top + scrollY), largeur: Math.round(r.width), max: parseInt(c.style.maxHeight), hauteur: Math.round(r.height), bas: document.querySelector('.tab-ligne-etat').offsetHeight + 6, menu: ['menu-replie', 'menu-deplie'].map(c => document.documentElement.classList.contains(c)).join() }; });
   const m0 = await mesure();
-  ok('7 · la hauteur maximale du cadre est la place qui reste sous lui (la fenêtre moins son haut, moins 24 px)', Math.abs(m0.max - (900 - m0.haut - 24)) <= 2 || m0.max === 300, JSON.stringify(m0));
+  // (la barre d'état est collée sous le cadre, lot 11 : sa hauteur et sa marge se retranchent aussi à la place du cadre)
+  ok('7 · la hauteur maximale du cadre est la place qui reste sous lui (la fenêtre moins son haut, moins 24 px, moins la barre d’état collée sous lui)', Math.abs(m0.max - (900 - m0.haut - 24 - m0.bas)) <= 2 || m0.max === 300, JSON.stringify(m0));
   ok('7 · une poignée est sous le cadre (frère du cadre, hors du défilement), nommée « Hauteur du tableur »', await page.evaluate(() => { const p = document.querySelector('#tab-zone > .tab-poignee-h'); return !!p && p.previousElementSibling?.id === 'tab-cadre' && p.getAttribute('aria-label') === 'Hauteur du tableur' && p.getAttribute('aria-orientation') === 'horizontal'; }));
   ok('7 · aucune erreur « ResizeObserver loop » : le cadre n’est observé par personne', erreurs.length === 0, erreurs.join(' / '));
   await page.keyboard.press('Alt+KeyM');
   await pause(page, 500);
   const m1 = await mesure();
-  ok('7 · à 1 100 px le menu se déplie (Alt+M) : le cadre suit (sa largeur change, sa hauteur maximale est recalculée avec la nouvelle place)', m1.menu !== m0.menu && m1.largeur !== m0.largeur && Math.abs(m1.max - Math.max(300, 900 - m1.haut - 24)) <= 2, `${JSON.stringify(m0)} → ${JSON.stringify(m1)}`);
+  ok('7 · à 1 100 px le menu se déplie (Alt+M) : le cadre suit (sa largeur change, sa hauteur maximale est recalculée avec la nouvelle place)', m1.menu !== m0.menu && m1.largeur !== m0.largeur && Math.abs(m1.max - Math.max(300, 900 - m1.haut - 24 - m1.bas)) <= 2, `${JSON.stringify(m0)} → ${JSON.stringify(m1)}`);
   // la poignée du bas : fenetres.tableur-h
   await tirer(page, '#tab-zone > .tab-poignee-h', 0, 120);
   await pause(page, 300);

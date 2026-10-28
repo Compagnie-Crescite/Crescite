@@ -20,6 +20,9 @@ const CAPT = path.join(ICI, 'dist', 'shots-vues-dates');
 const navigateur = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined });
 fs.mkdirSync(CAPT, { recursive: true });
 const attendre = (page, fn, arg = null, ms = 6000) => page.waitForFunction(fn, arg, { timeout: ms }).then(() => true, () => false);
+// (le tableur s'ouvre en Simple, une ligne par date : ce banc compte les séances et lit les colonnes du Complet, que le compte retient ici)
+const MODE_COMPLET = { user_id: UID, cle: 'tableur.mode', valeur: 'complet' };
+DB.crescite_preferences.push(MODE_COMPLET);
 const adresse = page => page.evaluate(() => location.search + location.hash);
 const lignesListe = page => page.$$eval('#l-dates a.ligne', xs => xs.map(x => +x.getAttribute('href').split('/').pop()).sort((a, b) => a - b));
 const lignesTableur = page => page.$$eval('#tab-corps tr[data-l]', xs => xs.length);
@@ -221,7 +224,7 @@ for (const v of ['tableur', 'carte']) {
   const pas = await page.evaluate(() => history.length);
   await page.click('#vue [data-effacer-filtres]');
   await attendre(page, () => document.activeElement?.id === 'f-q' && !document.querySelector('#vue [data-effacer-filtres]'));
-  const etat = await page.evaluate(() => ({ q: document.querySelector('#f-q').value, statut: document.querySelector('#f-statut').value, periode: document.querySelector('[data-f-periode][aria-pressed="true"]').dataset.fPeriode, focus: document.activeElement.id, session: JSON.stringify(Object.fromEntries(Object.entries(session.dates).filter(([k, x]) => x !== '' && k !== 'periode'))), pas: history.length }));
+  const etat = await page.evaluate(() => ({ q: document.querySelector('#f-q').value, statut: document.querySelector('#f-statut').value, periode: document.querySelector('[data-f-periode][aria-pressed="true"]').dataset.fPeriode, focus: document.activeElement.id, session: JSON.stringify(Object.fromEntries(Object.entries(session.dates).filter(([k, x]) => x !== '' && k !== 'periode' && k !== 'mode'))), pas: history.length }));
   ok(`6 · « Effacer les filtres » (${v}) : la recherche, le statut et la période reprennent leur valeur d’office dans la barre et dans l’état commun`, etat.q === '' && etat.statut === '' && etat.periode === 'avenir' && etat.session === '{}', JSON.stringify(etat));
   ok(`6 · … l’adresse les quitte (${adresse0} devient ${await adresse(page)}), sans pas de plus dans l’historique, le focus est à la recherche`, !/q=|statut=|periode=/.test(await adresse(page)) && (await adresse(page)).endsWith(`#/representations/${v}`) && etat.pas === pas && etat.focus === 'f-q', await adresse(page));
   ok(`6 · … sans routage : la vue reste là, ${v === 'tableur' ? 'la grille a ses lignes' : 'la carte a ses pastilles'}`, v === 'tableur' ? (await lignesTableur(page)) > 0 : (await compte(page, '.tn-svg .tn-pin')) > 0);
@@ -349,7 +352,7 @@ for (const v of ['tableur', 'carte']) {
 // ================================================================================ 10 · la vue retenue ; les touches V puis L / T / C
 const ecritesVue = () => ECRITURES.filter(e => e.cle === 'representations.vue').map(e => e.valeur);
 const lienMenu = page => page.getAttribute('.nav a[title^="Représentations"]', 'href');
-const repartir = () => { DB.crescite_preferences = []; ECRITURES.length = 0; };
+const repartir = () => { DB.crescite_preferences = [MODE_COMPLET]; ECRITURES.length = 0; };
 const attendreEcriture = async (n, ms = 4000) => { const t0 = Date.now(); while (ecritesVue().length < n && Date.now() - t0 < ms) await new Promise(r => setTimeout(r, 50)); };
 const hashEst = (page, h) => attendre(page, x => location.hash === x, h);
 // (les touches partent du focus où l'on est : un champ ou la grille du tableur les garde, c'est ce qu'on vérifie ; hors(page) retire le focus
@@ -394,7 +397,7 @@ const hors = page => page.evaluate(() => document.activeElement?.blur?.());
   await touches(page, 'v', 't');
   await hashEst(page, '#/representations/tableur');
   await page.waitForSelector('#tab-corps tr[data-l]', { timeout: 8000 });
-  ok('10 · « V » puis « T » ouvre le tableur', await adresse(page) === '#/representations/tableur', await adresse(page));
+  ok('10 · « V » puis « T » ouvre le tableur', await adresse(page) === '?mode=complet#/representations/tableur', await adresse(page));   // (le compte retient le Complet : l'adresse le dit)
   await calme(page);
   await page.screenshot({ path: `${CAPT}/vue-tableur.png`, fullPage: false });
   // dans la grille du tableur, une lettre ouvre la case : « V » n'y est pas une touche de vue (on en sort en cliquant hors de la grille)

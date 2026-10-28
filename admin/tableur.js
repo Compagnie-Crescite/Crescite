@@ -1,12 +1,35 @@
 'use strict';
-/* Le tableur des représentations (#/representations/tableur), à côté de la liste : une ligne par séance (jour et heure),
-   comme le tableur où la compagnie récapitule ses représentations ; les séances d'une même date se suivent, en bande.
+/* Le tableur des représentations (#/representations/tableur), à côté de la liste, comme le tableur où la compagnie récapitule ses
+   représentations, en deux modes (MODES) que le segment « Simple · Complet » de la tête choisit :
+   - Simple (d'office) : une ligne par date, six colonnes de grandes cases (lignes de 44 px) : le jour (de niveau « date » : en
+     écrire un autre décale la date, sa fin et chacune de ses séances, jamais une séance de plus), les séances (des pastilles
+     d'heures ; une fenêtre posée sous la case, editerSeances, pour ajouter, retirer ou changer une heure ; « 15h · 20h30 » se
+     colle), le spectacle, le lieu (sur deux lignes), le statut (en badge), la distribution. Le visuel : le petit calendrier du
+     jour (.tab-jj), le liseré de la couleur du spectacle (--c, posé sur la ligne). Une ligne vide au bas de la grille reçoit une
+     date neuve (T.brouillon : le jour, le spectacle, le lieu ; elle se crée dès que le jour et le spectacle y sont) ; « ＋ Date »
+     crée toujours une date, sans fusion avec sa voisine (ajouterSeance, separee). Une ligne est { d, r: null, rs, n: 1, premier,
+     bande, cle } : jamais de x.r, donc jamais repDe. Aucune colonne à masquer, déplacer ou replier : seules les largeurs se retiennent.
+     Le jour s'écrit aussi dans un petit calendrier (.tab-cal, poserCal : mois ‹ ›, lundi en premier, aujourd'hui cerclé, ← → ↑ ↓ et
+     Page ↑ ↓ depuis le champ, qui garde le focus ; au doigt, le champ de date du téléphone), ou se tape sous toutes les formes que lireJour lit.
+   - Complet : une ligne par séance (jour et heure) ; les séances d'une même date se suivent, en bande.
+   Le mode se garde avec le compte (la préférence tableur.mode, écrite au clic) et dans l'adresse (?mode=complet, sur le tableur
+   seulement : l'entrée propre de LISTES_ADRESSE) ; sans ?mode=, c'est la préférence qui décide ; une adresse qui le dit n'écrit rien
+   dans le compte. Changer de mode redessine la grille d'un coup, sans transition.
    Branché sur la base dans les deux sens : écrire dans une case enregistre aussitôt, par le même chemin que la fiche d'une
    date (ecrireDate : crescite_enregistrer_date, puis l'équipe, ou, avec le vingt-quatrième script, l'équipe dans le même
-   appel ; les mêmes déclencheurs, notifications et journal), avec « Annuler » et Ctrl+Z ; ce qui change ailleurs arrive en direct (le temps réel redessine les lignes, la case active
-   reste, ce qui a changé clignote). Une case « de la date » (spectacle, lieu, statut, nature, distribution, billetterie,
-   suivi) vaut pour toutes les séances de la date : les autres lignes de la date la répètent en gris et s'éclairent avec
-   elle. Ce qui est vide reste vide ; une colonne vide sur toute la vue se replie (« Colonnes vides » la montre). Les colonnes
+   appel ; les mêmes déclencheurs, notifications et journal), avec « Annuler » et Ctrl+Z. Les états d'une case qu'on écrit : en cours (en italique,
+   un petit anneau qui tourne dans le coin), enregistrée (le cadre vert, une coche qui s'efface), refusée par la base (un anneau rouge, le message en
+   infobulle, T.erreurs) ; la barre d'état, collée sous le cadre (.tab-ligne-etat : le compte, l'état, « Supprimer… »), le dit avec « Reprendre » (les
+   cases refusées reprennent leur valeur) et « Réessayer » (l'écriture est rejouée), jamais Ctrl+Z, qui défairait l'écriture d'avant, réussie (ils restent à la queue de toute phrase tant que des cases sont cerclées) ; placerCadre
+   retranche sa hauteur au cadre. Au collage, les cases que le tableur ne comprend pas (une valeur illisible, une case en lecture seule) sont
+   surlignées en ambre vingt secondes (.ignoree, la raison en infobulle) et comptées par la barre (« n cases ignorées », « Voir » va à la première).
+   Ce qui change ailleurs arrive en direct (le temps réel redessine les lignes, la case active reste, ce qui a changé clignote). Ce que le temps réel a touché, le script principal le note (aRedessiner : des dates, ou
+   « tout » pour un lieu, un spectacle, une personne, une distribution) et rafraichirListes(ids) le donne à la grille, qui ne refait
+   que les lignes de ces dates (dessinerLignes) ; un redessin entier (dessiner) ne remplace que les lignes dont le HTML a changé. Une saison entière
+   (trois cents dates) se pose par tranches (PREMIERES, TRANCHE : les premières lignes d'abord, le reste de tâche en tâche) pour qu'aucune tâche ne
+   dépasse 200 ms à CPU=4 ; viser une ligne pas encore posée (le clavier, « Voir ») pose d'un coup ce qui reste.
+   En Complet, une case « de la date » (spectacle, lieu, statut, nature, distribution, billetterie, suivi) vaut pour toutes les
+   séances de la date : les autres lignes de la date la répètent en gris et s'éclairent avec elle. Ce qui est vide reste vide ; une colonne vide sur toute la vue se replie (« Colonnes vides » la montre). Les colonnes
    se tirent du schéma de la date (SCHEMA_DATE, script principal : colonneDe) et sont à la carte, à l'ordinateur : la
    largeur (le bord droit de chaque en-tête se tire, un double-clic l'ajuste au contenu), l'ordre, les colonnes masquées et
    le nombre de colonnes figées à gauche (le jour et le spectacle d'office) se gardent avec le compte (la préférence
@@ -17,13 +40,13 @@
    principal les dessine, filtresDates, et les lit, dateRetenue) ; tri par date.
    La distribution : l'équipe de la date (la distribution « en tournée » par défaut ; une équipe explicite ne s'écrit que
    si on la change), en pastilles ; « Étendre à… » la pose sur les dates du même spectacle (la saison, l'année civile, ou
-   les lignes choisies), après un aperçu qui signale les remplaçants posés à la main. « ＋ Séance » : une date du même
+   les lignes choisies), après un aperçu qui signale les remplaçants posés à la main. « ＋ Séance » (Complet) : une date du même
    spectacle au même lieu qui touche ce jour (le même ou un voisin) la reçoit, sinon une date se crée ; le tableur dit ce
-   qu'il a fait. Exporter : Excel (.xlsx écrit ici, sans bibliothèque), CSV, Google Sheets (le tableau copié, à coller
+   qu'il a fait. En Simple, c'est « ＋ Date », qui crée toujours une date neuve. Exporter : Excel (.xlsx écrit ici, sans bibliothèque), CSV, Google Sheets (le tableau copié, à coller
    dans sheets.new). « Importer » : des lignes copiées d'Excel deviennent des séances, après un aperçu.
    Au clavier : flèches, Entrée ou F2 (ou taper directement) pour écrire, Échap, Tab, Maj+flèches pour choisir des
    cases, Ctrl+C / Ctrl+V comme dans un tableur, Suppr pour vider, Ctrl+Z pour annuler, Ctrl+Suppr pour supprimer la
-   séance (à la souris : le bouton « Supprimer la séance du … », qui dit laquelle).
+   séance (en Simple, la date et ses séances ; à la souris : le bouton « Supprimer la séance du … », qui dit laquelle).
    Ce que le tableur lit et écrit : les dates, leurs séances, leur suivi (organisateur, contact, contrat, notes), leurs
    chiffres (jauge, spectateurs, heures d'ateliers : quand la base a le dixième script), leur équipe, et, depuis l'audit
    de la chaîne commerciale, le montant de cession HT (colonne « Cession HT (€) », niveau « date », présente quand la base
@@ -44,15 +67,16 @@
    l'usage (typeof) et ses bornes se déclarent à la première vue. Au chargement, il n'évalue que son état T, ses constantes,
    COLONNES (tirée de SCHEMA_DATE, un const du script principal : déjà là), le CSS des largeurs de ses colonnes (une feuille
    de style, styles-tableur-colonnes), la normalisation de tableur.colonnes et les raccourcis Alt+← Alt+→ du registre ;
-   natif() n'est que déclarée. Le banc site/tableur.mjs le garde, et site/tableur-colonnes.mjs les colonnes à la carte.
+   natif() n'est que déclarée. Le banc site/tableur.mjs le garde (en Complet), site/tableur-colonnes.mjs les colonnes à la carte, site/tableur-simple.mjs le Simple.
 
    Son API (la globale TABLEUR) :
      TABLEUR.vue(f)           la vue #/representations/tableur (lue par le routage du script principal) ; f : les filtres
-                              communs, session.dates. Si f.cible porte l'identifiant d'une date (« Voir dans le tableur »),
+                              communs, session.dates (f.mode : le mode, 'simple' ou 'complet', que la vue y reporte). Si f.cible porte l'identifiant d'une date (« Voir dans le tableur »),
                               la vue arrive sur sa ligne : case active, en vue, cerclée un instant (visee sur chaque case) ;
                               la cible est oubliée aussitôt. Le tri vit dans session.vues.tableur, les colonnes dans la préférence.
-     TABLEUR.lireJour(t, ref) un jour tapé ou collé (« 5/11 », « jeu. 5 nov. 2026 ») → 'AAAA-MM-JJ', ou undefined
-     TABLEUR.lireHeure(t)     une heure tapée (« 20h30 », « 2030 ») → 'HH:MM', '' si vide, ou undefined
+     TABLEUR.lireJour(t, ref) un jour tapé ou collé (« 5/11 », « 05-11-2026 », « 2026/11/05 », « 5 nov 26 », « jeu. 5 nov. 2026 ») →
+                              'AAAA-MM-JJ', ou undefined (un intervalle, « du 5 au 7 nov », n'est pas un jour)
+     TABLEUR.lireHeure(t)     une heure tapée (« 20h30 », « 20 h », « 20:30:00 », « 2030 ») → 'HH:MM', '' si vide, ou undefined
      TABLEUR.lireTsv(texte)   un texte de tableur (tabulations, guillemets d'Excel) → des lignes de cases
      TABLEUR.xlsx({ entetes, lignes })   un classeur .xlsx (un Blob), écrit ici sans bibliothèque
      TABLEUR.lireImport(texte)           les lignes collées → { lignes (chacune avec son aperçu et ses erreurs), cles, avecTete }
@@ -70,8 +94,8 @@
    schéma de la date les lit aussi.)
 
    Ce qu'il lit du script principal (admin/index.html), relevé par grep croisé avec les déclarations :
-     E, $, $$, esc, clone, norm, AUJ, h5, jourCourt, lieu, spectacle, lieuTexte, repsDe, couleurSp (l'état et les petits
-     outils) ; session (session.dates, les filtres communs aux trois vues ; session.vues.tableur par etatVue : le tri),
+     E, $, $$, esc, clone, norm, AUJ, JS, MC, h5, jourCourt, jourSansAn, lieu, spectacle, lieuTexte, repsDe, couleurSp (l'état et
+     les petits outils) ; session (session.dates, les filtres communs aux trois vues ; session.vues.tableur par etatVue : le tri),
      SCHEMA_DATE (les colonnes), garderFiltres, dateRetenue, dansPeriode, filtresActifs, filtresDates, brancherFiltresDates,
      choixVueDates (les filtres et le sélecteur de vues) ; annoncer, erreur, cadre, partirSansPerdre ; cleRch, motsRch
      (la recherche) ; choixSpectacles, comboLieu (les champs de la fiche) ;
@@ -80,16 +104,25 @@
      AGENDA.heureTexte, AGENDA.MOIS (admin/agenda.js).
    D'admin/equipe.js : personne, nomDe, distributionDe, fonctionDistribution, equipeDate, equipeDeLaDate, ecartsDate,
      enregistrerEquipeDate, listeEt.
-   D'admin/prefs.js : PREFS (lire, ecrire, normaliser, surChangement : tableur.colonnes, menu.replie, fenetres.tableur-h) ; d'admin/icones.js :
+   D'admin/prefs.js : PREFS (lire, ecrire, normaliser, surChangement : tableur.mode, tableur.colonnes, menu.replie, fenetres.tableur-h) ; d'admin/icones.js :
      ICONES.svg ; du registre des raccourcis (script principal) : RACCOURCIS.declarer.
    Sous typeof (le module marche sans eux) : GESTES (gestes.js : garder et saisie, pour la fenêtre d'import), FENETRES
      (fenetres.js, chargé après lui : poignee, taille, garder, borner, actif ; sans lui, ni poignées ni tailles retenues).
    Il ne lit ni sb ni CALME_ADMIN : il n'écrit rien lui-même dans la base, tout passe par ecrireDate et
-   enregistrerEquipeDate. Le CSS du tableur (.tableur, .tab-…) et l'animation tab-ok restent dans admin/index.html. */
+   enregistrerEquipeDate. Le CSS du tableur (.tableur, .tableur.simple, .tab-jj, .tab-heure…) et l'animation tab-ok restent dans
+   admin/index.html. */
 const TABLEUR = (() => {
   // ==================== l'état de la vue et les petits outils
-  const T = { f: null, v: null, mode: 'complet', cols: [], figees: new Set(), tournant: null, geste: false, nettoyer: [], lignes: [], actif: { l: 0, c: 0 }, ancre: null, edition: null, pop: null, pile: [],
-    file: Promise.resolve(), recents: new Map(), textes: null, aRafraichir: false, attente: 0 };
+  // mode : 'simple' (une ligne par date) ou 'complet' (une ligne par séance), voir MODES ; brouillon : ce que la ligne vide du bas a déjà reçu
+  // (le jour, le spectacle, le lieu : la date se crée quand le jour et le spectacle y sont) ; neuve : cette ligne, pour la grille (Simple
+  // seulement, hors de T.lignes : une ligne qui n'est pas encore une date) ; aRafraichir : ce que le temps réel a changé pendant une saisie
+  // ou un geste (vrai : tout ; un ensemble d'identifiants de date : ces lignes seulement) ; erreurs : les cases que la base a refusées (cleCase → le
+  // message ; refus : ce qu'on y avait écrit) et echec : les changements refusés, que « Reprendre » et « Réessayer » prennent ; ignorees : les cases
+  // d'un collage que le tableur n'a pas comprises (cleCase → { brut, raison, t }), surlignées vingt secondes ; hBarre : la hauteur de la barre d'état ;
+  // htmls : le HTML de chaque ligne, rendues : combien sont dans le DOM, suite : la minuterie de la tranche suivante (le dessin par tranches)
+  const T = { f: null, v: null, mode: 'simple', cols: [], figees: new Set(), tournant: null, geste: false, nettoyer: [], lignes: [], actif: { l: 0, c: 0 }, ancre: null, edition: null, pop: null, pile: [],
+    file: Promise.resolve(), recents: new Map(), textes: null, aRafraichir: false, attente: 0, brouillon: { jour: '', spectacle: null, lieu: null }, neuve: null, htmls: null, sigLignes: '',
+    erreurs: new Map(), refus: new Map(), echec: null, ignorees: new Map(), hBarre: 0, suite: null, rendues: 0 };
   const natif = () => typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
   const PUBLICS = [['tout_public', 'Tout public'], ['scolaire', 'Scolaire'], ['autre', 'Autre']];
   const STATUTS = [['option', 'Option'], ['confirmee', 'Confirmée'], ['annulee', 'Annulée'], ['reportee', 'Reportée']];
@@ -100,11 +133,14 @@ const TABLEUR = (() => {
   const pl = (n, un, des) => `${n} ${n > 1 ? des || `${un}s` : un}`;
   const iso = (a, m, j) => { const x = new Date(Date.UTC(a, m - 1, j)); return x.getUTCFullYear() === a && x.getUTCMonth() === m - 1 && x.getUTCDate() === j ? `${a}-${String(m).padStart(2, '0')}-${String(j).padStart(2, '0')}` : undefined; };
   const jjmmaaaa = j => (j ? `${j.slice(8, 10)}/${j.slice(5, 7)}/${j.slice(0, 4)}` : '');
+  const jourPlus = (j, n) => new Date(Date.parse(`${j}T12:00:00Z`) + n * 864e5).toISOString().slice(0, 10);
+  const joursEntre = (a, b) => Math.round((Date.parse(`${b}T12:00:00Z`) - Date.parse(`${a}T12:00:00Z`)) / 864e5);
 
   // ==================== la lecture de ce qu'on tape ou colle (un jour, une heure, un choix, un spectacle, un lieu, des personnes)
   // ———— lire ce qu'on tape ou colle
-  // un jour : « 5/11/2026 », « 05/11 », « 2026-11-05 », « jeu. 5 nov. 2026 », « 5 novembre » ; sans année, celle qui le
-  // met au plus près du jour de référence (celui de la ligne, sinon aujourd'hui)
+  // un jour : « 5/11/2026 », « 05/11 », « 05-11-2026 », « 2026-11-05 », « 2026/11/05 », « jeu. 5 nov. 2026 », « 5 nov 26 », « 5 novembre » ;
+  // sans année, celle qui le met au plus près du jour de référence (celui de la ligne, sinon aujourd'hui). Un intervalle (« du 5 au 7 nov »)
+  // n'est pas un jour : il n'est pas lu (undefined), la saisie le refuse en le disant
   const MOIS_LUS = [['janv', 1], ['jan', 1], ['fev', 2], ['mars', 3], ['mar', 3], ['avr', 4], ['mai', 5], ['juin', 6], ['juil', 7], ['aou', 8], ['sep', 9], ['oct', 10], ['nov', 11], ['dec', 12]];
   const moisDe = w => (MOIS_LUS.find(([p]) => w.startsWith(p)) || [null, 0])[1];
   function proche(m, j, ref) {
@@ -115,17 +151,17 @@ const TABLEUR = (() => {
   function lireJour(t, ref) {
     const s = norm(String(t ?? '')).trim().replace(/^(lun|mar|mer|jeu|ven|sam|dim)[a-z]*\.?,?\s+(?=\d)/, '');
     let m;
-    if ((m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/))) return iso(+m[1], +m[2], +m[3]);
-    if ((m = s.match(/^(\d{1,2})[/.](\d{1,2})(?:[/.](\d{2}|\d{4}))?$/))) return m[3] ? iso(m[3].length === 2 ? 2000 + +m[3] : +m[3], +m[2], +m[1]) : proche(+m[2], +m[1], ref);
-    if ((m = s.match(/^(\d{1,2})(?:er)?\s+([a-z]+)\.?(?:\s+(\d{4}))?$/))) { const mo = moisDe(m[2]); return !mo ? undefined : m[3] ? iso(+m[3], mo, +m[1]) : proche(mo, +m[1], ref); }
+    if ((m = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/))) return iso(+m[1], +m[2], +m[3]);   // (aaaa-mm-jj, aaaa/mm/jj)
+    if ((m = s.match(/^(\d{1,2})[/.](\d{1,2})(?:[/.](\d{2}|\d{4}))?$/)) || (m = s.match(/^(\d{1,2})-(\d{1,2})-(\d{2}|\d{4})$/))) return m[3] ? iso(m[3].length === 2 ? 2000 + +m[3] : +m[3], +m[2], +m[1]) : proche(+m[2], +m[1], ref);   // (jj-mm-aaaa : le tiret veut l'année, « 5-7 » ne dit pas le 5 juillet)
+    if ((m = s.match(/^(\d{1,2})(?:er)?\s+([a-z]+)\.?(?:\s+(\d{2}|\d{4}))?$/))) { const mo = moisDe(m[2]); return !mo ? undefined : m[3] ? iso(m[3].length === 2 ? 2000 + +m[3] : +m[3], mo, +m[1]) : proche(mo, +m[1], ref); }
     if ((m = s.match(/^(\d{5})$/)) && +m[1] > 30000 && +m[1] < 80000) return new Date(Date.UTC(1899, 11, 30) + +m[1] * 864e5).toISOString().slice(0, 10);   // un jour d'Excel
     return undefined;
   }
-  // une heure : « 20h », « 20h30 », « 20:30 », « 2030 » ; vide : pas d'heure
+  // une heure : « 20h », « 20 h », « 20h30 », « 20:30 », « 20:30:00 » (les secondes sont ignorées), « 2030 » ; vide : pas d'heure
   function lireHeure(t) {
     const s = String(t ?? '').trim().toLowerCase().replace(/\s+/g, '');
     if (!s) return '';
-    const m = s.match(/^(\d{1,2})(?:[h:.](\d{2})?)?$/) || s.match(/^(\d{1,2})(\d{2})$/);
+    const m = s.match(/^(\d{1,2})(?:[h:.](\d{2})?)?$/) || s.match(/^(\d{1,2})(\d{2})$/) || s.match(/^(\d{1,2}):(\d{2}):([0-5]\d)$/);
     if (!m) return undefined;
     const h = +m[1], mi = +(m[2] || 0);
     return h < 24 && mi < 60 ? `${String(h).padStart(2, '0')}:${String(mi).padStart(2, '0')}` : undefined;
@@ -190,45 +226,115 @@ const TABLEUR = (() => {
       val: champ.val, texte: champ.texte, html: champ.html, copie: champ.copie || champ.texte, exp: champ.exp, lire: champ.lire, vider: champ.vider, ecrire: champ.ecrire };
   }
   const COLONNES = SCHEMA_DATE.filter(c => c.colonne).map(colonneDe).sort((a, b) => a.rang - b.rang);
-  const colonne = k => COLONNES.find(c => c.k === k);
+
+  // ———— les colonnes du mode Simple (une ligne par date) : les six de MODES.simple.colonnes. Quatre ne sont pas celles du schéma tel
+  // quel : le jour (de niveau « date » : il décale la date, ses séances le suivent), les séances (en pastilles d'heures ; une fenêtre
+  // pour les régler), le lieu (sur deux lignes) et le statut (en badge). Les deux autres, le spectacle et la distribution, sont celles
+  // du schéma. Une ligne du Simple est { d, r: null, rs (les séances de la date), n: 1, premier: true, bande, cle } : jamais de x.r,
+  // donc jamais repDe, qui ajouterait une séance au lieu de déplacer la date.
+  const LARGEURS_SIMPLE = { jour: 122, seances: 168, spectacle: 190, lieu: 210, statut: 140, distribution: 250 };
+  const pubDe = d => (d.public && d.public !== 'mixte' ? d.public : 'tout_public');
+  // une séance telle que la fenêtre et la colonne la portent (les mêmes clés, dans le même ordre que dateVersForm : on les compare en JSON)
+  const repSimple = r => ({ id: r.id, jour: r.jour, heure: h5(r.heure), fin: h5(r.fin), public: r.public, annulee: !!r.annulee, lien: r.lien || '', note: r.note || '' });
+  const trierReps = rs => rs.sort((a, b) => (a.jour < b.jour ? -1 : a.jour > b.jour ? 1 : String(a.heure || '99').localeCompare(String(b.heure || '99'))));
+  // « 15h · 20h30 », « 15h, 20h30 » (un collage) : chaque heure lue prend la séance de la date qui l'a déjà (même heure : son numéro, son
+  // public, sa fin, sa note, son annulation sont gardés : le RPC retire toute séance absente de la liste), sinon une séance sans heure,
+  // sinon une séance neuve au jour de la date ; celles qui ne sont plus citées sont retirées. Une heure illisible : undefined.
+  function lireSeances(t, x) {
+    const s = String(t ?? '').trim();
+    if (!s) return undefined;
+    const heures = s.split(/\s*(?:·|,|;|\/|\bet\b|\n)\s*/i).filter(p => p.trim() !== '').map(p => lireHeure(p));
+    if (!heures.length || heures.some(h => !h)) return undefined;
+    const libres = [...x.rs], prendre = pred => { const i = libres.findIndex(pred); return i >= 0 ? libres.splice(i, 1)[0] : null; };
+    const prises = heures.map(h => prendre(r => h5(r.heure) === h));
+    heures.forEach((h, i) => { if (!prises[i]) prises[i] = prendre(r => !r.heure); });
+    return trierReps(heures.map((h, i) => ({ ...repSimple(prises[i] || { jour: x.d.debut, public: pubDe(x.d) }), heure: h })));
+  }
+  const pastilleHeure = r => `<span class="tab-heure${r.annulee ? ' annulee' : ''}${r.public === 'scolaire' ? ' sco' : ''}"${r.annulee ? ' title="Séance annulée"' : ''}>${esc(heureT(r.heure))}</span>`;
+  const SEANCES = { k: 'seances', l: 'Séances', niveau: 'date', type: 'seances', nombre: false, toujours: true, largeur: LARGEURS_SIMPLE.seances, icone: 'horloge', rang: 25, instantane: true,
+    val: x => x.rs.map(repSimple), texte: x => x.rs.map(r => heureT(r.heure)).filter(Boolean).join(' · '),
+    html: x => `<span class="tab-heures">${x.rs.filter(r => r.heure).map(pastilleHeure).join('')}<span class="tab-heure-plus" aria-hidden="true">+</span></span>`,
+    lire: lireSeances, ecrire: (F, x, v) => { F.representations = v.map(r => ({ ...r })); } };
+  SEANCES.copie = SEANCES.texte;
+  // le petit calendrier du jour : « JEU / 5 / NOV » (une période : « → 7 » dessous ; une précision au mois : « NOV / 2026 »), le
+  // bandeau de la couleur du spectacle (--c, posée sur la ligne) ; le tout est aria-hidden, le jour entier est dit en .sr à côté
+  function tuileJour(d) {
+    if (!d.debut) return '';
+    const [a, m, j] = d.debut.split('-').map(Number), mois = MC[m - 1].replace('.', ''), long = colonne('jour').texte({ d, r: null });
+    const tuile = d.precision === 'mois' ? `<i></i><b class="mois">${esc(mois)}</b><i>${a}</i>`
+      : `<i>${JS[new Date(`${d.debut}T12:00:00`).getDay()].replace('.', '')}</i><b>${j}</b><i>${d.fin && d.fin !== d.debut ? `→ ${+d.fin.slice(8, 10)}` : esc(mois)}</i>`;
+    return `<span class="tab-jj" aria-hidden="true">${tuile}</span><span class="sr">${esc(long)}</span>`;
+  }
+  const statutBadge = d => (d.statut ? `<span class="badge ${d.statut}">${esc(libelleDe(STATUTS, d.statut))}</span>` : '');
+  const SIMPLES = {};
+  const colonne = k => COLONNES.find(c => c.k === k) || (k === 'seances' ? SEANCES : undefined);
+  Object.assign(SIMPLES, {
+    // décaler le jour d'une date : elle garde sa longueur (sa fin suit), chaque séance suit (le même nombre de jours) ; une date qui n'était
+    // qu'un mois devient le jour qu'on écrit
+    jour: { ...colonne('jour'), niveau: 'date', instantane: true, val: x => x.d.debut, html: x => tuileJour(x.d),
+      ecrire: (F, x, v) => {
+        const delta = joursEntre(F.debut, v);
+        F.representations.forEach(r => { if (r.jour) r.jour = jourPlus(r.jour, delta); });
+        if (!F.representations.length && F.precision && F.precision !== 'jour') { F.precision = 'jour'; F.fin = v; } else F.fin = F.fin ? jourPlus(F.fin, delta) : v;
+        F.debut = v;
+      } },
+    seances: SEANCES,
+    lieu: { ...colonne('lieu'), html: x => {
+      const l = lieu(x.d.lieu_id), ailleurs = !l && (x.d.intitule || '').split(' — ')[1];
+      return l ? `<span class="tab-lieu2"><b>${esc(l.nom || l.commune)}</b>${l.nom ? `<small>${esc(l.commune)}</small>` : ''}</span>` : ailleurs ? `<span class="tab-gris" title="Lieu repris de l’ancien site, sans fiche">${esc(ailleurs)}</span>` : '';
+    } },
+    statut: { ...colonne('statut'), html: x => `${statutBadge(x.d)}${nature(x.d) === 'representations' && x.d.visible === false ? '<span class="badge masquee">masquée</span>' : ''}` },
+  });
+  const colonnesSimple = () => MODES.simple.colonnes.map(k => SIMPLES[k] || colonne(k)).filter(c => c && (!c.si || c.si()));
+  const TOUTES = [...COLONNES, SEANCES];
   // le CSS des largeurs, écrit une fois d'après les colonnes : leur largeur d'origine (--w-<k>, sur :where(.tab-cadre), qui ne pèse
-  // rien : les media queries du téléphone, dans index.html, gardent la main sur Jour et Spectacle), puis par colonne la largeur lue
-  // dans la variable (une préférence ou le geste la posent en ligne sur #tab-cadre) et, pour une colonne figée, son bord gauche
-  // (--l-<k>, posé par dessiner)
+  // rien : les media queries du téléphone, dans index.html, gardent la main sur Jour et Spectacle), celle du Simple (sur
+  // .tab-cadre.tab-simple, qui ne pèse rien non plus), puis par colonne la largeur lue dans la variable (une préférence ou le geste
+  // la posent en ligne sur #tab-cadre) et, pour une colonne figée, son bord gauche (--l-<k>, posé par dessiner)
   (() => {
     const st = document.createElement('style');
     st.id = 'styles-tableur-colonnes';
-    st.textContent = `:where(.tab-cadre) { ${COLONNES.map(c => `--w-${c.k}: ${c.largeur}px;`).join(' ')} }\n`
-      + COLONNES.map(c => `.tableur .c-${c.k} { width: var(--w-${c.k}); min-width: var(--w-${c.k}); max-width: var(--w-${c.k}); }\n.tableur .figee.c-${c.k} { left: var(--l-${c.k}); }`).join('\n');
+    st.textContent = `:where(.tab-cadre) { ${TOUTES.map(c => `--w-${c.k}: ${c.largeur}px;`).join(' ')} }\n`
+      + `:where(.tab-cadre.tab-simple) { ${Object.entries(LARGEURS_SIMPLE).map(([k, w]) => `--w-${k}: ${w}px;`).join(' ')} }\n`
+      + TOUTES.map(c => `.tableur .c-${c.k} { width: var(--w-${c.k}); min-width: var(--w-${c.k}); max-width: var(--w-${c.k}); }\n.tableur .figee.c-${c.k} { left: var(--l-${c.k}); }`).join('\n');
     document.head.append(st);
   })();
 
   // ———— la mémoire des colonnes : la préférence tableur.colonnes
-  // Par mode (le tableur n'en montre qu'un aujourd'hui : « complet » ; le mode Simple y a déjà sa place) :
+  // Par mode (le Simple a six colonnes fixes, le jour figé : seules ses largeurs se retiennent) :
   //   { complet: { ordre: [k…], masquees: [k…], figees: n, largeurs: { k: px }, vides: bool }, simple: { largeurs } }
   // ordre : l'ordre voulu (vide : celui d'origine) ; masquees : les colonnes cachées par choix ; figees : le nombre de colonnes
   // figées à gauche, comptées dans l'ordre (une colonne vide repliée compte : elle reste à sa place quand « Colonnes vides » la
   // montre) ; largeurs : celles qu'on a tirées ; vides : « Colonnes vides ». normaliserColonnes ramène ce qu'on lit à cette forme
   // (clés inconnues ignorées, colonnes dont si() est faux tolérées, largeurs de 48 à 640 px, l'ancienne forme plate lue comme le
   // mode complet) ; la lecture s'en sert à chaque fois (PREFS.normaliser).
-  const MODES = ['complet', 'simple'], LARGEUR_MIN = 48, LARGEUR_MAX = 640, FIGEES_ORIGINE = 2;
+  // Les deux modes : le Simple, une ligne par date (parDate), avec ses six colonnes et le jour seul figé ; le Complet, une ligne par séance.
+  // Le mode se garde avec le compte (la préférence tableur.mode) et dans l'adresse (?mode=complet, sur le tableur seulement).
+  const MODES = { simple: { colonnes: ['jour', 'seances', 'spectacle', 'lieu', 'statut', 'distribution'], parDate: true, figees: 1 }, complet: { parDate: false } };
+  const LARGEUR_MIN = 48, LARGEUR_MAX = 640, FIGEES_ORIGINE = 2;
+  const modeSimple = () => !!MODES[T.mode]?.parDate;
+  const modeValide = m => (typeof m === 'string' && m in MODES ? m : null);
+  if (typeof PREFS !== 'undefined') PREFS.normaliser('tableur.mode', modeValide);
+  const modePrefere = () => (typeof PREFS !== 'undefined' && modeValide(PREFS.lire('tableur.mode', null))) || 'simple';
   const entierOuNul = v => (typeof v === 'number' && Number.isFinite(v) ? Math.round(v) : null);
   function normaliserMode(mode, brut) {
     const cles = COLONNES.map(c => c.k), b = brut && typeof brut === 'object' && !Array.isArray(brut) ? brut : {}, largeurs = {};
-    if (b.largeurs && typeof b.largeurs === 'object') Object.entries(b.largeurs).forEach(([k, v]) => { const n = entierOuNul(v); if (n !== null && cles.includes(k)) largeurs[k] = Math.max(LARGEUR_MIN, Math.min(LARGEUR_MAX, n)); });
+    if (b.largeurs && typeof b.largeurs === 'object') Object.entries(b.largeurs).forEach(([k, v]) => { const n = entierOuNul(v); if (n !== null && (cles.includes(k) || (mode === 'simple' && k === 'seances'))) largeurs[k] = Math.max(LARGEUR_MIN, Math.min(LARGEUR_MAX, n)); });
     if (mode === 'simple') return { largeurs };
     const liste = xs => (Array.isArray(xs) ? [...new Set(xs.filter(k => cles.includes(k)))] : []), f = entierOuNul(b.figees);
     return { ordre: liste(b.ordre), masquees: liste(b.masquees).filter(k => k !== 'jour'), figees: f === null ? FIGEES_ORIGINE : Math.max(0, Math.min(cles.length, f)), largeurs, vides: b.vides === true };
   }
   function normaliserColonnes(brut) {
     if (!brut || typeof brut !== 'object' || Array.isArray(brut)) return null;
-    const plat = !MODES.some(m => m in brut) && ['ordre', 'masquees', 'figees', 'largeurs', 'vides'].some(k => k in brut);
+    const plat = !Object.keys(MODES).some(m => m in brut) && ['ordre', 'masquees', 'figees', 'largeurs', 'vides'].some(k => k in brut);
     const source = plat ? { complet: brut } : brut;
-    return Object.fromEntries(MODES.map(m => [m, normaliserMode(m, source[m])]));
+    return Object.fromEntries(Object.keys(MODES).map(m => [m, normaliserMode(m, source[m])]));
   }
   if (typeof PREFS !== 'undefined') PREFS.normaliser('tableur.colonnes', normaliserColonnes);
   const toutesColonnes = () => (typeof PREFS !== 'undefined' && PREFS.lire('tableur.colonnes', null)) || normaliserColonnes({});
-  const reglages = () => toutesColonnes()[T.mode];
+  // (le Simple n'a que ses largeurs en mémoire : le reste, d'office, est fixe)
+  const REGLAGES_SIMPLE = { ordre: [], masquees: [], vides: false, figees: MODES.simple.figees };
+  const reglages = () => (modeSimple() ? { ...REGLAGES_SIMPLE, ...toutesColonnes().simple } : toutesColonnes()[T.mode]);
   // une modification du mode courant, écrite aussitôt (un clic) ; rend ce qu'il y avait, pour « Annuler »
   function ecrireReglages(modif) {
     const avant = toutesColonnes();
@@ -244,13 +350,16 @@ const TABLEUR = (() => {
   }
 
   // ==================== la grille : les lignes, la vue, le dessin, les gestes
-  // ———— les lignes : les dates filtrées, puis leurs séances (une date sans séance : une ligne, son jour ou sa période)
+  // ———— les lignes : les dates filtrées, puis, en Complet, leurs séances (une date sans séance : une ligne, son jour ou sa période) ; en
+  // Simple, une ligne par date { d, r: null, rs (ses séances), n: 1, premier: true, bande, cle } — dessiner lit bande et premier, marquer n,
+  // supprimerLignes rs : jamais de x.r (voir les colonnes du Simple)
   function lignes() {
     const f = T.f, mots = motsRch(f.q);
     const texte = d => { const s = spectacle(d.spectacle_id), l = lieu(d.lieu_id), su = suiviDe(d);
       return cleRch(`${s?.titre || ''} ${l ? `${l.nom || ''} ${l.commune} ${l.departement || ''}` : ''} ${d.intitule || ''} ${su.organisateur || ''} ${su.contact || ''} ${su.notes || ''} ${repsDe(d.id).map(r => r.note || '').join(' ')} ${libelleDe(STATUTS, d.statut)} ${libelleDe(NATURES_DATE, nature(d))} ${equipeIds(d).map(id => nomDe(personne(id))).join(' ')}`); };
     const ds = E.dates.filter(d => dateRetenue(d, f) && dansPeriode(d, f.periode) && (!mots.length || (t => mots.every(m => t.includes(m)))(texte(d))))
       .sort((a, b) => (a.debut < b.debut ? -1 : a.debut > b.debut ? 1 : a.id - b.id) * (T.v.tri === 'desc' ? -1 : 1));
+    if (modeSimple()) return ds.map((d, i) => ({ d, r: null, rs: repsDe(d.id), n: 1, premier: true, bande: i % 2, cle: `${d.id}:d` }));
     const out = [];
     ds.forEach((d, n) => {
       const reps = repsDe(d.id);
@@ -259,36 +368,55 @@ const TABLEUR = (() => {
     return out;
   }
   // les colonnes possibles (celles dont la base a le script qu'il faut), dans l'ordre voulu ; puis les montrées : ni masquées, ni vides
-  // sur toute la vue (sauf « Colonnes vides », et celles qui sont toujours là)
-  const possibles = () => ordonner(COLONNES.filter(c => !c.si || c.si()), reglages().ordre);
-  const colonnes = (xs, ps = possibles(), rg = reglages()) => ps.filter(c => !rg.masquees.includes(c.k) && (rg.vides || c.toujours || xs.some(x => c.texte(x) !== '')));
+  // sur toute la vue (sauf « Colonnes vides », et celles qui sont toujours là). Le Simple a les siennes, toujours toutes montrées : on
+  // ne teste pas leurs textes (une colonne repliée n'y a pas de sens, et c'était un appel par case)
+  const possibles = () => (modeSimple() ? colonnesSimple() : ordonner(COLONNES.filter(c => !c.si || c.si()), reglages().ordre));
+  const colonnes = (xs, ps = possibles(), rg = reglages()) => (modeSimple() ? ps : ps.filter(c => !rg.masquees.includes(c.k) && (rg.vides || c.toujours || xs.some(x => c.texte(x) !== ''))));
   // les colonnes figées : les n premières des possibles (une colonne vide repliée, ou masquée, garde sa place dans le compte)
   const figeesDe = (ps = possibles(), rg = reglages()) => new Set(ps.slice(0, rg.figees).map(c => c.k));
 
   // ———— la vue
+  // ce que le mode change dans la tête et le cadre : le segment, le bouton d'ajout, l'aide, le nom de la grille
+  const NOMS_MODES = [['simple', 'Simple', 'liste', 'une ligne par date'], ['complet', 'Complet', 'grille', 'une ligne par séance']];
+  const libelleAjout = () => (modeSimple() ? '＋ Date' : '＋ Séance');
+  const texteAide = () => (modeSimple()
+    ? 'Flèches pour aller de case en case ; Entrée (ou taper) pour écrire, Échap pour renoncer ; la case des séances s’ouvre en fenêtre (ajouter, retirer, changer une heure) ; Maj+flèches pour choisir plusieurs cases ; Ctrl+C, Ctrl+V comme dans un tableur ; Suppr pour vider une case, Ctrl+Suppr pour supprimer la date ; Ctrl+Z pour annuler. Le jour s’écrit dans un petit calendrier (← → ↑ ↓, Page ↑ Page ↓). La ligne vide du bas reçoit une nouvelle date : le jour, le spectacle, le lieu.'
+    : 'Flèches pour aller de case en case ; Entrée (ou taper) pour écrire, Échap pour renoncer ; Maj+flèches pour choisir plusieurs cases ; Ctrl+C, Ctrl+V comme dans un tableur ; Suppr pour vider une case, Ctrl+Suppr pour supprimer la séance ; Ctrl+Z pour annuler. Une case grisée répète la date : elle vaut pour toutes ses séances.');
+  const nomGrille = () => `Représentations : ${NOMS_MODES.find(m => m[0] === T.mode)[3]}`;
+  const segmentModes = () => `<span class="seg tab-modes" role="group" aria-label="Mode du tableur">${NOMS_MODES.map(([k, l, ic, d]) => `<button type="button" data-mode="${k}" aria-pressed="${k === T.mode}" title="${esc(`${l} : ${d}`)}">${icone(ic)}<span>${l}</span></button>`).join('')}</span>`;
   function vue(f = session.dates) {
     T.f = f; T.v = etatVue('tableur');
+    T.mode = modeValide(f.mode) || modePrefere();
+    if (f.mode !== T.mode) { f.mode = T.mode; garderFiltres(); }   // (l'adresse dit le mode quand il n'est pas celui d'office : ?mode=complet)
+    T.brouillon = { jour: '', spectacle: null, lieu: null }; T.neuve = null; T.aRafraichir = false;
+    oublierEtats(); annulerTranches(); T.rendues = 0; T.htmls = null;
     T.nettoyer.splice(0).forEach(fin => fin());   // (les écouteurs de la vue d'avant)
     if (T.v.vides === true) { ecrireReglages({ vides: true }); }   // (un ancien état de la session : « Colonnes vides » vit maintenant dans la préférence)
     delete T.v.vides;
     preparerFenetres();
     const cible = f.cible; delete f.cible;   // « Voir dans le tableur » : la date à viser, une seule fois
-    cadre('representations', `<div class="tete"><h1>Représentations</h1>${choixVueDates('tableur')}
-      <span class="tab-actions"><button type="button" class="btn principal" id="tab-plus" aria-expanded="false" aria-controls="tab-ajout">＋ Séance</button>
+    cadre('representations', `<div class="tete"><h1>Représentations</h1>${choixVueDates('tableur')}${segmentModes()}
+      <span class="tab-actions"><button type="button" class="btn principal" id="tab-plus" aria-expanded="false" aria-controls="tab-ajout">${libelleAjout()}</button>
       <button type="button" class="btn" id="tab-importer">Importer</button>
       <span class="tab-menu"><button type="button" class="btn" id="tab-exporter" aria-haspopup="true" aria-expanded="false" aria-controls="tab-export">Exporter</button>
         <span class="tab-export" id="tab-export" role="group" aria-label="Exporter" hidden><button type="button" class="btn" data-export="xlsx">Excel (.xlsx)</button><button type="button" class="btn" data-export="sheets">Google Sheets</button><button type="button" class="btn" data-export="csv">CSV</button>
         <span class="aide">Google Sheets : le tableau est copié, une feuille vierge s’ouvre (sheets.new) ; collez-le (Ctrl+V). Ou importez-y le fichier Excel.</span></span></span>
-      <button type="button" class="btn" id="tab-colonnes" aria-haspopup="dialog" aria-expanded="false">Colonnes…</button></span></div>
-    ${filtresDates(f, { vue: 'tableur', aDroite: `<label class="case tab-vides"><input type="checkbox" id="tab-vides"${reglages().vides ? ' checked' : ''}> Colonnes vides</label>` })}
+      <button type="button" class="btn" id="tab-colonnes" aria-haspopup="dialog" aria-expanded="false"${modeSimple() ? ' hidden' : ''}>Colonnes…</button></span></div>
+    ${filtresDates(f, { vue: 'tableur', aDroite: `<label class="case tab-vides"${modeSimple() ? ' hidden' : ''}><input type="checkbox" id="tab-vides"${reglages().vides ? ' checked' : ''}> Colonnes vides</label>` })}
     <form class="bloc tab-ajout" id="tab-ajout" hidden></form>
-    <p class="tab-ligne-etat"><span class="compte" id="tab-compte"></span><span class="tab-etat" id="tab-etat" aria-live="polite"></span>
-      <button type="button" class="btn lien petit tab-suppr" id="tab-suppr" aria-keyshortcuts="Control+Delete" title="Dans le tableau : Ctrl+Suppr">Supprimer la séance…</button></p>
-    <div class="tab-zone" id="tab-zone"><div class="tab-cadre" id="tab-cadre" style="${variablesColonnes()}"><table class="tableur" id="tab" role="grid" aria-multiselectable="true" aria-label="Représentations : une ligne par séance" aria-describedby="tab-aide">
+    <div class="tab-zone" id="tab-zone"><div class="tab-cadre${modeSimple() ? ' tab-simple' : ''}" id="tab-cadre" style="${variablesColonnes()}"><table class="tableur${modeSimple() ? ' simple' : ''}" id="tab" role="grid" aria-multiselectable="true" aria-label="${nomGrille()}" aria-describedby="tab-aide">
       <thead id="tab-tete"></thead><tbody id="tab-corps" data-liste></tbody></table></div></div>
-    <p class="aide tab-aide" id="tab-aide">Flèches pour aller de case en case ; Entrée (ou taper) pour écrire, Échap pour renoncer ; Maj+flèches pour choisir plusieurs cases ; Ctrl+C, Ctrl+V comme dans un tableur ; Suppr pour vider une case, Ctrl+Suppr pour supprimer la séance ; Ctrl+Z pour annuler. Une case grisée répète la date : elle vaut pour toutes ses séances.</p>`);
+    <p class="tab-ligne-etat"><span class="compte" id="tab-compte"></span><span class="tab-etat" id="tab-etat" aria-live="polite"></span>
+      <button type="button" class="btn lien petit tab-suppr" id="tab-suppr" aria-keyshortcuts="Control+Delete" title="Dans le tableau : Ctrl+Suppr">Supprimer ${modeSimple() ? 'la date' : 'la séance'}…</button></p>
+    <p class="aide tab-aide" id="tab-aide">${texteAide()}</p>`);
     const corps = $('#tab-corps');
-    corps.rafraichir = () => { if (T.edition || T.pop || T.geste) { T.aRafraichir = true; return; } dessiner({ garder: true }); };
+    // le temps réel : ids, les dates touchées (rafraichirListes) ; null, tout. Pendant une saisie, une fenêtre ouverte ou un bord qu'on
+    // tire, la grille attend ; rien que le tableur lise n'a changé (ids vide) : rien à faire
+    corps.rafraichir = ids => {
+      if (Array.isArray(ids) && !ids.length) return;
+      if (T.edition || T.pop || T.geste) { retarder(Array.isArray(ids) ? ids : null); return; }
+      if (Array.isArray(ids)) dessinerLignes(ids); else dessiner({ garder: true });
+    };
     T.actif = { l: 0, c: 0 }; T.ancre = null; T.textes = null;
     if (cible != null && !lignes().some(x => x.d.id === cible)) montrerAjouts([cible]);   // la ligne visée ne se cache pas derrière un filtre
     dessiner();
@@ -306,36 +434,126 @@ const TABLEUR = (() => {
     setTimeout(() => cases.forEach(td => td.classList.remove('visee')), 1800);
   }
 
+  // ———— changer de mode : Simple (une ligne par date) ou Complet (une ligne par séance). Il se garde avec le compte (la préférence
+  // tableur.mode) et dans l'adresse (?mode=complet) ; la grille se redessine d'un coup, sans transition (une grille n'entre pas en
+  // cascade), et la date de la case active reste la case active
+  function appliquerMode() {
+    const simple = modeSimple();
+    $$('.tab-modes [data-mode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === T.mode)));
+    $('#tab').classList.toggle('simple', simple); $('#tab-cadre').classList.toggle('tab-simple', simple);
+    $('#tab').setAttribute('aria-label', nomGrille());
+    $('#tab-plus').textContent = libelleAjout();
+    $('#tab-colonnes').hidden = simple;
+    const vides = $('#tab-vides'); if (vides) { vides.closest('label').hidden = simple; vides.checked = reglages().vides; }
+    $('#tab-aide').textContent = texteAide();
+    const form = $('#tab-ajout'); if (form && !form.hidden) { form.hidden = true; $('#tab-plus').setAttribute('aria-expanded', 'false'); }
+    poserLargeurs();
+    const tete = $('#tab-tete'); if (tete) tete.dataset.cles = '';
+  }
+  function changerMode(mode) {
+    if (!modeValide(mode) || mode === T.mode || !$('#tab-corps')) return;
+    if (T.edition) fermerEdition({ valider: true, focus: false });
+    fermerPop(false);
+    const id = ligne(T.actif.l)?.d.id, k = T.cols[T.actif.c]?.k;
+    T.mode = mode; T.f.mode = mode; T.ancre = null; T.aRafraichir = false;
+    oublierEtats();
+    if (typeof PREFS !== 'undefined') PREFS.ecrire('tableur.mode', mode, { aussitot: true });   // (avant l'adresse : elle compare le mode à la préférence)
+    garderFiltres();
+    appliquerMode();
+    dessiner();
+    const l = id == null ? -1 : T.lignes.findIndex(x => x.d.id === id), c = T.cols.findIndex(y => y.k === k);
+    T.actif = { l: l >= 0 ? l : 0, c: c >= 0 ? c : 0 };
+    marquer(false);
+    annoncer(`Mode ${mode === 'simple' ? 'Simple : une ligne par date' : 'Complet : une ligne par séance'}.`);
+  }
+
   // ———— dessiner (et redessiner : la case active, le défilement et ce qui a changé ailleurs)
+  // dessiner() refait toute la grille : au changement de filtre, de mode ou de colonnes. dessinerLignes(ids) ne refait que les lignes des
+  // dates dites (le temps réel, une écriture, « Annuler ») : leur <tr> est remplacé, les autres ne sont pas touchées ; quand la liste des
+  // lignes ou des colonnes n'est plus la même (une date change de place ou sort du filtre, une séance s'ajoute en Complet, une colonne vide
+  // se déplie), elle se replie sur dessiner complet.
   const cleCase = (x, c) => `${x.cle}|${c.k}`;
-  const titreCol = c => (c.niveau === 'date' ? 'Vaut pour toutes les séances de la date' : c.niveau === 'lieu' ? 'Vient de la fiche du lieu' : 'Propre à chaque séance');
+  const titreCol = c => (modeSimple() ? (c.k === 'seances' ? 'Les séances de la date' : c.niveau === 'lieu' ? 'Vient de la fiche du lieu' : 'Propre à la date')
+    : c.niveau === 'date' ? 'Vaut pour toutes les séances de la date' : c.niveau === 'lieu' ? 'Vient de la fiche du lieu' : 'Propre à chaque séance');
   const texteTri = () => `Jour <span aria-hidden="true">${T.v.tri === 'desc' ? '↓' : '↑'}</span><span class="sr">, trier ${T.v.tri === 'desc' ? 'du plus ancien' : 'du plus récent'} d’abord</span>`;
   const derniereFigee = () => [...T.cols].reverse().find(c => T.figees.has(c.k))?.k;
+  // une ligne de plus que les dates, au bas du Simple : la date qu'on y écrit n'existe pas encore (T.brouillon), elle se crée quand son jour et
+  // son spectacle y sont ; sa « date » n'a que ce qu'il faut aux colonnes pour se lire
+  function ligneNeuve() {
+    const b = T.brouillon, sp = b.spectacle ?? (T.f.spectacle ? +T.f.spectacle : null);
+    return { d: { id: null, spectacle_id: sp, lieu_id: b.lieu, debut: b.jour, fin: b.jour, precision: 'jour', public: 'tout_public', statut: null, visible: true, nature: 'representations', intitule: null },
+      r: null, rs: [], n: 1, premier: true, bande: T.lignes.length % 2, cle: 'neuve', neuve: true };
+  }
+  const CASES_NEUVES = ['jour', 'spectacle', 'lieu'];
+  // la ligne i (x : sa ligne) : un <tr>, ses cases ; T.textes garde le texte de chaque case (pour comparer au redessin suivant)
+  function htmlLigne(x, i, derniere = derniereFigee()) {
+    const sp = spectacle(x.d.spectacle_id), style = modeSimple() && sp ? ` style="--c:${esc(couleurSp(sp))}"` : '';
+    return `<tr role="row" aria-rowindex="${i + 2}"${x.neuve ? ' data-neuve' : ` data-l="${i}"`} class="b${x.bande}${x.premier ? ' premier' : ''}${x.neuve ? ' tab-neuve' : ''}${x.d.statut === 'annulee' || x.r?.annulee ? ' barree' : ''}"${style}>${T.cols.map((c, j) => {
+      const neuf = x.neuve && !CASES_NEUVES.includes(c.k), t = neuf ? '' : c.texte(x), cle = cleCase(x, c); T.textes.set(cle, t);
+      const lecture = neuf || c.type === 'lecture' || c.fige?.(x);
+      const vide = x.neuve && c.k === 'jour' && !t ? ' data-vide="Nouvelle date…" aria-label="Nouvelle date : le jour"' : '';
+      // (une case que la base a refusée garde ce qu'on y avait écrit, cerclée de rouge, le message en infobulle ; une case ignorée d'un collage est en ambre)
+      const erreur = T.erreurs.get(cle), ignoree = T.ignorees.get(cle), titre = erreur ? `Pas enregistré : ${erreur}` : ignoree ? `Ignorée : ${ignoree.raison} (« ${ignoree.brut} »)` : t.length > 16 ? t : '';
+      return `<td role="gridcell" aria-colindex="${j + 1}" data-c="${j}" class="c-${c.k}${T.figees.has(c.k) ? ` figee${c.k === derniere ? ' derniere' : ''}` : ''}${c.niveau !== 'seance' && !x.premier ? ' repete' : ''}${neuf ? ' neuve-vide' : ''}${erreur ? ' erreur' : ''}${ignoree ? ' ignoree' : ''}" tabindex="-1"${lecture ? ' aria-readonly="true"' : ''}${erreur ? ' aria-invalid="true"' : ''}${titre ? ` title="${esc(titre)}"` : ''}${vide}>${neuf ? '' : erreur ? esc(T.refus.get(cle) ?? t) : c.html ? c.html(x) : esc(t)}</td>`;
+    }).join('')}</tr>`;
+  }
+  const phraseCompte = (plie = [], rg = reglages()) => {
+    const n = T.lignes.length;
+    return modeSimple() ? `${pl(n, 'date')} · ${pl(T.lignes.reduce((s, x) => s + x.rs.length, 0), 'séance')}`
+      : `${pl(n, 'séance')} · ${pl(new Set(T.lignes.map(x => x.d.id)).size, 'date')}${plie.length && !rg.vides ? ` · colonnes vides repliées : ${plie.map(c => c.l.toLowerCase()).join(', ')}` : ''}`;
+  };
   function dessiner({ garder = false } = {}) {
     const corps = $('#tab-corps'), tete = $('#tab-tete'), cadreT = $('#tab-cadre');
     if (!corps) return;
     if (garder && T.geste) { T.aRafraichir = true; return; }   // un bord qu'on tire : la grille attend le relâchement
-    const avant = garder ? { ligne: T.lignes[T.actif.l]?.cle, col: T.cols[T.actif.c]?.k, focus: corps.contains(document.activeElement), haut: cadreT.scrollTop, gauche: cadreT.scrollLeft } : null;
+    const avant = garder ? { ligne: ligne(T.actif.l)?.cle, col: T.cols[T.actif.c]?.k, focus: corps.contains(document.activeElement), haut: cadreT.scrollTop, gauche: cadreT.scrollLeft } : null;
     const anciens = garder ? T.textes : null;
     const ps = possibles(), rg = reglages();
     T.lignes = lignes(); T.cols = colonnes(T.lignes, ps, rg); T.figees = figeesDe(ps, rg);
+    T.neuve = modeSimple() ? ligneNeuve() : null;
     const plie = ps.filter(c => !T.cols.includes(c) && !rg.masquees.includes(c.k)), derniere = derniereFigee();
-    $('#tab').setAttribute('aria-rowcount', String(T.lignes.length + 1));
+    $('#tab').setAttribute('aria-rowcount', String(nbLignes() + 1));
     $('#tab').setAttribute('aria-colcount', String(T.cols.length));
     if (!T.cols.some(c => c.k === T.tournant)) T.tournant = T.cols[0]?.k || null;
     dessinerTete(tete, derniere);
     poserGauches(cadreT);
     T.textes = new Map();
-    corps.innerHTML = T.lignes.map((x, i) => `<tr role="row" aria-rowindex="${i + 2}" data-l="${i}" class="b${x.bande}${x.premier ? ' premier' : ''}${x.d.statut === 'annulee' || x.r?.annulee ? ' barree' : ''}">${T.cols.map((c, j) => {
-      const t = c.texte(x); T.textes.set(cleCase(x, c), t);
-      const lecture = c.type === 'lecture' || c.fige?.(x);
-      return `<td role="gridcell" aria-colindex="${j + 1}" data-c="${j}" class="c-${c.k}${T.figees.has(c.k) ? ` figee${c.k === derniere ? ' derniere' : ''}` : ''}${c.niveau !== 'seance' && !x.premier ? ' repete' : ''}" tabindex="-1"${lecture ? ' aria-readonly="true"' : ''}${t.length > 16 ? ` title="${esc(t)}"` : ''}>${c.html ? c.html(x) : esc(t)}</td>`;
-    }).join('')}</tr>`).join('') || `<tr role="row"><td role="gridcell" colspan="${T.cols.length}" class="tab-vide">${E.dates.length ? `Aucune séance ne correspond.${filtresActifs(T.f) ? '<br><button type="button" class="btn" data-effacer-filtres>Effacer les filtres</button>' : ''}` : 'Aucune date pour l’instant : « ＋ Séance » en ajoute une.'}</td></tr>`;
-    const n = T.lignes.length, nd = new Set(T.lignes.map(x => x.d.id)).size;
-    $('#tab-compte').textContent = `${pl(n, 'séance')} · ${pl(nd, 'date')}${plie.length && !rg.vides ? ` · colonnes vides repliées : ${plie.map(c => c.l.toLowerCase()).join(', ')}` : ''}`;
+    // le HTML de chaque ligne : quand les lignes et les colonnes sont les mêmes qu'au dessin d'avant (garder), seules les lignes dont le HTML
+    // a changé sont remplacées (un redessin sans rien de nouveau ne touche pas au DOM : aucune mise en page à refaire) ; sinon, tout est
+    // redessiné, mais le HTML ne se fait que pour les lignes qu'on pose tout de suite (les autres le prendront en tranches : poserTranche)
+    const total = T.lignes.length + (T.neuve ? 1 : 0), htmls = new Array(total);
+    const faire = i => { htmls[i] = i < T.lignes.length ? htmlLigne(T.lignes[i], i, derniere) : htmlLigne(T.neuve, T.lignes.length, derniere); };
+    const signature = `${T.mode}|${T.cols.map(c => c.k).join(',')}|${derniere}|${[...T.figees].join(',')}`;
+    // (les cases de distribution des lignes remplacées, dont il faut recompter le « +n » ; null : toutes celles qui sont posées)
+    let refaites = null;
+    annulerTranches();
+    if (garder && T.lignes.length && T.htmls?.length === total && T.rendues === total && T.sigLignes === signature) {
+      // (seules les lignes dont le HTML a changé sont remplacées, une tranche à la fois : T.htmls garde ce que le DOM porte)
+      for (let i = 0; i < total; i++) faire(i);
+      const reste = htmls.map((h, i) => (h !== T.htmls[i] ? i : -1)).filter(i => i >= 0);
+      refaites = retoucher(corps, reste.splice(0, 12), anciens, derniere);   // (la première tâche porte déjà le HTML de toutes les lignes à comparer : peu de lignes posées)
+      if (reste.length) enTranches(corps, () => { compterPlus(retoucher(corps, reste.splice(0, TRANCHE), anciens, derniere)); return reste.length > 0; });
+    } else {
+      // tout est redessiné : les premières lignes d'abord, le reste par tranches (TRANCHE), sauf pour un redessin qui garde la place où l'on est ;
+      // celui-là pose tout, sauf quand les tranches d'avant n'avaient pas fini (le temps réel de la première seconde) : il ne pose alors que
+      // de quoi remplir le cadre là où l'on est (jusqu'à la case active et au bas de ce qu'on voit), le reste suit en tranches
+      const inachevees = garder && T.htmls && T.rendues < T.htmls.length;
+      let premieres = garder || total <= PREMIERES + TRANCHE ? total : PREMIERES;
+      if (inachevees) {
+        const active = avant.ligne === 'neuve' ? T.lignes.length : T.lignes.findIndex(x => x.cle === avant.ligne), pas = corps.firstElementChild?.offsetHeight || 44;
+        premieres = Math.min(total, Math.max(PREMIERES, active + 1, Math.ceil((avant.haut + cadreT.clientHeight) / pas) + 1));
+      }
+      for (let i = 0; i < premieres; i++) faire(i);
+      corps.innerHTML = `${T.lignes.length ? '' : `<tr role="row"><td role="gridcell" colspan="${T.cols.length}" class="tab-vide">${E.dates.length ? `${modeSimple() ? 'Aucune date' : 'Aucune séance'} ne correspond.${filtresActifs(T.f) ? '<br><button type="button" class="btn" data-effacer-filtres>Effacer les filtres</button>' : ''}` : `Aucune date pour l’instant : « ${libelleAjout()} » en ajoute une.`}</td></tr>`}${htmls.slice(0, premieres).join('')}`;
+      T.htmls = T.lignes.length ? htmls : null; T.rendues = premieres;
+      if (T.htmls && premieres < total) lancerTranches(corps);
+    }
+    T.sigLignes = signature;
+    const n = nbLignes();
+    $('#tab-compte').textContent = phraseCompte(plie, rg);
     // la case active : la même qu'avant (par sa ligne et sa colonne), sinon la plus proche
     if (avant) {
-      const l = T.lignes.findIndex(x => x.cle === avant.ligne), c = T.cols.findIndex(y => y.k === avant.col);
+      const l = avant.ligne === 'neuve' && T.neuve ? T.lignes.length : T.lignes.findIndex(x => x.cle === avant.ligne), c = T.cols.findIndex(y => y.k === avant.col);
       T.actif = { l: l >= 0 ? l : Math.min(T.actif.l, Math.max(0, n - 1)), c: c >= 0 ? c : Math.min(T.actif.c, T.cols.length - 1) };
       cadreT.scrollTop = avant.haut; cadreT.scrollLeft = avant.gauche;
     } else T.actif = { l: Math.min(T.actif.l, Math.max(0, n - 1)), c: Math.min(T.actif.c, T.cols.length - 1) };
@@ -344,23 +562,128 @@ const TABLEUR = (() => {
     // ce qui a changé ailleurs (le temps réel) clignote ; pas ce qu'on vient d'écrire ici
     if (anciens) {
       const maintenant = Date.now();
-      T.lignes.forEach((x, i) => T.cols.forEach((c, j) => {
+      T.lignes.forEach((x, i) => i < T.rendues && T.cols.forEach((c, j) => {   // (une ligne pas encore posée n'a ni texte ni case)
         const k = cleCase(x, c), avantT = anciens.get(k);
         if (avantT === undefined || avantT === T.textes.get(k)) return;
         cellule(i, j)?.classList.add(maintenant - (T.recents.get(x.d.id) || 0) < 4000 ? 'enregistree' : 'vient-d-ailleurs');
       }));
     }
-    compterPlus();
+    compterPlus(refaites);
+    placerCadre();
+  }
+  // ———— le dessin par tranches : une saison entière (trois cents dates, six cents séances) mise en page d'un bloc coûte plus de 200 ms à
+  // CPU=4. dessiner() n'en pose donc que les premières (PREMIERES, douze : de quoi voir la grille aussitôt, la tranche suivante arrive dans la tâche d'après) ; les autres suivent, TRANCHE par TRANCHE, chacune dans sa tâche (le
+  // navigateur peint entre deux), et chaque tranche compte le « +n » de ses cases et remet la marque de la case active si elle est de la
+  // tranche. Viser une ligne qui n'est pas encore là (le clavier, « Voir », la ligne vide du bas) pose d'un coup tout ce qui reste
+  // (finirTranches) ; un nouveau dessin complet abandonne les tranches qui restaient. T.htmls porte le HTML de toutes les lignes, T.rendues
+  // le nombre de celles qui sont dans le DOM.
+  const PREMIERES = 12, TRANCHE = 30;
+  function poserTranche(corps, n = TRANCHE) {
+    const de = T.rendues, a = Math.min(T.htmls.length, de + n), dernier = corps.lastElementChild, html = [];
+    for (let k = de; k < a; k++) html.push(T.htmls[k] ?? (T.htmls[k] = htmlLigne(ligne(k), k)));
+    corps.insertAdjacentHTML('beforeend', html.join(''));
+    T.rendues = a;
+    const cases = [];
+    for (let tr = dernier ? dernier.nextElementSibling : corps.firstElementChild; tr; tr = tr.nextElementSibling) cases.push(...$$('td.c-distribution', tr));
+    compterPlus(cases);
+    if (T.actif.l >= de && T.actif.l < a) marquer(false);
+  }
+  // une tâche qui se refait tranche après tranche, chacune dans sa minuterie, tant qu'elle rend vrai (le tableur change, la vue s'en va : elle s'arrête)
+  function enTranches(corps, tache) {
+    const suite = () => { T.suite = null; if (corps.isConnected && tache()) T.suite = setTimeout(suite, 0); };
+    T.suite = setTimeout(suite, 0);
+  }
+  function lancerTranches(corps) {
+    enTranches(corps, () => {
+      if (!T.htmls || T.rendues >= T.htmls.length) return false;
+      poserTranche(corps);
+      return T.rendues < T.htmls.length;
+    });
+  }
+  // remplacer des lignes posées par leur HTML d'aujourd'hui (T.htmls garde ce que le DOM porte) ; ce qui a changé de texte clignote ;
+  // rend les cases de distribution des lignes refaites, dont le « +n » est à recompter
+  function retoucher(corps, indices, anciens, derniere = derniereFigee()) {
+    const focus = corps.contains(document.activeElement), maintenant = Date.now(), cases = [];
+    let actif = false;
+    indices.forEach(i => {
+      const x = ligne(i), tr = corps.children[i];
+      if (!x || !tr) return;
+      const h = htmlLigne(x, i, derniere);
+      if (h === T.htmls[i]) return;
+      tr.outerHTML = h; T.htmls[i] = h;
+      const neuf = corps.children[i];
+      cases.push(...$$('td.c-distribution', neuf));
+      if (anciens) T.cols.forEach((c, j) => {
+        const k = cleCase(x, c), a = anciens.get(k);
+        if (a !== undefined && a !== T.textes.get(k)) neuf.children[j]?.classList.add(maintenant - (T.recents.get(x.d.id) || 0) < 4000 ? 'enregistree' : 'vient-d-ailleurs');
+      });
+      if (i === T.actif.l) actif = true;
+    });
+    if (actif) marquer(focus);
+    return cases;
+  }
+  function annulerTranches() { clearTimeout(T.suite); T.suite = null; }
+  function finirTranches() {
+    const corps = $('#tab-corps');
+    if (!corps || !T.htmls || T.rendues >= T.htmls.length) return;
+    annulerTranches();
+    poserTranche(corps, Infinity);
+  }
+  // ce que le temps réel a changé pendant une saisie, une fenêtre ouverte ou un bord qu'on tire : noté, refait à la fin
+  // (ids : les dates touchées ; null : tout)
+  function retarder(ids) {
+    if (!ids) T.aRafraichir = true;
+    else if (T.aRafraichir !== true) T.aRafraichir = new Set([...(T.aRafraichir || []), ...ids]);
+  }
+  // (une écriture qui finit pendant une saisie ou une fenêtre ouverte : les lignes se refont à leur fermeture, jamais sous la main)
+  const redessiner = ids => { if (T.edition || T.pop) retarder(ids); else dessinerLignes(ids); };
+  function rattraper() {
+    const a = T.aRafraichir;
+    if (!a) return false;
+    T.aRafraichir = false;
+    if (a instanceof Set) dessinerLignes([...a]); else dessiner({ garder: true });
+    return true;
+  }
+  function dessinerLignes(ids) {
+    const corps = $('#tab-corps');
+    if (!corps) return;
+    if (!ids) return dessiner({ garder: true });
+    if (T.geste) return retarder(ids);
+    const ps = possibles(), rg = reglages(), nouvelles = lignes(), cols = colonnes(nouvelles, ps, rg);
+    const memes = nouvelles.length === T.lignes.length && cols.length === T.cols.length && cols.every((c, j) => c === T.cols[j]) && nouvelles.every((x, i) => x.cle === T.lignes[i].cle);
+    if (!memes || !T.lignes.length) return dessiner({ garder: true });
+    const touchees = new Set(ids), focus = corps.contains(document.activeElement), maintenant = Date.now(), derniere = derniereFigee(), refaites = [];
+    T.lignes = nouvelles;
+    nouvelles.forEach((x, i) => {
+      if (!touchees.has(x.d.id)) return;
+      const anciens = T.cols.map(c => T.textes.get(cleCase(x, c)));
+      T.htmls[i] = htmlLigne(x, i, derniere);
+      const tr = i < T.rendues ? corps.children[i] : null;   // (une ligne que les tranches n'ont pas encore posée prendra ce HTML-ci)
+      if (!tr || tr.dataset.l !== String(i)) return;
+      tr.outerHTML = T.htmls[i];
+      const neuf = corps.children[i];
+      T.cols.forEach((c, j) => {
+        const a = anciens[j];
+        if (a === undefined || a === T.textes.get(cleCase(x, c))) return;
+        neuf.children[j]?.classList.add(maintenant - (T.recents.get(x.d.id) || 0) < 4000 ? 'enregistree' : 'vient-d-ailleurs');
+      });
+      refaites.push(neuf);
+    });
+    $('#tab-compte').textContent = phraseCompte(ps.filter(c => !T.cols.includes(c) && !rg.masquees.includes(c.k)), rg);
+    marquer(focus);
+    compterPlus(refaites.flatMap(tr => $$('td.c-distribution', tr)));
     placerCadre();
   }
 
   // ———— l'en-tête : refait seulement quand la liste des colonnes change (sinon une poignée qu'on tire serait détruite), mis à
   // jour en place le reste du temps (aria-sort, colonnes figées) ; une poignée au bord droit de chaque th, au pointeur fin
   const avecPoignees = () => typeof FENETRES !== 'undefined' && FENETRES.actif() && largeLa();
+  // l'icône du type de la colonne (14 px, aria-hidden : le libellé est à côté)
+  const iconeType = c => (c.icone ? icone(c.icone, 14) : '');
   function dessinerTete(tete, derniere) {
-    const signature = `${T.cols.map(c => c.k).join(',')}|${avecPoignees()}`;
+    const signature = `${T.cols.map(c => c.k).join(',')}|${avecPoignees()}|${T.mode}`;
     if (tete.dataset.cles !== signature) {
-      tete.innerHTML = `<tr role="row" aria-rowindex="1">${T.cols.map((c, j) => `<th role="columnheader" scope="col" class="c-${c.k}${c.niveau !== 'seance' ? ' de-date' : ''}" data-k="${c.k}" data-l="${esc(c.l)}" aria-colindex="${j + 1}" aria-keyshortcuts="Alt+ArrowLeft Alt+ArrowRight"${c.k === 'jour' ? ` aria-sort="${T.v.tri === 'desc' ? 'descending' : 'ascending'}"` : ''} title="${titreCol(c)}">${c.k === 'jour' ? `<button type="button" class="tab-tri" id="tab-tri">${texteTri()}</button>` : esc(c.l)}</th>`).join('')}</tr>`;
+      tete.innerHTML = `<tr role="row" aria-rowindex="1">${T.cols.map((c, j) => `<th role="columnheader" scope="col" class="c-${c.k}" data-k="${c.k}" data-l="${esc(c.l)}" aria-colindex="${j + 1}" aria-keyshortcuts="Alt+ArrowLeft Alt+ArrowRight"${c.k === 'jour' ? ` aria-sort="${T.v.tri === 'desc' ? 'descending' : 'ascending'}"` : ''} title="${titreCol(c)}">${c.k === 'jour' ? `<button type="button" class="tab-tri" id="tab-tri">${iconeType(c)}${texteTri()}</button>` : `<span class="tab-th">${iconeType(c)}<span>${esc(c.l)}</span></span>`}</th>`).join('')}</tr>`;
       tete.dataset.cles = signature;
       if (avecPoignees()) T.cols.forEach(c => poignee($(`th[data-k="${c.k}"]`, tete), c));
     }
@@ -368,7 +691,8 @@ const TABLEUR = (() => {
       const c = T.cols[j];
       th.setAttribute('aria-colindex', String(j + 1));
       th.classList.toggle('figee', T.figees.has(c.k)); th.classList.toggle('derniere', c.k === derniere);
-      if (c.k === 'jour') { th.setAttribute('aria-sort', T.v.tri === 'desc' ? 'descending' : 'ascending'); $('#tab-tri', th).innerHTML = texteTri(); }
+      if (c.k === 'jour') { th.setAttribute('aria-sort', T.v.tri === 'desc' ? 'descending' : 'ascending'); $('#tab-tri', th).innerHTML = `${iconeType(c)}${texteTri()}`; }
+      th.title = titreCol(c);
     });
     tournant();
   }
@@ -395,7 +719,7 @@ const TABLEUR = (() => {
   function poserLargeurs() {
     const c = $('#tab-cadre'); if (!c) return;
     const g = largeLa() ? reglages().largeurs : {};
-    COLONNES.forEach(x => { if (g[x.k]) c.style.setProperty(`--w-${x.k}`, `${g[x.k]}px`); else c.style.removeProperty(`--w-${x.k}`); });
+    TOUTES.forEach(x => { if (g[x.k]) c.style.setProperty(`--w-${x.k}`, `${g[x.k]}px`); else c.style.removeProperty(`--w-${x.k}`); });
   }
   // les largeurs ne s'écrivent qu'au pointeur fin et au-dessus de 700 px : dessous, les media queries du téléphone gardent la main
   const largeLa = () => typeof matchMedia === 'function' && matchMedia('(min-width: 701px) and (pointer: fine)').matches;
@@ -404,7 +728,8 @@ const TABLEUR = (() => {
   // ———— la poignée d'une colonne : son bord droit se tire (FENETRES), un double-clic ou Entrée l'ajuste au contenu
   // la largeur d'une colonne telle qu'elle est posée (la variable en ligne, sinon la gardée, sinon l'origine) : sans rien mesurer, une
   // poignée par en-tête se crée sans que la grille se remette en page à chacune
-  const largeurPosee = k => parseFloat($('#tab-cadre')?.style.getPropertyValue(`--w-${k}`)) || reglages().largeurs[k] || colonne(k).largeur;
+  const largeurOrigine = k => (modeSimple() && LARGEURS_SIMPLE[k]) || colonne(k).largeur;
+  const largeurPosee = k => parseFloat($('#tab-cadre')?.style.getPropertyValue(`--w-${k}`)) || reglages().largeurs[k] || largeurOrigine(k);
   const mesures = {};     // la dernière largeur « au contenu » de chaque colonne (la remise de la poignée la fait garder)
   function poignee(th, c) {
     const cadreT = $('#tab-cadre'), k = c.k;
@@ -423,13 +748,13 @@ const TABLEUR = (() => {
   // le geste est fini : ce que le temps réel a changé pendant qu'on tirait se dessine enfin
   function finGeste() {
     T.geste = false;
-    if (T.aRafraichir && !T.edition && !T.pop) { T.aRafraichir = false; dessiner({ garder: true }); }
+    if (!T.edition && !T.pop) rattraper();
     placerCadre();
   }
   // la largeur gardée (au relâchement, ou à la remise : null veut dire « ajustée au contenu », que ajuster vient de mesurer)
   function gardeLargeur(k, v) {
     const w = v === null ? mesures[k] ?? null : v, largeurs = { ...reglages().largeurs };
-    if (w === null || w === colonne(k).largeur) delete largeurs[k]; else largeurs[k] = w;
+    if (w === null || w === largeurOrigine(k)) delete largeurs[k]; else largeurs[k] = w;
     ecrireReglages({ largeurs });
   }
   // la largeur qui montre tout le contenu d'une colonne : mesurée une fois, sur des copies de ses cases dans un petit tableau hors de
@@ -455,21 +780,22 @@ const TABLEUR = (() => {
     return (mesures[k] = Math.max(LARGEUR_MIN, Math.min(LARGEUR_MAX, w)));
   }
 
-  // ———— la hauteur du cadre : la place qui reste sous lui (bornée à 300 px), ou la hauteur voulue si elle est plus petite
-  // (la poignée du bas, fenetres.tableur-h) ; au téléphone et au doigt, l'écran moins l'en-tête de l'administration, comme avant.
-  // Une seule fonction pour tout ce qui la change : le dessin, la fenêtre, le menu replié, la fin d'un geste.
+  // ———— la hauteur du cadre : la place qui reste sous lui (bornée à 300 px), moins la barre d'état collée sous lui, ou la hauteur voulue si elle
+  // est plus petite (la poignée du bas, fenetres.tableur-h) ; au téléphone et au doigt, l'écran moins l'en-tête de l'administration, comme avant.
+  // Une seule fonction pour tout ce qui la change : le dessin, la fenêtre, le menu replié, la fin d'un geste, une phrase d'état qui change de hauteur.
   function placerCadre() {
     const c = $('#tab-cadre'); if (!c || document.documentElement.classList.contains('redim')) return;
+    const barre = $('.tab-ligne-etat'), bas = barre ? (T.hBarre = barre.offsetHeight) + 6 : 0;   // (6 px : sa marge du haut)
     const bureau = typeof FENETRES !== 'undefined' && FENETRES.actif() && largeLa();
-    const place = Math.max(300, Math.floor(bureau ? innerHeight - (c.getBoundingClientRect().top + scrollY) - 24 : innerHeight - ($('.barre')?.offsetHeight || 0) - 24));
+    const place = Math.max(300, Math.floor(bureau ? innerHeight - (c.getBoundingClientRect().top + scrollY) - 24 - bas : innerHeight - ($('.barre')?.offsetHeight || 0) - 24 - bas - (document.documentElement.classList.contains('ob-actif') ? 64 : 0)));   // (au téléphone, la barre du bas de mobile.js)
     const voulu = bureau ? FENETRES.taille('tableur-h') : null, h = voulu ? Math.min(voulu, place) : place;
     c.style.maxHeight = `${h}px`; c.style.height = voulu ? `${h}px` : '';
   }
 
   // ———— « +n » de la distribution : les pastilles tiennent sur une ligne (le CSS les rogne), et ce qui ne tient pas se compte ici
   // après le dessin, sur les cases en place : data-plus sur la case, que le CSS écrit en « +n » dans son coin
-  function compterPlus() {
-    const cases = $$('#tab-corps td.c-distribution');
+  function compterPlus(portee = null) {
+    const cases = portee || $$('#tab-corps td.c-distribution');
     if (!cases.length) return;
     const gauche = parseFloat(getComputedStyle(cases[0]).paddingLeft) || 9, plus = cases.map(td => {
       const l = $('.tab-pastilles-ligne', td);
@@ -480,7 +806,10 @@ const TABLEUR = (() => {
     });
     cases.forEach((td, i) => { if (plus[i]) { if (td.dataset.plus !== String(plus[i])) td.dataset.plus = String(plus[i]); } else if ('plus' in td.dataset) delete td.dataset.plus; });
   }
-  const cellule = (l, c) => $(`#tab-corps tr[data-l="${l}"] td[data-c="${c}"]`);
+  const cellule = (l, c) => $(`#tab-corps ${T.neuve && l === T.lignes.length ? 'tr[data-neuve]' : `tr[data-l="${l}"]`} td[data-c="${c}"]`);
+  // le nombre de lignes de la grille (la ligne vide du bas du Simple comprise) et la ligne d'un rang : T.lignes, puis cette ligne-là
+  const nbLignes = () => T.lignes.length + (T.neuve ? 1 : 0);
+  const ligne = l => T.lignes[l] || (T.neuve && l === T.lignes.length ? T.neuve : undefined);
   const dansPlage = (l, c) => { if (!T.ancre) return l === T.actif.l && c === T.actif.c; const [l0, l1] = [Math.min(T.ancre.l, T.actif.l), Math.max(T.ancre.l, T.actif.l)], [c0, c1] = [Math.min(T.ancre.c, T.actif.c), Math.max(T.ancre.c, T.actif.c)]; return l >= l0 && l <= l1 && c >= c0 && c <= c1; };
   const plage = () => { const a = T.ancre || T.actif; return { l0: Math.min(a.l, T.actif.l), l1: Math.max(a.l, T.actif.l), c0: Math.min(a.c, T.actif.c), c1: Math.max(a.c, T.actif.c) }; };
   // la case active (tabindex 0), la plage choisie (aria-selected), et la même case de la date sur ses autres séances
@@ -488,8 +817,8 @@ const TABLEUR = (() => {
     $$('#tab-corps td.actif, #tab-corps td.choisie, #tab-corps td.meme-date').forEach(td => { td.classList.remove('actif', 'choisie', 'meme-date'); td.tabIndex = -1; td.removeAttribute('aria-selected'); });
     // le bouton « Supprimer » dit sur quoi il agit : la séance de la case active, ou les lignes choisies
     const bs = $('#tab-suppr'), pg = plage(), xs = T.lignes.slice(pg.l0, pg.l1 + 1);
-    if (bs) { bs.hidden = !xs.length; bs.textContent = xs.length > 1 ? `Supprimer ces ${xs.length} ${xs.every(y => y.r) ? 'séances' : 'lignes'}…` : xs.length ? `Supprimer ${xs[0].r ? 'la séance' : 'la date'} du ${jourCourt(xs[0].r?.jour || xs[0].d.debut)}…` : ''; }
-    const x = T.lignes[T.actif.l], c = T.cols[T.actif.c];
+    if (bs) { bs.hidden = !xs.length; bs.textContent = xs.length > 1 ? `Supprimer ces ${xs.length} ${modeSimple() ? 'dates' : xs.every(y => y.r) ? 'séances' : 'lignes'}…` : xs.length ? `Supprimer ${xs[0].r ? 'la séance' : 'la date'} du ${jourCourt(xs[0].r?.jour || xs[0].d.debut)}…` : ''; }
+    const x = ligne(T.actif.l), c = T.cols[T.actif.c];
     if (!x || !c) return;
     if (T.ancre) { const p = plage(); for (let l = p.l0; l <= p.l1; l++) for (let j = p.c0; j <= p.c1; j++) { const td = cellule(l, j); if (td) { td.classList.add('choisie'); td.setAttribute('aria-selected', 'true'); } } }
     if (c.niveau !== 'seance' && x.n > 1) T.lignes.forEach((y, l) => { if (y.d.id === x.d.id && l !== T.actif.l) cellule(l, T.actif.c)?.classList.add('meme-date'); });
@@ -511,28 +840,49 @@ const TABLEUR = (() => {
     if (r.top < barre || r.bottom > innerHeight) { if (p.top < barre || p.top > innerHeight * 0.6) scrollBy({ top: p.top - barre - 8 }); }
   }
   function activer(l, c, { etendre = false, focus = true } = {}) {
-    if (!T.lignes.length) return;
-    l = Math.max(0, Math.min(T.lignes.length - 1, l)); c = Math.max(0, Math.min(T.cols.length - 1, c));
+    if (!nbLignes()) return;
+    l = Math.max(0, Math.min(nbLignes() - 1, l)); c = Math.max(0, Math.min(T.cols.length - 1, c));
+    if (T.htmls && l >= T.rendues) finirTranches();   // (la ligne visée n'est pas encore posée)
     if (etendre) { if (!T.ancre) T.ancre = { ...T.actif }; } else T.ancre = null;
     T.actif = { l, c };
     marquer(focus);
     enVue(cellule(l, c));
   }
-  // une phrase sous les filtres : « Enregistrement… », « Enregistré : … » (avec « Annuler »), une erreur
-  function etat(texte, genre = '', annulable = false) {
+  // la barre d'état, collée sous le cadre (.tab-ligne-etat : le compte, l'état, « Supprimer… ») : une icône, une phrase (« Enregistrement… »,
+  // « Enregistré : … » avec « Annuler Ctrl Z » quand la pile le permet, une erreur), et, quand un collage a laissé des cases de côté (la
+  // phrase le dit), « Voir » qui va à la première. Une écriture que la base a refusée (echec) offre « Reprendre » (les cases reprennent leur
+  // valeur d'avant) et « Réessayer » (l'écriture est rejouée) : jamais Ctrl+Z, qui défairait l'écriture d'avant, réussie. Les deux restent
+  // à la queue de toute phrase tant que des cases sont cerclées de rouge (T.echec) : une autre phrase (« Copié »…) ne les prive pas d'issue.
+  const ICONES_ETAT = { encours: 'horloge', ok: 'coche-cercle', erreur: 'alerte' };
+  function etat(texte, genre = '', annulable = false, { echec = false } = {}) {
     const el = $('#tab-etat'); if (!el) return;
     el.className = `tab-etat ${genre}`;
-    el.innerHTML = `${esc(texte)}${annulable && T.pile.length ? ' <button type="button" class="btn lien petit" id="tab-annuler">Annuler <kbd>Ctrl Z</kbd></button>' : ''}`;
+    const ico = ICONES_ETAT[genre] ? `<span class="tab-etat-ico" aria-hidden="true">${icone(ICONES_ETAT[genre], 14)}</span>` : '';
+    const bouton = (id, libelle) => ` <button type="button" class="btn lien petit" id="${id}">${libelle}</button>`;
+    el.innerHTML = `${ico}${esc(texte)}${annulable && T.pile.length ? bouton('tab-annuler', 'Annuler <kbd>Ctrl Z</kbd>') : ''}${T.ignorees.size && /ignorée/.test(texte) ? bouton('tab-voir', 'Voir') : ''}${echec || (T.echec && genre !== 'encours') ? `${bouton('tab-reprendre', 'Reprendre')}${bouton('tab-reessayer', 'Réessayer')}` : ''}`;
+    const barre = $('.tab-ligne-etat');
+    if (barre && barre.offsetHeight !== T.hBarre) placerCadre();   // (une phrase longue passe à la ligne : le cadre rend la place)
+  }
+  // ce qu'une vue d'avant laissait : cases refusées, cases ignorées d'un collage (leurs minuteries aussi)
+  function oublierEtats() {
+    T.erreurs.clear(); T.refus.clear(); T.echec = null;
+    T.ignorees.forEach(i => clearTimeout(i.t)); T.ignorees.clear();
   }
 
   // ———— les gestes
   function brancher() {
     brancherFiltresDates(T.f, () => { garderFiltres(); T.actif = { l: 0, c: 0 }; T.ancre = null; dessiner(); });
     $('#tab-vides').addEventListener('change', e => { ecrireReglages({ vides: e.target.checked }); dessiner({ garder: true }); });
+    $$('.tab-modes [data-mode]').forEach(b => b.addEventListener('click', () => changerMode(b.dataset.mode)));
     $('#tab-tete').addEventListener('click', e => { if (e.target.closest('#tab-tri')) { basculerTri(); $('#tab-tri')?.focus(); } });
     brancherTete($('#tab-tete'));
     $('#tab-colonnes').addEventListener('click', () => { if (T.pop?.ouvreur === $('#tab-colonnes')) fermerPop(); else ouvrirChoix(); });
-    $('#tab-etat').addEventListener('click', e => { if (e.target.closest('#tab-annuler')) annuler(); });
+    $('#tab-etat').addEventListener('click', e => {
+      if (e.target.closest('#tab-annuler')) annuler();
+      else if (e.target.closest('#tab-voir')) voirIgnorees();
+      else if (e.target.closest('#tab-reprendre')) reprendre();
+      else if (e.target.closest('#tab-reessayer')) reessayer();
+    });
     $('#tab-plus').addEventListener('click', () => formAjout());
     $('#tab-importer').addEventListener('click', () => importer());
     $('#tab-suppr').addEventListener('click', () => supprimerLignes());
@@ -547,7 +897,7 @@ const TABLEUR = (() => {
     const corps = $('#tab-corps'), table = $('#tab');
     corps.addEventListener('mousedown', e => {
       const td = e.target.closest('td[data-c]'); if (!td || td.contains(T.edition?.el)) return;
-      const l = +td.parentNode.dataset.l, c = +td.dataset.c;
+      const l = td.parentNode.hasAttribute('data-neuve') ? T.lignes.length : +td.parentNode.dataset.l, c = +td.dataset.c;
       if (T.edition) fermerEdition({ valider: true });
       const deja = td === document.activeElement && !T.ancre;   // un clic sur la case active (déjà choisie) : écrire
       e.preventDefault();
@@ -589,7 +939,8 @@ const TABLEUR = (() => {
         ecrire: v => { cadreT.style.maxHeight = `${v}px`; cadreT.style.height = `${v}px`; } });
     }
     if (typeof ResizeObserver === 'function') {
-      const ro = new ResizeObserver(() => compterPlus());
+      let largeur = -1;   // (seule la largeur compte : les lignes qui s'ajoutent ne changent pas ce qui tient dans une case)
+      const ro = new ResizeObserver(es => { const w = Math.round(es[0].contentRect.width); if (w !== largeur) { largeur = w; compterPlus(); } });
       ro.observe($('#tab-corps')); T.nettoyer.push(() => ro.disconnect());
     }
   }
@@ -599,19 +950,19 @@ const TABLEUR = (() => {
     if (T.edition || T.pop || !e.target.closest('#tab-corps')) return;
     const mod = e.ctrlKey || e.metaKey, { l, c } = T.actif, k = e.key;
     const bouger = (dl, dc) => { e.preventDefault(); activer(l + dl, c + dc, { etendre: e.shiftKey }); };
-    if (k === 'ArrowDown') return bouger(mod ? T.lignes.length : 1, 0);
-    if (k === 'ArrowUp') return bouger(mod ? -T.lignes.length : -1, 0);
+    if (k === 'ArrowDown') return bouger(mod ? nbLignes() : 1, 0);
+    if (k === 'ArrowUp') return bouger(mod ? -nbLignes() : -1, 0);
     if (k === 'ArrowRight') return bouger(0, mod ? T.cols.length : 1);
     if (k === 'ArrowLeft') return bouger(0, mod ? -T.cols.length : -1);
     if (k === 'PageDown') return bouger(10, 0);
     if (k === 'PageUp') return bouger(-10, 0);
     if (k === 'Home') { e.preventDefault(); return activer(mod ? 0 : l, 0, { etendre: e.shiftKey }); }
-    if (k === 'End') { e.preventDefault(); return activer(mod ? T.lignes.length - 1 : l, T.cols.length - 1, { etendre: e.shiftKey }); }
+    if (k === 'End') { e.preventDefault(); return activer(mod ? nbLignes() - 1 : l, T.cols.length - 1, { etendre: e.shiftKey }); }
     if (k === 'Tab') {
       const n = c + (e.shiftKey ? -1 : 1);
       if (n >= 0 && n < T.cols.length) { e.preventDefault(); return activer(l, n); }
       const m = l + (e.shiftKey ? -1 : 1);
-      if (m >= 0 && m < T.lignes.length) { e.preventDefault(); return activer(m, e.shiftKey ? T.cols.length - 1 : 0); }
+      if (m >= 0 && m < nbLignes()) { e.preventDefault(); return activer(m, e.shiftKey ? T.cols.length - 1 : 0); }
       return;   // au bord du tableau, Tab en sort
     }
     if (k === 'Escape') { if (T.ancre) { e.preventDefault(); T.ancre = null; marquer(true); } return; }
@@ -624,7 +975,7 @@ const TABLEUR = (() => {
     if (k.length === 1 && !mod && !e.altKey) {
       const col = T.cols[c];
       if (['texte', 'long', 'lien', 'heure', 'jour'].includes(col?.type) && !(natif() && ['heure', 'jour'].includes(col.type))) { e.preventDefault(); return editer(k); }
-      if (col?.type === 'choix' || col?.type === 'lieu' || col?.type === 'equipe') { e.preventDefault(); return editer(col.type === 'choix' ? null : k); }
+      if (col?.type === 'choix' || col?.type === 'lieu' || col?.type === 'equipe' || col?.type === 'seances') { e.preventDefault(); return editer(col.type === 'choix' || col.type === 'seances' ? null : k); }
     }
   }
 
@@ -655,7 +1006,7 @@ const TABLEUR = (() => {
   function retablir(avant) { if (typeof PREFS !== 'undefined') PREFS.ecrire('tableur.colonnes', avant, { aussitot: true }); rafraichirColonnes(); }
   function masquer(k, { dire = true } = {}) {
     const c = colonne(k), rg = reglages();
-    if (!c || rg.masquees.includes(k)) return;
+    if (!c || modeSimple() || rg.masquees.includes(k)) return;
     if (k === 'jour') { annoncer('Le jour reste : c’est lui qui date chaque ligne.'); return; }
     const avant = ecrireReglages({ masquees: [...rg.masquees, k] }), j = T.cols.findIndex(x => x.k === k), dansTete = !!document.activeElement?.closest?.('#tab-tete');
     dessiner({ garder: true });
@@ -664,7 +1015,7 @@ const TABLEUR = (() => {
   }
   function montrer(k) {
     const rg = reglages();
-    if (!colonne(k) || !rg.masquees.includes(k)) return;
+    if (!colonne(k) || modeSimple() || !rg.masquees.includes(k)) return;
     ecrireReglages({ masquees: rg.masquees.filter(x => x !== k) });
     dessiner({ garder: true });
   }
@@ -672,7 +1023,7 @@ const TABLEUR = (() => {
   // figée, elles se défigent
   function figer(k) {
     const c = colonne(k), n = rang(k) + 1;
-    if (!c || n < 1) return;
+    if (!c || modeSimple() || n < 1) return;
     const deja = reglages().figees === n;
     ecrireReglages({ figees: deja ? 0 : n });
     dessiner({ garder: true });
@@ -688,7 +1039,7 @@ const TABLEUR = (() => {
   // « Colonnes… ») ; le focus revient où il était
   function deplacer(k, sens, { parmi = 'montrees', focus = false } = {}) {
     const c = colonne(k), liste = parmi === 'toutes' ? possibles() : T.cols, j = liste.findIndex(x => x.k === k), v = liste[j + sens];
-    if (!c || j < 0) return false;
+    if (!c || modeSimple() || j < 0) return false;
     if (!v) { annoncer(`« ${c.l} » est déjà la ${sens < 0 ? 'première' : 'dernière'} colonne.`); return false; }
     const ordre = possibles().map(x => x.k).filter(x => x !== k), i = ordre.indexOf(v.k);
     ordre.splice(sens < 0 ? i : i + 1, 0, k);
@@ -709,6 +1060,9 @@ const TABLEUR = (() => {
   // le menu d'un en-tête (clic droit, Maj+F10, appui long) : menus.js l'appelle, rien d'autre
   function actions(k) {
     const c = colonne(k); if (!c) return [];
+    // (le Simple a six colonnes fixes : on ne les masque, ne les fige ni ne les déplace ; la largeur et, pour le jour, le tri)
+    if (modeSimple()) return [...(largeLa() ? [{ libelle: 'Ajuster la largeur', icone: icone('poignee-v'), faire: () => ajusterEtGarder(k) }] : []),
+      ...(k === 'jour' ? [{ libelle: T.v.tri === 'desc' ? 'Trier : du plus ancien' : 'Trier : du plus récent', icone: icone(T.v.tri === 'desc' ? 'haut' : 'bas'), faire: () => basculerTri() }] : [])];
     const j = T.cols.findIndex(x => x.k === k), jusquIci = reglages().figees === rang(k) + 1;
     return [
       { libelle: 'Masquer', detail: k === 'jour' ? 'le jour date chaque ligne' : '', icone: icone('oeil-barre'), desactive: k === 'jour', faire: () => masquer(k) },
@@ -806,21 +1160,91 @@ const TABLEUR = (() => {
       faire: () => { const th = document.activeElement?.closest?.('#tab-tete th[data-k]'); if (th) deplacer(th.dataset.k, sens, { focus: true }); } }));
 
   // ==================== l'édition : écrire dans une case, enregistrer, annuler, vider
+  // ———— le petit calendrier de la case du jour (.tab-cal) : accroché à la saisie (T.edition.cal), jamais une fenêtre posée (poser) : celle-ci ferme
+  // au mousedown ailleurs que chez elle, et la saisie se ferme au blur de son champ, deux machines d'état sur une même case. Le champ garde le
+  // focus : le calendrier n'est pas focalisable, il se pilote depuis le clavier du champ (aria-activedescendant ; ← → ± un jour, ↑ ↓ ± une
+  // semaine, Page ↑ ↓ ± un mois, Entrée, Échap, Suppr, tous avec stopPropagation : le clavier de la grille lie Page ↑ ↓ à ± 10 lignes et Suppr à
+  // vider) ou à la souris (un mousedown sur lui ne retire pas le focus du champ). « ‹ Novembre 2026 › », lundi en premier, une grille de six
+  // semaines de 32 px, aujourd'hui cerclé, le jour choisi plein, les jours des mois voisins à demi effacés. Au doigt (natif), le champ de date
+  // du téléphone le remplace : pas de calendrier.
+  const JOURS_LONGS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+  // le même quantième n mois plus loin, ramené à la fin du mois qui n'a pas ce quantième (le 31 janvier + 1 mois : le 28 février)
+  function moisPlus(j, n) {
+    const [a, m, d] = j.split('-').map(Number), t = a * 12 + (m - 1) + n, a2 = Math.floor(t / 12), m2 = t % 12 + 1;
+    return iso(a2, m2, Math.min(d, new Date(Date.UTC(a2, m2, 0)).getUTCDate()));
+  }
+  function poserCal(td, champ, depart) {
+    let sel = depart, vue = depart.slice(0, 7);
+    const cal = document.createElement('div');
+    cal.className = 'tab-cal'; cal.id = 'tab-cal';
+    document.body.append(cal);
+    champ.setAttribute('role', 'combobox'); champ.setAttribute('aria-haspopup', 'grid'); champ.setAttribute('aria-expanded', 'true'); champ.setAttribute('aria-controls', 'tab-cal');
+    const dessinerCal = () => {
+      const [a, m] = vue.split('-').map(Number), decal = (new Date(Date.UTC(a, m - 1, 1)).getUTCDay() + 6) % 7, premier = jourPlus(`${vue}-01`, -decal), mois = AGENDA.MOIS[m - 1];
+      let rangs = '';
+      for (let r = 0; r < 6; r++) {
+        rangs += '<div role="row" class="tab-cal-rang">';
+        for (let c = 0; c < 7; c++) {
+          const j = jourPlus(premier, r * 7 + c), nom = `${JOURS_LONGS[new Date(`${j}T12:00:00Z`).getUTCDay()]} ${+j.slice(8)} ${AGENDA.MOIS[+j.slice(5, 7) - 1]} ${j.slice(0, 4)}`;
+          rangs += `<span role="gridcell" id="tab-cal-${j}" data-j="${j}" aria-selected="${j === sel}" aria-label="${nom}" class="tab-cal-j${j.slice(0, 7) !== vue ? ' hors' : ''}${j === AUJ ? ' auj' : ''}${j === sel ? ' choisi' : ''}">${+j.slice(8)}</span>`;
+        }
+        rangs += '</div>';
+      }
+      cal.innerHTML = `<div class="tab-cal-tete"><button type="button" tabindex="-1" data-cal-mois="-1" aria-label="Mois précédent">‹</button><b id="tab-cal-titre">${mois[0].toUpperCase()}${mois.slice(1)} ${a}</b><button type="button" tabindex="-1" data-cal-mois="1" aria-label="Mois suivant">›</button></div>
+        <div class="tab-cal-grille" role="grid" aria-labelledby="tab-cal-titre"><div role="row" class="tab-cal-rang tab-cal-sem">${['lun', 'mar', 'mer', 'jeu', 'ven', 'sam', 'dim'].map((s, i) => `<span role="columnheader" abbr="${JOURS_LONGS[(i + 1) % 7]}">${s}</span>`).join('')}</div>${rangs}</div>`;
+      if ($(`#tab-cal-${sel}`, cal)) champ.setAttribute('aria-activedescendant', `tab-cal-${sel}`); else champ.removeAttribute('aria-activedescendant');
+    };
+    const aller = (j, ecrireChamp) => { sel = j; vue = j.slice(0, 7); if (ecrireChamp) champ.value = jjmmaaaa(j); dessinerCal(); };
+    dessinerCal();
+    const placer = () => placerSous(cal, td);
+    placer();
+    window.addEventListener('resize', placer); $('#tab-cadre')?.addEventListener('scroll', placer);
+    cal.addEventListener('mousedown', e => e.preventDefault());   // (le champ garde le focus : sinon son blur fermerait la saisie)
+    cal.addEventListener('click', e => {
+      const nav = e.target.closest('[data-cal-mois]'), jour = e.target.closest('[data-j]');
+      if (nav) { vue = moisPlus(`${vue}-01`, +nav.dataset.calMois).slice(0, 7); dessinerCal(); }
+      else if (jour) { champ.value = jjmmaaaa(jour.dataset.j); fermerEdition({ valider: true }); }
+    });
+    champ.addEventListener('input', () => { const j = lireJour(champ.value, depart); if (j) { sel = j; vue = j.slice(0, 7); dessinerCal(); } });   // (ce qu'on tape déplace le calendrier)
+    return {
+      el: cal,
+      // une touche du champ : le calendrier la prend (rend vrai) ou la laisse au champ (Suppr, Retour arrière : le texte s'efface ; rien ne remonte à la grille)
+      touche(e) {
+        if (e.ctrlKey || e.metaKey || e.altKey) return false;
+        if (e.key === 'Delete' || e.key === 'Backspace') { e.stopPropagation(); return false; }
+        if (e.shiftKey) return false;
+        const pas = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[e.key];
+        const n = pas ? jourPlus(sel, pas) : e.key === 'PageUp' ? moisPlus(sel, -1) : e.key === 'PageDown' ? moisPlus(sel, 1) : null;
+        if (!n) return false;
+        e.preventDefault(); e.stopPropagation();
+        aller(n, true);
+        return true;
+      },
+      fermer() {
+        window.removeEventListener('resize', placer); $('#tab-cadre')?.removeEventListener('scroll', placer);
+        cal.remove();
+        ['role', 'aria-haspopup', 'aria-expanded', 'aria-controls', 'aria-activedescendant'].forEach(a => champ.removeAttribute(a));
+      },
+    };
+  }
+
   // ———— écrire dans une case
   function editer(initial = null) {
-    const x = T.lignes[T.actif.l], c = T.cols[T.actif.c];
+    const x = ligne(T.actif.l), c = T.cols[T.actif.c];
     if (!x || !c) return;
+    if (x.neuve && !CASES_NEUVES.includes(c.k)) return etat('Cette case se remplit quand la date existe : écrivez d’abord son jour et son spectacle.');
     if (c.type === 'lecture') { const j = T.cols.findIndex(y => y.k === 'lieu'); etat('La commune vient de la fiche du lieu : changez le lieu.'); if (j >= 0) { activer(T.actif.l, j); editer(); } return; }
     if (c.fige?.(x)) return etat('Une répétition, une résidence : jamais sur le site.');
     if (c.type === 'case') return ecrire([{ x, col: c, v: !c.val(x) }]);
     if (c.type === 'lieu') return editerLieu(x, c, initial);
     if (c.type === 'equipe') return editerEquipe(x, c, initial);
+    if (c.type === 'seances') return editerSeances(x, c);
     const td = cellule(T.actif.l, T.actif.c);
     const date = c.type === 'jour' && natif(), heure = c.type === 'heure' && natif();
     const el = document.createElement(c.type === 'choix' ? 'select' : c.type === 'long' ? 'textarea' : 'input');
     el.className = 'tab-ed';
     el.setAttribute('aria-label', `${c.l}${c.niveau === 'date' && x.n > 1 ? ` (pour les ${x.n} séances de la date)` : ''}`);
-    if (c.type === 'choix') el.innerHTML = c.choix().map(([v, l]) => `<option value="${esc(v)}"${String(v) === String(c.val(x)) ? ' selected' : ''}>${esc(l)}</option>`).join('');
+    if (c.type === 'choix') el.innerHTML = `${x.neuve ? '<option value="">—</option>' : ''}${c.choix().map(([v, l]) => `<option value="${esc(v)}"${String(v) === String(c.val(x)) ? ' selected' : ''}>${esc(l)}</option>`).join('')}`;
     else {
       if (el.tagName === 'INPUT') { el.type = date ? 'date' : heure ? 'time' : c.type === 'lien' ? 'url' : 'text'; if (heure) el.step = 300; el.autocomplete = 'off'; }
       el.value = initial ?? (date ? c.val(x) : c.type === 'heure' ? (heure ? c.val(x) : heureT(c.val(x))) : c.type === 'jour' ? jjmmaaaa(c.val(x)) : c.val(x));
@@ -837,8 +1261,10 @@ const TABLEUR = (() => {
     T.edition = { x, col: c, el, td, l: T.actif.l, c: T.actif.c, taille0: c.type === 'long' ? [el.offsetWidth, el.offsetHeight] : null };
     el.focus();
     if (initial == null && el.select && c.type !== 'choix') el.select();
+    if (c.type === 'jour' && !date) { const ref = /^\d{4}-\d{2}-\d{2}$/.test(c.val(x) || '') ? c.val(x) : AUJ; T.edition.cal = poserCal(td, el, lireJour(el.value, ref) || ref); }   // (au doigt, le champ de date du téléphone)
     if (c.niveau === 'date' && x.n > 1) etat(`${c.l} : vaut pour les ${x.n} séances de cette date.`);
     el.addEventListener('keydown', e => {
+      if (T.edition?.cal?.touche(e)) return;
       if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); fermerEdition({ valider: false }); return; }
       if (e.key === 'Enter' && !(c.type === 'long' && e.shiftKey)) { e.preventDefault(); fermerEdition({ valider: true, aller: e.shiftKey ? 'haut' : 'bas' }); return; }
       if (e.key === 'Tab') { e.preventDefault(); fermerEdition({ valider: true, aller: e.shiftKey ? 'gauche' : 'droite' }); }
@@ -849,20 +1275,22 @@ const TABLEUR = (() => {
     const ed = T.edition; if (!ed) return;
     const { x, col, el, td } = ed;
     let v;
+    if (valider && x.neuve && el.value === '') valider = false;   // (la ligne vide du bas : rien d'écrit, rien à enregistrer)
     if (valider) {
       const brut = el.value;
       v = col.type === 'choix' ? col.choix().find(([y]) => String(y) === brut)?.[0] : (col.type === 'jour' && el.type === 'date') ? brut || undefined : (col.type === 'heure' && el.type === 'time') ? brut : col.lire(brut, x);
       if (v === undefined || (v === '' && !col.vider && col.type !== 'heure')) {
-        etat(`${col.l} : « ${brut} » n’est pas reconnu${focus ? '' : ', la case garde sa valeur'}.${col.type === 'jour' ? ' Écrivez par exemple 5/11/2026.' : col.type === 'heure' ? ' Écrivez par exemple 20h30.' : ''}`, 'erreur');
+        etat(`${col.l} : « ${brut} » n’est pas reconnu${focus ? '' : ', la case garde sa valeur'}.${col.type === 'jour' ? (/^\s*du\s|\sau\s|→/i.test(brut) ? ' Une période n’est pas un jour : écrivez un seul jour, par exemple 5/11/2026.' : ' Écrivez par exemple 5/11/2026.') : col.type === 'heure' ? ' Écrivez par exemple 20h30.' : ''}`, 'erreur');
         if (focus) { el.focus(); return; }
         valider = false;
       }
     }
     T.edition = null;
+    ed.cal?.fermer();
     if (ed.taille0 && el.isConnected && typeof FENETRES !== 'undefined' && (el.offsetWidth !== ed.taille0[0] || el.offsetHeight !== ed.taille0[1])) FENETRES.garder(`tab-ed-${col.k}`, { l: el.offsetWidth, h: el.offsetHeight });
     el.remove(); td.classList.remove('en-edition');
-    if (valider && JSON.stringify(v) !== JSON.stringify(col.val(x))) { td.innerHTML = esc(apercu(col, v)); td.classList.add('en-cours'); ecrire([{ x, col, v }]); }
-    else if (T.aRafraichir) { T.aRafraichir = false; dessiner({ garder: true }); }
+    if (valider && JSON.stringify(v) !== JSON.stringify(col.val(x))) { td.innerHTML = esc(apercu(col, v)); td.classList.add('en-cours'); if (T.htmls) T.htmls[ed.l] = null; ecrire([{ x, col, v }]); }
+    else rattraper();
     if (aller === 'bas') activer(T.actif.l + 1, T.actif.c, { focus });
     else if (aller === 'haut') activer(T.actif.l - 1, T.actif.c, { focus });
     else if (aller === 'droite') activer(T.actif.l, T.actif.c + 1, { focus });
@@ -870,30 +1298,42 @@ const TABLEUR = (() => {
     else if (focus) marquer(true);
   }
   // ce qu'une case montre pendant l'enregistrement
-  const apercu = (col, v) => col.type === 'heure' ? heureT(v) : col.type === 'jour' ? jourCourt(v) : col.type === 'choix' ? (col.choix().find(([y]) => String(y) === String(v)) || [null, ''])[1] : col.type === 'lieu' ? lieuTexte(lieu(v)) : col.type === 'equipe' ? prenoms(v).join(', ') : String(v ?? '');
+  const apercu = (col, v) => col.type === 'seances' ? v.map(r => heureT(r.heure)).filter(Boolean).join(' · ') : col.type === 'heure' ? heureT(v) : col.type === 'jour' ? jourCourt(v) : col.type === 'choix' ? (col.choix().find(([y]) => String(y) === String(v)) || [null, ''])[1] : col.type === 'lieu' ? lieuTexte(lieu(v)) : col.type === 'equipe' ? prenoms(v).join(', ') : String(v ?? '');
 
   // ———— enregistrer : par date, son formulaire (dateVersForm) avec ce qui change, puis ecrireDate — le chemin de la fiche
   // changements : [{ x (la ligne), col, v }]. Les écritures passent l'une après l'autre (T.file).
-  function ecrire(changements, { annulable = true, dire = null } = {}) {
+  // prevenir : le nombre de dates dont le jour change et dont l'équipe est prévenue par la base (« Date déplacée »), dit pendant l'écriture
+  function ecrire(changements, { annulable = true, dire = null, prevenir = 0 } = {}) {
+    // la ligne vide du bas ne s'écrit pas : elle se remplit (remplirNeuve), et se crée quand son jour et son spectacle y sont
+    const neuves = changements.filter(ch => ch.x.neuve);
+    if (neuves.length) { remplirNeuve(neuves); changements = changements.filter(ch => !ch.x.neuve); if (!changements.length) return Promise.resolve(true); }
     const parDate = new Map();
     changements.forEach(ch => { const id = ch.x.d.id; if (!parDate.has(id)) parDate.set(id, []); parDate.get(id).push(ch); });
+    changements.forEach(ch => { const k = cleCase(ch.x, ch.col); T.erreurs.delete(k); T.refus.delete(k); });   // (réécrite : la case n'est plus en erreur)
+    if (T.echec) { T.echec.changements = T.echec.changements.filter(ch => !changements.some(y => cleCase(y.x, y.col) === cleCase(ch.x, ch.col))); if (!T.echec.changements.length) T.echec = null; }
+    let reste = [...changements];   // ce que la base n'a pas encore pris : en cas de refus, les cases qu'on rend en erreur
     T.attente++;
-    etat('Enregistrement…', 'encours');
+    etat(prevenir ? `Enregistrement… l’équipe de ${pl(prevenir, 'date')} est prévenue.` : 'Enregistrement…', 'encours');
     const tache = async () => {
       const defaire = [], faits = [];
       for (const [id, chs] of parDate) {
         const d = E.dates.find(y => y.id === id);
         if (!d) throw new Error('Cette date n’existe plus (elle a été supprimée ailleurs).');
-        const F = dateVersForm(d), instantane = chs.some(ch => !ch.x.r && ch.col.niveau === 'seance') ? clone(F) : null;
+        // (l'instantané de la date : une case de séance sans séance, ou une case qui décale la date ou refait ses séances — le jour et les
+        // séances du Simple —, qu'« Annuler » rend d'un bloc)
+        const F = dateVersForm(d), instantane = chs.some(ch => (!ch.x.r && ch.col.niveau === 'seance') || ch.col.instantane) ? clone(F) : null;
         const avant = chs.map(ch => ({ x: ch.x, col: ch.col, v: ch.col.val({ ...ch.x, d, r: ch.x.r && E.reps.find(r => r.id === ch.x.r.id) }) }));
-        chs.forEach(ch => ch.col.ecrire(F, ch.x, ch.v));
+        // (les séances d'abord : celles qu'on crée prennent le jour d'avant, que le décalage du jour, s'il est du même coup, emporte avec les autres)
+        [...chs].sort((a, b) => (b.col.k === 'seances') - (a.col.k === 'seances')).forEach(ch => ch.col.ecrire(F, ch.x, ch.v));
+        const retirees = instantane ? new Set(instantane.representations.filter(y => y.id && !F.representations.some(z => z.id === y.id)).map(y => y.id)) : null;   // (celles que ce geste retire : « Annuler » les recrée)
         const manque = manqueDate(F); if (manque) throw new Error(manque);
         T.recents.set(id, Date.now());
         const { equipeOk } = await ecrireDate(F, d, { libre: !!(d.intitule || '').trim() });
         T.recents.set(id, Date.now());
         if (!equipeOk) throw new Error('La date est enregistrée, mais pas son équipe.');
-        defaire.push(instantane ? { instantane, id } : { avant });
+        defaire.push(instantane ? { instantane, id, retirees } : { avant });
         faits.push(...chs);
+        reste = reste.filter(ch => !chs.includes(ch));
       }
       return { defaire, faits };
     };
@@ -902,28 +1342,64 @@ const TABLEUR = (() => {
     return p.then(({ defaire, faits }) => {
       T.attente--;
       const un = faits[0], phrase = dire || (faits.length === 1 ? `${un.col.l} ${un.col.niveau === 'date' && un.x.n > 1 ? `des ${un.x.n} séances ` : ''}du ${jourCourt(un.x.r?.jour || un.x.d.debut)} : ${apercu(un.col, un.v) || 'vide'}` : `${pl(faits.length, 'case')} sur ${pl(parDate.size, 'date')}`);
-      if (annulable) T.pile.push({ libelle: phrase, defaire: async () => {
+      if (annulable) T.pile.push({ libelle: phrase, ids: [...parDate.keys()], defaire: async () => {
         for (const u of defaire) {
-          if (u.instantane) { const d = E.dates.find(y => y.id === u.id); if (!d) continue; const F = u.instantane; F.representations = F.representations.filter(r => !r.id || E.reps.some(y => y.id === r.id)); await ecrireDate(F, d, { libre: !!(d.intitule || '').trim() }); T.recents.set(u.id, Date.now()); }
+          if (u.instantane) {
+            const d = E.dates.find(y => y.id === u.id); if (!d) continue;
+            const F = u.instantane;
+            F.representations = F.representations.filter(r => !r.id || u.retirees.has(r.id) || E.reps.some(y => y.id === r.id));   // (une séance retirée ailleurs entre-temps ne revient pas ; celle que ce geste a retirée revient, recréée)
+            F.representations.forEach(r => { if (u.retirees.has(r.id)) delete r.id; });
+            await ecrireDate(F, d, { libre: !!(d.intitule || '').trim() }); T.recents.set(u.id, Date.now());
+          }
           else if (!(await ecrire(u.avant, { annulable: false, dire: 'retour en arrière' }))) throw new Error('la base a refusé');
         }
       } });
       if (!T.attente) etat(`Enregistré : ${phrase}.`, 'ok', annulable);
-      dessiner({ garder: true });
+      redessiner([...parDate.keys()]);
       return true;
     }, err => {
       T.attente--;
-      etat(`Pas enregistré : ${err?.message || err}`, 'erreur');
-      dessiner({ garder: true });
+      refuser(reste.length ? reste : changements, err?.message || String(err), { annulable, dire, prevenir });
+      redessiner([...parDate.keys()]);
       return false;
     });
+  }
+  // la base a refusé (ou n'a pas pu) : les cases qu'elle n'a pas prises restent cerclées de rouge avec ce qu'on y avait écrit, le message en
+  // infobulle ; la barre d'état le dit, avec « Reprendre » et « Réessayer ». Un refus qui suit un refus s'ajoute au premier. Les options de
+  // l'écriture (annulable, dire, prevenir : le message du collage, « l'équipe de n dates est prévenue ») sont gardées pour « Réessayer » ;
+  // quand le refus en rejoint un autre, la phrase ne dit plus que le dernier geste : elle n'est pas rejouée.
+  function refuser(chs, message, options = {}) {
+    const avant = T.echec ? T.echec.changements.filter(ch => !chs.some(y => cleCase(y.x, y.col) === cleCase(ch.x, ch.col))) : [];
+    T.echec = { message, changements: [...avant, ...chs], options: avant.length ? { annulable: options.annulable } : options };
+    chs.forEach(ch => { const k = cleCase(ch.x, ch.col); T.erreurs.set(k, message); T.refus.set(k, apercu(ch.col, ch.v)); });
+    etat(`Pas enregistré : ${message}`, 'erreur', false, { echec: true });
+  }
+  // « Reprendre » : les cases refusées reprennent la valeur qu'elles avaient (l'erreur s'efface, rien n'est écrit)
+  function reprendre() {
+    const e = T.echec; if (!e) return;
+    const ids = [...new Set(e.changements.map(ch => ch.x.d.id))];
+    e.changements.forEach(ch => { const k = cleCase(ch.x, ch.col); T.erreurs.delete(k); T.refus.delete(k); });
+    T.echec = null;
+    etat('Les cases refusées ont repris leur valeur d’avant.');
+    redessiner(ids);
+    marquer(true);
+  }
+  // « Réessayer » : la même écriture, rejouée (les lignes sont reprises telles qu'elles sont maintenant : le temps réel a pu les refaire)
+  function reessayer() {
+    const e = T.echec; if (!e) return;
+    const chs = e.changements.map(ch => ({ ...ch, x: T.lignes.find(y => y.cle === ch.x.cle) || ch.x }));
+    chs.forEach(ch => {   // (la case reprend l'italique de l'écriture en cours, sans attendre)
+      const l = T.lignes.findIndex(y => y.cle === ch.x.cle), j = T.cols.findIndex(y => y.k === ch.col.k), td = l >= 0 && j >= 0 ? cellule(l, j) : null;
+      if (td) { td.classList.remove('erreur'); td.removeAttribute('title'); td.removeAttribute('aria-invalid'); td.classList.add('en-cours'); }
+    });
+    ecrire(chs, e.options || {});
   }
   async function annuler() {
     const u = T.pile.pop();
     if (!u) return etat('Rien à annuler.');
     etat('Retour en arrière…', 'encours');
     try { await u.defaire(); etat(`Annulé : ${u.libelle}.`, 'ok'); } catch (e) { etat(`Retour impossible : ${e?.message || e}`, 'erreur'); }
-    dessiner({ garder: true });
+    dessinerLignes(u.ids);   // (sans ids — un ajout, une suppression, « Étendre à… » : toute la grille)
     marquer(true);
   }
   // Suppr : vider les cases choisies (celles qui peuvent l'être)
@@ -942,6 +1418,15 @@ const TABLEUR = (() => {
   }
 
   // ==================== les fenêtres posées sur une case (le lieu, la distribution)
+  // ———— poser une boîte (une fenêtre, le petit calendrier) sous une case, ou au-dessus quand il n'y a pas la place, sans sortir de l'écran
+  function placerSous(boite, td) {
+    if (!td.isConnected) return;
+    const r = td.getBoundingClientRect(), w = Math.min(boite.offsetWidth, innerWidth - 16), h = boite.offsetHeight;
+    let top = r.bottom + 4;
+    if (top + h > innerHeight - 8 && r.top - h - 4 > 8) top = r.top - h - 4;
+    boite.style.left = `${Math.min(Math.max(8, r.left), innerWidth - w - 8)}px`;
+    boite.style.top = `${Math.max(8, Math.min(top, innerHeight - h - 8))}px`;
+  }
   // ———— une fenêtre posée sur la case (le lieu, la distribution) : Échap la ferme ; un clic à côté la ferme aussi
   // cle : la fenêtre a un coin qu'on tire (FENETRES, fenetres.<cle>), et rouvre à la largeur retenue ; ouvreur : le bouton qui l'ouvre
   // (un clic sur lui ne la ferme pas avant de la rouvrir) ; retour : où va le focus quand elle se ferme (sinon la case active)
@@ -953,14 +1438,7 @@ const TABLEUR = (() => {
     if (label) pop.setAttribute('aria-label', label);
     pop.innerHTML = html;
     document.body.append(pop);
-    const placer = () => {
-      if (!td.isConnected) return;
-      const r = td.getBoundingClientRect(), w = Math.min(pop.offsetWidth, innerWidth - 16), h = pop.offsetHeight;
-      let top = r.bottom + 4;
-      if (top + h > innerHeight - 8 && r.top - h - 4 > 8) top = r.top - h - 4;
-      pop.style.left = `${Math.min(Math.max(8, r.left), innerWidth - w - 8)}px`;
-      pop.style.top = `${Math.max(8, Math.min(top, innerHeight - h - 8))}px`;
-    };
+    const placer = () => placerSous(pop, td);
     if (cle && typeof FENETRES !== 'undefined' && FENETRES.actif()) {
       const t = FENETRES.taille(cle), largeurOrigine = Math.min(large ? 430 : 340, innerWidth - 16);
       let naturelle = null;   // la hauteur que le contenu donne à la largeur d'origine, mesurée au geste (le contenu peut arriver après l'ouverture)
@@ -991,7 +1469,7 @@ const TABLEUR = (() => {
     const p = T.pop; if (!p) return;
     T.pop = null; p.nettoyer(); p.el.remove();
     p.ouvreur?.setAttribute('aria-expanded', 'false');
-    if (T.aRafraichir) { T.aRafraichir = false; dessiner({ garder: true }); }
+    rattraper();
     if (rendre) { if (p.retour) p.retour(); else marquer(true); }
   }
   // le lieu : la recherche des lieux de l'administration (et « Nouveau lieu »)
@@ -1065,6 +1543,121 @@ const TABLEUR = (() => {
     if (initial) { q.value = initial; dessinerP(); }
   }
 
+  // ———— les séances d'une date (le Simple) : une fenêtre qui les liste (jour, heure, fin), ✕ pour en retirer une, ＋ pour en ajouter ; Entrée,
+  // « Enregistrer » ou un clic à côté écrivent la liste d'un coup, par ecrire() comme toute case (la pile d'annulation, l'état) ; Échap renonce
+  function editerSeances(x, c) {
+    const td = cellule(T.actif.l, T.actif.c), d = x.d, avecFin = !!E.sql3, periode = d.fin && d.fin !== d.debut && !x.rs.length;
+    const lignesS = x.rs.map(repSimple), sansFin = avecFin ? '' : ' sans-fin';
+    const pop = poser(td, `<p class="tab-pop-titre" id="tab-sc-titre">Séances · ${esc(jourCourt(d.debut))}${d.fin && d.fin !== d.debut ? ` <small>→ ${esc(jourCourt(d.fin))}</small>` : ''}</p>
+      ${periode ? `<p class="aide">Cette date est une période (${esc(jourSansAn(d.debut))} → ${esc(jourSansAn(d.fin))}) : ajouter une séance la fixe au jour.</p>` : ''}
+      <div class="tab-sc-tete${sansFin}" aria-hidden="true"><span>Jour</span><span>Heure</span>${avecFin ? '<span>Fin</span>' : ''}<span></span></div>
+      <ul class="tab-sc-liste${sansFin}" id="tab-sc-liste"></ul>
+      <p class="tab-sc-erreur" id="tab-sc-erreur" role="alert" hidden></p>
+      <div class="tab-pop-pied"><button type="button" class="btn petit" data-sc-plus>＋ Séance</button><button type="button" class="btn principal petit" data-sc-ok>Enregistrer</button><button type="button" class="btn petit lien" data-fermer>Annuler</button></div>
+      <p class="aide">Entrée enregistre, Échap renonce.</p>`, { label: `Séances du ${jourCourt(d.debut)}` });
+    pop.classList.add('seances');
+    const liste = $('#tab-sc-liste', pop), erreur = $('#tab-sc-erreur', pop);
+    const champ = (nom, i, valeur, aide, ex) => `<input type="text" data-sc="${nom}" value="${esc(valeur)}" placeholder="${ex}" aria-label="${aide} de la séance ${i + 1}" autocomplete="off" spellcheck="false">`;
+    const rangee = (r, i) => `<li class="tab-sc" data-i="${i}">${champ('jour', i, jjmmaaaa(r.jour), 'Jour', 'jj/mm/aaaa')}${champ('heure', i, r.heure ? heureT(r.heure) : '', 'Heure', '20h30')}${avecFin ? champ('fin', i, r.fin ? heureT(r.fin) : '', 'Fin', '22h') : ''}<button type="button" class="btn petit lien" data-sc-retirer aria-label="Retirer la séance ${i + 1}">✕</button></li>`;
+    liste.innerHTML = lignesS.map(rangee).join('');
+    T.pop.placer();
+    // la liste voulue : chaque rangée lue (une rangée laissée vide ne compte pas) ; faux, avec l'erreur dite, si l'une est illisible
+    const lire = () => {
+      const sortie = [], faux = [];
+      $$('.tab-sc', liste).forEach((li, k) => {
+        const r = lignesS[+li.dataset.i], [jb, hb, fb] = ['jour', 'heure', 'fin'].map(n => $(`[data-sc=${n}]`, li));
+        if (!jb.value.trim() && !hb.value.trim() && !(fb && fb.value.trim())) return;
+        const j = lireJour(jb.value, d.debut), h = lireHeure(hb.value), f = fb ? lireHeure(fb.value) : r.fin;
+        jb.setAttribute('aria-invalid', String(!j)); hb.setAttribute('aria-invalid', String(h === undefined)); if (fb) fb.setAttribute('aria-invalid', String(f === undefined));
+        if (!j) faux.push({ el: jb, dit: `séance ${k + 1} : le jour n’est pas reconnu (écrivez par exemple 5/11/2026)` });
+        else if (h === undefined) faux.push({ el: hb, dit: `séance ${k + 1} : l’heure n’est pas reconnue (écrivez par exemple 20h30)` });
+        else if (f === undefined) faux.push({ el: fb, dit: `séance ${k + 1} : l’heure de fin n’est pas reconnue (écrivez par exemple 22h)` });
+        else sortie.push({ ...r, jour: j, heure: h, fin: f });
+      });
+      erreur.hidden = !faux.length; erreur.textContent = faux.length ? `${faux[0].dit[0].toUpperCase()}${faux[0].dit.slice(1)}.` : '';
+      T.pop?.placer();
+      if (faux.length) { faux[0].el.focus(); return false; }
+      return trierReps(sortie);
+    };
+    const valider = () => {
+      const sortie = lire();
+      if (!sortie) return false;
+      fermerPop();
+      if (JSON.stringify(sortie) !== JSON.stringify(c.val(x))) return ecrire([{ x, col: c, v: sortie }]);
+      return Promise.resolve(true);
+    };
+    T.pop.valider = valider;
+    pop.addEventListener('click', e => {
+      if (e.target.closest('[data-fermer]')) return fermerPop();
+      if (e.target.closest('[data-sc-ok]')) return valider();
+      if (e.target.closest('[data-sc-plus]')) {
+        const dernier = [...$$('.tab-sc [data-sc=jour]', liste)].pop(), nouvelle = repSimple({ jour: (dernier && lireJour(dernier.value, d.debut)) || d.debut, public: pubDe(d) });
+        lignesS.push(nouvelle);
+        liste.insertAdjacentHTML('beforeend', rangee(nouvelle, lignesS.length - 1));
+        T.pop.placer();
+        $('.tab-sc:last-child [data-sc=heure]', liste).focus();
+        return;
+      }
+      const retirer = e.target.closest('[data-sc-retirer]');
+      if (retirer) {
+        const li = retirer.closest('.tab-sc'), voisin = li.nextElementSibling || li.previousElementSibling;
+        li.remove(); T.pop.placer();
+        ($('[data-sc=heure]', voisin || pop) || $('[data-sc-plus]', pop)).focus();
+      }
+    });
+    pop.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && e.target.matches('input')) { e.preventDefault(); valider(); return; }
+      if (e.key !== 'Tab') return;
+      const focalisables = $$('input, button', pop).filter(el => !el.disabled && el.offsetParent !== null), premier = focalisables[0], dernier = focalisables[focalisables.length - 1];
+      if (e.shiftKey && document.activeElement === premier) { e.preventDefault(); dernier.focus(); }
+      else if (!e.shiftKey && document.activeElement === dernier) { e.preventDefault(); premier.focus(); }
+    });
+    const premier = $('[data-sc=heure]', liste) || $('[data-sc-plus]', pop);
+    premier.focus();
+    if (premier.select) premier.select();
+  }
+
+  // ———— la ligne vide du bas du Simple : elle reçoit le jour, le spectacle, le lieu de la date à venir (T.brouillon), qui se crée dès que son
+  // jour et son spectacle y sont (un nouvelle date, jamais fusionnée avec sa voisine), annoncée avec « Annuler »
+  function remplirNeuve(chs) {
+    chs.forEach(({ col, v }) => { if (col.k === 'jour') T.brouillon.jour = v; else if (col.k === 'spectacle') T.brouillon.spectacle = v; else if (col.k === 'lieu') T.brouillon.lieu = v; });
+    if (T.brouillon.jour && ligneNeuve().d.spectacle_id) return creerDateNeuve();
+    dessinerNeuve();
+    etat(`Nouvelle date : il manque ${T.brouillon.jour ? 'le spectacle' : 'le jour'}.`);
+  }
+  function dessinerNeuve() {
+    const corps = $('#tab-corps'); if (!corps || !T.neuve) return;
+    finirTranches();   // (elle vient à la fin : les lignes d'avant doivent être là)
+    const focus = corps.contains(document.activeElement), tr = $('tr[data-neuve]', corps);
+    T.neuve = ligneNeuve();
+    if (tr) tr.outerHTML = htmlLigne(T.neuve, T.lignes.length); else corps.insertAdjacentHTML('beforeend', htmlLigne(T.neuve, T.lignes.length));
+    marquer(focus);
+  }
+  async function creerDateNeuve() {
+    const b = { ...T.brouillon }, sp = ligneNeuve().d.spectacle_id;
+    T.brouillon = { jour: '', spectacle: null, lieu: null };
+    etat('Enregistrement…', 'encours');
+    const tache = T.file.then(() => ajouterSeance({ jour: b.jour, heure: '', spectacle_id: sp, lieu_id: b.lieu, separee: true }));
+    T.file = tache.catch(() => {});
+    try {
+      const a = await tache;
+      T.pile.push({ libelle: a.texte, defaire: () => defaireAjout(a) });
+      etat(`${a.texte[0].toUpperCase()}${a.texte.slice(1)}.`, 'ok', true);
+      montrerAjouts([a.id]);
+      const focus = !!$('#tab-corps')?.contains(document.activeElement);
+      dessiner();
+      // la case active reste sur la ligne vide, pour la suivante (elle est la dernière : activer() pose d'abord ce que les tranches n'ont pas posé) ;
+      // la date neuve se place dans l'ordre des jours et clignote, une fois sa ligne posée
+      activer(T.lignes.length, Math.max(0, T.cols.findIndex(y => y.k === 'jour')), { focus });
+      const l = T.lignes.findIndex(y => y.d.id === a.id), tr = l >= 0 ? $(`#tab-corps tr[data-l="${l}"]`) : null;
+      if (tr) $$('td', tr).forEach(td => td.classList.add('vient-d-ailleurs'));
+    } catch (err) {
+      T.brouillon = b;   // ce qu'on avait écrit reste sur la ligne
+      etat(`Pas enregistré : ${err?.message || err}`, 'erreur');
+      dessiner({ garder: true });
+    }
+  }
+
   // ==================== la distribution sur d'autres dates (« Étendre à… »)
   // ———— « Étendre à… » : la même distribution sur d'autres dates du même spectacle
   function etendre(x, ids) {
@@ -1127,8 +1720,9 @@ const TABLEUR = (() => {
   const ecartJours = (d, j) => (j < d.debut ? (Date.parse(d.debut) - Date.parse(j)) : j > (d.fin || d.debut) ? (Date.parse(j) - Date.parse(d.fin || d.debut)) : 0) / 864e5;
   const dateVoisine = (sp, lieuId, jour) => E.dates.filter(d => d.spectacle_id === sp && d.statut !== 'annulee' && (d.lieu_id ?? null) === (lieuId ?? null) && ecartJours(d, jour) <= 1).sort((a, b) => ecartJours(a, jour) - ecartJours(b, jour))[0] || null;
   const ouDit = lieuId => { const l = lieu(lieuId); return l ? `${l.nom ? `${l.nom}, ` : ''}${l.commune}` : 'lieu à préciser'; };
-  async function ajouterSeance({ jour, heure = '', fin = '', spectacle_id, lieu_id = null, seance = {}, date = {}, suivi = {}, equipe = null }) {
-    const d = dateVoisine(spectacle_id, lieu_id, jour);
+  // separee : une date neuve, jamais fusionnée avec sa voisine (une ligne du Simple est une date)
+  async function ajouterSeance({ jour, heure = '', fin = '', spectacle_id, lieu_id = null, seance = {}, date = {}, suivi = {}, equipe = null, separee = false }) {
+    const d = separee ? null : dateVoisine(spectacle_id, lieu_id, jour);
     const rep = { jour, heure, fin, public: 'tout_public', annulee: false, lien: '', note: '', ...seance };
     if (d) {
       const F = dateVersForm(d);
@@ -1173,12 +1767,13 @@ const TABLEUR = (() => {
     if (!form.hidden) { form.hidden = true; b.setAttribute('aria-expanded', 'false'); b.focus(); return; }
     form.hidden = false; b.setAttribute('aria-expanded', 'true');
     const sp0 = String(T.f.spectacle || (E.spectacles.slice().sort((x, y) => (y.page - x.page) || x.ordre - y.ordre)[0] || {}).id || '');
-    form.innerHTML = `<h3>Ajouter une séance</h3><div class="tab-ajout-champs">
+    const simple = modeSimple();
+    form.innerHTML = `<h3>${simple ? 'Ajouter une date' : 'Ajouter une séance'}</h3><div class="tab-ajout-champs${simple ? ' sans-heure' : ''}">
       <div class="champ"><label for="ta-jour">Jour</label><input id="ta-jour" ${natif() ? 'type="date"' : 'type="text" placeholder="jj/mm/aaaa"'} autocomplete="off"></div>
-      <div class="champ"><label for="ta-heure">Heure</label><input id="ta-heure" ${natif() ? 'type="time" step="300"' : 'type="text" placeholder="20h30"'} autocomplete="off"></div>
+      ${simple ? '' : `<div class="champ"><label for="ta-heure">Heure</label><input id="ta-heure" ${natif() ? 'type="time" step="300"' : 'type="text" placeholder="20h30"'} autocomplete="off"></div>`}
       <div class="champ"><label for="ta-sp">Spectacle</label><select id="ta-sp">${choixSpectacles().map(([v, l]) => `<option value="${v}"${v === sp0 ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select></div>
       <div class="champ ta-lieu"><span class="lib">Lieu</span><div id="ta-lieu"></div></div></div>
-      <p class="aide">Une date du même spectacle au même lieu qui touche ce jour (le même, la veille ou le lendemain) reçoit la séance ; sinon une nouvelle date se crée.</p>
+      <p class="aide">${simple ? 'Une nouvelle date se crée toujours, même à côté d’une date du même spectacle au même lieu ; ses heures se règlent ensuite dans la case Séances.' : 'Une date du même spectacle au même lieu qui touche ce jour (le même, la veille ou le lendemain) reçoit la séance ; sinon une nouvelle date se crée.'}</p>
       <div class="fm-boutons"><button type="submit" class="btn principal">Ajouter</button><button type="button" class="btn" data-fermer>Fermer</button></div>`;
     let lieuId = null;
     comboLieu(form, 'ta-lieu', null, id => { lieuId = id; });
@@ -1187,7 +1782,7 @@ const TABLEUR = (() => {
     form.onkeydown = e => { if (e.key === 'Escape' && !e.target.closest('.combo')) { e.preventDefault(); formAjout(); } };
     form.onsubmit = async e => {
       e.preventDefault();
-      const jour = natif() ? $('#ta-jour', form).value : lireJour($('#ta-jour', form).value, AUJ), heure = natif() ? $('#ta-heure', form).value : lireHeure($('#ta-heure', form).value);
+      const jour = natif() ? $('#ta-jour', form).value : lireJour($('#ta-jour', form).value, AUJ), heure = simple ? '' : natif() ? $('#ta-heure', form).value : lireHeure($('#ta-heure', form).value);
       if (!jour) { etat('Le jour n’est pas reconnu : écrivez par exemple 5/11/2026.', 'erreur'); return $('#ta-jour', form).focus(); }
       if (heure === undefined) { etat('L’heure n’est pas reconnue : écrivez par exemple 20h30.', 'erreur'); return $('#ta-heure', form).focus(); }
       const sp = +$('#ta-sp', form).value;
@@ -1195,7 +1790,7 @@ const TABLEUR = (() => {
       const bouton = $('button[type=submit]', form);
       bouton.disabled = true;
       etat('Enregistrement…', 'encours');
-      const tache = T.file.then(() => ajouterSeance({ jour, heure, spectacle_id: sp, lieu_id: lieuId }));
+      const tache = T.file.then(() => ajouterSeance({ jour, heure, spectacle_id: sp, lieu_id: lieuId, separee: simple }));
       T.file = tache.catch(() => {});
       try {
         const a = await tache;
@@ -1206,9 +1801,9 @@ const TABLEUR = (() => {
         // la séance ajoutée : en vue, et la case de l'heure active
         montrerAjouts([a.id]);
         dessiner();
-        const l = T.lignes.findIndex(y => y.d.id === a.id && (a.rep ? y.r?.id === a.rep : y.r?.jour === jour));
-        if (l >= 0) { activer(l, Math.max(0, T.cols.findIndex(y => y.k === 'heure')), { focus: false }); cellule(l, T.actif.c)?.classList.add('vient-d-ailleurs'); }
-        $('#ta-jour', form).value = ''; $('#ta-heure', form).value = '';
+        const l = T.lignes.findIndex(y => y.d.id === a.id && (simple || (a.rep ? y.r?.id === a.rep : y.r?.jour === jour)));
+        if (l >= 0) { activer(l, Math.max(0, T.cols.findIndex(y => y.k === (simple ? 'seances' : 'heure'))), { focus: false }); cellule(l, T.actif.c)?.classList.add('vient-d-ailleurs'); }
+        $('#ta-jour', form).value = ''; if (!simple) $('#ta-heure', form).value = '';
         $('#ta-jour', form).focus();
       } catch (err) { bouton.disabled = false; etat(`Pas enregistré : ${err?.message || err}`, 'erreur'); }
     };
@@ -1222,9 +1817,10 @@ const TABLEUR = (() => {
     const parDate = new Map();
     xs.forEach(x => { if (!parDate.has(x.d.id)) parDate.set(x.d.id, { d: x.d, reps: new Set(), entiere: !x.r }); const g = parDate.get(x.d.id); if (x.r) g.reps.add(x.r.id); else g.entiere = true; });
     const groupes = [...parDate.values()].map(g => ({ ...g, entiere: g.entiere || repsDe(g.d.id).every(r => g.reps.has(r.id)) }));
-    const entieres = groupes.filter(g => g.entiere), nS = xs.filter(x => x.r).length;
-    const seul = xs.length === 1 ? xs[0] : null, dateSeule = !!seul && !seul.r;   // une date sans séance (une période)
-    const quoi = seul ? `${dateSeule ? 'la date' : 'la séance'} du ${jourCourt(seul.r?.jour || seul.d.debut)}${seul.r?.heure ? ` à ${heureT(seul.r.heure)}` : ''} (${spectacle(seul.d.spectacle_id)?.titre || ''}, ${ouDit(seul.d.lieu_id)})` : `${pl(nS || xs.length, 'séance')}`;
+    const simple = modeSimple(), entieres = groupes.filter(g => g.entiere), nS = simple ? xs.reduce((n, x) => n + x.rs.length, 0) : xs.filter(x => x.r).length;
+    const seul = xs.length === 1 ? xs[0] : null, dateSeule = !!seul && !seul.r;   // une date sans séance (une période) ; en Simple, une ligne est une date
+    const quoi = seul ? `${dateSeule ? 'la date' : 'la séance'} du ${jourCourt(seul.r?.jour || seul.d.debut)}${seul.r?.heure ? ` à ${heureT(seul.r.heure)}` : ''} (${spectacle(seul.d.spectacle_id)?.titre || ''}, ${ouDit(seul.d.lieu_id)})${simple && nS ? ` et ${nS > 1 ? `ses ${nS} séances` : 'sa séance'}` : ''}`
+      : simple ? `${pl(xs.length, 'date')}${nS ? ` et leurs ${pl(nS, 'séance')}` : ''}` : `${pl(nS || xs.length, 'séance')}`;
     const suite = dateSeule ? 'Elle n’a pas de séance : elle est supprimée, avec son équipe et sa feuille de route.'
       : entieres.length ? `${entieres.length > 1 ? `${entieres.length} dates n’auront` : 'Sa date n’aura'} plus de séance : ${entieres.length > 1 ? 'elles sont supprimées' : 'elle est supprimée'}, avec ${entieres.length > 1 ? 'leur' : 'son'} équipe et ${entieres.length > 1 ? 'leur' : 'sa'} feuille de route.` : '';
     etat('Suppression…', 'encours');
@@ -1244,7 +1840,7 @@ const TABLEUR = (() => {
     T.file = tache.catch(() => {});
     try {
       const defaire = await tache;
-      const texte = `${quoi} supprimée${xs.length > 1 ? 's' : ''}${entieres.length && !dateSeule ? ` (${pl(entieres.length, 'date')} entière${entieres.length > 1 ? 's' : ''})` : ''}`;
+      const texte = `${quoi} supprimée${xs.length > 1 || (simple && nS) ? 's' : ''}${entieres.length && !dateSeule && !simple ? ` (${pl(entieres.length, 'date')} entière${entieres.length > 1 ? 's' : ''})` : ''}`;
       T.pile.push({ libelle: texte, defaire: async () => { for (const f of defaire.reverse()) await f(); } });
       T.ancre = null;
       etat(`${texte[0].toUpperCase()}${texte.slice(1)}.`, 'ok', true);
@@ -1257,7 +1853,7 @@ const TABLEUR = (() => {
   const cellTsv = v => (/[\t\n"]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
   function copie() {
     const p = plage(), out = [];
-    for (let l = p.l0; l <= p.l1; l++) { const x = T.lignes[l]; out.push(T.cols.slice(p.c0, p.c1 + 1).map(c => cellTsv(String(c.copie(x) ?? '').replace(/\r?\n/g, ' '))).join('\t')); }
+    for (let l = p.l0; l <= p.l1; l++) { const x = T.lignes[l]; if (!x) continue; out.push(T.cols.slice(p.c0, p.c1 + 1).map(c => cellTsv(String(c.copie(x) ?? '').replace(/\r?\n/g, ' '))).join('\t')); }
     return out.join('\n');
   }
   // un texte de tableur → des lignes de cases (les guillemets d'Excel et de Google Sheets compris)
@@ -1275,26 +1871,66 @@ const TABLEUR = (() => {
     out[out.length - 1].push(cas);
     return out.filter(r => r.some(x => x.trim() !== '') || r.length > 1);
   }
+  // les cases d'un collage que le tableur n'a pas comprises : { ligne, colonne, brut, raison, cle }, surlignées en ambre vingt secondes (.ignoree : le
+  // fond --option-doux, la raison en infobulle) et comptées par la barre d'état (« n cases ignorées », « Voir » va à la première)
+  const SURLIGNEE_MS = 20000;
+  function placeDe(cle) {
+    const i = cle.lastIndexOf('|'), xc = cle.slice(0, i), k = cle.slice(i + 1);
+    const l = xc === 'neuve' ? (T.neuve ? T.lignes.length : -1) : T.lignes.findIndex(y => y.cle === xc), j = T.cols.findIndex(c => c.k === k);
+    return l >= 0 && j >= 0 ? { l, j } : null;
+  }
+  const caseDe = cle => { const q = placeDe(cle); return q ? cellule(q.l, q.j) : null; };
+  // (une ligne que les tranches n'ont pas encore posée prendra le HTML d'aujourd'hui, pas celui qu'elle avait : surlignée ou non)
+  const aRefaire = cle => { const q = placeDe(cle); if (q && T.htmls && q.l >= T.rendues && q.l < T.htmls.length) T.htmls[q.l] = null; };
+  function oublierIgnoree(cle) {
+    const i = T.ignorees.get(cle); if (!i) return;
+    clearTimeout(i.t); T.ignorees.delete(cle);
+    aRefaire(cle);
+    const td = caseDe(cle);
+    if (td) { td.classList.remove('ignoree'); const t = T.textes?.get(cle) || ''; if (t.length > 16) td.title = t; else td.removeAttribute('title'); }
+  }
+  function marquerIgnorees(liste) {
+    [...T.ignorees.keys()].forEach(oublierIgnoree);
+    liste.forEach(i => {
+      T.ignorees.set(i.cle, { ligne: i.ligne, colonne: i.colonne, brut: i.brut, raison: i.raison, t: setTimeout(() => oublierIgnoree(i.cle), SURLIGNEE_MS) });
+      aRefaire(i.cle);
+      const td = caseDe(i.cle);
+      if (td) { td.classList.add('ignoree'); td.title = `Ignorée : ${i.raison} (« ${i.brut} »)`; }
+    });
+  }
+  function voirIgnorees() {
+    for (const [cle, i] of T.ignorees) { const q = placeDe(cle); if (q) { activer(q.l, q.j); return annoncer(`Première case ignorée : ${i.raison}.`); } }
+    etat('Les cases ignorées ne sont plus surlignées.');
+  }
   function coller(texte) {
     const m = lireTsv(texte);
     if (!m.length) return;
-    const p = plage(), chs = [], vus = new Map();
-    let ignorees = 0, dehors = 0;
+    const p = plage(), chs = [], vus = new Map(), ignorees = [];
+    let dehors = 0;
     const mettre = (l, j, brut) => {
-      const x = T.lignes[l], c = T.cols[j];
+      const x = T.lignes[l] || (T.neuve && l === T.lignes.length ? T.neuve : null), c = T.cols[j];   // (la ligne vide du bas, juste après la dernière date, reçoit le collage : son jour, son spectacle, son lieu)
       if (!x || !c) { dehors++; return; }
-      if (c.type === 'lecture' || c.fige?.(x)) { ignorees++; return; }
+      const ignorer = raison => ignorees.push({ ligne: l, colonne: j, brut: String(brut).trim(), raison, cle: cleCase(x, c) });
+      if (x.neuve && !CASES_NEUVES.includes(c.k)) { if (String(brut).trim() !== '') ignorer('cette case se remplit quand la date existe'); return; }   // (une case vide, à cheval sur la ligne vide, ne se compte pas)
+      if (c.type === 'lecture') return ignorer('case en lecture seule');
+      if (c.fige?.(x)) return ignorer('une répétition, une résidence : jamais sur le site');
       const v = c.lire(brut, x);
-      if (v === undefined || (v === '' && !c.vider && c.type !== 'heure')) { ignorees++; return; }
+      if (v === undefined) return ignorer(`valeur non reconnue pour « ${c.l} »`);
+      if (v === '' && !c.vider && c.type !== 'heure') return ignorer(`« ${c.l} » ne se vide pas ainsi`);
       const k = c.niveau === 'seance' ? `${x.cle}|${c.k}` : `${x.d.id}|${c.k}`;
       if (vus.has(k)) chs.splice(vus.get(k), 1, { x, col: c, v }); else { vus.set(k, chs.length); chs.push({ x, col: c, v }); }
     };
     if (m.length === 1 && m[0].length === 1 && T.ancre) { for (let l = p.l0; l <= p.l1; l++) for (let j = p.c0; j <= p.c1; j++) mettre(l, j, m[0][0]); }
     else m.forEach((ligne, i) => ligne.forEach((brut, j) => mettre(p.l0 + i, p.c0 + j, brut)));
+    marquerIgnorees(ignorees);
     const fait = chs.filter(ch => JSON.stringify(ch.col.val(ch.x)) !== JSON.stringify(ch.v));
-    const note = [ignorees ? `${pl(ignorees, 'case')} ignorée${ignorees > 1 ? 's' : ''} (valeur non reconnue ou case en lecture seule)` : '', dehors ? `${pl(dehors, 'case')} hors du tableau (« Importer » crée des séances)` : ''].filter(Boolean).join(' ; ');
+    const n = ignorees.length, note = [n ? `${pl(n, 'case')} ignorée${n > 1 ? 's' : ''}, surlignée${n > 1 ? 's' : ''} en ambre` : '', dehors ? `${pl(dehors, 'case')} hors du tableau (« Importer » crée des ${modeSimple() ? 'dates' : 'séances'})` : ''].filter(Boolean).join(' ; ');
     if (!fait.length) return etat(note ? `Rien de collé : ${note}.` : 'Rien ne change.', note ? 'erreur' : '');
-    ecrire(fait, { dire: `${pl(fait.length, 'case')} collée${fait.length > 1 ? 's' : ''}${note ? ` ; ${note}` : ''}` });
+    // (le Simple : des séances que la liste collée ne cite plus sont retirées ; décaler le jour de dates à venir prévient leur équipe — « Date déplacée » —, ce que l'état dit)
+    const retirees = fait.reduce((n, ch) => n + (ch.col.k === 'seances' ? ch.x.rs.filter(r => !ch.v.some(y => y.id === r.id)).length : 0), 0);
+    const prevenues = new Set(fait.filter(ch => ch.col.k === 'jour' && (ch.x.d.fin || ch.x.d.debut) >= AUJ).map(ch => ch.x.d.id)).size, prevenir = modeSimple() && prevenues > 1 ? prevenues : 0;
+    const plus = [retirees ? `${pl(retirees, 'séance')} retirée${retirees > 1 ? 's' : ''}` : '', prevenir ? `l’équipe de ${pl(prevenir, 'date')} est prévenue` : ''].filter(Boolean).join(' ; ');
+    ecrire(fait, { dire: `${pl(fait.length, 'case')} collée${fait.length > 1 ? 's' : ''}${note ? ` ; ${note}` : ''}${plus ? ` ; ${plus}` : ''}`, prevenir });
   }
 
   // ==================== l'export : Excel, CSV, Google Sheets
