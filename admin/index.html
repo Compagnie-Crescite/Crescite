@@ -662,15 +662,22 @@ table.simple tr.cliquable:hover td { background: var(--doux); }
 .tab-etat kbd { margin-left: 2px; }
 .btn.tab-suppr { margin-left: auto; color: var(--alerte); }
 .btn.tab-suppr[hidden] { display: none; }
-.tab-cadre { --w-jour: 138px; --w-spectacle: 178px; position: relative; overflow: auto; overscroll-behavior: contain; max-height: 70vh; border: 1px solid var(--trait); border-radius: var(--rayon); background: var(--carte); }
+.tab-zone { position: relative; }
+.tab-cadre { position: relative; overflow: auto; overscroll-behavior: contain; max-height: 70vh; border: 1px solid var(--trait); border-radius: var(--rayon); background: var(--carte); }
 table.tableur { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; font-size: 13.5px; }
 .tableur th, .tableur td { box-sizing: border-box; padding: 6px 9px; border-bottom: 1px solid var(--trait); border-right: 1px solid var(--trait); text-align: left; vertical-align: top; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tableur thead th { position: sticky; top: 0; z-index: 3; background: var(--doux); color: var(--gris); font-size: 12.5px; font-weight: 750; }
 .tableur thead th.de-date { text-decoration: underline dotted color-mix(in srgb, var(--gris) 60%, transparent); text-underline-offset: 3px; }
 .tableur .tab-tri { border: 0; background: none; padding: 0; font: inherit; color: inherit; cursor: pointer; }
-.tableur .c-jour { position: sticky; left: 0; z-index: 2; }
-.tableur .c-spectacle { position: sticky; left: var(--w-jour); z-index: 2; box-shadow: 2px 0 0 var(--trait); }
-.tableur thead .c-jour, .tableur thead .c-spectacle { z-index: 4; }
+/* les colonnes figées (TABLEUR.colonnes.figer) : tableur.js pose .figee sur leur th et leurs td, .derniere sur la dernière, et --l-<k> (le
+   bord gauche, la somme des largeurs d'avant) sur le cadre ; les largeurs (--w-<k>) et le left de chaque colonne sont écrits par tableur.js
+   (style#styles-tableur-colonnes) d'après les colonnes du schéma de la date : leurs valeurs d'origine ne sont écrites qu'à cet endroit */
+.tableur .figee { position: sticky; z-index: 2; }
+.tableur .figee.derniere { box-shadow: 2px 0 0 var(--trait); }
+.tableur thead th.figee { z-index: 4; }
+.tableur thead th:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.tableur thead th > .poignee { right: 0; width: 9px; z-index: 5; }
+.tableur thead th > .poignee::after { left: auto; right: 2px; }
 .tableur tbody tr.b0 td { background: var(--carte); }
 .tableur tbody tr.b1 td { background: color-mix(in srgb, var(--doux) 60%, var(--carte)); }
 .tableur tbody tr.premier:not(:first-child) td { border-top: 1px solid color-mix(in srgb, var(--gris) 45%, transparent); }
@@ -678,12 +685,12 @@ table.tableur { border-collapse: separate; border-spacing: 0; width: max-content
 .tableur td.repete .pastille, .tableur td.repete .badge, .tableur td.repete .tab-pastille { opacity: .72; }
 .tableur td.choisie { background: var(--accent-doux) !important; }
 .tableur td.meme-date { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent); }
-.tableur td.c-spectacle.meme-date { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent), 2px 0 0 var(--trait); }
+.tableur td.figee.derniere.meme-date { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent), 2px 0 0 var(--trait); }
 .tableur td:focus, .tableur td:focus-visible { outline: none; }
 .tableur td.actif { box-shadow: inset 0 0 0 2px var(--accent); }
-.tableur td.c-spectacle.actif { box-shadow: inset 0 0 0 2px var(--accent), 2px 0 0 var(--trait); }
+.tableur td.figee.derniere.actif { box-shadow: inset 0 0 0 2px var(--accent), 2px 0 0 var(--trait); }
 .tableur td.en-edition { overflow: visible; }
-.tableur td.en-edition:not(.c-jour):not(.c-spectacle) { position: relative; }
+.tableur td.en-edition:not(.figee) { position: relative; }   /* (une case figée est déjà positionnée : sticky, la zone de saisie s'y pose) */
 .tableur td.en-cours { color: var(--option); font-style: italic; }
 .tableur td.vient-d-ailleurs { animation: tab-ailleurs 2s ease-out; }
 @keyframes tab-ailleurs { 0%, 30% { background: color-mix(in srgb, var(--ok) 32%, var(--carte)); } }
@@ -699,17 +706,13 @@ html.still .tableur td.visee { background-color: var(--accent-doux); box-shadow:
 .tab-ed { position: absolute; left: 0; top: 0; z-index: 6; width: max(100%, 190px); min-height: 100%; padding: 4px 8px; border: 2px solid var(--accent); border-radius: 4px; background: var(--carte); color: var(--encre); font-size: 14px; box-shadow: 0 6px 18px rgba(20, 10, 20, .2); }
 select.tab-ed { width: max(100%, 200px); }
 textarea.tab-ed { width: max(100%, 320px); min-height: 130px; resize: both; }
-.tableur .c-jour { width: var(--w-jour); min-width: var(--w-jour); max-width: var(--w-jour); }
-.tableur .c-spectacle { width: var(--w-spectacle); min-width: var(--w-spectacle); max-width: var(--w-spectacle); }
-.tableur .c-heure { width: 78px; min-width: 78px; max-width: 78px; }
-.tableur .c-fin { width: 68px; min-width: 68px; max-width: 68px; }
-.tableur .c-lieu { width: 190px; min-width: 190px; max-width: 190px; }
-.tableur .c-commune { width: 150px; min-width: 150px; max-width: 150px; }
-.tableur .c-public { width: 110px; min-width: 110px; max-width: 110px; }
-.tableur .c-statut { width: 112px; min-width: 112px; max-width: 112px; }
-.tableur .c-nature { width: 136px; min-width: 136px; max-width: 136px; }
-.tableur .c-distribution { width: 250px; min-width: 250px; max-width: 250px; }
-.tab-pastille.plus { background: none; border: 1px solid var(--trait); color: var(--gris); }
+/* les pastilles d'une case de distribution tiennent sur une ligne que la case rogne ; ce qui ne tient pas se compte (data-plus, posé par tableur.js
+   après le dessin) et s'écrit en « +n » dans le coin ; la place du « +n » se réserve à droite */
+.tab-pastilles-ligne { display: flex; flex-wrap: nowrap; overflow: hidden; }
+.tab-pastilles-ligne .tab-pastille { flex: none; }
+.tableur td.c-distribution[data-plus] { padding-right: 30px; }
+.tableur td.c-distribution[data-plus]:not(.figee) { position: relative; }
+.tableur td.c-distribution[data-plus]::after { content: '+' attr(data-plus); position: absolute; right: 6px; top: 6px; padding: 1px 7px; border: 1px solid var(--trait); border-radius: 999px; background: var(--carte); color: var(--gris); font-size: 12px; font-weight: 600; line-height: 1.25; }
 /* la cellule Distribution (admin/distribution.js) : des pastilles rondes de 24 px aux initiales, qui se chevauchent ; le
    liseré est celui du métier (les couleurs vont avec les jetons, dans habillage.js), un anneau pointillé pour un remplaçant
    ou un renfort, gris et barré pour qui ne part pas ; « −n » et « +n » en bout de rangée ; rien n'y bouge */
@@ -721,14 +724,6 @@ textarea.tab-ed { width: max(100%, 320px); min-height: 130px; resize: both; }
 .dist-moins, .dist-plus { margin-left: 6px; padding: 0 6px; border-radius: 999px; font-size: 11.5px; font-weight: 700; line-height: 18px; }
 .dist-moins { background: var(--corail-doux); color: var(--corail); }
 .dist-plus { background: none; border: 1px solid var(--trait); color: var(--gris); }
-.tableur .c-billetterie { width: 190px; min-width: 190px; max-width: 190px; }
-.tableur .c-precisions { width: 180px; min-width: 180px; max-width: 180px; }
-.tableur .c-organisateur { width: 180px; min-width: 180px; max-width: 180px; }
-.tableur .c-contact { width: 210px; min-width: 210px; max-width: 210px; }
-.tableur .c-contrat { width: 104px; min-width: 104px; max-width: 104px; }
-.tableur .c-notes { width: 240px; min-width: 240px; max-width: 240px; }
-.tableur .c-annulee { width: 112px; min-width: 112px; max-width: 112px; }
-.tableur .c-site { width: 90px; min-width: 90px; max-width: 90px; }
 .tab-aide { margin: 10px 2px 0; font-size: 12.5px; color: var(--gris); }
 .tab-ajout { margin-bottom: 12px; }
 .tab-ajout h3 { margin: 0 0 10px; }
@@ -736,6 +731,15 @@ textarea.tab-ed { width: max(100%, 320px); min-height: 130px; resize: both; }
 .tab-ajout .champ { margin-bottom: 8px; }
 .tab-pop { position: fixed; z-index: 40; width: min(340px, calc(100vw - 16px)); padding: 12px; background: var(--carte); border: 1px solid var(--trait); border-radius: 12px; box-shadow: 0 14px 40px rgba(20, 10, 20, .28); }
 .tab-pop.large { width: min(430px, calc(100vw - 16px)); }
+/* la fenêtre « Colonnes… » : la liste cochable et réordonnable */
+.tab-col-liste { max-height: min(60vh, 460px); margin: 0 0 4px; padding: 0; overflow: auto; list-style: none; }
+.tab-col { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 2px 4px; border-radius: 8px; cursor: grab; }
+.tab-col:hover { background: var(--doux); }
+.tab-col.glisse { opacity: .45; }
+.tab-col-nom { display: flex; align-items: center; gap: 8px; flex: 1; min-height: 32px; cursor: pointer; }
+.tab-col-nom small { color: var(--gris); }
+.tab-col-ordre { display: flex; gap: 2px; }
+.tab-col-ordre .btn { padding: 2px 8px; }
 .tab-pop-titre { margin: 0 0 8px; font-weight: 750; }
 .tab-pop-titre small { color: var(--gris); font-weight: 500; }
 .tab-pop .aide { margin: 8px 0 0; font-size: 12.5px; color: var(--gris); }
@@ -1024,8 +1028,8 @@ const LISTES_ADRESSE = [
   [/^#\/ateliers(?:\/seances(?:\/(?:nouvelle|\d+))?)?$/, 'seances', { periode: 'avenir', saison: '' }],
   [/^#\/journal$/, 'journal', { q: '', quoi: '', qui: '', periode: '', du: '', au: '' }],
 ];
-// Représentations : la liste, le tableur et la carte ont les mêmes filtres (l'état session.dates, une seule entrée) ; tri, vides,
-// serre, vb (le cadre de la carte : il ne dure que le temps où la carte reste ouverte) et ouvertes (session.vues.<vue>) et cible (« Voir dans le tableur ») ne vont jamais dans l'adresse. Seule clé lue et
+// Représentations : la liste, le tableur et la carte ont les mêmes filtres (l'état session.dates, une seule entrée) ; tri, serre,
+// vb (le cadre de la carte : il ne dure que le temps où la carte reste ouverte) et ouvertes (session.vues.<vue>) et cible (« Voir dans le tableur ») ne vont jamais dans l'adresse. Seule clé lue et
 // jamais réécrite : ?tri= (le tableur l'écrivait avant les filtres communs) ; elle sort de l'adresse à la première vue dessinée.
 const CLES_LUES_SEULEMENT = ['tri'];
 const CLES_FILTRES = [...new Set([...LISTES_ADRESSE.flatMap(x => Object.keys(x[2])), ...CLES_LUES_SEULEMENT])];
@@ -2600,11 +2604,12 @@ function formNouveauLieu(zone, texte, etablissement, fini) {
    et partagent leurs filtres : un seul état, session.dates (la recherche, la période, la saison, le spectacle, le statut,
    le public, et nature, département, contrat, du, au), un seul prédicat (dateRetenue), une seule barre (filtresDates).
    Changer de vue les garde ; l'adresse les porte (LISTES_ADRESSE : ce qui diffère de la valeur d'office). Ce qui est propre
-   à une vue reste dans session.vues.<vue>, hors de l'adresse (la liste : ses saisons ouvertes ; le tableur : le tri et les
-   colonnes vides ; la carte : « Autour des dates » et le cadre du zoom, vb, que la carte efface à chaque ouverture). Les trois vues partagent aussi le sélecteur de vues (choixVueDates :
+   à une vue reste dans session.vues.<vue>, hors de l'adresse (la liste : ses saisons ouvertes ; le tableur : le tri ; la carte :
+   « Autour des dates » et le cadre du zoom, vb, que la carte efface à chaque ouverture). Les colonnes du tableur (vides, ordre,
+   masquées, figées, largeurs) sont une préférence du compte. Les trois vues partagent aussi le sélecteur de vues (choixVueDates :
    une pilule de trois liens à icônes). */
 const DEFAUTS_DATES = { q: '', saison: '', spectacle: '', periode: 'avenir', statut: '', public: '', nature: '', dep: '', contrat: '', du: '', au: '' };
-const DEFAUTS_VUES = { liste: { ouvertes: [] }, tableur: { tri: 'asc', vides: false }, carte: { serre: false, vb: null } };
+const DEFAUTS_VUES = { liste: { ouvertes: [] }, tableur: { tri: 'asc' }, carte: { serre: false, vb: null } };   // (les colonnes vides du tableur vivent dans la préférence tableur.colonnes)
 const FILTRES_PLUS = ['nature', 'dep', 'contrat', 'du', 'au'];   // ceux que la barre range sous « Plus de filtres »
 // l'état propre à une vue (session.vues.<vue>), complété de ses valeurs d'office ; le même objet à chaque appel
 function etatVue(nom) {
@@ -2625,7 +2630,7 @@ function etatDates() {
     if (typeof t.saison === 'string') prendre('saison', t.saison);
     if (['avenir', 'passees', 'toutes'].includes(t.periode)) prendre('periode', t.periode);
     if (t.tri === 'desc') etatVue('tableur').tri = 'desc';
-    if (t.vides === true) etatVue('tableur').vides = true;
+    if (t.vides === true) etatVue('tableur').vides = true;   // (TABLEUR.vue le prend et l'écrit dans la préférence tableur.colonnes, une fois)
   }
   if (c && typeof c === 'object') {
     if (typeof c.saison === 'string') prendre('saison', c.saison === 'toutes' ? '' : c.saison);
@@ -2975,12 +2980,12 @@ const NATURES_DATE = [['representations', 'Représentations'], ['repetitions', '
 // date en tire ses libellés, ses aides et ses puces « calculé tout seul » ; le rail d'écriture (ecrireChamps) en tire le
 // geste d'écriture de chaque champ ; les feuilles « traiter sur place » du tableau de bord en tirent leurs champs ; l'essai
 // « aucun champ oublié » (site/champs.mjs) compare ce tableau aux colonnes réelles de la base (supabase/tests/champs.mjs).
-// Le tableur a encore sa déclaration (COLONNES, admin/tableur.js) : les deux coexistent jusqu'au lot qui retire l'ancienne ;
-// celle-ci en reprend les 22 colonnes telles quelles (val, texte, exp, copie, lire, ecrire).
+// Le tableur n'a plus sa propre déclaration : ses colonnes (COLONNES, admin/tableur.js) se tirent d'ici, par colonneDe, pour
+// tous les champs qui portent `colonne` ; ajouter une colonne au tableur, c'est écrire `colonne` sur un champ (les 22 d'aujourd'hui).
 //
 // Le contrat d'un champ — une entrée du tableau SCHEMA_DATE :
 //   k            l'identifiant, libre (« spectacle » est la colonne spectacle_id, « billetterie » la colonne lien de la date)
-//   l, aide      le libellé et l'aide de la fiche ; court : l'en-tête d'une colonne quand il est plus court que l
+//   l, aide      le libellé et l'aide de la fiche ; court : l'en-tête d'une colonne quand il diffère de l (« Billetterie »)
 //   table, col   la place dans la base : table parmi 'dates', 'representations', 'dates_suivi', 'dates_chiffres', 'equipes'
 //                (crescite_ devant), col le nom de la colonne ; absents pour un champ qui n'est que la vue d'un autre
 //                (miroir : 'visible' pour « site », 'equipe' pour « distribution ») et pour les envois entiers
@@ -2992,8 +2997,11 @@ const NATURES_DATE = [['representations', 'Représentations'], ['repetitions', '
 //   min, max, pas   pour un nombre (le montant de cession : 0 à 10 000 000, au centime ; les chiffres : CHIFFRES)
 //   derive       (F, d0) => 'la raison' quand le champ se calcule tout seul, '' sinon : la fiche en fait une puce grise
 //   confidentiel  vrai : jamais publié, jamais exporté sans le demander (le suivi commercial) ; jeux : les jeux de colonnes
-//                où le champ entre ('site', 'tournee', 'suivi', 'bilan', 'diffusion') ; colonne : { toujours } quand le
-//                tableur en fait une colonne ; fige : x => 'la raison' | '' (la case est grise quand le champ ne s'applique pas)
+//                où le champ entre ('site', 'tournee', 'suivi', 'bilan', 'diffusion') ; colonne : { toujours, rang, largeur, icone }
+//                quand le tableur en fait une colonne (toujours : jamais repliée quand elle est vide ; rang : sa place d'origine,
+//                du plus petit au plus grand ; largeur : sa largeur d'origine en pixels, la seule source du CSS et de la
+//                préférence tableur.colonnes ; icone : un nom de la bibliothèque ICONES) ; fige : x => 'la raison' | '' (la case
+//                est grise quand le champ ne s'applique pas)
 //   val, texte, html, exp, copie, lire, ecrire, vider   comme les colonnes du tableur : val x → la valeur (écrire, annuler,
 //                comparer), texte x → ce qui s'affiche, exp x → la valeur exportée, copie x → ce qu'on copie, lire (t, x,
 //                ligne) → une valeur ou undefined (pas reconnu), ecrire (F, x, v) → pose v dans le formulaire de la date
@@ -3041,31 +3049,34 @@ const SCHEMA_DATE = (() => {
   const joursDe = F => F.representations.filter(r => r.jour).map(r => r.jour).sort();
   const SUIVENT = F => (joursDe(F).length ? 'Début et fin : suivent les séances' : '');
   const ETIQUETTES_PUBLIC = { tout_public: 'tout public', scolaire: 'scolaire', mixte: 'mixte', autre: 'autre' };
-  const suiviCol = (k, l, extra) => ({ k, l, table: 'dates_suivi', col: k, niveau: 'suivi', type: 'texte', jeux: ['suivi'], confidentiel: true, colonne: {}, vider: true,
+  // la place, la largeur et l'icône des quatre colonnes du suivi dans le tableur (colonne.rang, .largeur, .icone)
+  const RANGS_SUIVI = { organisateur: 130, contact: 140, contrat: 150, notes: 170 }, LARGEURS_SUIVI = { organisateur: 180, contact: 210, contrat: 104, notes: 240 };
+  const ICONES_SUIVI = { organisateur: 'mallette', contact: 'tel', contrat: 'feuille', notes: 'crayon' };
+  const suiviCol = (k, l, extra) => ({ k, l, table: 'dates_suivi', col: k, niveau: 'suivi', type: 'texte', jeux: ['suivi'], confidentiel: true, colonne: { rang: RANGS_SUIVI[k], largeur: LARGEURS_SUIVI[k], icone: ICONES_SUIVI[k] }, vider: true,
     val: x => suiviDe(x.d)[k] || '', texte: x => suiviDe(x.d)[k] || '', lire: lireTexte, ecrire: (F, x, v) => { F.suivi[k] = v; }, ...extra });
   return [
     // ———— la date (crescite_dates)
-    { k: 'spectacle', l: 'Spectacle', table: 'dates', col: 'spectacle_id', niveau: 'date', type: 'choix', jeux: ['site', 'tournee'], colonne: { toujours: true }, choix: () => choixSpectacles().map(([v, l]) => [+v, l]),
+    { k: 'spectacle', l: 'Spectacle', table: 'dates', col: 'spectacle_id', niveau: 'date', type: 'choix', jeux: ['site', 'tournee'], colonne: { toujours: true, rang: 20, largeur: 178, icone: 'spectacles' }, choix: () => choixSpectacles().map(([v, l]) => [+v, l]),
       val: x => x.d.spectacle_id, texte: x => spectacle(x.d.spectacle_id)?.titre || '',
       html: x => { const s = spectacle(x.d.spectacle_id); return s ? `<span class="pastille" style="--c:${esc(couleurSp(s))}"></span>${esc(s.titre)}` : ''; },
       lire: lecteur('spectacle'), ecrire: (F, x, v) => { F.spectacle_id = v; } },
-    { k: 'lieu', l: 'Lieu', table: 'dates', col: 'lieu_id', niveau: 'date', type: 'lieu', jeux: ['site', 'tournee'], colonne: {}, val: x => x.d.lieu_id ?? null,
+    { k: 'lieu', l: 'Lieu', table: 'dates', col: 'lieu_id', niveau: 'date', type: 'lieu', jeux: ['site', 'tournee'], colonne: { rang: 50, largeur: 190, icone: 'carte' }, val: x => x.d.lieu_id ?? null,
       texte: x => { const l = lieuDe(x); return l ? l.nom || l.commune : ''; },
       html: x => { const l = lieuDe(x), ailleurs = !l && (x.d.intitule || '').split(' — ')[1]; return l ? esc(l.nom || l.commune) : ailleurs ? `<span class="tab-gris" title="Lieu repris de l’ancien site, sans fiche">${esc(ailleurs)}</span>` : ''; },
       lire: (t, x, ligne) => TABLEUR.lecteurs.lieu(t, ligne?.commune), vider: true, ecrire: (F, x, v) => { F.lieu_id = v; } },
-    { k: 'commune', l: 'Commune', niveau: 'lieu', type: 'lecture', jeux: ['tournee'], colonne: {}, val: x => lieuDe(x)?.commune || '',
+    { k: 'commune', l: 'Commune', niveau: 'lieu', type: 'lecture', jeux: ['tournee'], colonne: { rang: 60, largeur: 150, icone: 'carte' }, val: x => lieuDe(x)?.commune || '',
       texte: x => { const l = lieuDe(x); return l ? `${l.commune}${l.departement ? ` (${l.departement})` : ''}` : ''; } },
-    { k: 'statut', l: 'Statut', aide: 'Une option n’apparaît jamais sur le site.', table: 'dates', col: 'statut', niveau: 'date', type: 'choix', jeux: ['site', 'tournee'], colonne: {}, choix: () => STATUTS_DATE,
+    { k: 'statut', l: 'Statut', aide: 'Une option n’apparaît jamais sur le site.', table: 'dates', col: 'statut', niveau: 'date', type: 'choix', jeux: ['site', 'tournee'], colonne: { rang: 80, largeur: 112, icone: 'coche-cercle' }, choix: () => STATUTS_DATE,
       val: x => x.d.statut, texte: x => libelleDe(STATUTS_DATE, x.d.statut),
       html: x => (x.d.statut === 'confirmee' ? 'Confirmée' : `<span class="badge ${x.d.statut === 'annulee' ? 'annulee' : 'option'}">${esc(libelleDe(STATUTS_DATE, x.d.statut))}</span>`),
       lire: lecteur('choix', STATUTS_DATE), ecrire: (F, x, v) => { F.statut = v; } },
     { k: 'nature', l: 'Nature', aide: 'Les représentations et les résidences vont sur le site (une résidence y est marquée « Résidence », sans réservation) ; les répétitions et les autres dates ne sont que pour l’équipe.',
-      table: 'dates', col: 'nature', niveau: 'date', type: 'choix', jeux: ['site'], colonne: {}, si: () => E.sql3, choix: () => NATURES_DATE, val: x => natureDe(x.d), texte: x => libelleDe(NATURES_DATE, natureDe(x.d)),
+      table: 'dates', col: 'nature', niveau: 'date', type: 'choix', jeux: ['site'], colonne: { rang: 90, largeur: 136, icone: 'feuille' }, si: () => E.sql3, choix: () => NATURES_DATE, val: x => natureDe(x.d), texte: x => libelleDe(NATURES_DATE, natureDe(x.d)),
       lire: lecteur('choix', NATURES_DATE), ecrire: (F, x, v) => { F.nature = v; if (!PUBLIABLE(v)) F.visible = false; } },
     { k: 'visible', l: 'Publiée sur le site', aide: 'Une option ou une date annulée n’y va jamais.', table: 'dates', col: 'visible', niveau: 'date', type: 'case', jeux: ['site'],
       derive: F => (PUBLIABLE(F.nature) ? '' : `Masquée : ${F.nature === 'repetitions' ? 'une répétition' : 'une date « autre »'} ne va jamais sur le site`),
       val: x => !!x.d.visible, texte: x => (x.d.visible ? 'publiée' : 'masquée'), ecrire: (F, x, v) => { F.visible = !!v; } },
-    { k: 'site', l: 'Site', miroir: 'visible', niveau: 'date', type: 'case', jeux: ['site'], colonne: {}, fige: x => (natureDe(x.d) !== 'representations' ? 'Une répétition, une résidence ou une autre date ne se règle pas ici' : ''),
+    { k: 'site', l: 'Site', miroir: 'visible', niveau: 'date', type: 'case', jeux: ['site'], colonne: { rang: 220, largeur: 90, icone: 'oeil' }, fige: x => (natureDe(x.d) !== 'representations' ? 'Une répétition, une résidence ou une autre date ne se règle pas ici' : ''),
       val: x => natureDe(x.d) === 'representations' && !x.d.visible, texte: x => (natureDe(x.d) === 'representations' && !x.d.visible ? 'masquée' : ''),
       html: x => (natureDe(x.d) === 'representations' && !x.d.visible ? '<span class="badge masquee">masquée</span>' : ''),
       lire: t => /^(masquee?|cachee?|non|oui)$/i.test(norm(t).trim()) ? /^(masquee?|cachee?|oui)$/i.test(norm(t).trim()) : (String(t ?? '').trim() ? undefined : false),
@@ -3074,7 +3085,7 @@ const SCHEMA_DATE = (() => {
       val: x => x.d.intitule || '', texte: x => x.d.intitule || '', lire: lireTexte, vider: true, ecrire: (F, x, v) => { F.intitule = v || null; } },
     { k: 'details', l: 'Précisions sous la ligne', aide: 'Vide : le site écrit lui-même « 14h et 20h : représentations au … ».', table: 'dates', col: 'details', niveau: 'date', type: 'riche', jeux: ['site'],
       val: x => x.d.details || [], texte: x => (x.d.details || []).map(p => texteSeul(p.texte)).join(' · '), ecrire: (F, x, v) => { F.details = v || []; } },
-    { k: 'billetterie', l: 'Lien (billetterie ou page du lieu)', court: 'Billetterie', table: 'dates', col: 'lien', niveau: 'date', type: 'lien', jeux: ['site'], colonne: {}, val: x => x.d.lien || '', texte: x => x.d.lien || '',
+    { k: 'billetterie', l: 'Lien (billetterie ou page du lieu)', court: 'Billetterie', table: 'dates', col: 'lien', niveau: 'date', type: 'lien', jeux: ['site'], colonne: { rang: 110, largeur: 190, icone: 'externe' }, val: x => x.d.lien || '', texte: x => x.d.lien || '',
       html: x => (x.d.lien ? esc(String(x.d.lien).replace(/^https?:\/\/(www\.)?/, '')) : ''),
       lire: t => { const s = String(t ?? '').trim(); return !s ? '' : /^https?:\/\/\S+$/.test(s) ? s : /^[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(s) ? `https://${s}` : undefined; }, vider: true, ecrire: (F, x, v) => { F.lien = v; } },
     { k: 'nb-representations', l: 'Nombre de représentations', aide: 'Quand les séances ne sont pas détaillées.', table: 'dates', col: 'nb_representations', niveau: 'date', type: 'nombre', min: 1, max: 1000, pas: 1,
@@ -3094,22 +3105,22 @@ const SCHEMA_DATE = (() => {
       derive: F => { const ps = new Set(F.representations.filter(r => r.jour).map(r => r.public)); return ps.size ? `Public : ${ETIQUETTES_PUBLIC[ps.size > 1 ? 'mixte' : [...ps][0]] || 'autre'}, d’après les séances` : ''; },
       val: x => x.d.public, texte: x => ETIQUETTES_PUBLIC[x.d.public] || x.d.public },
     // ———— les séances (crescite_representations)
-    { k: 'jour', l: 'Jour', table: 'representations', col: 'jour', niveau: 'seance', type: 'jour', jeux: ['site', 'tournee'], colonne: { toujours: true },
+    { k: 'jour', l: 'Jour', table: 'representations', col: 'jour', niveau: 'seance', type: 'jour', jeux: ['site', 'tournee'], colonne: { toujours: true, rang: 10, largeur: 138, icone: 'calendrier' },
       val: x => (x.r ? x.r.jour : x.d.debut),
       texte: x => (x.r ? jourCourt(x.r.jour) : x.d.precision === 'mois' ? `${AGENDA.MOIS[+x.d.debut.slice(5, 7) - 1]} ${x.d.debut.slice(0, 4)}` : `${jourCourt(x.d.debut)}${x.d.fin && x.d.fin !== x.d.debut ? ` → ${jourCourt(x.d.fin)}` : ''}`),
       copie: x => jjmmaaaa(x.r ? x.r.jour : x.d.debut), exp: x => ({ jour: x.r ? x.r.jour : x.d.debut }),
       lire: (t, x) => TABLEUR.lireJour(t, x ? (x.r ? x.r.jour : x.d.debut) : AUJ), ecrire: (F, x, v) => { repDe(F, x).jour = v; } },
-    { k: 'heure', l: 'Heure', table: 'representations', col: 'heure', niveau: 'seance', type: 'heure', jeux: ['site', 'tournee'], colonne: {}, val: x => h5(x.r?.heure), texte: x => heureT(x.r?.heure), copie: x => h5(x.r?.heure),
+    { k: 'heure', l: 'Heure', table: 'representations', col: 'heure', niveau: 'seance', type: 'heure', jeux: ['site', 'tournee'], colonne: { rang: 30, largeur: 78, icone: 'horloge' }, val: x => h5(x.r?.heure), texte: x => heureT(x.r?.heure), copie: x => h5(x.r?.heure),
       exp: x => ({ heure: h5(x.r?.heure) }), lire: t => TABLEUR.lireHeure(t), ecrire: (F, x, v) => { repDe(F, x).heure = v; } },
-    { k: 'fin', l: 'Fin', aide: 'Heure de fin (une répétition : 10h-18h).', table: 'representations', col: 'fin', niveau: 'seance', type: 'heure', jeux: ['tournee'], colonne: {}, si: () => E.sql3, val: x => h5(x.r?.fin), texte: x => heureT(x.r?.fin), copie: x => h5(x.r?.fin),
+    { k: 'fin', l: 'Fin', aide: 'Heure de fin (une répétition : 10h-18h).', table: 'representations', col: 'fin', niveau: 'seance', type: 'heure', jeux: ['tournee'], colonne: { rang: 40, largeur: 68, icone: 'horloge' }, si: () => E.sql3, val: x => h5(x.r?.fin), texte: x => heureT(x.r?.fin), copie: x => h5(x.r?.fin),
       exp: x => ({ heure: h5(x.r?.fin) }), lire: t => TABLEUR.lireHeure(t), ecrire: (F, x, v) => { repDe(F, x).fin = v; } },
-    { k: 'public', l: 'Public', table: 'representations', col: 'public', niveau: 'seance', type: 'choix', jeux: ['site'], colonne: {}, choix: () => PUBLICS_SEANCE, val: x => (x.r ? x.r.public : ''), texte: x => (x.r ? libelleDe(PUBLICS_SEANCE, x.r.public) : ''),
+    { k: 'public', l: 'Public', table: 'representations', col: 'public', niveau: 'seance', type: 'choix', jeux: ['site'], colonne: { rang: 70, largeur: 110, icone: 'equipe' }, choix: () => PUBLICS_SEANCE, val: x => (x.r ? x.r.public : ''), texte: x => (x.r ? libelleDe(PUBLICS_SEANCE, x.r.public) : ''),
       lire: lecteur('choix', PUBLICS_SEANCE), ecrire: (F, x, v) => { repDe(F, x).public = v; } },
-    { k: 'precisions', l: 'Précision', aide: 'Une précision publique : « complet », « audiodécrite »…', table: 'representations', col: 'note', niveau: 'seance', type: 'texte', jeux: ['site'], colonne: {}, val: x => x.r?.note || '', texte: x => x.r?.note || '',
+    { k: 'precisions', l: 'Précision', court: 'Précisions', aide: 'Une précision publique : « complet », « audiodécrite »…', table: 'representations', col: 'note', niveau: 'seance', type: 'texte', jeux: ['site'], colonne: { rang: 120, largeur: 180, icone: 'crayon' }, val: x => x.r?.note || '', texte: x => x.r?.note || '',
       lire: lireTexte, vider: true, ecrire: (F, x, v) => { repDe(F, x).note = v; } },
     { k: 'billetterie-seance', l: 'Billetterie de la séance', table: 'representations', col: 'lien', niveau: 'seance', type: 'lien', jeux: ['site'], val: x => x.r?.lien || '', texte: x => x.r?.lien || '',
       lire: t => { const s = String(t ?? '').trim(); return !s ? '' : /^https?:\/\/\S+$/.test(s) ? s : undefined; }, vider: true, ecrire: (F, x, v) => { repDe(F, x).lien = v; } },
-    { k: 'annulee', l: 'Séance annulée', table: 'representations', col: 'annulee', niveau: 'seance', type: 'case', jeux: ['site', 'tournee'], colonne: {}, val: x => !!x.r?.annulee, texte: x => (x.r?.annulee ? 'annulée' : ''),
+    { k: 'annulee', l: 'Séance annulée', table: 'representations', col: 'annulee', niveau: 'seance', type: 'case', jeux: ['site', 'tournee'], colonne: { rang: 210, largeur: 112, icone: 'croix' }, val: x => !!x.r?.annulee, texte: x => (x.r?.annulee ? 'annulée' : ''),
       html: x => (x.r?.annulee ? '<span class="badge annulee">annulée</span>' : ''), lire: t => /^(oui|x|vrai|true|1|annulee?)$/i.test(norm(t).trim()) || (String(t ?? '').trim() ? undefined : false),
       ecrire: (F, x, v) => { repDe(F, x).annulee = !!v; } },
     // ———— le suivi interne (crescite_dates_suivi) : jamais publié
@@ -3121,11 +3132,11 @@ const SCHEMA_DATE = (() => {
     // le montant de cession : la seule colonne vivante du suivi commercial (les autres : voir plus haut), écrite par ecrireMontant
     // (avec le vingt-quatrième script, dans le suivi du même appel)
     { k: 'montant', l: 'Montant de cession HT (€)', court: 'Cession HT (€)', aide: 'Repris dans le devis, le contrat, la facture', table: 'dates_suivi', col: 'montant_cession', niveau: 'diffusion', type: 'nombre', min: 0, max: 1e7, pas: .01,
-      confidentiel: true, jeux: ['diffusion'], colonne: {}, si: () => !!E.ideale, val: x => suiviDe(x.d).montant_cession ?? '', texte: x => { const v = suiviDe(x.d).montant_cession; return v == null || v === '' ? '' : nombreFr(v); },
+      confidentiel: true, jeux: ['diffusion'], colonne: { rang: 160, largeur: 111, icone: 'euro' }, si: () => !!E.ideale, val: x => suiviDe(x.d).montant_cession ?? '', texte: x => { const v = suiviDe(x.d).montant_cession; return v == null || v === '' ? '' : nombreFr(v); },
       lire: t => { const n = String(t ?? '').trim().replace(/\s|€/g, '').replace(',', '.'); if (!n) return ''; const v = Number(n); return Number.isFinite(v) && v >= 0 && v < 1e7 ? Math.round(v * 100) / 100 : undefined; },
       vider: true, ecrire: (F, x, v) => { F.suivi.montant_cession = nombreOuVide(v); } },
     // ———— les chiffres (crescite_dates_chiffres) : jamais publiés, l'équipe les lit
-    ...CHIFFRES.map(([k, l, pas, max]) => ({ k: `chiffre-${k}`, l, court: l.replace(' (places)', ''), table: 'dates_chiffres', col: k, niveau: 'chiffres', type: 'nombre', min: 0, max, pas, confidentiel: true, jeux: ['bilan'], colonne: {}, si: () => !!E.chiffresInstalles,
+    ...CHIFFRES.map(([k, l, pas, max], i) => ({ k: `chiffre-${k}`, l, court: l.replace(' (places)', ''), table: 'dates_chiffres', col: k, niveau: 'chiffres', type: 'nombre', min: 0, max, pas, confidentiel: true, jeux: ['bilan'], colonne: { rang: 180 + 10 * i, largeur: { jauge: 57, spectateurs: 94, heures_ateliers: 123 }[k], icone: 'histogramme' }, si: () => !!E.chiffresInstalles,
       val: x => chiffresVersForm(x.d.id)[k], texte: x => { const v = chiffresVersForm(x.d.id)[k]; return v === '' ? '' : nombreFr(v); },
       lire: t => { const n = String(t ?? '').trim().replace(/\s/g, '').replace(',', '.'); if (!n) return ''; const v = Number(n);
         return Number.isFinite(v) && v >= 0 && v <= max ? (pas < 1 ? Math.round(v * 2) / 2 : Math.round(v)) : undefined; },
@@ -3133,11 +3144,11 @@ const SCHEMA_DATE = (() => {
     { k: 'chiffres-source', l: 'D’où viennent ces chiffres', aide: 'Par exemple : « Récapitulatif de la compagnie, feuille « Bérénice », ligne 12 ».', table: 'dates_chiffres', col: 'source', niveau: 'chiffres', type: 'texte', confidentiel: true, jeux: ['bilan'], si: () => !!E.chiffresInstalles,
       val: x => chiffresVersForm(x.d.id).source, texte: x => chiffresVersForm(x.d.id).source, lire: lireTexte, vider: true, ecrire: (F, x, v) => { F.chiffres = F.chiffres || {}; F.chiffres.source = v; } },
     // ———— l'équipe (crescite_equipes) : ce qui change de la distribution en tournée, pour cette date
-    { k: 'distribution', l: 'Distribution', miroir: 'equipe', niveau: 'date', type: 'equipe', jeux: ['tournee'], colonne: {}, si: () => E.equipeInstallee, val: x => equipeIds(x.d),
+    { k: 'distribution', l: 'Distribution', miroir: 'equipe', niveau: 'date', type: 'equipe', jeux: ['tournee'], colonne: { rang: 100, largeur: 250, icone: 'equipe' }, si: () => E.equipeInstallee, val: x => equipeIds(x.d),
       texte: x => equipeIds(x.d).map(id => nomDe(personne(id))).filter(Boolean).join(', '),
-      // des pastilles sur une ligne : autant qu'il en tient, puis « +n »
-      html: x => { const ids = equipeIds(x.d), ns = prenoms(ids); let place = 232, k = 0; for (; k < ns.length && place - (ns[k].length * 7.4 + 22) >= (k < ns.length - 1 ? 34 : 0); k++) place -= ns[k].length * 7.4 + 22;
-        return ns.slice(0, k).map(n => `<span class="tab-pastille">${esc(n)}</span>`).join('') + (k < ns.length ? `<span class="tab-pastille plus">+${ns.length - k}</span>` : ''); },
+      // toutes les pastilles sur une ligne que la case rogne (le CSS) ; le « +n » de ce qui ne tient pas est posé après coup, sur la case
+      // en place (data-plus : TABLEUR, compterPlus), d'après la largeur qu'elle a vraiment
+      html: x => { const ns = prenoms(equipeIds(x.d)); return ns.length ? `<span class="tab-pastilles-ligne">${ns.map(n => `<span class="tab-pastille">${esc(n)}</span>`).join('')}</span>` : ''; },
       lire: t => (String(t ?? '').trim() ? TABLEUR.lecteurs.personnes(t) : []), vider: true, ecrire: (F, x, v) => { F.equipe = ecartsPour({ ...x.d, spectacle_id: F.spectacle_id }, v, F.spectacle_id); } },
     { k: 'equipe-present', l: 'Part sur cette date', aide: 'Faux : la personne ne part pas sur cette date (remplacée).', table: 'equipes', col: 'present', niveau: 'equipe', type: 'case', jeux: ['tournee'], si: () => E.equipeInstallee,
       val: x => ecartVal(x, 'present') !== false, texte: x => (ecartVal(x, 'present') === false ? 'ne part pas' : 'part'), ecrire: (F, x, v) => { const e = ecartDe(F, x); if (e) e.present = !!v; } },

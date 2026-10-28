@@ -238,7 +238,7 @@ dialog.recherche, dialog.tab-dialogue, dialog.tb-brief { border-radius: var(--ra
    les liens posés seuls sur leur ligne (une personne ou un lieu à compléter, un téléphone, une feuille de route, un
    spectacle d'une fiche) prennent la hauteur d'un doigt. Les liens dans une phrase restent dans leur phrase. */
 @media (pointer: coarse) {
-  .btn, .seg > button, .puce, .onglets-ed button, .outils-riche button, .tb-ico, .tb-traiter, .a4-b, .a4-vues button, .tab-tri, select, .avant > summary { min-height: 44px; }
+  .btn, .seg > button, .puce, .onglets-ed button, .outils-riche button, .tb-ico, .tb-traiter, .a4-b, .a4-vues button, .tab-tri, .tab-col-nom, select, .avant > summary { min-height: 44px; }
   .btn.petit, .outils-riche button, .tb-ico, .tb-traiter, .a4-b, .tb-lien { min-width: 44px; }
   .tb-lien { justify-content: center; }
   .avant-fenetre select { min-height: 44px; min-width: 64px; }
@@ -296,6 +296,8 @@ html.bascule *, html.bascule *::before, html.bascule *::after { transition: none
   html:not(.tb-impression) .coque { display: block; }
   /* les poignées des fenêtres ajustables (fenetres.js : le séparateur de la liste, le coin des boîtes) ne s'impriment pas */
   .poignee, .sep-v, .dlg-coin { display: none !important; }
+  /* le tableur imprimé : toutes ses lignes, sans la hauteur ni le défilement du cadre (les poignées des en-têtes et du bas sont déjà masquées) */
+  #vue .tab-cadre { max-height: none !important; height: auto !important; overflow: visible !important; }
   html:not(.tb-impression) #imp-tete { display: block; margin: 0 0 12pt; padding: 0 0 6pt; border-bottom: 1pt solid #000; color: #000; }
   #imp-tete p { margin: 0; }
   #imp-tete .imp-quoi { font: 700 15pt/1.25 var(--titres); }

@@ -248,7 +248,7 @@ for (const v of ['tableur', 'carte']) {
   await page.reload();
   await page.waitForSelector('#tab-corps tr[data-l]', { timeout: 15000 });
   const t = await page.evaluate(() => ({ periode: document.querySelector('[data-f-periode][aria-pressed="true"]').dataset.fPeriode, tri: document.querySelector('#tab-tete th.c-jour').getAttribute('aria-sort'), vides: document.querySelector('#tab-vides').checked, anciens: ['tableur', 'tournee'].filter(k => k in session), ouvertes: 'ouvertes' in session.dates, vues: JSON.stringify(session.vues) }));
-  ok('7 · l’ancien état du tableur passe dans l’état commun (période) et dans sa vue (tri, colonnes vides), puis s’efface', t.periode === 'toutes' && t.tri === 'descending' && t.vides && !t.anciens.length, JSON.stringify(t));
+  ok('7 · l’ancien état du tableur passe dans l’état commun (période), dans sa vue (le tri) et dans la préférence des colonnes (« Colonnes vides »), puis s’efface', t.periode === 'toutes' && t.tri === 'descending' && t.vides && !t.anciens.length, JSON.stringify(t));
   ok('7 · les saisons ouvertes de la liste quittent l’état commun pour session.vues.liste', !t.ouvertes && /"ouvertes":\["2024-2025"\]/.test(t.vues), t.vues);
   await page.click('nav.vues a[data-vue="carte"]');
   await page.waitForSelector('.tn-svg', { timeout: 8000 });

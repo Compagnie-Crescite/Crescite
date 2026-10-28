@@ -154,15 +154,30 @@ const FENETRES = (() => {
   const oublier = cle => garder(cle, null);
   // PREFS applique la borne à chaque lecture (« pleine » est un oui / non : rien à borner)
   if (typeof PREFS !== 'undefined') CLES.filter(c => c !== 'pleine').forEach(c => PREFS.normaliser(PREFIXE + c, v => normaliser(c, v)));
-  // « Disposition d'origine » : toutes les clés fenetres.* à null ; rend ce qu'elles valaient (pour « Annuler » : rendre)
+  // « Disposition d'origine » remet aussi ce que d'autres modules gardent hors de la liste d'ici : les fenêtres du tableur
+  // (TABLEUR.clesFenetres), ses colonnes (la clé tableur.colonnes : TABLEUR.colonnes.origine, rendue par retablir) et le menu
+  // replié (menu.replie : CADRE.oublierRepli, rendu par rendreRepli). Leur valeur d'avant va dans le même instantané, sous « @clé ».
+  const toutesCles = () => CLES.concat((typeof TABLEUR !== 'undefined' && Array.isArray(TABLEUR.clesFenetres) ? TABLEUR.clesFenetres : []).filter(c => !CLES.includes(c)));
+  const AUSSI = {
+    'tableur.colonnes': {
+      oublier: () => (typeof TABLEUR !== 'undefined' && TABLEUR.colonnes && typeof PREFS !== 'undefined' && PREFS.lire('tableur.colonnes', null, { brut: true }) != null ? TABLEUR.colonnes.origine({ dire: false }) : undefined),
+      rendre: v => { if (typeof TABLEUR !== 'undefined' && TABLEUR.colonnes) TABLEUR.colonnes.retablir(v); },
+    },
+    'menu.replie': {
+      oublier: () => (typeof CADRE !== 'undefined' && CADRE.oublierRepli ? CADRE.oublierRepli() : undefined),
+      rendre: v => { if (typeof CADRE !== 'undefined' && CADRE.rendreRepli) CADRE.rendreRepli(v); },
+    },
+  };
+  // « Disposition d'origine » : toutes les clés fenetres.* à null (et ce qui précède) ; rend ce qu'elles valaient (pour « Annuler » : rendre)
   function toutOublier() {
     const avant = {};
-    CLES.forEach(c => { const v = lireTelle(c); if (v !== null && v !== undefined) { avant[c] = v; garder(c, null); } });
+    toutesCles().forEach(c => { const v = lireTelle(c); if (v !== null && v !== undefined) { avant[c] = v; garder(c, null); } });
+    Object.entries(AUSSI).forEach(([nom, a]) => { const v = a.oublier(); if (v !== null && v !== undefined) avant['@' + nom] = v; });
     remettre();
     return avant;
   }
   function rendre(avant) {
-    Object.entries(avant || {}).forEach(([c, v]) => { if (CLES.includes(c)) garder(c, v); });
+    Object.entries(avant || {}).forEach(([c, v]) => { if (c.startsWith('@')) AUSSI[c.slice(1)]?.rendre(v); else if (toutesCles().includes(c)) garder(c, v); });
     remettre();
   }
   // les surfaces qu'on voit reprennent la valeur gardée (ou leur origine) sans attendre qu'on les rouvre
@@ -524,7 +539,7 @@ const FENETRES = (() => {
     const g = document.createElement('div');
     g.className = 'fen-reglages'; g.setAttribute('role', 'group'); g.setAttribute('aria-label', 'Fenêtres');
     g.innerHTML = `<button type="button" class="fen-reglage" id="fen-pleine" aria-pressed="false" title="Pleine largeur : le contenu ne plafonne plus à 1 500 px">${icone('moniteur')}<span class="menu-l">Pleine largeur</span></button>
-      <button type="button" class="fen-reglage" id="fen-origine" title="Disposition d’origine : la taille du tiroir, de la liste et des fenêtres redevient celle d’origine">${icone('actualiser')}<span class="menu-l">Disposition d’origine</span></button>`;
+      <button type="button" class="fen-reglage" id="fen-origine" title="Disposition d’origine : les tailles du tiroir, de la liste et des fenêtres, les colonnes du tableur et le menu reviennent à leur origine">${icone('actualiser')}<span class="menu-l">Disposition d’origine</span></button>`;
     zone.append(g);
     $('#fen-pleine', g).addEventListener('click', () => {
       const v = !pleine();
@@ -537,7 +552,7 @@ const FENETRES = (() => {
       if (typeof annoncer !== 'function') return;
       if (!Object.keys(avant).length) { annoncer('La disposition est déjà celle d’origine.'); return; }
       // tout de suite, sans question : l'annonce porte « Annuler », qui rend ce que les clés valaient
-      annoncer('Disposition d’origine remise : les tailles du tiroir, de la liste et des fenêtres sont effacées.', { libelle: 'Annuler', delai: 8000, action: () => {
+      annoncer('Disposition d’origine remise : les tailles des fenêtres, les colonnes du tableur et le menu sont revenus à leur origine.', { libelle: 'Annuler', delai: 8000, action: () => {
         rendre(avant);
         annoncer('La disposition d’avant est revenue.');
       } });

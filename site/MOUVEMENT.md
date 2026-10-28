@@ -105,7 +105,8 @@ distribution à l'écran : la cellule d'une date, qui sera prévenu, la boîte d
 `fenetres.mjs` (les fenêtres ajustables : la poignée
 du tiroir, le séparateur de la liste, le coin des boîtes et les réglages du menu), `fenetres-2.mjs` (les autres : le
 détail du planning, la carte, la hauteur d'une tuile, le zoom de la feuille A4), `carte-travail.mjs` (la carte comme vue
-de travail) et `acces.mjs` (les accès
+de travail), `tableur-colonnes.mjs` (les colonnes du tableur à la carte : la poignée d'un en-tête, le menu, la hauteur
+du cadre, le « +n » de la distribution) et `acces.mjs` (les accès
 rapides du menu et la barre de commande : l'arrivée d'un épinglé en `ad-pop`, d'un récent en `ad-arrive`, le menu
 « Créer » en `gm-paraitre`). Ils ne touchent presque
 pas à ce vocabulaire : `cadre.mjs` mesure seulement que le repli anime la colonne une fois, et rien sous « moins
@@ -121,7 +122,12 @@ geste, et qu'aucune tâche ne dépasse 200 ms à `CPU=4` pendant un glisser (le 
 même) ; `fenetres-2.mjs`, qu'aucune tâche ne dépasse 200 ms à `CPU=4` pendant un glisser du détail du planning, de
 la carte ou d'une tuile, et que le zoom A4 ne bouge ni la pagination ni rien d'autre ; `carte-travail.mjs`, que le cadre de la carte glisse en passant par un cadre intermédiaire (et
 change d'un coup sous « moins d'animations » et avec `?anim=0`, la pastille allumée ne grossissant pas non plus), et
-qu'aucune tâche ne dépasse 200 ms à `CPU=4` pendant le zoom, la molette, le glisser et le survol ; `acces.mjs`, les trois arrivées ci-dessus, et le
+qu'aucune tâche ne dépasse 200 ms à `CPU=4` pendant le zoom, la molette, le glisser et le survol ; `tableur-colonnes.mjs`, que la grille ne se redessine pas
+pendant le glisser d'un bord d'en-tête (seule une variable CSS change) et qu'aucune tâche ne dépasse 200 ms à `CPU=4` à
+l'ouverture du tableur, pendant un glisser, un ajustement, un changement d'ordre, un masquage, « Colonnes vides » ou le repli
+du menu, **sur une trentaine de lignes** seulement (28 séances, chaque geste mesuré à part et refait une fois s'il dépasse) :
+avec les 230 lignes de la base réelle, l'ouverture coûte environ 450 ms et un cran de glisser 150 à 230 ms, donc la tenue
+des 200 ms n'est pas encore vérifiée sur des données réelles ; `acces.mjs`, les trois arrivées ci-dessus, et le
 silence sous « moins d'animations » ; pour le reste, ils veillent à ce qu'une refonte ne casse rien. (La case de la matrice qui saute, `ad-pop`,
 vient avec le mode Distribution du tableur.)
 

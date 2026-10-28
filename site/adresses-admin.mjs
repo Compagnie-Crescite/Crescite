@@ -317,7 +317,9 @@ for (const [largeur, hauteur, nom] of [[1440, 900, 'bureau'], [390, 844, 'télé
   await calme(page);
   await page.screenshot({ path: path.join(CAPT, `vide-dates-${largeur < 600 ? 'telephone' : 'bureau'}.png`) });
   await page.click('#vue .liste-vide [data-effacer-filtres]');
-  await attendre(page, () => !document.querySelector('#vue .liste-vide') && document.querySelectorAll('#l-dates a.ligne').length > 0);
+  // (la liste revient, les filtres se remettent, puis le focus va à la recherche : sous charge, des images peuvent les séparer ;
+  // on attend que tout y soit, la vérification qui suit le redit)
+  await attendre(page, () => !document.querySelector('#vue .liste-vide') && document.querySelectorAll('#l-dates a.ligne').length > 0 && document.querySelector('#f-statut')?.value === '' && !document.querySelector('#vue [data-sp][aria-pressed="true"]') && document.activeElement?.id === 'f-q');
   ok(`vides (${nom}) · « Effacer les filtres » rend toute la liste, les filtres à leur valeur d’office, l’adresse aussi, le focus à la recherche`, await page.evaluate(() => document.querySelector('#f-statut').value === '' && !document.querySelector('#vue [data-sp][aria-pressed="true"]') && !/statut=|spectacle=/.test(location.search) && document.activeElement?.id === 'f-q'), await adresse(page));
   for (const [h, champ, attendu] of [['#/lieux', '#li-q', 'Aucun lieu ne correspond à ces filtres.'], ['#/equipe', '#eq-q', 'Personne ne correspond.'], ['#/journal', '#j-q', 'Aucune modification ne correspond.'], ['#/diffusion/devis', '#dv-q', 'Aucune demande ne correspond.']]) {
     await page.evaluate(x => { location.hash = x; }, h);

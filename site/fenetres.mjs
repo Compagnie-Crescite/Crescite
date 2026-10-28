@@ -433,6 +433,29 @@ async function ouvrirTiroir(page) {
   await ctx.close();
 }
 {
+  // « Disposition d'origine » remet aussi ce qui est gardé hors des clés fenetres.* d'ici : les fenêtres du tableur (fenetres.tableur-h),
+  // ses colonnes (tableur.colonnes) et le menu replié (menu.replie) ; « Annuler » rend le tout
+  repartir(); garder('fenetres.tableur-h', 520); garder('menu.replie', true);
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1440, hauteur: 900, hash: '#/representations/tableur' });
+  await page.waitForSelector('#tab-tete th[data-k="lieu"]', { timeout: 15000 });
+  await page.evaluate(() => TABLEUR.colonnes.masquer('lieu'));
+  await page.waitForTimeout(300);
+  const etat = () => page.evaluate(() => ({ lieu: !!document.querySelector('#tab-tete th[data-k="lieu"]'), replie: document.documentElement.classList.contains('menu-replie'), h: FENETRES.taille('tableur-h') }));
+  const e0 = await etat();
+  ok('8 · avant : la colonne Lieu masquée, le menu replié par choix, la hauteur du tableur gardée (520 px)', !e0.lieu && e0.replie && e0.h === 520, JSON.stringify(e0));
+  await page.evaluate(() => { window.__avant = FENETRES.toutOublier(); });
+  await page.waitForTimeout(400);
+  const e1 = await etat(), av = await page.evaluate(() => window.__avant);
+  ok('8 · toutOublier remet aussi les colonnes du tableur, sa hauteur et le menu (les trois clés à null, la colonne Lieu revient, le menu se déplie à 1 440 px)', e1.lieu && !e1.replie && e1.h === null && ecrites('tableur.colonnes').at(-1)?.valeur === null && ecrites('menu.replie').at(-1)?.valeur === null && ecrites('fenetres.tableur-h').at(-1)?.valeur === null, JSON.stringify({ e1, av }));
+  ok('8 · l’instantané garde ce qu’elles valaient (tableur-h, @tableur.colonnes, @menu.replie)', av['tableur-h'] === 520 && av['@menu.replie'] === true && !!av['@tableur.colonnes'], JSON.stringify(av));
+  await page.evaluate(() => FENETRES.rendre(window.__avant));
+  await page.waitForTimeout(400);
+  const e2 = await etat();
+  ok('8 · rendre (« Annuler ») remet la colonne masquée, le menu replié et la hauteur', !e2.lieu && e2.replie && e2.h === 520, JSON.stringify(e2));
+  ok('8 · aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+{
   // un tiroir ouvert reprend sa taille d'origine quand tout est oublié
   repartir(); garder('fenetres.tiroir', 1000);
   const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1440, hauteur: 900, hash: '#/accueil' });

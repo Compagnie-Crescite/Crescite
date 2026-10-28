@@ -35,6 +35,7 @@ node site/tableau.mjs              # le tableau de bord et l'en-tête de l'admin
 node site/niveau.mjs               # les dix idées de l'administration, dans Chromium, sur la même base fictive
 node site/adresses-admin.mjs       # les adresses et les garde-fous de l'administration, sur la même base fictive
 node site/tableur.mjs              # le tableur des représentations, dans Chromium, sur la même base fictive (après le build)
+node site/tableur-colonnes.mjs     # les colonnes du tableur à la carte : largeur, ordre, masquées, figées, hauteur (après le build)
 node site/icones.mjs               # la bibliothèque d'icônes de l'administration et ses consommateurs, dans Chromium (après le build)
 node site/cadre.mjs                # la coque, le menu latéral, ses raccourcis et ses badges, dans Chromium, sur la même base fictive (après le build)
 node site/champs.mjs               # la fiche d'une date : le schéma de ses champs, le rail d'écriture, les puces, la jauge (après le build)
@@ -381,8 +382,11 @@ compte du projet inscrit dans `crescite_admins`.
   devis, Planning › propositions), un séparateur règle la largeur de la liste, la même pour ces huit pages (de 340 px à
   55 % du contenu). Double-clic ou Entrée sur la poignée : la taille d'origine, en un cinquième de seconde (rien ne bouge
   si l'appareil demande moins d'animations) ; au clavier, ← → règlent de 16 px (Maj : 64 px), Début et Fin vont aux deux
-  bouts. La taille se garde avec le compte, une clé par surface (`fenetres.tiroir`, `fenetres.liste`), écrite une seule
-  fois, au relâchement ; sur un écran plus petit, elle est ramenée dans ce qu'il permet. Rien de tout cela au
+  bouts. La taille se garde avec le compte, une clé par surface (`fenetres.tiroir`, `fenetres.liste`,
+  `fenetres.tableur-h`…), écrite une seule fois, au relâchement ; sur un écran plus petit, elle est ramenée dans ce
+  qu'il permet. Le tableur s'en sert aussi : le bord droit de chaque en-tête (la largeur de la colonne), une poignée
+  sous son cadre (sa hauteur), le coin des fenêtres du lieu et de la distribution ouvertes sur une case, et la zone de
+  texte des notes (voir Le tableur). Rien de tout cela au
   téléphone ni au doigt (la poignée n'existe qu'à partir de 641 px avec un pointeur précis), ni dans l'espace de
   l'équipe, ni à l'impression. Pendant le geste, rien d'autre ne bouge (les lignes d'une liste ne glissent pas, le pied de
   la fiche ne se remesure pas). `node site/fenetres.mjs` le vérifie dans Chromium, hors ligne, sur une base fictive
@@ -401,9 +405,10 @@ compte du projet inscrit dans `crescite_admins`.
   des fenêtres comme les autres (`boiteCrm`, dans `admin/index.html`) : posées sur la page, elles survivent à un redessin
   en direct de la Diffusion, et l'opportunité garde sa question « Fermer sans enregistrer ? » quand une saisie est
   commencée. Deux réglages au bas du menu latéral : « Pleine largeur » (le contenu et le pied de page ne plafonnent plus à
-  1 500 px ; clé `fenetres.pleine`) et « Disposition d'origine » (efface toutes les tailles gardées, d'un coup, avec une
-  annonce qui porte « Annuler »). À l'impression, ni poignée ni coin, et le briefing imprimé ignore la taille tirée.
-  Le même outil règle trois surfaces de plus (`node site/fenetres-2.mjs`, 113 vérifications) : **le planning**, où la
+  1 500 px ; clé `fenetres.pleine`) et « Disposition d'origine » (efface d'un coup toutes les tailles gardées, celles du tableur
+  comprises, les colonnes du tableur et le choix du menu replié, remet aussitôt ce qu'on voit, et l'annonce porte
+  « Annuler »). À l'impression, ni poignée ni coin, et le briefing imprimé ignore la taille tirée.
+  Le même outil règle trois surfaces de plus (`node site/fenetres-2.mjs`, 115 vérifications) : **le planning**, où la
   colonne du détail d'un jour se tire par son bord gauche (de 240 à 560 px, `fenetres.pl-detail`) et, au-dessus de
   1 200 px, le détail se met aussi à côté de la grille en vue Équipe une fois un jour choisi ; **la carte de tournée**,
   dont une poignée entre la carte et les étapes règle la largeur de la carte (de 360 px à la largeur de la grille moins
@@ -563,6 +568,19 @@ compte du projet inscrit dans `crescite_admins`.
     ses séances, les deux lignes se marquent), le collage d'un texte de tableur et Ctrl+C, Ctrl+Z, la fenêtre de la
     distribution et « Étendre à… » (son aperçu, son application, leur annulation), l'import, l'export CSV et Excel :
     86 vérifications, des captures dans `site/dist/shots-tableur/` (`tableur-1600.png`, `tableur-1280.png`).
+  - `node site/tableur-colonnes.mjs` garde les colonnes à la carte du tableur : une poignée par en-tête au pointeur fin
+    et au-dessus de 700 px seulement (aucune à 390 px, ni au doigt), le glisser (une seule écriture de `tableur.colonnes`,
+    au relâchement), les flèches, le double-clic qui ajuste au contenu, la largeur retrouvée et bornée (48 à 640 px),
+    l'ancienne forme plate de la préférence ; le menu d'un en-tête (Maj+F10, le focus tournant des en-têtes) : masquer
+    (le CSV et l'Excel suivent les colonnes montrées), figer jusqu'ici (les bords gauche cumulés, la case visée jamais
+    sous les colonnes figées), Alt+← et Alt+→ (aussi depuis la poignée et le bouton du tri), « Colonnes d'origine » et son
+    « Annuler » ; la fenêtre « Colonnes… » (cocher, ↑ ↓, glisser ; des cibles de 44 px au doigt) ; la hauteur du cadre
+    (la place qui reste, le menu latéral, la poignée du bas) ; le coin des fenêtres du lieu et de la distribution (largeur
+    et hauteur, et le double-clic qui rend la taille d'origine) et la taille de la zone de texte des notes ; le « +n » de la
+    distribution ; un changement qui arrive pendant un glisser, l'impression, l'aide « ? » ; aucune tâche de plus de
+    200 ms à `CPU=4`, geste par geste, mais sur une trentaine de lignes seulement (voir `site/MOUVEMENT.md`) :
+    118 vérifications, des captures dans `site/dist/shots-tableur-colonnes/` (`colonnes.png`, `colonnes-menu.png`,
+    `colonnes-fenetre.png`, `distribution-plus.png`).
   - `node site/icones.mjs` garde la bibliothèque d'icônes (`admin/icones.js`) et ce qui la lit : aucun doublon de tracé,
     les 26 noms de l'ancien GESTES.ICO, chaque svg de la bibliothèque en 24 × 24 et `aria-hidden` sur l'accueil, Représentations
     et le planning, la barre du téléphone (22 px, trait 1,9) et la tuile Équipe qui partagent un dessin, les dessins du
@@ -751,8 +769,9 @@ compte du projet inscrit dans `crescite_admins`.
   (la carte) ; le tri du tableur reste dans l'en-tête de sa colonne « Jour ». Changer de vue garde les filtres ;
   l'adresse les porte (`?q=caen&periode=toutes` : seul ce qui diffère de la valeur d'office s'y écrit), donc un
   rechargement, le précédent du navigateur et un lien partagé rouvrent la même chose ; « Effacer les filtres » remet
-  tout d'office et rend le focus à la recherche. Le tri du tableur, ses colonnes vides, « Autour des dates » et les
-  saisons ouvertes de la liste ne vont pas dans l'adresse (un ancien lien `?tri=desc` est encore lu). « Voir dans le
+  tout d'office et rend le focus à la recherche. Le tri du tableur, « Autour des dates » et les saisons ouvertes de la
+  liste ne vont pas dans l'adresse (un ancien lien `?tri=desc` est encore lu) ; les colonnes du tableur, « Colonnes
+  vides » comprises, sont une préférence du compte. « Voir dans le
   tableur » (le menu d'une date : clic droit, Maj+F10) ouvre le tableur sur la ligne de cette date : case active, en
   vue, cerclée un instant (si un filtre la cachait, il est relâché ; si l'appareil demande moins d'animations, la ligne
   est marquée sans mouvement, le temps qu'on la repère). Les trois vues lisent les filtres de la même façon ; passer de
@@ -774,10 +793,23 @@ compte du projet inscrit dans `crescite_admins`.
   de route, Prévenir l'équipe, Dupliquer et Supprimer passent dans un menu « Plus » (↑ ↓, Échap rend le focus) ; seul
   « Enregistrer » reste à côté.
 - **Le tableur** (Représentations → Tableur ; `admin/tableur.js`, chargé après le tableau de bord) : une ligne par
-  séance, comme le tableur où la compagnie récapitule ses représentations ; les séances d'une même date se suivent, en bande. Colonnes : jour, spectacle, heure et fin, lieu,
-  commune, public, statut, nature, distribution, billetterie, précisions, organisateur, contact, contrat, notes, séance
-  annulée, site. Ce qui est vide reste vide, et une colonne vide sur toute la vue se replie (« Colonnes vides » la
-  montre). Filtres : ceux de la barre commune des trois vues (voir Représentations) ; tri par date.
+  séance, comme le tableur où la compagnie récapitule ses représentations ; les séances d'une même date se suivent, en
+  bande. Colonnes : jour, spectacle, heure et fin, lieu, commune, public, statut, nature, distribution, billetterie,
+  précisions, organisateur, contact, contrat, notes, séance annulée, site (les colonnes se tirent du schéma de la date).
+  Ce qui est vide reste vide, et une colonne vide sur toute la vue se replie (« Colonnes vides » la montre). Filtres :
+  ceux de la barre commune des trois vues (voir Représentations) ; tri par date.
+  - Les colonnes sont à la carte, à l'ordinateur : le bord droit de chaque en-tête se tire (un double-clic l'ajuste à
+    son contenu ; la poignée se règle aussi aux flèches, ← →) ; un clic droit sur un en-tête, ou Maj+F10 (les en-têtes
+    se parcourent aux flèches ← →), propose Masquer, Figer jusqu'ici, Ajuster la largeur, Avancer, Reculer (Alt+← et
+    Alt+→ au clavier), Trier (le jour) et Colonnes d'origine ; le bouton « Colonnes… » ouvre la liste de toutes les
+    colonnes, à cocher, à réordonner par ↑ ↓ ou en les glissant. Le jour ne se masque pas. Le jour et le spectacle sont
+    figés d'office ; figer jusqu'ici en fige autant qu'on veut, de la première à celle-ci. Tout est retenu avec le
+    compte (la préférence `tableur.colonnes`, par mode : l'ordre, les colonnes masquées, le nombre de colonnes figées,
+    les largeurs, « Colonnes vides »), et « Colonnes d'origine » l'oublie avec un « Annuler ». Les largeurs ne se
+    règlent qu'au pointeur fin et au-dessus de 700 px : le téléphone garde les siennes. Une poignée sous le cadre en
+    règle la hauteur (`fenetres.tableur-h`) ; sans elle, le cadre prend la place qui reste sous lui, et suit le menu
+    latéral qui se replie ou se déplie. La fenêtre du lieu ou de la distribution, ouverte sur une case, retient sa taille
+    (son coin se tire), et la zone de texte des notes aussi.
   - Branché sur la base dans les deux sens. Écrire dans une case enregistre aussitôt, par le même chemin que la fiche
     d'une date (`crescite_enregistrer_date` ; avec le vingt-quatrième script, les chiffres et l'équipe dans le même appel,
     sinon l'équipe ensuite : les mêmes déclencheurs, notifications et journal) ; l'état
@@ -788,21 +820,26 @@ compte du projet inscrit dans `crescite_admins`.
   - Au clavier comme dans un tableur : flèches, Entrée ou F2 (ou taper directement), Échap, Tab, Maj+flèches pour choisir
     des cases, Ctrl+C et Ctrl+V (des cases venues d'Excel ou de Google Sheets), Suppr pour vider, Ctrl+Suppr pour
     supprimer la séance (après confirmation ; à la souris ou au doigt, le bouton « Supprimer la séance du … » dit
-    laquelle), Ctrl+Z. L'en-tête reste en haut, le jour et le spectacle à gauche ; au téléphone, le tableau défile sous
-    les doigts.
+    laquelle), Ctrl+Z. L'en-tête reste en haut, les colonnes figées (le jour et le spectacle d'office) à gauche ; au
+    téléphone, le tableau défile sous les doigts.
   - « ＋ Séance » : le jour, l'heure, le spectacle, le lieu (la recherche des lieux) ; une date du même spectacle au
     même lieu qui touche ce jour (le même, la veille ou le lendemain) reçoit la séance, sinon une date se crée, et le
     tableur dit ce qu'il a fait ; un filtre qui la cacherait se relâche.
-  - La distribution : l'équipe de la date (la distribution « en tournée » par défaut ; une équipe explicite ne s'écrit
-    que si on la change), en pastilles qu'on retire et qu'on ajoute, au clavier aussi. « Étendre à… » la pose sur les
-    dates du même spectacle de la saison, de l'année civile ou des lignes choisies (les passées si on le veut), après un
-    aperçu du nombre de dates qui changeront ; les remplaçants posés à la main sont signalés avant d'être remplacés.
-  - Exporter les lignes et les colonnes de la vue : Excel (un .xlsx écrit par l'administration elle-même, sans
-    bibliothèque : de vraies dates et heures, l'en-tête figé et filtrable), CSV (points-virgules, pour Excel en
-    français), Google Sheets (le tableau copié, une feuille vierge sheets.new s'ouvre : on colle). « Importer » : des
-    lignes copiées d'un tableur (les titres de colonnes reconnus, ou l'ordre de l'export) deviennent des séances, après
-    un aperçu ligne par ligne ; « Annuler » reprend tout l'import. Le tableur ne montre ni n'exporte rien des colonnes de
-    diffusion du suivi (ni montant ni prix de cession).
+  - La distribution : l'équipe de la date (la distribution « en tournée » par défaut ; une équipe explicite ne
+    s'écrit que si on la change), en pastilles qu'on retire et qu'on ajoute, au clavier aussi ; dans la case, les
+    pastilles tiennent sur une ligne, et ce qui ne tient pas se compte en « +n » (selon la largeur qu'on a donnée à la
+    colonne). « Étendre à… » la pose sur les dates du même spectacle de la saison, de l'année civile ou des lignes
+    choisies (les passées si on le veut), après un aperçu du nombre de dates qui changeront ; les remplaçants posés à
+    la main sont signalés avant d'être remplacés.
+  - Exporter les lignes et les colonnes de la vue (celles qu'on montre, dans l'ordre où on les montre ; une colonne
+    masquée n'est pas exportée, « Colonnes vides » les rend) : Excel (un .xlsx écrit par l'administration elle-même,
+    sans bibliothèque : de vraies dates et heures, l'en-tête filtrable, autant de colonnes figées que dans la vue),
+    CSV (points-virgules, pour Excel en français), Google Sheets (le tableau copié, une feuille vierge sheets.new
+    s'ouvre : on colle). « Importer » : des lignes copiées d'un tableur (les titres de colonnes reconnus, ou l'ordre
+    de l'export) deviennent des séances, après un aperçu ligne par ligne ; « Annuler » reprend tout l'import. Le
+    tableur ne montre ni n'exporte rien des colonnes de diffusion du suivi (l'étape, les contacts, les relances, les
+    notes de diffusion) ; seul le montant de cession HT y a sa colonne (« Cession HT (€) »), avec le script de la
+    compagnie idéale.
 - **Spectacles** : toute la fiche, l'univers (avec le contrôle des contrastes) et les photos (allégées avant l'envoi).
 - **Ateliers** : le catalogue publié et les séances dans les établissements, avec le total des heures par saison.
 - **Lieux** : avec la recherche de commune (geo.api.gouv.fr), la fusion des doublons, et ses dates (à venir, puis
@@ -1183,8 +1220,12 @@ ne l'a pas choisi ; elle ne se garde que sur un grand écran, voir « Le cadre e
 Représentations), `menu.epingles` (les accès épinglés du menu latéral : la liste des clés d'action, au plus douze, écrite
 aussitôt ; absente tant qu'on n'a rien changé, le menu montre alors le tableur, les feuilles de route, le planning, les
 devis, les frais, le journal et le site, voir « Le cadre et le menu latéral »), `theme` (`nuit`, `jour` ou `appareil` ;
-la nuit tant qu'on n'a pas choisi) et `densite` (`confortable` ou `compacte` ; voir « L'apparence »), puis `fenetres.tiroir` (la largeur du tiroir, en
-pixels), `fenetres.liste` (la largeur de la colonne de la liste à côté d'une fiche, en pixels), `fenetres.pl-detail` (la
+la nuit tant qu'on n'a pas choisi) et `densite` (`confortable` ou `compacte` ; voir « L'apparence »), puis
+`tableur.colonnes` (les colonnes du tableur à la carte, par mode : ordre, masquées, colonnes figées, largeurs, « Colonnes
+vides » ; voir Représentations), puis `fenetres.tiroir` (la largeur du tiroir, en pixels), `fenetres.liste` (la largeur
+de la colonne de la liste à côté d'une fiche, en pixels), pour le tableur `fenetres.tableur-h` (la hauteur de son cadre),
+`fenetres.tab-pop-lieu` et `fenetres.tab-pop-distribution` (la taille des fenêtres posées sur une case) et
+`fenetres.tab-ed-notes` (la zone de texte des notes), `fenetres.pl-detail` (la
 colonne du détail d'un jour du planning), `fenetres.tn` (la colonne de la carte de tournée) et `fenetres.a4-zoom` (le zoom
 de la page A4 : un pourcentage de 50 à 200, ou `auto` pour « Ajuster »), absentes tant qu'on ne les a pas réglées, ramenées
 dans ce que l'écran permet à chaque lecture (voir « Les fenêtres ajustables »), puis `fenetres.pleine` (le contenu sur toute la

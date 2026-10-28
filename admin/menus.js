@@ -13,7 +13,9 @@
      revenir, ouvrir la fiche. Une tuile du tableau de bord : ses réglages, la réduire, sa largeur, la déplacer, la
      masquer, personnaliser ; une action rapide : la retirer, la mettre dans le menu latéral ou l'en retirer ; un accès épinglé du
      menu latéral : l'ouvrir, le retirer, le monter, le descendre. Un spectacle : ses dates, l'avancer, le reculer. Une ligne
-     « à traiter » : la traiter sur place, l'épingler, la reporter ; une ligne du fil : annuler la modification.
+     « à traiter » : la traiter sur place, l'épingler, la reporter ; une ligne du fil : annuler la modification. L'en-tête d'une
+     colonne du tableur : masquer, figer jusqu'ici, ajuster la largeur, avancer, reculer, trier (le jour), les colonnes d'origine
+     (TABLEUR.colonnes.actions, admin/tableur.js).
    - Précédent / suivant dans chaque fiche ouverte à côté de sa liste (dates, personnes, lieux, devis, invitations,
      propositions, ateliers, séances, textes), et dans une feuille de route ou un spectacle : deux boutons dans le titre,
      Alt+↑ et Alt+↓ (GESTES.precSuiv). Les flèches ↑ ↓ passent d'une ligne à l'autre dans toutes les listes. */
@@ -306,6 +308,10 @@
   });
   document.addEventListener('dragend', () => { $$('.crm-carte[data-glisse]').forEach(c => { c.classList.remove('glisse'); delete c.dataset.glisse; }); $$('.crm-colonne.cible').forEach(x => x.classList.remove('cible')); });
 
+  // ===================================================================================================== l'en-tête d'une colonne du tableur
+  // clic droit, Maj+F10 (les en-têtes ont un focus tournant) ou appui long : ce que TABLEUR.colonnes propose pour cette colonne
+  if (typeof TABLEUR !== 'undefined' && TABLEUR.colonnes) G.menu({ cible: '#tab-tete th', titre: th => th.dataset.l || th.textContent.trim(), actions: th => TABLEUR.colonnes.actions(th.dataset.k) });
+
   // ===================================================================================================== précédent / suivant
   // dans une fiche ouverte à côté de sa liste : la ligne d'avant, celle d'après (dans l'ordre de la liste, filtres compris) ;
   // une feuille de route ou un spectacle n'ont pas de liste à côté : l'ordre est celui des dates, des spectacles
@@ -401,7 +407,11 @@
         { t: [['Échap']], d: 'Annuler la saisie' },
         { t: [['Suppr']], d: 'Vider la case' },
         { t: [[CMD, 'Z']], d: 'Annuler la dernière écriture' },
-        { t: [[CMD, 'A']], d: 'Tout sélectionner' }] },
+        { t: [[CMD, 'A']], d: 'Tout sélectionner' },
+        { g: 'Glisser le bord d’un en-tête', d: 'Régler la largeur de la colonne (la poignée se règle aussi aux flèches, ← →) ; double-clic : l’ajuster à son contenu' },
+        { g: 'Clic droit sur un en-tête', d: 'Masquer, figer jusqu’ici, ajuster, avancer, reculer, les colonnes d’origine (Maj+F10 sur l’en-tête choisi aux flèches ← →)' },
+        { g: '« Colonnes… »', d: 'Montrer ou masquer chaque colonne, changer leur ordre (↑ ↓ ou glisser)' },
+        { g: 'Glisser le bas du cadre', d: 'Régler la hauteur du tableur' }] },
       { titre: 'La carte', ici: h.startsWith('#/representations/carte'), lignes: [
         { t: [['Entrée']], d: 'Sur une pastille : ses dates, nouvelle date ici, l’itinéraire, la fiche (le clic, le clic droit aussi)' },
         { t: [['Maj', 'clic']], d: 'Choisir toutes les dates du lieu, puis agir sur elles' },

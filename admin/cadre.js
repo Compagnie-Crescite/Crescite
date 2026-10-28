@@ -87,7 +87,8 @@
    CADRE.poser(rubrique)   CADRE.marquer(rubrique)   CADRE.basculer(replie)   CADRE.replie()   CADRE.badges()   CADRE.perimer()
    CADRE.creer()   CADRE.epingles()   CADRE.estAuMenu(k)   CADRE.epinglable(k)   CADRE.mettreAuMenu(k)   CADRE.retirerDuMenu(k)
    CADRE.deplacer(k, sens)   CADRE.recents()   CADRE.nouvelleOpportunite()   CADRE.allerEtCliquer(adresse, selecteur)
-   CADRE.reglages()   CADRE.theme(valeur)   CADRE.densite(valeur)   CADRE.apparence() */
+   CADRE.reglages()   CADRE.theme(valeur)   CADRE.densite(valeur)   CADRE.apparence()
+   CADRE.oublierRepli() → le choix d'avant (« Disposition d'origine »)   CADRE.rendreRepli(v) */
 const CADRE = (() => {
   const html = document.documentElement;
   const CLE = 'menu.replie', CLE_THEME = 'theme', CLE_DENSITE = 'densite', MIROIR = 'crescite-admin-apparence', SESSION = 'crescite-admin-menu', PETIT = '(max-width: 1339px)';
@@ -549,6 +550,20 @@ const CADRE = (() => {
     majBouton();
   }
   if (typeof PREFS !== 'undefined') PREFS.surChangement(CLE, appliquer);
+  // « Disposition d'origine » (fenetres.js) : le choix du compte s'oublie, la feuille décide de nouveau selon la largeur ; rend le choix
+  // d'avant (rien s'il n'y en avait pas), que rendreRepli remet pour « Annuler »
+  function oublierRepli() {
+    const v = typeof PREFS !== 'undefined' ? PREFS.lire(CLE, null) : null;
+    if (typeof v !== 'boolean') return undefined;
+    PREFS.ecrire(CLE, null, { aussitot: true });
+    appliquer(null);
+    return v;
+  }
+  function rendreRepli(v) {
+    if (typeof v !== 'boolean' || typeof PREFS === 'undefined') return;
+    PREFS.ecrire(CLE, v, { aussitot: true });
+    appliquer(v);
+  }
   if (typeof PREFS !== 'undefined') PREFS.surChangement('representations.vue', suivreVueRetenue);
   // la fenêtre qui passe la limite des 1 340 px : au-dessus, le choix du compte reprend la main ; en dessous, le dépli de l'onglet
   if (typeof matchMedia === 'function') matchMedia(PETIT).addEventListener('change', () => {
@@ -556,5 +571,5 @@ const CADRE = (() => {
     majBouton();
   });
 
-  return { poser, marquer, basculer, replie, badges, perimer, creer, epingles, estAuMenu, epinglable, mettreAuMenu, retirerDuMenu, deplacer, recents, nouvelleOpportunite, allerEtCliquer, reglages, theme: choisirTheme, densite: choisirDensite, apparence };
+  return { poser, marquer, basculer, replie, badges, perimer, creer, epingles, estAuMenu, epinglable, mettreAuMenu, retirerDuMenu, deplacer, recents, nouvelleOpportunite, allerEtCliquer, reglages, theme: choisirTheme, densite: choisirDensite, apparence, oublierRepli, rendreRepli };
 })();

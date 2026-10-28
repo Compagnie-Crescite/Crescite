@@ -91,6 +91,9 @@ const jjmmaaaa = iso => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4
   await page.uncheck('#tab-vides');
   await attendre(page, n => document.querySelectorAll('#tab-tete th').length === n, 4000, sans);
   ok('2 · … et les replie', (await enTetes(page)).length === sans);
+  // (« Colonnes vides » est une préférence du compte depuis le lot 10 : la base fictive la garde pour les sections suivantes ; on
+  // attend que le décochage y soit écrit avant de fermer la page, sinon l'export plus bas hériterait des colonnes vides)
+  for (let i = 0; i < 60 && DB.crescite_preferences.find(p => p.cle === 'tableur.colonnes')?.valeur?.complet?.vides !== false; i++) await page.waitForTimeout(50);
   await ctx.close();
 }
 
