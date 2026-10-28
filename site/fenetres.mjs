@@ -16,7 +16,8 @@
 // troupe ; les deux petites questions n'en ont pas) ; les fenêtres de la diffusion (l'opportunité, le courriel de relance :
 // des dialog.tab-dialogue sur la page, leurs fermetures, la question « Fermer sans enregistrer ? ») ; « Pleine largeur » et
 // « Disposition d'origine » dans les réglages du menu ; un écran bas (1 440 × 700 px : le coin d'une boîte qui défile reste dans l'angle,
-// l'opportunité a sa clé fenetres.crm, les réglages du menu tiennent sur une rangée au-dessus de « Replier », qui garde le bas) et « Annuler »
+// l'opportunité a sa clé fenetres.crm, les réglages du menu tiennent sur une rangée de 36 px sous « Replier », au-dessus de
+// l'apparence, et le menu défilé jusqu'en bas les montre ; à 900 px, l'un sous l'autre en 44 px) et « Annuler »
 // qui rend la largeur gardée sur un plus grand écran sans la borner.
 // Les captures vont dans site/dist/shots-fenetres/. Sort en erreur si une vérification manque.
 import fs from 'node:fs';
@@ -452,6 +453,24 @@ async function ouvrirTiroir(page) {
   await page.waitForTimeout(400);
   const e2 = await etat();
   ok('8 · rendre (« Annuler ») remet la colonne masquée, le menu replié et la hauteur', !e2.lieu && e2.replie && e2.h === 520, JSON.stringify(e2));
+  ok('8 · aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+{
+  // la hauteur du tableur seule : rien d'autre ne redessine le tableur, « Disposition d'origine » doit la remettre elle-même
+  repartir(); garder('fenetres.tableur-h', 420);
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1440, hauteur: 900, hash: '#/representations/tableur' });
+  await page.waitForSelector('#tab-cadre', { timeout: 15000 });
+  await page.waitForTimeout(300);
+  const cadre = () => page.$eval('#tab-cadre', c => ({ h: Math.round(c.getBoundingClientRect().height), enLigne: c.style.height }));
+  const c0 = await cadre();
+  await page.evaluate(() => { window.__avant = FENETRES.toutOublier(); });
+  await page.waitForTimeout(300);
+  const c1 = await cadre();
+  await page.evaluate(() => FENETRES.rendre(window.__avant));
+  await page.waitForTimeout(300);
+  const c2 = await cadre();
+  ok('8 · la hauteur gardée du tableur (420 px) revient à la place qui reste sur-le-champ, puis « Annuler » la rend', c0.h === 420 && c1.h !== 420 && c1.enLigne === '' && c2.h === 420, JSON.stringify({ c0, c1, c2 }));
   ok('8 · aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();
 }

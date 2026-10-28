@@ -53,7 +53,10 @@ const contraste = (page) => page.evaluate(() => {
   const pilule = document.querySelector('.reg-theme'), repos = document.querySelector('.reg-theme [role=radio]:not([aria-checked="true"])'), choisi = document.querySelector('.reg-theme [role=radio][aria-checked="true"]');
   const fond = voile(bande, [255, 255, 255], dec(getComputedStyle(pilule).backgroundColor)[3]), t = dec(getComputedStyle(repos).color), tc = dec(getComputedStyle(choisi).color), fc = dec(getComputedStyle(choisi).backgroundColor);
   const fondChoisi = voile(fond, fc.slice(0, 3), fc[3] ?? 1);
-  return { theme: document.documentElement.dataset.theme, repos: +rapport(voile(fond, t.slice(0, 3), t[3] ?? 1), fond).toFixed(2), choisi: +rapport(tc.slice(0, 3), fondChoisi).toFixed(2), texte: getComputedStyle(repos).color };
+  // (les deux réglages des fenêtres, « Pleine largeur » et « Disposition d'origine », posés à même la bande, sans fond)
+  const fr = document.querySelector('.fen-reglage'), tf = fr ? dec(getComputedStyle(fr).color) : null;
+  return { theme: document.documentElement.dataset.theme, repos: +rapport(voile(fond, t.slice(0, 3), t[3] ?? 1), fond).toFixed(2), choisi: +rapport(tc.slice(0, 3), fondChoisi).toFixed(2), texte: getComputedStyle(repos).color,
+    fenetres: tf ? +rapport(voile(bande, tf.slice(0, 3), tf[3] ?? 1), bande).toFixed(2) : 0 };
 });
 
 // ================================================================================ la nuit par défaut, et la pilule
@@ -115,6 +118,7 @@ const contraste = (page) => page.evaluate(() => {
   ok('jour · la coque (l’en-tête et le menu) reste de nuit : fonds très sombres, texte blanc', coque.barre && coque.menu && coque.texte === 'rgb(255, 255, 255)' && coque.lien === 'rgb(255, 255, 255)', JSON.stringify(coque));
   const cj = await contraste(page);
   ok('contraste de la pilule contre la bande de nuit : 4,5:1 au moins, l’icône au repos comme l’icône choisie (le jour)', cj.theme === 'jour' && cj.repos >= 4.5 && cj.choisi >= 4.5, JSON.stringify(cj));
+  ok('jour · « Pleine largeur » et « Disposition d’origine » restent habillés pour la bande de nuit : 4,5:1 au moins', cj.fenetres >= 4.5, JSON.stringify(cj));
   const r = await page.evaluate(() => [...document.querySelectorAll('.reg-theme [role=radio]')].map(x => x.getAttribute('aria-checked')).join());
   ok('jour · le jour est coché, la nuit ne l’est plus', r === 'false,true,false', r);
   await page.waitForTimeout(900);

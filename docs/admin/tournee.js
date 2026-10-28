@@ -56,6 +56,7 @@ const TOURNEE = (() => {
   }
   const quandTexte = j => j < 0 ? 'en même temps' : j === 0 ? 'le même jour' : j === 1 ? 'le lendemain' : j < 14 ? `${j} jours après` : j < 60 ? `${Math.round(j / 7)} semaines après` : `${Math.round(j / 30)} mois après`;
   // ------------------------------------------------------------------------------------------- le cadre : zoom, glisser, viser
+  let surRemiseCarte = null;     // l'écoute de « Disposition d'origine » (fenetres.js) posée par la dernière carte dessinée
   const LARGEUR_MIN = 90;      // le plus près : un neuvième de la France
   const texteCadre = c => c.map(n => +n.toFixed(1)).join(' ');
   const lireCadre = t => String(t).trim().split(/\s+/).map(Number);
@@ -104,11 +105,17 @@ const TOURNEE = (() => {
     // la largeur de la carte se règle (fenetres.tn) : une poignée posée une fois, entre la carte et la colonne des étapes (dessiner()
     // ne touche que l'intérieur de .tn-cadre, #tn-resume et #tn-etapes : elle survit, et les boutons du zoom aussi)
     if (typeof FENETRES !== 'undefined') {
-      const deux = $('.tn-deux'), t = FENETRES.taille('tn');
-      if (typeof t === 'number') deux.style.setProperty('--l-tn', `${t}px`);
+      const deux = $('.tn-deux');
+      // sans largeur gardée, c'est la feuille qui décide (1,3 fr contre 1 fr) : la remise (double-clic, Entrée) efface la variable
+      // au lieu d'y figer une largeur en pixels, et « Disposition d'origine » (ou son « Annuler ») reprend la valeur gardée, ou la feuille
+      const suivre = () => { const t = FENETRES.taille('tn'); if (typeof t === 'number') deux.style.setProperty('--l-tn', `${t}px`); else deux.style.removeProperty('--l-tn'); };
+      suivre();
       FENETRES.poignee(carte, { cle: 'tn', axe: 'x', bord: 'droite', libelle: 'Largeur de la carte', dans: deux, apres: carte, entre: [() => carte, () => $('.tn-cote', deux)],
-        defaut: () => { const l = deux.clientWidth; return Math.min(Math.round((l - 18) * 1.3 / 2.3), l - 18 - 320); }, defautVivant: true,   // (le partage 1,3 / 1 de la feuille : « Disposition d'origine » y revient sans recharger)
-        ecrire: v => { deux.style.setProperty('--l-tn', `${v}px`); } });
+        defaut: () => { const l = deux.clientWidth; return Math.min(Math.round((l - 18) * 1.3 / 2.3), l - 18 - 320); },
+        ecrire: v => { deux.style.setProperty('--l-tn', `${v}px`); }, apresOrigine: () => deux.style.removeProperty('--l-tn') });
+      if (surRemiseCarte) document.removeEventListener('fenetres:remises', surRemiseCarte);       // (une seule écoute : celle de la carte qu'on voit)
+      surRemiseCarte = () => { if (deux.isConnected) suivre(); };
+      document.addEventListener('fenetres:remises', surRemiseCarte);
     }
     let m = null;              // ce que la carte montre : les dates, les lieux, les étapes
     let vb = lireCadre(F.viewBox);    // le cadre courant (la cible, pendant qu'il glisse)

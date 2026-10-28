@@ -40,7 +40,17 @@
 --   fenetres.tiroir         la largeur du tiroir de l'administration (admin/fenetres.js), en pixels, tirée à son bord gauche (absente
 --                           tant qu'on ne l'a pas tirée) ; ramenée dans les bornes de l'écran à chaque lecture.
 --   fenetres.liste          la largeur de la colonne de la liste à côté d'une fiche (huit pages à deux colonnes), en pixels, même forme.
---                           D'autres clés fenetres.* (le contenu sur toute la largeur, les boîtes de dialogue) suivront avec leur surface.
+--   fenetres.pl-detail, fenetres.tn
+--                           la colonne du détail d'un jour du planning, la colonne de la carte de tournée : en pixels, même forme.
+--   fenetres.a4-zoom        le zoom de la page A4 d'une feuille de route (admin/equipe.js) : un pourcentage de 50 à 200, ou 'auto'.
+--   fenetres.pleine         true ou absente : le contenu sur toute la largeur (« Pleine largeur » du menu).
+--   fenetres.<boîte>        { l, h } : la taille d'une famille de boîtes de dialogue (recherche, tab-dialogue, tab-dialogue-large, crm,
+--                           tb-brief, gq-aide, gf), tirée par son coin.
+--   fenetres.tableur-h, .tab-pop-lieu, .tab-pop-distribution, .tab-ed-notes
+--                           la hauteur du cadre du tableur ; la taille des fenêtres posées sur une case et de la zone des notes.
+--   tableur.colonnes        { complet: { ordre, masquees, figees, largeurs, vides }, simple: { … } } : les colonnes du tableur à la carte,
+--                           par mode (admin/tableur.js) ; absente tant qu'on n'a rien changé. « Disposition d'origine » (le menu)
+--                           efface toutes les clés fenetres.*, celle-ci et menu.replie, avec « Annuler ».
 -- Rien à migrer dans la base : les clés sont des lignes, pas des colonnes.
 
 begin;

@@ -95,41 +95,43 @@ coupées), au téléphone et à l'ordinateur, à une heure figée, puis avec le 
 captures vont dans `site/dist/shots-equipe/` et `site/dist/shots-admin/`. Un banc sort en erreur dès qu'une vérification
 manque.
 
-`bash site/bancs-admin.sh` enchaîne aussi `prefs.mjs` (où chaque réglage est gardé : avec le compte ou sur l'appareil),
-`tableur.mjs` (le tableur des représentations), `icones.mjs` (la bibliothèque d'icônes), `cadre.mjs` (la coque, le menu
-latéral, ses raccourcis et ses badges), `champs.mjs` (la fiche d'une date : le schéma de ses champs, la jauge, le bandeau
-« Modifiée ailleurs », qui paraît en `ad-arrive`), `vues-dates.mjs` (les trois vues de Représentations : la pilule, les
-filtres communs, le fondu, le focus, la ligne visée, la vue retenue et les touches V puis L / T / C), `theme.mjs` (le
-thème et la densité : le jour, « appareil » qui suit le système, la compacte, le menu replié), `distribution.mjs` (la
-distribution à l'écran : la cellule d'une date, qui sera prévenu, la boîte d'impact, la fiche d'une date),
-`fenetres.mjs` (les fenêtres ajustables : la poignée
-du tiroir, le séparateur de la liste, le coin des boîtes et les réglages du menu), `fenetres-2.mjs` (les autres : le
-détail du planning, la carte, la hauteur d'une tuile, le zoom de la feuille A4), `carte-travail.mjs` (la carte comme vue
-de travail), `tableur-colonnes.mjs` (les colonnes du tableur à la carte : la poignée d'un en-tête, le menu, la hauteur
-du cadre, le « +n » de la distribution) et `acces.mjs` (les accès
-rapides du menu et la barre de commande : l'arrivée d'un épinglé en `ad-pop`, d'un récent en `ad-arrive`, le menu
-« Créer » en `gm-paraitre`). Ils ne touchent presque
-pas à ce vocabulaire : `cadre.mjs` mesure seulement que le repli anime la colonne une fois, et rien sous « moins
-d'animations », et que le compte des badges ne tient jamais la page plus de 200 ms à `CPU=4` ; `vues-dates.mjs`, que le
-passage entre les trois vues est un fondu ; `theme.mjs`, qu'aucune transition de couleur ne se lance au changement de
-thème, que l'icône choisie saute en 450 ms au ressort, que rien ne bouge sous « moins d'animations » ou `?anim=0`, et
-qu'à `CPU=4` aucune tâche ne dépasse 200 ms ; `distribution.mjs`, que les pastilles de la cellule (qui se chevauchent, un anneau pointillé pour un
-remplaçant, grises et barrées pour qui ne part pas) n'animent rien (ni animation ni transition, d'après le style calculé), que le HTML de 120 dates de huit personnes se fabrique en moins de
-100 ms, et qu'un écran de 30 dates se pose et se met en page en moins de 100 ms à `CPU=4` (les 120 d'un coup, 960 pastilles, coûtent plus de 100 ms de
-mise en page : le tableur les dessinera par tranches) ; `fenetres.mjs`, que la remise à la taille
-d'origine s'anime une fois (et d'un coup sous « moins d'animations »), que rien ne glisse ni ne se remesure pendant le
-geste, et qu'aucune tâche ne dépasse 200 ms à `CPU=4` pendant un glisser (le coin d'une boîte suit le pointeur de la même façon, et sa remise à la taille d'origine est la
-même) ; `fenetres-2.mjs`, qu'aucune tâche ne dépasse 200 ms à `CPU=4` pendant un glisser du détail du planning, de
-la carte ou d'une tuile, et que le zoom A4 ne bouge ni la pagination ni rien d'autre ; `carte-travail.mjs`, que le cadre de la carte glisse en passant par un cadre intermédiaire (et
-change d'un coup sous « moins d'animations » et avec `?anim=0`, la pastille allumée ne grossissant pas non plus), et
-qu'aucune tâche ne dépasse 200 ms à `CPU=4` pendant le zoom, la molette, le glisser et le survol ; `tableur-colonnes.mjs`, que la grille ne se redessine pas
-pendant le glisser d'un bord d'en-tête (seule une variable CSS change) et qu'aucune tâche ne dépasse 200 ms à `CPU=4` à
-l'ouverture du tableur, pendant un glisser, un ajustement, un changement d'ordre, un masquage, « Colonnes vides » ou le repli
-du menu, **sur une trentaine de lignes** seulement (28 séances, chaque geste mesuré à part et refait une fois s'il dépasse) :
-avec les 230 lignes de la base réelle, l'ouverture coûte environ 450 ms et un cran de glisser 150 à 230 ms, donc la tenue
-des 200 ms n'est pas encore vérifiée sur des données réelles ; `acces.mjs`, les trois arrivées ci-dessus, et le
-silence sous « moins d'animations » ; pour le reste, ils veillent à ce qu'une refonte ne casse rien. (La case de la matrice qui saute, `ad-pop`,
-vient avec le mode Distribution du tableur.)
+`bash site/bancs-admin.sh` enchaîne aussi `prefs.mjs` (où chaque réglage est gardé : avec le compte ou sur
+l'appareil), `tableur.mjs` (le tableur des représentations), `icones.mjs` (la bibliothèque d'icônes), `cadre.mjs` (la
+coque, le menu latéral, ses raccourcis et ses badges), `champs.mjs` (la fiche d'une date : le schéma de ses champs, la
+jauge, le bandeau « Modifiée ailleurs », qui paraît en `ad-arrive`), `vues-dates.mjs` (les trois vues de
+Représentations : la pilule, les filtres communs, le fondu, le focus, la ligne visée, la vue retenue et les touches V
+puis L / T / C), `theme.mjs` (le thème et la densité : le jour, « appareil » qui suit le système, la compacte, le menu
+replié), `distribution.mjs` (la distribution à l'écran : la cellule d'une date, qui sera prévenu, la boîte d'impact,
+la fiche d'une date), `fenetres.mjs` (les fenêtres ajustables : la poignée du tiroir, le séparateur de la liste, le
+coin des boîtes et les réglages du menu), `fenetres-2.mjs` (les autres : le détail du planning, la carte, la hauteur
+d'une tuile, le zoom de la feuille A4), `carte-travail.mjs` (la carte comme vue de travail), `tableur-colonnes.mjs`
+(les colonnes du tableur à la carte : la poignée d'un en-tête, le menu, la hauteur du cadre, le « +n » de la
+distribution) et `acces.mjs` (les accès rapides du menu et la barre de commande : l'arrivée d'un épinglé en `ad-pop`,
+d'un récent en `ad-arrive`, le menu « Créer » en `gm-paraitre`). Ils ne touchent presque pas à ce vocabulaire :
+`cadre.mjs` mesure seulement que le repli anime la colonne une fois, et rien sous « moins d'animations », et que le
+compte des badges ne tient jamais la page plus de 200 ms à `CPU=4` ; `vues-dates.mjs`, que le passage entre les trois
+vues est un fondu ; `theme.mjs`, qu'aucune transition de couleur ne se lance au changement de thème, que l'icône
+choisie saute en 450 ms au ressort, que rien ne bouge sous « moins d'animations » ou `?anim=0`, et qu'à `CPU=4` aucune
+tâche ne dépasse 200 ms ; `distribution.mjs`, que les pastilles de la cellule (qui se chevauchent, un anneau pointillé
+pour un remplaçant, grises et barrées pour qui ne part pas) n'animent rien (ni animation ni transition, d'après le
+style calculé), que le HTML de 120 dates de huit personnes se fabrique en moins de 100 ms, et qu'un écran de 30 dates
+se pose et se met en page en moins de 100 ms à `CPU=4` (les 120 d'un coup, 960 pastilles, coûtent plus de 100 ms de
+mise en page : le tableur les dessinera par tranches) ; `fenetres.mjs`, que la remise à la taille d'origine s'anime
+une fois (et d'un coup sous « moins d'animations »), que rien ne glisse ni ne se remesure pendant le geste, et
+qu'aucune tâche ne dépasse 200 ms à `CPU=4` pendant un glisser (le coin d'une boîte suit le pointeur de la même façon,
+et sa remise à la taille d'origine est la même) ; `fenetres-2.mjs`, qu'aucune tâche ne dépasse 200 ms à `CPU=4`
+pendant un glisser du détail du planning, de la carte ou d'une tuile, et que le zoom A4 ne bouge ni la pagination ni
+rien d'autre ; `carte-travail.mjs`, que le cadre de la carte glisse en passant par un cadre intermédiaire (et change
+d'un coup sous « moins d'animations » et avec `?anim=0`, la pastille allumée ne grossissant pas non plus), et
+qu'aucune tâche ne dépasse 200 ms à `CPU=4` pendant le zoom, la molette, le glisser et le survol ;
+`tableur-colonnes.mjs`, que la grille ne se redessine pas pendant le glisser d'un bord d'en-tête (seule une variable
+CSS change) et qu'aucune tâche ne dépasse 200 ms à `CPU=4` à l'ouverture du tableur, pendant un glisser, un
+ajustement, un changement d'ordre, un masquage, « Colonnes vides » ou le repli du menu, **sur une trentaine de
+lignes** seulement (28 séances, chaque geste mesuré à part et refait une fois s'il dépasse) : avec les 230 lignes de
+la base réelle, l'ouverture coûte environ 450 ms et un cran de glisser 150 à 230 ms, donc la tenue des 200 ms n'est
+pas encore vérifiée sur des données réelles ; `acces.mjs`, les trois arrivées ci-dessus, et le silence sous « moins
+d'animations » ; pour le reste, ils veillent à ce qu'une refonte ne casse rien. (La case de la matrice qui saute,
+`ad-pop`, vient avec le mode Distribution du tableur.)
 
 ## Ce qui a été écarté
 

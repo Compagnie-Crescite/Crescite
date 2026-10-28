@@ -575,6 +575,7 @@ const TABLEUR = (() => {
     const obs = new MutationObserver(() => { const m = menu(); if (m !== etatMenu) { etatMenu = m; placerCadre(); } });
     obs.observe(html, { attributes: true, attributeFilter: ['class'] }); T.nettoyer.push(() => obs.disconnect());
     ecoute(html, 'transitionend', e => { if (e.propertyName === '--large-menu') placerCadre(); });
+    ecoute(document, 'fenetres:remises', placerCadre);     // (« Disposition d'origine » et son « Annuler » : la hauteur gardée, ou l'origine)
     if (typeof PREFS !== 'undefined') {
       T.nettoyer.push(PREFS.surChangement('menu.replie', placerCadre), PREFS.surChangement('fenetres.tableur-h', placerCadre),
         PREFS.surChangement('tableur.colonnes', () => { if (T.geste || !$('#tab-cadre')) return; poserLargeurs(); const t = $('#tab-tete'); if (t) t.dataset.cles = ''; dessiner({ garder: true }); }));

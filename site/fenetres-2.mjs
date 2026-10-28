@@ -238,7 +238,7 @@ const variable = (page, sel, nom) => page.$eval(sel, (e, n) => getComputedStyle(
   // « Disposition d'origine » (le menu latéral) : la carte reprend sa largeur d'origine tout de suite, sans recharger
   await page.click('#fen-origine');
   await page.waitForTimeout(500);
-  ok('2 · « Disposition d’origine » rend à la carte sa largeur d’origine sur-le-champ, et efface fenetres.tn', Math.abs((await largeur(page, '#tn-carte')) - l0) <= 1 && ecrites('fenetres.tn').at(-1).valeur === null, `${await largeur(page, '#tn-carte')} pour ${l0}`);
+  ok('2 · « Disposition d’origine » rend à la carte sa largeur d’origine sur-le-champ (la variable --l-tn effacée : la feuille décide), et efface fenetres.tn', Math.abs((await largeur(page, '#tn-carte')) - l0) <= 1 && (await variable(page, '.tn-deux', '--l-tn')) === '' && ecrites('fenetres.tn').at(-1).valeur === null, `${await largeur(page, '#tn-carte')} pour ${l0}`);
   // sous 900 px, les deux colonnes s'empilent
   await page.setViewportSize({ width: 1000, height: 800 });
   await page.waitForTimeout(500);

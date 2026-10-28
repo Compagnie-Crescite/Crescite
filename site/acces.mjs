@@ -106,9 +106,10 @@ const ouvrirMenu = async (page, sel) => { await page.focus(sel); await page.keyb
   await page.click('.gm-boite [data-gm]:has-text("Opportunité de diffusion")');
   const venue = await attendre(page, () => document.querySelector('dialog.crm-boite[open]'), null, 8000);
   ok('2 · « Opportunité de diffusion » mène à #/diffusion puis clique « Nouvelle opportunité » : la fenêtre de la piste s’ouvre', venue && (await hash(page)) === '#/diffusion', await hash(page));
-  await page.keyboard.press('Escape'); await page.evaluate(() => { document.querySelectorAll('dialog.crm-boite').forEach(d => d.remove()); });
-  await page.waitForTimeout(150);
-  ok('2 · … et la fenêtre est fermée avant la suite', (await compte(page, 'dialog.crm-boite')) === 0);
+  // Échap ferme la fenêtre (une boîte vide : sans question) et la boîte quitte la page d'elle-même (boiteCrm, index.html)
+  await page.keyboard.press('Escape');
+  ok('2 · … Échap la ferme, et la boîte quitte la page', await attendre(page, () => !document.querySelector('dialog.crm-boite'), null, 3000));
+  await page.evaluate(() => { document.querySelectorAll('dialog.crm-boite').forEach(d => d.remove()); });     // (le ménage, si elle restait)
   // déjà sur la Diffusion : avant, le clic restait sans effet (aucun hashchange ne venait)
   await page.click('.menu-creer'); await menuOuvert(page);
   await page.click('.gm-boite [data-gm]:has-text("Opportunité de diffusion")');

@@ -21,8 +21,9 @@
      fenetres.pl-detail (la colonne du détail d'un jour, à côté de la grille du planning), fenetres.tn (la colonne de la carte
      de tournée, à côté des étapes), fenetres.a4-zoom (l'échelle de la page A4 d'une feuille de route : un pourcentage de 50 à
      200, ou 'auto' pour « Ajuster »), et une par famille de boîtes (fenetres.recherche, .tab-dialogue, .tab-dialogue-large, .crm,
-     .tb-brief, .gq-aide, .gf), dont la valeur est la taille { l, h }. La hauteur d'une tuile du tableau de bord se garde avec la
-     disposition (accueil.tableau, tuiles[i].hauteur), non ici. Rien dans l'adresse.
+     .tb-brief, .gq-aide, .gf), dont la valeur est la taille { l, h }. Le tableur règle les siennes (TABLEUR.clesFenetres :
+     fenetres.tableur-h, .tab-pop-lieu, .tab-pop-distribution, .tab-ed-notes). La hauteur d'une tuile du tableau de bord se garde
+     avec la disposition (accueil.tableau, tuiles[i].hauteur), non ici. Rien dans l'adresse.
    - Les bornes : chaque surface déclare la sienne (FENETRES.borner), une fonction de l'écran du moment (le tiroir : de
      480 px à la largeur de l'écran moins 80 px, pour que le voile reste cliquable ; la liste : de 340 px à 55 % de la largeur
      du contenu). Une valeur gardée est ramenée dans ces bornes à chaque lecture, et la surface suit quand la fenêtre change
@@ -57,14 +58,19 @@
    - La remise : un double-clic ou Entrée sur la poignée (ou « Taille d'origine » du menu du tiroir) oublie la clé et ramène
      la surface à sa taille d'origine, en 220 ms (le « doux » de site/MOUVEMENT.md), une fois ; rien ne bouge sous
      prefers-reduced-motion ni ?anim=0 (la taille d'origine s'applique d'un coup). « Disposition d'origine »
-     (FENETRES.toutOublier) oublie toutes les clés fenetres.* et rend ce qu'elles valaient, pour le « Annuler »
-     (FENETRES.rendre) ; l'un et l'autre remettent aussitôt ce qu'on voit (les poignées vivantes, les boîtes, la mise en page)
-     et disent « fenetres:remises » sur document à ce qui n'est pas une poignée (le zoom de la page A4).
+     (FENETRES.toutOublier) oublie toutes les clés fenetres.* (la pleine largeur et le zoom de la page A4 compris), celles du
+     tableur (TABLEUR.clesFenetres), ses colonnes (la clé tableur.colonnes : TABLEUR.colonnes.origine) et le choix du menu
+     replié (menu.replie : CADRE.oublierRepli), et rend ce qu'elles valaient, pour le « Annuler » (FENETRES.rendre : les deux
+     dernières y sont sous « @tableur.colonnes » et « @menu.replie », rendues par TABLEUR.colonnes.retablir et
+     CADRE.rendreRepli). L'un et l'autre remettent aussitôt ce qu'on voit (les poignées vivantes, les boîtes, la mise en page)
+     et disent « fenetres:remises » sur document à ce qui n'est pas une poignée (le zoom de la page A4, la largeur de la carte,
+     la hauteur du tableur). La hauteur d'une tuile n'en est pas : c'est le « Réinitialiser » du tableau de bord qui la remet.
    - Les réglages du menu (FENETRES.reglages, appelé par cadre.js sous « Replier ») : « Pleine largeur » (un interrupteur :
-     html.pleine-largeur lève le plafond de 1 500 px du contenu et du pied de page) et « Disposition d'origine » (efface
-     toutes les clés fenetres.* d'un coup, avec une annonce qui porte « Annuler »). Ils sont sous « Replier », au-dessus de l'apparence
-     (cadre.js), l'un sous l'autre ; sur un écran bas (moins de 820 px), ils tiennent sur une rangée d'icônes. « Annuler » rend la valeur gardée telle quelle (PREFS.lire avec { brut }), non bornée à l'écran du moment. Comme les
-     poignées, ils ne comptent qu'à l'ordinateur : la pleine largeur gardée dort au téléphone et au doigt.
+     html.pleine-largeur lève le plafond de 1 500 px du contenu et du pied de page) et « Disposition d'origine » (tout ce qui
+     précède, d'un coup, avec une annonce qui porte « Annuler »). Ils sont sous « Replier », au-dessus de l'apparence (cadre.js),
+     l'un sous l'autre ; sur un écran bas (moins de 820 px), ils tiennent sur une rangée d'icônes. « Annuler » rend la valeur
+     gardée telle quelle (PREFS.lire avec { brut }), non bornée à l'écran du moment. Comme les poignées, ils ne comptent qu'à
+     l'ordinateur : la pleine largeur gardée dort au téléphone et au doigt.
    - Où l'outil dort : la poignée n'est créée qu'à partir de 641 px de large avec un pointeur précis
      ((min-width: 641px) and (pointer: fine)) ; au téléphone et au doigt, les surfaces gardent leur taille d'origine. Ce qui se règle
      sans poignée suit la même règle : une hauteur de tuile gardée (tableau.js) et le zoom de la page A4 (equipe.js, FENETRES.actif)
@@ -160,7 +166,13 @@ const FENETRES = (() => {
   const toutesCles = () => CLES.concat((typeof TABLEUR !== 'undefined' && Array.isArray(TABLEUR.clesFenetres) ? TABLEUR.clesFenetres : []).filter(c => !CLES.includes(c)));
   const AUSSI = {
     'tableur.colonnes': {
-      oublier: () => (typeof TABLEUR !== 'undefined' && TABLEUR.colonnes && typeof PREFS !== 'undefined' && PREFS.lire('tableur.colonnes', null, { brut: true }) != null ? TABLEUR.colonnes.origine({ dire: false }) : undefined),
+      oublier: () => {
+        if (typeof TABLEUR === 'undefined' || !TABLEUR.colonnes || typeof PREFS === 'undefined') return undefined;
+        const brut = PREFS.lire('tableur.colonnes', null, { brut: true });      // (telle qu'elle était gardée, pas normalisée : « Annuler » la rend à l'identique)
+        if (brut === null || brut === undefined) return undefined;
+        TABLEUR.colonnes.origine({ dire: false });
+        return brut;
+      },
       rendre: v => { if (typeof TABLEUR !== 'undefined' && TABLEUR.colonnes) TABLEUR.colonnes.retablir(v); },
     },
     'menu.replie': {
@@ -539,7 +551,7 @@ const FENETRES = (() => {
     const g = document.createElement('div');
     g.className = 'fen-reglages'; g.setAttribute('role', 'group'); g.setAttribute('aria-label', 'Fenêtres');
     g.innerHTML = `<button type="button" class="fen-reglage" id="fen-pleine" aria-pressed="false" title="Pleine largeur : le contenu ne plafonne plus à 1 500 px">${icone('moniteur')}<span class="menu-l">Pleine largeur</span></button>
-      <button type="button" class="fen-reglage" id="fen-origine" title="Disposition d’origine : les tailles du tiroir, de la liste et des fenêtres, les colonnes du tableur et le menu reviennent à leur origine">${icone('actualiser')}<span class="menu-l">Disposition d’origine</span></button>`;
+      <button type="button" class="fen-reglage" id="fen-origine" title="Disposition d’origine : les tailles des fenêtres, la pleine largeur, le zoom de la page A4, les colonnes du tableur et le menu reviennent à leur origine">${icone('actualiser')}<span class="menu-l">Disposition d’origine</span></button>`;
     zone.append(g);
     $('#fen-pleine', g).addEventListener('click', () => {
       const v = !pleine();
@@ -552,7 +564,7 @@ const FENETRES = (() => {
       if (typeof annoncer !== 'function') return;
       if (!Object.keys(avant).length) { annoncer('La disposition est déjà celle d’origine.'); return; }
       // tout de suite, sans question : l'annonce porte « Annuler », qui rend ce que les clés valaient
-      annoncer('Disposition d’origine remise : les tailles des fenêtres, les colonnes du tableur et le menu sont revenus à leur origine.', { libelle: 'Annuler', delai: 8000, action: () => {
+      annoncer('Disposition d’origine remise : les tailles des fenêtres, la pleine largeur, le zoom de la page A4, les colonnes du tableur et le menu sont revenus à leur origine.', { libelle: 'Annuler', delai: 8000, action: () => {
         rendre(avant);
         annoncer('La disposition d’avant est revenue.');
       } });
@@ -626,12 +638,12 @@ dialog.dlg-taille .tb-brief-corps { flex: 1 1 auto; min-height: 0; }
 @container menu (max-width: 120px) { .fen-reglage { justify-content: center; gap: 0; padding: 0; } }
 /* un écran bas (moins de 820 px) : les deux réglages tiennent sur une rangée d'icônes de 36 px (leur nom reste lu et en infobulle), pour
    que le menu défile le moins possible ; dans le menu replié, ils restent l'un sous l'autre */
-@media (max-height: 820px) {
+@media (max-height: 819px) {
   .fen-reglages { flex-direction: row; }
   .fen-reglage { flex: 1 1 0; width: auto; min-height: 36px; margin: 0; padding: 0; justify-content: center; gap: 0; }
   .fen-reglage .menu-l { position: absolute; width: 1px; height: 1px; flex: none; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 }
-@container menu (max-width: 120px) { @media (max-height: 820px) { .fen-reglages { flex-direction: column; } } }
+@container menu (max-width: 120px) { @media (max-height: 819px) { .fen-reglages { flex-direction: column; } } }
 @media not all and (min-width: 641px) and (pointer: fine) { .fen-reglages { display: none; } }
 html.still .poignee::after { transition: none; }
 @media (prefers-reduced-motion: reduce) { .poignee::after { transition: none; } }`;

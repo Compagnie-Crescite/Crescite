@@ -62,16 +62,16 @@ body { min-height: 100%; background: radial-gradient(1100px 540px at -5% -10%, c
    (comme les rubriques de la feuille du téléphone), le badge en corail ; replié, le badge devient un point sur l'icône */
 .menu { background: var(--menu-fond); color: rgba(255, 255, 255, .8); }
 .menu .nav { gap: 0; }
-.menu .nav a, .menu-replier { color: rgba(255, 255, 255, .8); font-family: var(--etiq); font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.menu .nav a, .menu-replier, .fen-reglage { color: rgba(255, 255, 255, .8); font-family: var(--etiq); font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
 .menu .nav a { margin: 2px 8px; border-radius: 10px; transition: background .15s, color .15s, box-shadow .15s; }
-.menu .nav a:hover, .menu-replier:hover { background: rgba(255, 255, 255, .12); color: #fff; }
+.menu .nav a:hover, .menu-replier:hover, .fen-reglage:hover { background: rgba(255, 255, 255, .12); color: #fff; }
 .menu .nav a[aria-current="page"] { background: rgba(255, 255, 255, .14); color: #fff; box-shadow: inset 3px 0 0 var(--saison-texte-nuit), 0 6px 16px -6px color-mix(in srgb, var(--saison) 80%, transparent); }
-.menu a:focus-visible, .menu-replier:focus-visible { outline-color: #fff; }
+.menu a:focus-visible, .menu-replier:focus-visible, .fen-reglage:focus-visible { outline-color: #fff; }
 .menu-replier { margin: auto 8px 8px; border-radius: 10px; transition: background .15s, color .15s; }
 .reg-theme { background: rgba(255, 255, 255, .1); }
 .reg-theme button, .reg-densite { color: rgba(255, 255, 255, .72); }   /* (aucune transition de couleur : le thème change d'un coup) */
 .reg-theme button:hover, .reg-densite:hover { background: rgba(255, 255, 255, .12); color: #fff; }
-.reg-theme button[aria-checked="true"], .reg-densite[aria-pressed="true"] { background: rgba(255, 255, 255, .2); color: #fff; box-shadow: inset 0 0 0 1.5px var(--saison-texte-nuit); }
+.reg-theme button[aria-checked="true"], .reg-densite[aria-pressed="true"], .fen-reglage[aria-pressed="true"] { background: rgba(255, 255, 255, .2); color: #fff; box-shadow: inset 0 0 0 1.5px var(--saison-texte-nuit); }
 .reg-theme button:focus-visible, .reg-densite:focus-visible { outline-color: #fff; }
 /* les accès rapides : « ＋ Créer » au dégradé de la saison, les épinglés et les récents en blanc doux sur la nuit du menu */
 .menu-etiq { color: rgba(255, 255, 255, .55); font-family: var(--etiq); }

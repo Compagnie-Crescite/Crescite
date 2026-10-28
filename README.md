@@ -390,7 +390,7 @@ compte du projet inscrit dans `crescite_admins`.
   téléphone ni au doigt (la poignée n'existe qu'à partir de 641 px avec un pointeur précis), ni dans l'espace de
   l'équipe, ni à l'impression. Pendant le geste, rien d'autre ne bouge (les lignes d'une liste ne glissent pas, le pied de
   la fiche ne se remesure pas). `node site/fenetres.mjs` le vérifie dans Chromium, hors ligne, sur une base fictive
-  (181 vérifications : la poignée et ses valeurs, un glisser qui n'écrit qu'une fois, la taille retrouvée et bornée à
+  (199 vérifications : la poignée et ses valeurs, un glisser qui n'écrit qu'une fois, la taille retrouvée et bornée à
   l'écran, le double-clic, les flèches, le bouton « ⋯ », le recul des tiroirs empilés, le séparateur de la liste sur les
   huit pages et après un enregistrement, le squelette du chargement, la remise de toutes les tailles et son « Annuler »,
   le téléphone et le tactile, l'impression, les coins de chaque boîte et la taille qu'ils gardent, la feuille et son piège de
@@ -406,8 +406,9 @@ compte du projet inscrit dans `crescite_admins`.
   en direct de la Diffusion, et l'opportunité garde sa question « Fermer sans enregistrer ? » quand une saisie est
   commencée. Deux réglages au bas du menu latéral : « Pleine largeur » (le contenu et le pied de page ne plafonnent plus à
   1 500 px ; clé `fenetres.pleine`) et « Disposition d'origine » (efface d'un coup toutes les tailles gardées, celles du tableur
-  comprises, les colonnes du tableur et le choix du menu replié, remet aussitôt ce qu'on voit, et l'annonce porte
-  « Annuler »). À l'impression, ni poignée ni coin, et le briefing imprimé ignore la taille tirée.
+  comprises, la pleine largeur, le zoom de la page A4, les colonnes du tableur et le choix du menu replié, remet aussitôt
+  ce qu'on voit, et l'annonce porte « Annuler » ; la hauteur d'une tuile, elle, revient par le « Réinitialiser » du tableau
+  de bord). À l'impression, ni poignée ni coin, et le briefing imprimé ignore la taille tirée.
   Le même outil règle trois surfaces de plus (`node site/fenetres-2.mjs`, 115 vérifications) : **le planning**, où la
   colonne du détail d'un jour se tire par son bord gauche (de 240 à 560 px, `fenetres.pl-detail`) et, au-dessus de
   1 200 px, le détail se met aussi à côté de la grille en vue Équipe une fois un jour choisi ; **la carte de tournée**,
@@ -658,7 +659,7 @@ compte du projet inscrit dans `crescite_admins`.
     pour les lecteurs d'écran) ; les récents s'effacent. Quand la colonne manque de hauteur, « Créer » reste toujours entier à
     l'écran (sur un écran de moins de 780 px de haut, à la souris, les rubriques se resserrent un peu) et ce sont les épinglés et
     les récents qui défilent d'eux-mêmes, jusqu'à une ligne, pour que le repli et les réglages restent au pied de l'écran ; sur
-    un écran plus bas encore (et replié, dès 900 px de haut : ses quatre réglages s'empilent), c'est le menu entier qui défile.
+    un écran plus bas encore (et replié, dès 900 px de haut : ses six réglages s'empilent, les deux des fenêtres puis les quatre de l'apparence), c'est le menu entier qui défile.
     Un épinglé qui arrive
     saute, un récent neuf se pose ; rien ne bouge si l'appareil demande moins d'animations. L'aide « **?** » les décrit sous
     « Les accès rapides ». Au téléphone, rien n'a changé : « + » de la barre du bas garde sa liste.
@@ -1208,42 +1209,43 @@ fait de même quand le compte connecté administre. Trois fonctions, à déploye
   courriels (`node courriel.mjs`), 39 du flux d'agenda (`node agenda.mjs` : les dates inchangées, les propositions,
   l'échappement et le pliage des lignes).
 
-**Les préférences.** Le sixième script, `supabase/migrations/20261025_crescite_preferences.sql`, s'exécute après les cinq
-autres, de la même façon, et peut être relancé. Il ajoute `crescite_preferences` : ce que chacun règle une fois et
+**Les préférences.** Le sixième script, `supabase/migrations/20261025_crescite_preferences.sql`, s'exécute après les
+cinq autres, de la même façon, et peut être relancé. Il ajoute `crescite_preferences` : ce que chacun règle une fois et
 retrouve sur tous ses appareils, une valeur par compte et par clé. Chacun ne lit et n'écrit que les siennes,
 l'administration comprise ; le public n'y a aucun droit. Voici les clés d'aujourd'hui : `accueil.tableau` (la
 disposition du tableau de bord), `planning.masques` (les personnes masquées du planning, en liste brute, que lit aussi
-l'espace de l'équipe), `representations.avant` (le panneau « À compléter avant la tournée » : ouvert ou fermé, 30, 60
-ou 90 jours), `menu.replie` (le menu latéral de l'administration, replié ou déplié : vrai ou faux, absente tant qu'on
-ne l'a pas choisi ; elle ne se garde que sur un grand écran, voir « Le cadre et le menu latéral »), `representations.vue`
+l'espace de l'équipe), `representations.avant` (le panneau « À compléter avant la tournée » : ouvert ou fermé, 30, 60 ou
+90 jours), `menu.replie` (le menu latéral de l'administration, replié ou déplié : vrai ou faux, absente tant qu'on ne
+l'a pas choisi ; elle ne se garde que sur un grand écran, voir « Le cadre et le menu latéral »), `representations.vue`
 (la dernière vue de Représentations, `liste`, `tableur` ou `carte` : écrite à l'ordinateur seulement, voir
-Représentations), `menu.epingles` (les accès épinglés du menu latéral : la liste des clés d'action, au plus douze, écrite
-aussitôt ; absente tant qu'on n'a rien changé, le menu montre alors le tableur, les feuilles de route, le planning, les
-devis, les frais, le journal et le site, voir « Le cadre et le menu latéral »), `theme` (`nuit`, `jour` ou `appareil` ;
-la nuit tant qu'on n'a pas choisi) et `densite` (`confortable` ou `compacte` ; voir « L'apparence »), puis
-`tableur.colonnes` (les colonnes du tableur à la carte, par mode : ordre, masquées, colonnes figées, largeurs, « Colonnes
-vides » ; voir Représentations), puis `fenetres.tiroir` (la largeur du tiroir, en pixels), `fenetres.liste` (la largeur
-de la colonne de la liste à côté d'une fiche, en pixels), pour le tableur `fenetres.tableur-h` (la hauteur de son cadre),
+Représentations), `menu.epingles` (les accès épinglés du menu latéral : la liste des clés d'action, au plus douze,
+écrite aussitôt ; absente tant qu'on n'a rien changé, le menu montre alors le tableur, les feuilles de route, le
+planning, les devis, les frais, le journal et le site, voir « Le cadre et le menu latéral »), `theme` (`nuit`, `jour` ou
+`appareil` ; la nuit tant qu'on n'a pas choisi) et `densite` (`confortable` ou `compacte` ; voir « L'apparence »), puis
+`tableur.colonnes` (les colonnes du tableur à la carte, par mode : ordre, masquées, colonnes figées, largeurs, «
+Colonnes vides » ; voir Représentations), puis `fenetres.tiroir` (la largeur du tiroir, en pixels), `fenetres.liste` (la
+largeur de la colonne de la liste à côté d'une fiche, en pixels), `fenetres.pl-detail` (la colonne du détail d'un jour
+du planning), `fenetres.tn` (la colonne de la carte de tournée) et `fenetres.a4-zoom` (le zoom de la page A4 : un
+pourcentage de 50 à 200, ou `auto` pour « Ajuster ») ; pour le tableur, `fenetres.tableur-h` (la hauteur de son cadre),
 `fenetres.tab-pop-lieu` et `fenetres.tab-pop-distribution` (la taille des fenêtres posées sur une case) et
-`fenetres.tab-ed-notes` (la zone de texte des notes), `fenetres.pl-detail` (la
-colonne du détail d'un jour du planning), `fenetres.tn` (la colonne de la carte de tournée) et `fenetres.a4-zoom` (le zoom
-de la page A4 : un pourcentage de 50 à 200, ou `auto` pour « Ajuster »), absentes tant qu'on ne les a pas réglées, ramenées
-dans ce que l'écran permet à chaque lecture (voir « Les fenêtres ajustables »), puis `fenetres.pleine` (le contenu sur toute la
+`fenetres.tab-ed-notes` (la zone de texte des notes) ; toutes absentes tant qu'on ne les a pas réglées, ramenées dans ce
+que l'écran permet à chaque lecture (voir « Les fenêtres ajustables »), puis `fenetres.pleine` (le contenu sur toute la
 largeur : vrai, ou absente) et une clé par famille de boîtes de dialogue (`fenetres.recherche`, `.tab-dialogue`,
-`.tab-dialogue-large`, `.crm`, `.tb-brief`, `.gq-aide`, `.gf` : la taille `{ l, h }` qu'on leur a donnée). La hauteur d'une tuile du tableau de bord se garde dans
-`accueil.tableau` (`tuiles[i].hauteur`). Une clé nouvelle se nomme `rubrique.reglage`, en minuscules, et sa valeur garde la même forme d'une
-version à l'autre. Tous les modules passent par un seul outil, `admin/prefs.js` (`PREFS`), qui lit le compte en une
-requête à l'ouverture, répond ensuite sans attendre, et écrit sans faire attendre : le réglage est gardé sur l'appareil
-tout de suite (sous `crescite-prefs:<compte>` : une copie par compte, rien ne se mélange sur un ordinateur partagé),
-puis envoyé à la base un instant après le dernier geste (immédiatement pour un clic) ; fermer la page envoie ce qui reste.
-Deux onglets du même navigateur se préviennent, sauf pendant une saisie. Quand l'appareil et la base ne disent pas la même
-chose, ce qui n'est pas encore parti l'emporte, sinon la base. Les anciennes clés de l'appareil
-(`crescite-admin-tableau`, `crescite-planning-masques`, `crescite-admin-avant`) passent dans la base à l'ouverture qui suit,
-puis s'effacent. Tant que le script n'est pas passé, rien ne s'affiche à l'écran de travers : les réglages restent sur
-l'appareil (la liste des personnes masquées dans `crescite-planning-masques`, que partage l'espace de l'équipe) et le
-panneau du tableau de bord le dit. Une seule annonce par session dit où un réglage est gardé (« Gardé avec votre compte »
-ou « Gardé sur cet appareil »), au premier réglage hors du tableau de bord. 56 vérifications (`node site/prefs.mjs`, captures
-dans `site/dist/shots-prefs/`) ; les 22 essais du script restent `node preferences.mjs` (dans `supabase/tests/`).
+`.tab-dialogue-large`, `.crm`, `.tb-brief`, `.gq-aide`, `.gf` : la taille `{ l, h }` qu'on leur a donnée). La hauteur
+d'une tuile du tableau de bord se garde dans `accueil.tableau` (`tuiles[i].hauteur`). Une clé nouvelle se nomme
+`rubrique.reglage`, en minuscules, et sa valeur garde la même forme d'une version à l'autre. Tous les modules passent
+par un seul outil, `admin/prefs.js` (`PREFS`), qui lit le compte en une requête à l'ouverture, répond ensuite sans
+attendre, et écrit sans faire attendre : le réglage est gardé sur l'appareil tout de suite (sous
+`crescite-prefs:<compte>` : une copie par compte, rien ne se mélange sur un ordinateur partagé), puis envoyé à la base
+un instant après le dernier geste (immédiatement pour un clic) ; fermer la page envoie ce qui reste. Deux onglets du
+même navigateur se préviennent, sauf pendant une saisie. Quand l'appareil et la base ne disent pas la même chose, ce qui
+n'est pas encore parti l'emporte, sinon la base. Les anciennes clés de l'appareil (`crescite-admin-tableau`,
+`crescite-planning-masques`, `crescite-admin-avant`) passent dans la base à l'ouverture qui suit, puis s'effacent. Tant
+que le script n'est pas passé, rien ne s'affiche à l'écran de travers : les réglages restent sur l'appareil (la liste
+des personnes masquées dans `crescite-planning-masques`, que partage l'espace de l'équipe) et le panneau du tableau de
+bord le dit. Une seule annonce par session dit où un réglage est gardé (« Gardé avec votre compte » ou « Gardé sur cet
+appareil »), au premier réglage hors du tableau de bord. 56 vérifications (`node site/prefs.mjs`, captures dans
+`site/dist/shots-prefs/`) ; les 22 essais du script restent `node preferences.mjs` (dans `supabase/tests/`).
 
 **« Compagnie Idéale » (lancé le 25 octobre 2026).** Le septième script, `supabase/migrations/20261026_crescite_ideale.sql`,
 s'exécute après les six autres et peut être relancé. Il ajoute les alertes de tournée et les demandes de devis (le public
