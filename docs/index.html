@@ -432,7 +432,7 @@ section.bloc.sans-filet { border-top: 0; padding-top: clamp(28px, 4vw, 48px); }
 .scene .sc-h { color: transparent; }
 .sc-mot { position: absolute; left: 0; top: 0; z-index: 3; display: block; width: 0; height: auto; margin: 0; padding: 0; border: 0; background: none; color: #fff; opacity: 0; cursor: pointer; will-change: transform, opacity;
   -webkit-tap-highlight-color: transparent; }
-.sc-mot svg { display: block; width: 100%; height: auto; fill: currentColor; overflow: visible; filter: drop-shadow(0 4px 5px rgba(0, 0, 0, .5)); }
+.sc-mot svg { display: block; width: 100%; height: auto; fill: currentColor; overflow: visible; filter: drop-shadow(0 3px 4px rgba(0, 0, 0, .6)) drop-shadow(0 0 14px rgba(0, 0, 0, .4)); }
 .sc-mot:focus-visible { outline: 2px solid #fff; outline-offset: 8px; border-radius: 6px; }
 /* (il flotte : il monte et descend doucement, un peu de travers ; caressé, il fait la gelée, ou se trémousse, ou bondit) */
 html:not(.still) .sc-mot > span { display: block; animation: mot-flotte 4.6s ease-in-out infinite; }
@@ -12029,9 +12029,10 @@ const CREATURE = (() => {
     // où elle commence à pousser. Sans mouvement : là d'emblée
     let couronne = null, toileC = null;
     const motEl = $('.sc-mot', el);
-    // la caresse (voir caresser) : la réaction en cours (genre, depuis quand, de quel côté), les caresses rapprochées, la lueur,
-    // les cœurs qui montent
-    const CAR = { genre: -1, t0: -1e9, cote: 1, n: 0, tN: -1e9, lueur: 0, coeurs: [], tPrec: 0 };
+    // la caresse (voir caresser) : la réaction en cours (genre, depuis quand, de quel côté), les caresses rapprochées, la
+    // poursuite (le projecteur qui s'allume sur elle, de 0 à 1)
+    const CAR = { genre: -1, t0: -1e9, cote: 1, n: 0, tN: -1e9, poursuite: 0, tPrec: 0 };
+    const MOT_K = .5;   // (« crescite » : la moitié de sa taille dans le logo, bien lisible)
     let motPos = { x: 0, y: 0, w: 0 }, motG = 0, motOp = '', motRaf = 0;   // (« crescite » : sa place, sa venue, son opacité)
     // la profondeur, dans la seule toile : la pieuvre et ses tentacules qui mènent aux spectacles se peignent d'abord ; puis,
     // dessous (destination-over), leur ombre : la toile recopiée en noir dans une toile cinq fois plus petite (OMBRE), que
@@ -12253,7 +12254,7 @@ const CREATURE = (() => {
       // (la fenêtre qui passe d'un côté à l'autre de 760 px : le haut se pose sur la scène, ou retourne sous elle ; son fond suit
       // le nom de la scène, que l'observateur ne relit pas tant qu'il ne bouge pas)
       // (« crescite » sous la pieuvre : sa place et sa largeur, celles de la couronne (motCouronne))
-      motPos = { x: ox + COEUR[0] * s - 827 * .38 * s / 2, y: oy + (351 - 110 - 163 * .38) * s, w: 827 * .38 * s };
+      motPos = { x: ox + COEUR[0] * s - 827 * MOT_K * s / 2, y: oy + (351 - 100 - 163 * MOT_K) * s, w: 827 * MOT_K * s };
       motEl.style.width = motPos.w.toFixed(1) + 'px'; motEl.style.transform = `translate(${motPos.x.toFixed(1)}px, ${motPos.y.toFixed(1)}px)`;
       if (affiche) { if (yMenu == null) { Menu.surScene(); majMot(); } else { Menu.el.classList.remove('sur-scene'); Menu.sousPieuvre(yMenu); majMot(); } }
       // les deux bouts du texte de chaque titre (tx0, tx1), par rapport à lui : c'est le texte que la tentacule souligne, pas le
@@ -12364,7 +12365,7 @@ const CREATURE = (() => {
       const pe = vivant && eveil !== null ? jouer(now, dtI) : 0;
       theta += JEU.rT; dxT += JEU.rx; dyT += JEU.ry;
       const ca = vivant ? caresse(now) : null;
-      if (ca) { theta += ca.th; dxT += ca.dx; dyT += ca.dy; }
+      if (ca && Number.isFinite(ca.th + ca.dx + ca.dy + ca.kx + ca.ky)) { theta += ca.th; dxT += ca.dx; dyT += ca.dy; }
       const ondeJ = onde + 2.2 * pe + (ca ? ca.onde : 0);
       // (la pieuvre ouverte : un de ses bras tient un titre, ou fait un geste ; ses tentacules décoratives se déploient alors)
       const ouverte = eveil !== null && BRAS.some(b => !b.t.decor && (b.but || b.geste));
@@ -12419,13 +12420,11 @@ const CREATURE = (() => {
         if (gC < 1) occupe = true;
       }
       b.x0 -= 4; b.y0 -= 4; b.x1 += 18; b.y1 += 22;   // (l'ombre, décalée et adoucie)
-      // (les cœurs de la caresse, et la lueur autour de la tête)
-      const cxT = ox + bob.x + COEUR[0] * s, cyT = oy + bob.y + 560 * s;
-      if (CAR.coeurs.length || CAR.lueur > .01) { const R = 1042 * s * .7; b.x0 = Math.min(b.x0, cxT - R); b.x1 = Math.max(b.x1, cxT + R); b.y0 = Math.min(b.y0, cyT - R * 1.2); b.y1 = Math.max(b.y1, cyT + R); occupe = true; }
-      for (const c of CAR.coeurs) { b.x0 = Math.min(b.x0, c.x - 30); b.x1 = Math.max(b.x1, c.x + 30); b.y0 = Math.min(b.y0, c.y - 30); b.y1 = Math.max(b.y1, c.y + 30); }
+      // (la poursuite de la caresse : son faisceau, du haut de la scène à la flaque de lumière sous la pieuvre)
+      if (CAR.poursuite > .005) { const P = poursuiteDe(); b.x0 = Math.min(b.x0, P.x - P.r1); b.x1 = Math.max(b.x1, P.x + P.r1); b.y0 = 0; b.y1 = Math.max(b.y1, P.yf + P.r1 * .4); occupe = true; }
       // le rebond de la pose : à la relève, le corps se ramasse puis se détend, bras compris (ils ne partent qu'ensuite)
       const kp = anime && eveil !== null ? (relaye ? 1 : 1 - .05 * choc((now - eveil) / 700)) * (secousse ? 1 - .035 * choc((now - secousse) / 520) : 1) : 1, cxh = ox + bob.x + COEUR[0] * s, cyh = oy + bob.y + COEUR[1] * s;
-      const kx = ca && ca.kx || 1, ky = ca && ca.ky || 1;
+      const kx = ca && Number.isFinite(ca.kx) ? ca.kx : 1, ky = ca && Number.isFinite(ca.ky) ? ca.ky : 1;
       const u = boite && kp === 1 && kx === 1 && ky === 1 ? { x0: Math.min(b.x0, boite.x0), y0: Math.min(b.y0, boite.y0), x1: Math.max(b.x1, boite.x1), y1: Math.max(b.y1, boite.y1) } : { x0: 0, y0: 0, x1: W, y1: H };
       boite = b;
       const X0 = Math.max(0, Math.floor(u.x0 * dpr)), Y0 = Math.max(0, Math.floor(u.y0 * dpr)), Rw = Math.min(cv.width, Math.ceil(u.x1 * dpr)) - X0, Rh = Math.min(cv.height, Math.ceil(u.y1 * dpr)) - Y0;
@@ -12459,7 +12458,6 @@ const CREATURE = (() => {
           // (les plus enfoncées d'abord : elles passent derrière les autres ; celle qu'on regarde, devant tout)
           for (const a of [...BRAS].sort((x, y) => x.t.profondeur() - y.t.profondeur())) if (a !== ab) trace(a);
           if (ab) trace(ab);
-          dessinerCoeurs();
           // (les tentacules posées flottent, portées par les remous (PIEUVRE, flotter) : c'est ce mouvement qui invite à les
           // remonter ; plus de lueur qui court dessus)
           // (les titres et leurs dates sont devant, par-dessus la toile : rien n'y est effacé, les bras passent derrière les
@@ -12475,12 +12473,7 @@ const CREATURE = (() => {
           // (elle vient en douceur à l'éveil : la pieuvre de l'ouverture, qu'elle relaie, n'en a pas)
           ctx.globalAlpha = .42 * (anime ? lisse(0, 1, (now - eveil) / 900) : 1); ctx.drawImage(cvO, x0, y0, x1 - x0, y1 - y0, x0 * k + 5 * dpr, y0 * k + 9 * dpr, (x1 - x0) * k, (y1 - y0) * k);
           if (couronne) { ctx.globalAlpha = .4; ctx.setTransform(repere); dessinerCouronne(gC, cxh, cyh); }
-          if (CAR.lueur > .01) {   // (caressée, elle rayonne : une lueur douce derrière sa tête)
-            ctx.setTransform(repere); ctx.globalAlpha = 1;
-            const R = 1042 * s * (.42 + .12 * CAR.lueur), x = ox + bob.x + COEUR[0] * s, y = oy + bob.y + 560 * s, g = ctx.createRadialGradient(x, y, R * .1, x, y, R);
-            g.addColorStop(0, `rgba(255, 214, 236, ${(.42 * CAR.lueur).toFixed(3)})`); g.addColorStop(1, 'rgba(255, 214, 236, 0)');
-            ctx.fillStyle = g; ctx.fillRect(x - R, y - R, 2 * R, 2 * R);
-          }
+          if (CAR.poursuite > .005) { ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.globalAlpha = 1; dessinerPoursuite(); }
           ctx.restore();
           ctx.setTransform(1, 0, 0, 1, 0, 0);
         }
@@ -12494,8 +12487,8 @@ const CREATURE = (() => {
       else if (une && occupe) reveil();
     }
     const reveil = () => { if (!raf && affiche && visible && !document.hidden) raf = requestAnimationFrame(image); };
-    // « crescite » au-dessus de la pieuvre, sobre : au tiers de sa taille du logo (38 %), centré au-dessus de sa tête (le haut
-    // de l'arche : 351 unités ; le mot du logo : 355 à 1182 en largeur, 937 à 1100 en hauteur), un peu adouci ; il paraît à
+    // « crescite » au-dessus de la pieuvre : à la moitié de sa taille du logo (MOT_K), centré au-dessus de sa tête (le haut
+    // de l'arche : 351 unités ; le mot du logo : 355 à 1182 en largeur, 937 à 1100 en hauteur), plein, une ombre le détache ; il paraît à
     // l'éveil. C'est le nom de la page en haut de l'accueil (le titre, .sc-h, ne se voit pas) : quand on descend, il s'efface en
     // approchant du haut de l'écran, et la barre déplie alors son nom, « Compagnie Crescite » (.sur-scene) : il le devient
     function motVenue(gm) { if (gm !== motG) { motG = gm; majMot(); } }
@@ -12504,8 +12497,9 @@ const CREATURE = (() => {
       // (il s'efface en approchant du haut de l'écran : au téléphone, dès les premiers pixels, il est sous la barre ; au bureau,
       // aussi pendant que le menu, posé sous la scène, monte s'arrimer en haut et y déplier le nom : il n'est plus là quand il
       // s'arrime)
-      const tel = TEL.matches, m = Menu.el.getBoundingClientRect(), y = el.getBoundingClientRect().top + motPos.y;
-      const p = tel ? clamp((y - 4) / 30, 0, 1) : Math.min(clamp((y - 4) / 120, 0, 1), clamp((m.top - 10) / 260, 0, 1)), op = (.86 * motG * p).toFixed(3);
+      // (au téléphone, il part tout en haut : il s'efface à mesure qu'il quitte sa place, plein tant qu'on n'a pas défilé)
+      const tel = TEL.matches, m = Menu.el.getBoundingClientRect(), rs = el.getBoundingClientRect(), y = rs.top + motPos.y, y0 = rs.top + scrollY + motPos.y;
+      const p = tel ? clamp((y - 2) / Math.max(12, y0 - 2), 0, 1) : Math.min(clamp((y - 4) / 120, 0, 1), clamp((m.top - 10) / 260, 0, 1)), op = (motG * p).toFixed(3);
       if (op !== motOp) { motOp = op; motEl.style.opacity = op; motEl.style.visibility = +op ? '' : 'hidden'; }
       // (sans mouvement, la caresse n'a rien à faire bouger : le mot n'est plus qu'un mot)
       const vif = motionOK(); if (motEl.tabIndex !== (vif ? 0 : -1)) { motEl.tabIndex = vif ? 0 : -1; motEl.toggleAttribute('aria-hidden', !vif); motEl.style.cursor = vif ? '' : 'default'; }
@@ -12530,13 +12524,13 @@ const CREATURE = (() => {
     }
 
     /* ---------- la caresse ----------
-       Un clic (un toucher) sur « crescite », ou sur la tête de la pieuvre : on la caresse. Elle fond : elle rayonne d'une lueur
-       rose, des petits cœurs montent de sa tête, et tout tremble avec elle (sa tête, la couronne, le mot, les tentacules qui
-       ondulent depuis leurs racines), de l'une de quatre façons, au hasard, jamais deux fois la même de suite : la gelée (elle
-       tremblote, s'aplatit et s'étire), le câlin (elle penche la tête vers la main et s'y frotte), le ronron (un frisson rapide,
-       ses tentacules frémissent), le bond de joie (elle se ramasse et saute). Caressée encore (dans la seconde et demie), elle en
-       redemande : plus fort, plus de cœurs ; à la cinquième, elle fond tout à fait (une gerbe de cœurs). Moins d'animations :
-       rien ne bouge */
+       Un clic (un toucher) sur « crescite », ou sur la tête de la pieuvre : on la caresse. Tout tremble avec elle (sa tête, la
+       couronne, le mot, les tentacules qui ondulent depuis leurs racines), de l'une de quatre façons, au hasard, jamais deux fois
+       la même de suite : la gelée (elle tremblote, s'aplatit et s'étire), le câlin (elle penche la tête vers la main et s'y
+       frotte), le ronron (un frisson rapide, ses tentacules frémissent), le bond de joie (elle se ramasse et saute). Et, comme au
+       théâtre, la poursuite la trouve : un faisceau de lumière chaude descend du haut de la scène sur elle, une flaque de lumière
+       s'étend sous elle, puis le projecteur s'éteint doucement. Caressée encore (dans la seconde et demie), elle en redemande :
+       plus fort, la lumière plus franche. Moins d'animations : rien ne bouge */
     const DUREE_C = [900, 1400, 1300, 1000];
     function caresser(x) {
       if (!motionOK() || pause) return;
@@ -12544,37 +12538,25 @@ const CREATURE = (() => {
       CAR.n = now - CAR.tN < 1500 ? Math.min(CAR.n + 1, 6) : 1; CAR.tN = now;
       let g; do g = Math.floor(Math.random() * 4); while (g === CAR.genre && Math.random() < .9);
       CAR.genre = g; CAR.t0 = now; CAR.cote = x == null ? (Math.random() < .5 ? -1 : 1) : x < ox + COEUR[0] * s ? -1 : 1;
-      CAR.lueur = Math.max(CAR.lueur, .55 + .09 * CAR.n);
-      const nb = CAR.n >= 5 ? 16 : 3 + 2 * CAR.n, cx = ox + bob.x + COEUR[0] * s, cy = oy + bob.y + 470 * s, Lp = 1042 * s;
-      const C = ['#ffffff', '#ffc2de', '#ff8fc7', themeSaison().v];
-      for (let i = 0; i < nb; i++) {
-        const a = -Math.PI / 2 + (Math.random() - .5) * (CAR.n >= 5 ? 2.6 : 1.5), v = (60 + Math.random() * 90) * (CAR.n >= 5 ? 1.5 : 1);
-        CAR.coeurs.push({ x: cx + (Math.random() - .5) * Lp * .25, y: cy + (Math.random() - .5) * Lp * .1, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t0: now + i * 45, vie: 1300 + Math.random() * 900,
-          r: (5 + Math.random() * 6) * Math.max(.8, Math.min(1.4, Lp / 420)), col: C[Math.floor(Math.random() * C.length)], ph: Math.random() * 6.3 });
-      }
-      if (CAR.coeurs.length > 90) CAR.coeurs.splice(0, CAR.coeurs.length - 90);
+      CAR.vise = Math.min(1, .6 + .1 * CAR.n);   // (la poursuite monte vers cette intensité, puis s'éteint)
       motEl.classList.remove('c-0', 'c-1', 'c-2', 'c-3'); void motEl.offsetWidth; motEl.classList.add('c-' + g);
       if (navigator.vibrate && matchMedia('(pointer: coarse)').matches) { try { navigator.vibrate(CAR.n >= 5 ? [10, 30, 10, 30, 16] : 8); } catch (e) { /* (refusé : rien) */ } }
       reveil();
     }
-    // une image de la caresse : ce qu'elle ajoute à la tête (th, dx, dy, en unités du dessin) et à l'ondulation ; les cœurs avancent
+    // une image de la caresse : ce qu'elle ajoute à la tête (th, dx, dy, en unités du dessin) et à l'ondulation ; la poursuite
+    // s'allume vite (un projecteur qu'on ouvre), puis, la caresse finie, s'éteint lentement
     function caresse(now) {
       const dts = Math.min(.05, (now - (CAR.tPrec || now)) / 1000); CAR.tPrec = now;
-      CAR.lueur *= Math.pow(.35, dts);
-      for (let i = CAR.coeurs.length - 1; i >= 0; i--) {
-        const c = CAR.coeurs[i];
-        if (now < c.t0) continue;
-        if (now - c.t0 > c.vie) { CAR.coeurs.splice(i, 1); continue; }
-        c.vx *= Math.pow(.4, dts); c.vy = c.vy * Math.pow(.5, dts) - 30 * dts;
-        c.x += (c.vx + Math.sin((now - c.t0) / 260 + c.ph) * 18) * dts; c.y += c.vy * dts;
-      }
-      const t = (now - CAR.t0) / 1000, d = (DUREE_C[CAR.genre] || 0) / 1000;
+      if (CAR.vise) { CAR.poursuite += (CAR.vise - CAR.poursuite) * Math.min(1, dts * 9); if (now - CAR.t0 > (DUREE_C[CAR.genre] || 0) + 400) CAR.vise = 0; }
+      else CAR.poursuite *= Math.pow(.25, dts);
+      // (l'image peut dater d'un peu avant le clic : son temps part de zéro, jamais d'avant)
+      const t = Math.max(0, (now - CAR.t0) / 1000), d = (DUREE_C[CAR.genre] || 0) / 1000;
       if (CAR.genre < 0 || t >= d) return null;
       const u = t / d, k = 1 + .22 * Math.min(CAR.n - 1, 4), RAD = Math.PI / 180, cote = CAR.cote, env = Math.sin(Math.PI * u);
       // (la tête ne bouge qu'à peine de plus que dans sa vie ordinaire (theta ±3°, dx ±16 unités) : plus, les boucles du logo,
       // qui suivent leurs racines, tombent dans la découpe de la tête et s'y peignent, au premier plan. Le corps entier, lui,
-      // s'écrase et s'étire autour du cœur (kx, ky : à 7 % au plus), et les tentacules ondulent ; le reste, le mot, la lueur, les
-      // cœurs le disent)
+      // s'écrase et s'étire autour du cœur (kx, ky : à 7 % au plus), et les tentacules ondulent ; le mot et la poursuite disent
+      // le reste)
       const lim = r => Math.max(-1, Math.min(1, r)), q = Math.min(k, 1.5);
       switch (CAR.genre) {
         case 0: { const e = Math.exp(-4.2 * t), w = Math.sin(t * 22) * e; return { th: 2.2 * RAD * Math.sin(t * 17) * e, dx: 4 * Math.sin(t * 13 + 1) * e, dy: -8 * w, onde: 3 * e, kx: 1 + .06 * q * w, ky: 1 - .06 * q * w }; }
@@ -12587,24 +12569,37 @@ const CREATURE = (() => {
         }
       }
     }
-    // les cœurs : ils montent de sa tête en se balançant, grossissent un peu, puis pâlissent
-    function dessinerCoeurs() {
-      const now = performance.now();
-      for (const c of CAR.coeurs) {
-        if (now < c.t0) continue;
-        const u = (now - c.t0) / c.vie, a = u < .12 ? u / .12 : Math.pow(1 - (u - .12) / .88, 1.4), r = c.r * (.7 + .5 * Math.min(1, u * 3));
-        ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(Math.sin((now - c.t0) / 300 + c.ph) * .25); ctx.scale(r / 10, r / 10);
-        ctx.globalAlpha = a; ctx.fillStyle = c.col;
-        ctx.beginPath(); ctx.moveTo(0, 9); ctx.bezierCurveTo(-13, 0, -9, -11, 0, -4); ctx.bezierCurveTo(9, -11, 13, 0, 0, 9); ctx.fill();
-        ctx.restore();
+    // la poursuite : où tombe le faisceau (x, sous la pieuvre, yf), sa largeur en haut (r0) et en bas (r1), en px de la toile
+    function poursuiteDe() {
+      const Lp = 1042 * s, x = ox + bob.x + COEUR[0] * s, yf = oy + bob.y + 930 * s;
+      return { x, yf, r0: Lp * .14, r1: Lp * .62 };
+    }
+    // peinte tout au fond (sous la couronne, l'ombre et la pieuvre) : le faisceau, plus clair vers le bas, aux bords doux (deux
+    // cônes l'un dans l'autre), puis la flaque de lumière où il tombe ; une lumière chaude, celle d'une poursuite de théâtre
+    function dessinerPoursuite() {
+      const P = poursuiteDe(), a = CAR.poursuite, lum = (k, al) => `rgba(255, 238, 206, ${(al * a * k).toFixed(3)})`;
+      // (cinq cônes l'un dans l'autre, du plus large au plus étroit : le bord s'estompe ; chacun finit sur la flaque, par son
+      // ellipse, et non d'un trait)
+      for (const l of [1, .86, .72, .58, .44]) {
+        const g = ctx.createLinearGradient(0, 0, 0, P.yf + P.r1 * .26 * l);
+        g.addColorStop(0, lum(.2, .07)); g.addColorStop(.75, lum(.2, .2)); g.addColorStop(1, lum(.2, .28));
+        ctx.fillStyle = g; ctx.beginPath();
+        ctx.moveTo(P.x - P.r0 * l, 0); ctx.lineTo(P.x + P.r0 * l, 0); ctx.lineTo(P.x + P.r1 * l, P.yf);
+        ctx.ellipse(P.x, P.yf, P.r1 * l, P.r1 * .26 * l, 0, 0, Math.PI); ctx.closePath(); ctx.fill();
       }
+      ctx.save(); ctx.translate(P.x, P.yf); ctx.scale(1, .26);
+      const f = ctx.createRadialGradient(0, 0, 0, 0, 0, P.r1 * 1.05);
+      f.addColorStop(0, lum(1, .42)); f.addColorStop(.6, lum(1, .18)); f.addColorStop(1, lum(1, 0));
+      ctx.fillStyle = f; ctx.beginPath(); ctx.arc(0, 0, P.r1 * 1.05, 0, Math.PI * 2); ctx.fill(); ctx.restore();
     }
     motEl.addEventListener('click', () => caresser(null));
 
     /* ---------- le jeu (voir JEU) ---------- */
     // le regard et le sursaut, une image : la tête (JEU.rT, rx, ry, ajoutés à theta, dxT, dyT) ; rend l'ampleur du sursaut
     function jouer(now, dt) {
-      const dts = dt / 1000, cx = ox + bob.x + COEUR[0] * s, cy = oy + bob.y + COEUR[1] * s, L = 1042 * s, p = JEU.tire && JEU.tire.actif ? null : pointeur;
+      // (le pas du ressort borné : une image en retard (jusqu'à un quart de seconde, sur un appareil chargé) le faisait diverger,
+      // jusqu'à une tête sans place, et la pieuvre ne se dessinait plus)
+      const dts = Math.min(.033, dt / 1000), cx = ox + bob.x + COEUR[0] * s, cy = oy + bob.y + COEUR[1] * s, L = 1042 * s, p = JEU.tire && JEU.tire.actif ? null : pointeur;
       JEU.v *= Math.pow(.86, dt / 16);
       if (p && JEU.v > 1.5 && now - JEU.tPeur > 1100 && Math.hypot(p.x - cx, p.y - cy) < L * .7) {
         const d = Math.hypot(cx - p.x, cy - p.y) || 1;
@@ -12615,6 +12610,7 @@ const CREATURE = (() => {
       const nx = p ? clamp((p.x - cx) / (W * .38), -1, 1) : 0, ny = p ? clamp((p.y - cy) / (H * .38), -1, 1) : 0, ux = JEU.peur ? JEU.peur.ux : 0, uy = JEU.peur ? JEU.peur.uy : 0;
       const tV = (nx * 4 - ux * 6 * pe) * Math.PI / 180, xV = nx * 12 + ux * 26 * pe, yV = ny * 8 + uy * 16 * pe - 10 * pe;
       JEU.vR += (40 * (tV - JEU.rT) - 5 * JEU.vR) * dts; JEU.rT += JEU.vR * dts;
+      if (!Number.isFinite(JEU.rT + JEU.vR + JEU.rx + JEU.ry)) { JEU.rT = JEU.vR = JEU.rx = JEU.ry = 0; }   // (au repos, s'il dérape)
       JEU.rx += (xV - JEU.rx) * Math.min(1, dt / 90); JEU.ry += (yV - JEU.ry) * Math.min(1, dt / 90);
       return pe;
     }
