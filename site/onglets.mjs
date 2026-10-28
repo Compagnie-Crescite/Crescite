@@ -28,6 +28,7 @@
 // les univers et les actions culturelles des spectacles) : tout texte absent de D est signalé.
 const PW = process.env.PLAYWRIGHT_MODULE || '/opt/node22/lib/node_modules/playwright/index.mjs';
 const { chromium } = await import(PW);
+const { garderStockage } = await import('./stockage-local.mjs');   // (les portraits du stockage : une fois par machine)
 const { readFileSync } = await import('node:fs');
 const { mesurer, depassements } = process.env.REACTIVITE === '1' ? await import('./reactivite.mjs') : {};
 const [out, ...names] = process.argv.slice(2);
@@ -686,7 +687,7 @@ async function regle20(page, tag, log) {
   if (tag === 'tab') log.push(`· règle 20 : ${e.n} personnes, ${e.places} places en ${e.cats} catégories, ${e.vignettes} vignettes${e.info.length ? ` ; ${e.info.join(', ')}` : ''}`);
 }
 
-const browser = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--no-sandbox'] });
+const browser = garderStockage(await chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--no-sandbox'] }));
 // une visite (une maquette, au bureau ou au téléphone) passe l'essentiel de son temps à attendre : chacune se fait en
 // parties indépendantes, chaque partie dans son onglet (les vues ; au téléphone, la largeur de 360 px ; le passage d'une
 // page de spectacle à l'autre ; les redirections ; chaque règle demandée ; au bureau, les clics du menu), et les parties
