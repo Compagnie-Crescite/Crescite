@@ -27,6 +27,11 @@
 --                           route à l'ordinateur seulement (jamais au téléphone) ; lue par le lien « Représentations » du menu
 --                           latéral et par la page d'ouverture (admin/index.html). Absente tant qu'on n'a pas ouvert le tableur
 --                           ou la carte : l'adresse nue #/representations reste la liste. Avant ce script, sur l'appareil.
+--   menu.epingles           [clé d'action…] : les accès épinglés du menu latéral (admin/cadre.js), sous « ＋ Créer », dans l'ordre
+--                           voulu, douze au plus (les clés de TABLEAU.ACTIONS : tableur, feuilles, planning, devis, frais, journal,
+--                           site, editer ; jamais les créations « ＋ » ni la recherche). Écrite aussitôt à chaque geste (retirer,
+--                           monter, descendre, « Mettre dans le menu » depuis la tuile des actions rapides). Absente tant qu'on n'a
+--                           rien changé : le menu montre alors les sept d'office. Avant ce script, sur l'appareil, comme les autres.
 --   theme                   'nuit' (par défaut), 'jour' ou 'appareil' : le thème de l'administration (admin/cadre.js). Le jour ne
 --                           change que le contenu des pages ; « appareil » suit le réglage du système. Avant ce script, sur
 --                           l'appareil seulement (crescite-admin-apparence:<compte>, que lit la page avant son premier dessin).

@@ -42,6 +42,7 @@ node site/vues-dates.mjs           # les trois vues de Représentations (pilule,
 node site/theme.mjs                # le thème (nuit, jour, appareil) et la densité, dans Chromium, sur la même base fictive (après le build)
 node site/distribution.mjs         # la distribution à l'écran : la cellule d'une date, qui sera prévenu, la fiche, l'impact, dans Chromium (après le build)
 node site/fenetres.mjs             # les fenêtres ajustables : la poignée du tiroir et le séparateur de la liste, dans Chromium (après le build)
+node site/acces.mjs                # les accès rapides du menu et la recherche comme barre de commande, dans Chromium (après le build)
 bash site/bancs-admin.sh           # le build, puis tous les bancs de l'administration l'un après l'autre ; --tout y joint
                                    # ceux de l'espace de l'équipe (sinon, seulement si gestes.js, planning.js ou feuille.js changent)
 node site/reactivite.mjs /tmp/x index --strict  # les budgets de réactivité du site, au bureau et au téléphone ralenti ×4
@@ -328,7 +329,11 @@ compte du projet inscrit dans `crescite_admins`.
     traitée, la suivante prend le focus. (3) **La barre de commande** (Ctrl K, la loupe) cherche aussi les actions
     (« nouvelle date », « briefing », « personnaliser »), les vues, ce qui est à traiter (Entrée le traite sur place),
     les notes de frais, les devis, la diffusion, les propositions, les séances ; le genre compte dans les mots (« frais
-    Camille », « lieu Le Volcan »). (4) **Des vues nommées** (« Lundi matin », « Veille de tournée »…) : chacune garde
+    Camille », « lieu Le Volcan »). Elle propose aussi les commandes du menu latéral, chacune avec sa touche, écrite à côté
+    de son genre : « Replier le menu » (ou « Déplier le menu ») **Alt M**, « Vue liste » **V L**, « Vue tableur » **V T**,
+    « Vue carte » **V C**, et les douze rubriques avec leur séquence (« Représentations » **G D**…) ; sans rien taper, elle
+    montre les fiches ouvertes en dernier, puis les prochaines dates (voir « La recherche rapide »). (4) **Des vues nommées**
+    (« Lundi matin », « Veille de tournée »…) : chacune garde
     une disposition (tuiles, ordre, tailles, réglages, colonnes), choisie dans l'en-tête ; une vue peut s'ouvrir
     d'elle-même certains jours, le matin ou l'après-midi, ou quand une date confirmée est dans les trois jours (un choix
     fait à la main tient six heures) ; « Vue par défaut » rend la disposition d'avant. (5) **Un ordre des urgences qui
@@ -577,6 +582,35 @@ compte du projet inscrit dans `crescite_admins`.
     d'écouter le clavier de son côté. Seul le bouton de repli porte `aria-keyshortcuts="Alt+M"` : une suite de touches n'est
     pas un raccourci de rechange pour les lecteurs d'écran, la séquence va dans l'infobulle et dans l'aide. Dans la
     rubrique Représentations, **V puis L / T / C** choisit la liste, le tableur ou la carte (voir Représentations).
+  - **Les accès rapides.** Entre les rubriques et le bouton « Replier », sous l'étiquette « ACCÈS RAPIDES » : un bouton
+    **« ＋ Créer »** au dégradé de la saison, les accès **épinglés**, puis les **récents**.
+    « Créer » ouvre un menu à côté du bouton (↑ ↓ Entrée Échap, comme tous les menus de l'administration) : Nouvelle date,
+    Proposer des dates, Nouvelle fiche, Nouveau lieu, Séance d'atelier, Inviter une salle, Opportunité de diffusion
+    (chacune avec son icône, et seulement celles que la base permet : la fiche d'équipe et les propositions veulent
+    l'équipe, l'invitation d'une salle le quatrième script, l'opportunité la Diffusion). Un second clic sur « Créer » referme son
+    menu. « Opportunité de diffusion » mène à la Diffusion puis ouvre la fenêtre de la nouvelle piste ; il le fait aussi quand on y est déjà, et la
+    tuile « actions » du tableau de bord comme la barre de commande en profitent (avant, le clic restait sans effet sur la
+    Diffusion même). Les **épinglés** sont des liens avec leur icône et leur nom : par défaut le tableur, les feuilles de route, le
+    planning, les demandes de devis, les notes de frais, le journal et le site (ceux que la base permet : sept quand la
+    Diffusion et l'équipe sont installées) ; ce ne sont pas des rubriques (ni la classe de la navigation ni `aria-current`),
+    et un épinglé qui a l'adresse d'une rubrique, comme les feuilles, le planning ou le journal, ne la remplace pas : il se
+    garde, c'est une liste à soi. Le **clic droit** (ou **Maj+F10**) sur un épinglé propose Ouvrir, Ouvrir dans un nouvel
+    onglet, **Retirer du menu**, **Monter**, **Descendre** ; le clic droit sur une action de la tuile « actions » du
+    tableau de bord propose **Mettre dans le menu** (ou « Retirer du menu » si elle y est déjà : la tuile et le menu ont
+    chacun leur liste, la tuile est une page d'ouverture, le menu un raccourci permanent ; les « ＋ » et la recherche ne
+    s'épinglent pas). Chaque geste est gardé aussitôt avec le compte (`menu.epingles`, au plus douze, voir « Les
+    préférences ») et dit avec « Annuler ». Les **récents** sont les cinq dernières fiches ouvertes (une date, un lieu, une
+    personne, un spectacle, un devis, une piste, une séance…), avec leur genre : « Date · Bérénice, 5 nov. » ; une fiche qu'on
+    vient de créer en fait partie, une fiche supprimée disparaît, un nom changé se relit. C'est la liste que la recherche
+    propose champ vide (celle de l'appareil, `crescite-admin-recentes`) : elle est donc partagée entre les onglets du même
+    navigateur, pas propre à l'onglet. **Replié**, il ne reste que « ＋ » et les icônes des épinglés (le nom en infobulle et
+    pour les lecteurs d'écran) ; les récents s'effacent. Quand la colonne manque de hauteur, « Créer » reste toujours entier à
+    l'écran (sur un écran de moins de 780 px de haut, à la souris, les rubriques se resserrent un peu) et ce sont les épinglés et
+    les récents qui défilent d'eux-mêmes, jusqu'à une ligne, pour que le repli et les réglages restent au pied de l'écran ; sur
+    un écran plus bas encore (et replié, dès 900 px de haut : ses quatre réglages s'empilent), c'est le menu entier qui défile.
+    Un épinglé qui arrive
+    saute, un récent neuf se pose ; rien ne bouge si l'appareil demande moins d'animations. L'aide « **?** » les décrit sous
+    « Les accès rapides ». Au téléphone, rien n'a changé : « + » de la barre du bas garde sa liste.
   - **Les badges.** Trois rubriques disent ce qui attend, par une pastille corail (un point sur l'icône quand le menu est
     replié) : le **Tableau de bord** (le nombre de lignes « à traiter » de la tuile, hors reportées : le même que la tuile),
     la **Diffusion** (les demandes de devis nouvelles) et l'**Équipe** (les notes de frais en attente). La Diffusion et
@@ -625,6 +659,17 @@ compte du projet inscrit dans `crescite_admins`.
     et les badges (les comptes, ce que lisent les lecteurs d'écran, le point du menu replié, le mémo de 30 s, le calcul
     différé, un changement en direct, une ligne reportée que le badge suit sans attendre, des catégories imposées, aucune
     tâche de plus de 200 ms à `CPU=4`) : 120 vérifications, des captures dans `site/dist/shots-cadre/`.
+  - `node site/acces.mjs` garde les accès rapides et la barre de commande : « Créer » (ses sept créations avec leur icône, Entrée,
+    Échap, le second clic qui referme, un autre menu qu'il remplace, l'opportunité qui marche aussi sur la Diffusion), les
+    sept épinglés d'office (ni `.nav` ni `aria-current`, leur infobulle, une condition qui change, une clé mal formée ou
+    vide), leurs flèches ↑ ↓ jusqu'aux récents, leur menu (Maj+F10 : retirer, monter, descendre, « Annuler » ; le clic droit sur la tuile : « Mettre dans le
+    menu », qui laisse les dix actions de la tuile), les récents (le lieu avant la date, une fiche créée, supprimée,
+    renommée, un autre onglet, un tiroir), la recherche (« replier », « vue carte », les douze rubriques avec leur séquence, la
+    touche à côté du genre et jamais dedans, les récents sans saisie), le menu replié, un écran bas (« Créer »
+    entier à 720 et 768 px de haut), le téléphone (aucune touche), le mouvement (l'arrivée
+    d'un épinglé et d'un récent, rien sous « moins d'animations »), l'aide « ? », et sans le
+    script SQL 6 : 108 vérifications, des captures dans `site/dist/shots-acces/` (`acces.png`, `acces-replie.png`,
+    `recherche-commandes.png`).
 - **Les gestes** (`admin/gestes.js`, commun avec l'espace de l'équipe ; `admin/menus.js` pour ce que l'administration en
   fait) : un **clic droit**, un **appui long** (au doigt, avec une courte vibration) ou **Maj+F10** sur une ligne, une
   carte ou une tuile ouvrent ce qu'on peut en faire sans ouvrir la fiche, près du pointeur à l'ordinateur, en feuille
@@ -647,8 +692,12 @@ compte du projet inscrit dans `crescite_admins`.
 - **La recherche rapide** : Ctrl K (⌘K sur un Mac), ou la loupe de l'en-tête (au téléphone, au bout de la ligne du
   logo). Une date se trouve par son spectacle, son lieu, sa commune ou son jour (« 21 oct », « mardi », « 21/10 »),
   comme une personne, un lieu, un spectacle, une feuille de route ou une rubrique ; ↑ ↓ choisissent, Entrée ouvre,
-  Échap ferme ; sans rien taper, les prochaines dates. Tout se cherche dans ce que l'administration a déjà chargé :
-  aucune requête à la frappe.
+  Échap ferme ; sans rien taper, les fiches ouvertes en dernier (les mêmes que « Récents » dans le menu), puis les
+  prochaines dates. Tout se cherche dans ce que l'administration a déjà chargé : aucune requête à la frappe. C'est aussi une
+  barre de commande : « replier » ou « déplier » trouve « Replier le menu » (**Alt M**), « vue carte » la carte de tournée
+  (**V C**), et chaque rubrique montre sa séquence (« Planning » **G P**) ; la touche s'écrit à côté du genre de l'entrée.
+  Au téléphone, il n'y a pas de menu à replier : la commande n'y est pas, et sans clavier (écran tactile, téléphone) aucune
+  touche ne s'écrit. Les trois vues (**V L**, **V T**, **V C**) n'agissent que dans Représentations : l'infobulle le dit.
 - **À compléter avant la tournée**, en tête de Représentations (repliable, et repliée elle le reste) : pour les dates
   confirmées des 60 prochains jours (30 ou 90 au choix), les personnes de l'équipe de tournée sans téléphone, les lieux
   sans adresse ou sans contact (ou la date sans lieu), les dates sans feuille de route ou dont la feuille a encore du
@@ -1088,14 +1137,16 @@ fait de même quand le compte connecté administre. Trois fonctions, à déploye
 **Les préférences.** Le sixième script, `supabase/migrations/20261025_crescite_preferences.sql`, s'exécute après les cinq
 autres, de la même façon, et peut être relancé. Il ajoute `crescite_preferences` : ce que chacun règle une fois et
 retrouve sur tous ses appareils, une valeur par compte et par clé. Chacun ne lit et n'écrit que les siennes,
-l'administration comprise ; le public n'y a aucun droit. Neuf clés servent aujourd'hui : `accueil.tableau` (la
+l'administration comprise ; le public n'y a aucun droit. Dix clés servent aujourd'hui : `accueil.tableau` (la
 disposition du tableau de bord), `planning.masques` (les personnes masquées du planning, en liste brute, que lit aussi
 l'espace de l'équipe), `representations.avant` (le panneau « À compléter avant la tournée » : ouvert ou fermé, 30, 60
 ou 90 jours), `menu.replie` (le menu latéral de l'administration, replié ou déplié : vrai ou faux, absente tant qu'on
 ne l'a pas choisi ; elle ne se garde que sur un grand écran, voir « Le cadre et le menu latéral »), `representations.vue`
 (la dernière vue de Représentations, `liste`, `tableur` ou `carte` : écrite à l'ordinateur seulement, voir
-Représentations), `theme` (`nuit`, `jour` ou `appareil` ; la nuit tant qu'on n'a pas choisi) et `densite` (`confortable`
-ou `compacte` ; voir « L'apparence »), puis `fenetres.tiroir` (la largeur du tiroir, en pixels) et `fenetres.liste` (la
+Représentations), `menu.epingles` (les accès épinglés du menu latéral : la liste des clés d'action, au plus douze, écrite
+aussitôt ; absente tant qu'on n'a rien changé, le menu montre alors le tableur, les feuilles de route, le planning, les
+devis, les frais, le journal et le site, voir « Le cadre et le menu latéral »), `theme` (`nuit`, `jour` ou `appareil` ;
+la nuit tant qu'on n'a pas choisi) et `densite` (`confortable` ou `compacte` ; voir « L'apparence »), puis `fenetres.tiroir` (la largeur du tiroir, en pixels) et `fenetres.liste` (la
 largeur de la colonne de la liste à côté d'une fiche, en pixels), absentes tant qu'on ne les a pas tirées, ramenées dans ce
 que l'écran permet à chaque lecture (voir « Les fenêtres ajustables ») ; les autres fenêtres ajustables auront leur clé
 `fenetres.…` en venant. Une clé nouvelle se nomme `rubrique.reglage`, en minuscules, et sa valeur garde la même forme d'une

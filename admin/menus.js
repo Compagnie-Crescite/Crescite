@@ -10,7 +10,8 @@
      frais : valider, refuser, marquer remboursée. Une invitation pro : prolonger de trente jours, copier le lien,
      écrire. Une proposition de dates : la clore. Une séance d'atelier : dupliquer, supprimer. Une ligne du journal :
      revenir, ouvrir la fiche. Une tuile du tableau de bord : ses réglages, la réduire, sa largeur, la déplacer, la
-     masquer, personnaliser ; une action rapide : la retirer. Un spectacle : ses dates, l'avancer, le reculer. Une ligne
+     masquer, personnaliser ; une action rapide : la retirer, la mettre dans le menu latéral ou l'en retirer ; un accès épinglé du
+     menu latéral : l'ouvrir, le retirer, le monter, le descendre. Un spectacle : ses dates, l'avancer, le reculer. Une ligne
      « à traiter » : la traiter sur place, l'épingler, la reporter ; une ligne du fil : annuler la modification.
    - Précédent / suivant dans chaque fiche ouverte à côté de sa liste (dates, personnes, lieux, devis, invitations,
      propositions, ateliers, séances, textes), et dans une feuille de route ou un spectacle : deux boutons dans le titre,
@@ -173,7 +174,19 @@
   function actionsActionRapide(b) {
     const href = b.getAttribute('href'), k = b.dataset.action;
     return [href && href.startsWith('#') ? ouvrirA(href) : null, href ? { libelle: 'Ouvrir dans un nouvel onglet', href: absolu(href), externe: true, icone: ICO.externe } : null,
-      k && typeof TABLEAU !== 'undefined' && TABLEAU.retirerAction ? { libelle: 'Retirer des actions rapides', detail: 'les réglages de la tuile les remettent', faire: () => TABLEAU.retirerAction(k), icone: ICO.moins } : null];
+      k && typeof TABLEAU !== 'undefined' && TABLEAU.retirerAction ? { libelle: 'Retirer des actions rapides', detail: 'les réglages de la tuile les remettent', faire: () => TABLEAU.retirerAction(k), icone: ICO.moins } : null,
+      ...(k && typeof CADRE !== 'undefined' && CADRE.epinglable(k) ? [{ separateur: true }, CADRE.estAuMenu(k)
+        ? { libelle: 'Retirer du menu', detail: 'l’action reste dans la tuile', faire: () => CADRE.retirerDuMenu(k), icone: ICO.moins }
+        : { libelle: 'Mettre dans le menu', detail: 'un accès rapide, sous les rubriques', faire: () => CADRE.mettreAuMenu(k), icone: ICONES.svg('epingle', { taille: 16 }) }] : [])];
+  }
+  // un accès épinglé du menu latéral (cadre.js) : l'ouvrir, l'ouvrir ailleurs, le retirer du menu, le monter, le descendre
+  function actionsEpingle(a) {
+    const k = a.dataset.action, href = a.getAttribute('href'), vus = typeof CADRE !== 'undefined' ? CADRE.epingles() : [], i = vus.indexOf(k);
+    return [href.startsWith('#') ? ouvrirA(href) : { libelle: 'Ouvrir', href, externe: true, icone: ICO.externe, raccourci: 'Entrée' },
+      href.startsWith('#') ? { libelle: 'Ouvrir dans un nouvel onglet', href: absolu(href), externe: true, icone: ICO.externe } : null,
+      { separateur: true }, { libelle: 'Retirer du menu', detail: 'l’action reste dans la tuile', faire: () => CADRE.retirerDuMenu(k), icone: ICO.moins },
+      i > 0 ? { libelle: 'Monter', faire: () => CADRE.deplacer(k, -1), icone: ICO.haut } : null,
+      i >= 0 && i < vus.length - 1 ? { libelle: 'Descendre', faire: () => CADRE.deplacer(k, 1), icone: ICO.bas } : null];
   }
 
   // ===================================================================================================== ce qu'un élément désigne
@@ -251,6 +264,7 @@
   G.menu({ cible: '.tb-tuile', titre: sec => (typeof TABLEAU !== 'undefined' && TABLEAU.TUILES[sec.dataset.k]?.titre) || 'Tuile',
     actions: (sec, infos) => { const b = infos && infos.x != null ? document.elementFromPoint(infos.x, infos.y) : null; return b && b.closest('.tb-actions .btn') ? actionsActionRapide(b.closest('.tb-actions .btn')) : b && b.closest('a.tb-l') ? [] : actionsTuile(sec); } });
   G.menu({ cible: '.tb-actions .btn', titre: 'Action rapide', actions: actionsActionRapide });
+  G.menu({ cible: '.menu-epingle', titre: a => $('.menu-l', a)?.textContent || 'Accès rapide', actions: actionsEpingle });
   G.menu({ cible: '.tb-sp', titre: el => $('.tb-l-t', el)?.textContent || 'Spectacle', actions: el => { const s = E.spectacles.find(x => `#/spectacles/${x.slug}` === $('a.tb-l-t', el)?.getAttribute('href')); return s ? actionsSpectacle(s, el) : []; } });
   // les flèches dans toutes les listes
   G.fleches(document, 'a.ligne[href], a.tb-l[href], a.carte-sp[href]');
@@ -362,6 +376,10 @@
         { t: [['J'], ['K']], d: 'La ligne à traiter suivante, la précédente' },
         { t: [['Entrée']], d: 'La traiter sur place' },
         { t: [['Échap']], d: 'Refermer, ou lever le filtre d’un spectacle' }] },
+      { titre: 'Les accès rapides', lignes: [
+        { t: [['Entrée']], d: 'Sur « Créer » : le menu des créations (↑ ↓ pour choisir, Entrée pour créer)' },
+        { t: [['Maj', 'F10'], ['Menu']], d: 'Sur un accès épinglé : l’ouvrir, le retirer du menu, le monter, le descendre' },
+        { t: [[CMD, 'K']], d: 'Sans rien taper : les fiches ouvertes en dernier ; « replier », « vue carte »… : les commandes du menu, avec leur touche' }] },
       { titre: 'La recherche', lignes: [
         { t: [['↑'], ['↓']], d: 'Choisir un résultat' },
         { t: [['Entrée']], d: 'L’ouvrir' },

@@ -26,14 +26,43 @@
      premier (PREFS.surChangement) ;
    - sous 1 340 px, le menu naît replié sans que ce soit un choix (rien n'est écrit) ; le déplier exprès ne vaut que pour
      l'onglet (sessionStorage `crescite-admin-menu`), jamais pour le compte : la clé reste ce qu'elle était sur un grand écran.
-   L'annonce « Menu replié » / « Menu déplié » est dite aux lecteurs d'écran par une zone polie (#sr-menu), posée vide avec le menu. Au téléphone
-   (moins de 641 px) le menu est masqué par la feuille d'index.html.
+   L'annonce « Menu replié » / « Menu déplié » est dite aux lecteurs d'écran par une zone polie (#sr-menu), posée vide avec le
+   menu. Au téléphone (moins de 641 px) le menu est masqué par la feuille d'index.html.
    Les badges (CADRE.badges) disent ce qui attend, en corail, sur trois rubriques : le Tableau de bord (les lignes « à traiter » de
    la tuile, hors reportées), la Diffusion (les demandes de devis nouvelles) et l'Équipe (les notes de frais en attente). Le
    compte (TABLEAU.urgences) n'est pas gratuit : il se fait au repos de la page (requestIdleCallback), se garde 30 secondes,
-   et se refait un instant après un changement reçu en direct, un report ou une relecture de la base. Replié, le badge devient un point sur l'icône ; le lien dit son
-   compte aux lecteurs d'écran (aria-label « Diffusion CRM, 3 devis à traiter »). Les raccourcis (Alt+M, G puis une lettre)
+   et se refait un instant après un changement reçu en direct, un report ou une relecture de la base. Replié, le badge
+   devient un point sur l'icône ; le lien dit son compte aux lecteurs d'écran
+   (aria-label « Diffusion CRM, 3 devis à traiter »). Les raccourcis (Alt+M, G puis une lettre)
    sont déclarés dans le registre RACCOURCIS du script principal ; le menu en écrit la touche dans l'infobulle de chaque lien.
+   Les accès rapides tiennent le milieu du menu, entre les rubriques et le bouton de repli, sous l'étiquette « Accès rapides »
+   (un <nav aria-label="Accès rapides">, sans la classe .nav : les rubriques restent seules à porter aria-current). Ils se
+   redessinent à chaque vue (CADRE.marquer), parce que ce qu'ils montrent dépend de la base (E.ideale, E.equipeInstallee, E.sql4
+   se connaissent après le premier dessin) :
+   - « ＋ Créer » (.menu-creer, en dégradé de la saison : aria-haspopup="menu", aria-expanded) ouvre un menu de GESTES (↑ ↓ Entrée
+     Échap) à côté du bouton (à sa droite, le haut aligné sur lui : il recouvre la page, jamais les rubriques ni le bouton) :
+     les actions de TABLEAU.ACTIONS dont le libellé commence par « ＋ » et dont la condition est vraie, chacune avec son icône
+     (le sixième élément d'ACTIONS). Le menu n'a qu'un signal de fermeture, l'événement « gestes:menu-ferme »
+     de gestes.js : il remet aria-expanded à faux, et sert à reconnaître le second clic, qui referme (le pointerdown de gestes.js a
+     déjà fermé le menu quand le clic arrive : sans cette garde, le clic le rouvrirait). « Opportunité de diffusion » mène à la
+     Diffusion puis clique « Nouvelle opportunité » (CADRE.nouvelleOpportunite, qui sert aussi la tuile « actions » et la barre de
+     commande : sur la Diffusion même, il clique tout de suite).
+   - Les épinglés (.menu-epingle, des <a> avec leur icône et leur nom) sont la clé de préférence `menu.epingles` : une liste de clés
+     d'ACTIONS, au plus douze, normalisée à la lecture (clés inconnues, clés « ＋ » et 'recherche' ignorées, doublons ôtés), par
+     défaut TABLEAU.MENU_EPINGLES_DEFAUT ; une action dont la condition est fausse (la Diffusion sans ses tables) n'est pas
+     dessinée, mais reste dans la clé. CADRE.mettreAuMenu(k), retirerDuMenu(k) et deplacer(k, ±1) l'écrivent aussitôt et
+     l'annoncent, avec « Annuler ». Un épinglé qui arrive saute (la classe .pop de la feuille, sauf si l'appareil demande moins
+     d'animations). Le menu contextuel d'un épinglé (clic droit, Maj+F10) et celui d'une action de la tuile « actions » du tableau
+     de bord (« Mettre dans le menu ») sont dans menus.js.
+   - Les récents (.menu-recent) sont les cinq dernières fiches ouvertes, « Date · Bérénice, 5 nov. » : la liste de la recherche
+     (Ctrl K, champ vide), celle du script principal (noterRecente, localStorage `crescite-admin-recentes`, donc partagée entre
+     onglets), dont descriptionRecente() dit le genre et le nom d'aujourd'hui ; une fiche supprimée disparaît. Un récent neuf se
+     pose (.ad-neuf). Le script principal appelle CADRE.recents() chaque fois qu'il en note un (une fiche ouverte, en page ou en
+     tiroir, ou créée).
+   Replié, il ne reste de tout cela que « ＋ » et les icônes des épinglés (leur nom en infobulle) ; les récents disparaissent.
+   Sur un écran bas, « Créer » (et l'étiquette) ne défilent jamais : seuls les épinglés et les récents (.menu-defile) défilent d'eux-mêmes,
+   réduits jusqu'à une ligne pour garder le repli et les réglages au pied de l'écran ; à la souris, sous 780 px de haut, les rubriques
+   se resserrent, et plus bas encore c'est le menu entier qui défile (replié à 1 280 × 900 déjà : la colonne des réglages est haute).
    L'apparence : deux préférences du compte, `theme` ('nuit' par défaut, 'jour', ou 'appareil', qui suit le réglage du système) et
    `densite` ('confortable' par défaut, ou 'compacte'). Le thème est la nuit ou le jour de <html data-theme> ; « appareil » se résout
    ici en nuit ou en jour (la feuille de style ne connaît que data-theme) et suit le système tant qu'il est choisi (matchMedia
@@ -55,6 +84,8 @@
    - CADRE.theme(valeur) et CADRE.densite(valeur) font ce que fait un clic (les commandes « Mode jour », « Mode nuit » et
      « Compact » de la recherche) ; CADRE.apparence() dit ce qui est réglé : { theme, resolu, densite }.
    CADRE.poser(rubrique)   CADRE.marquer(rubrique)   CADRE.basculer(replie)   CADRE.replie()   CADRE.badges()   CADRE.perimer()
+   CADRE.creer()   CADRE.epingles()   CADRE.estAuMenu(k)   CADRE.epinglable(k)   CADRE.mettreAuMenu(k)   CADRE.retirerDuMenu(k)
+   CADRE.deplacer(k, sens)   CADRE.recents()   CADRE.nouvelleOpportunite()   CADRE.allerEtCliquer(adresse, selecteur)
    CADRE.reglages()   CADRE.theme(valeur)   CADRE.densite(valeur)   CADRE.apparence() */
 const CADRE = (() => {
   const html = document.documentElement;
@@ -114,13 +145,14 @@ const CADRE = (() => {
     if (!m || m.dataset.pose) return;
     m.dataset.pose = '1';
     preparerAnnonce();
-    m.innerHTML = '<nav class="nav" aria-label="Rubriques"></nav><button type="button" class="menu-replier" aria-expanded="true" aria-controls="menu"></button><div class="menu-reglages"></div>';
+    m.innerHTML = '<nav class="nav" aria-label="Rubriques"></nav><nav class="menu-acces" aria-label="Accès rapides"></nav><button type="button" class="menu-replier" aria-expanded="true" aria-controls="menu"></button><div class="menu-reglages"></div>';
     dessinerNav(m, courante);
+    poserAcces(m);
     const bouton = $('.menu-replier', m);
     const ks = typeof RACCOURCIS !== 'undefined' ? RACCOURCIS.keyshortcuts('menu.replier') : '';
     if (ks) bouton.setAttribute('aria-keyshortcuts', ks);
     bouton.addEventListener('click', () => basculer());
-    if (typeof GESTES !== 'undefined') GESTES.fleches(m, '.nav a', { horizontal: false });
+    if (typeof GESTES !== 'undefined') { GESTES.fleches(m, '.nav a', { horizontal: false }); GESTES.fleches(m, '.menu-creer, .menu-epingle, .menu-recent', { horizontal: false }); }
     if (typeof PREFS !== 'undefined') { appliquer(PREFS.lire(CLE)); appliquerTheme(themeVoulu()); appliquerDensite(densiteVoulue()); }
     reglages();
     majBouton();
@@ -132,6 +164,7 @@ const CADRE = (() => {
     $$('.nav a', m).forEach(a => { if (a.dataset.rubrique === rubrique) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     suivreVueRetenue();
     badges();
+    dessinerAcces();
   }
   // le lien « Représentations » porte l'adresse de la vue retenue : relu à chaque vue, et quand un autre onglet ou un autre
   // appareil en retient une autre
@@ -190,6 +223,180 @@ const CADRE = (() => {
   const apresChangement = () => perimer(DELAI_CHANGEMENT);
   if (typeof APRES_VUE !== 'undefined') APRES_VUE.push(badges);
   if (typeof APRES_CHANGEMENT !== 'undefined') APRES_CHANGEMENT.push(apresChangement);
+
+  // ===================================================================================================== les accès rapides
+  const CLE_EPINGLES = 'menu.epingles', MAX_EPINGLES = 12, MAX_RECENTS = 5, ZONE_CREER = '.menu-creer-zone', CLE_RECENTES_ONGLETS = 'crescite-admin-recentes';
+  const actionsDe = () => (typeof TABLEAU !== 'undefined' && TABLEAU.ACTIONS) || [];
+  const action = k => actionsDe().find(a => a[0] === k);
+  const estCreation = a => /^＋/.test(a[1]);
+  const present = a => { try { return !a[3] || !!a[3](); } catch { return false; } };         // (la condition de l'action : E.ideale, E.equipeInstallee…)
+  const nomAction = a => a[1].replace(/^＋\s*/, '').replace(/\s*↗$/, '');
+  const iconeAction = (a, taille) => ICONES.svg(a[5] || 'plus', { taille });
+  const calme = () => (typeof CALME_ADMIN === 'function' && CALME_ADMIN()) || (typeof GESTES !== 'undefined' && GESTES.reduit());
+  let accesPret = false;                                                                     // (un premier dessin avec la base : rien ne saute à l'ouverture de la page)
+
+  // ---- aller à une page, puis cliquer un de ses boutons une fois qu'elle est là (l'équivalent, pour le menu latéral, de
+  // allerEtCliquer de mobile.js) ; déjà sur la page, il clique tout de suite : l'écouteur de hashchange resterait en attente
+  function allerEtCliquer(adresse, selecteur, essais = 40) {
+    const essayer = n => { const b = $(selecteur); if (b) { b.click(); return; } if (n > 0) requestAnimationFrame(() => essayer(n - 1)); };
+    if (location.hash === adresse) { essayer(essais); return; }
+    window.addEventListener('hashchange', () => setTimeout(() => { if (location.hash === adresse) essayer(essais); }, 20), { once: true });
+    location.hash = adresse;
+  }
+  const nouvelleOpportunite = () => allerEtCliquer('#/diffusion', '#b-nouveau-prospect');
+
+  // ---- les épinglés : la clé de préférence menu.epingles
+  const defaut = () => (typeof TABLEAU !== 'undefined' && TABLEAU.MENU_EPINGLES_DEFAUT) || [];
+  const epinglable = k => { const a = action(k); return !!a && !estCreation(a) && k !== 'recherche'; };
+  function normaliser(v) {
+    if (!Array.isArray(v)) return normaliser(defaut());
+    const vus = new Set(), sortie = [];
+    for (const k of v) if (typeof k === 'string' && !vus.has(k) && epinglable(k)) { vus.add(k); sortie.push(k); }
+    return sortie.slice(0, MAX_EPINGLES);
+  }
+  const cles = () => normaliser(typeof PREFS !== 'undefined' ? PREFS.lire(CLE_EPINGLES, defaut()) : defaut());      // (la clé entière, conditions comprises)
+  const epingles = () => cles().filter(k => present(action(k)));                                                       // (ce qu'on dessine)
+  const estAuMenu = k => cles().includes(k);
+  function ecrireEpingles(liste, dit, avant) {
+    if (typeof PREFS === 'undefined') return;
+    PREFS.ecrire(CLE_EPINGLES, liste, { aussitot: true, muet: true });                // (muet : l'annonce d'ici dit ce qui change)
+    dessinerAcces();
+    if (dit && typeof annoncer === 'function') annoncer(dit, { libelle: 'Annuler', action: () => { PREFS.ecrire(CLE_EPINGLES, avant, { aussitot: true, muet: true }); dessinerAcces(); } });
+  }
+  function mettreAuMenu(k) {
+    const avant = cles();
+    if (!epinglable(k) || avant.includes(k)) return false;
+    if (avant.length >= MAX_EPINGLES) { annoncer(`Le menu garde ${MAX_EPINGLES} accès rapides au plus : retirez-en un d’abord.`, { erreur: true }); return false; }
+    ecrireEpingles([...avant, k], `« ${nomAction(action(k))} » est dans le menu.`, avant);
+    return true;
+  }
+  function retirerDuMenu(k) {
+    const avant = cles();
+    if (!avant.includes(k)) return false;
+    ecrireEpingles(avant.filter(x => x !== k), `« ${nomAction(action(k))} » n’est plus dans le menu.`, avant);
+    return true;
+  }
+  // monter ou descendre d'un cran parmi ceux qu'on voit (un épinglé dont la condition est fausse reste où il est dans la clé)
+  function deplacer(k, sens) {
+    const avant = cles(), vus = avant.filter(x => present(action(x))), i = vus.indexOf(k), voisin = vus[i + (sens < 0 ? -1 : 1)];
+    if (i < 0 || voisin === undefined) return false;
+    const apres = [...avant];
+    apres[avant.indexOf(k)] = voisin; apres[avant.indexOf(voisin)] = k;
+    ecrireEpingles(apres, `« ${nomAction(action(k))} » ${sens < 0 ? 'monte' : 'descend'} d’un cran.`, avant);
+    return true;
+  }
+
+  // ---- le dessin : on garde les éléments qui restent (un diff par clé), on pose les neufs, on rend le focus à celui qui l'avait
+  // (l'infobulle d'un épinglé dit sa séquence quand l'action est celle d'une rubrique ou d'une vue ; aria-keyshortcuts seulement pour un accord)
+  function raccourciDe(a) {
+    const h = a[2], m = typeof h === 'string' && h.match(/^#\/([a-z]+)$/);
+    return m ? `rubrique.${m[1]}` : h === '#/representations/tableur' ? 'vue.tableur' : null;
+  }
+  function epingle(k) {
+    const a = action(k), id = typeof RACCOURCIS !== 'undefined' ? raccourciDe(a) : null, seq = id ? RACCOURCIS.libelle(id) : '', ks = id ? RACCOURCIS.keyshortcuts(id) : '';
+    const el = document.createElement('a');
+    el.className = 'menu-epingle'; el.href = a[2]; el.dataset.action = k;
+    if (a[4] || !String(a[2]).startsWith('#')) { el.target = '_blank'; el.rel = 'noopener'; }
+    el.title = `${a[1].replace(/\s*↗$/, '')}${seq ? ` (${seq}${/^vue\./.test(id) ? ' dans Représentations' : ''})` : ''}`;
+    if (ks) el.setAttribute('aria-keyshortcuts', ks);
+    el.innerHTML = `${iconeAction(a, 20)}<span class="menu-l">${esc(nomAction(a))}</span>`;
+    return el;
+  }
+  function recent(r) {
+    const el = document.createElement('a');
+    el.className = 'menu-recent'; el.href = r.href; el.dataset.href = r.href; el.title = `${r.genre} · ${r.nom}`;
+    el.innerHTML = `<span class="menu-rg">${esc(r.genre)}</span> · <span class="menu-rn">${esc(r.nom)}</span>`;
+    return el;
+  }
+  // voulus : [[clé, fabrique]] dans l'ordre ; rend les éléments neufs
+  function accorder(zone, voulus, attr) {
+    const actif = document.activeElement, cleActive = actif && zone.contains(actif) ? actif.dataset[attr] : null;
+    const avant = new Map([...zone.children].map(el => [el.dataset[attr], el])), neufs = [];
+    voulus.forEach(([cle, fabrique], i) => {
+      let el = avant.get(cle);
+      if (el) avant.delete(cle); else { el = fabrique(); neufs.push(el); }
+      if (zone.children[i] !== el) zone.insertBefore(el, zone.children[i] || null);
+    });
+    avant.forEach(el => el.remove());
+    if (cleActive != null) { const el = [...zone.children].find(x => x.dataset[attr] === cleActive); if (el && document.activeElement !== el) el.focus({ preventScroll: true }); }
+    return neufs;
+  }
+  const animer = (el, classe) => { el.classList.add(classe); el.addEventListener('animationend', () => el.classList.remove(classe), { once: true }); };
+  function poserAcces(m) {
+    const zone = $('.menu-acces', m);
+    zone.innerHTML = `<p class="menu-etiq">Accès rapides</p><div class="menu-creer-zone"><button type="button" class="menu-creer" aria-haspopup="menu" aria-expanded="false" title="Créer">${ICONES.svg('plus', { taille: 20, trait: 2.4 })}<span class="menu-l">Créer</span></button></div><div class="menu-defile"><div class="menu-epingles" role="group" aria-label="Épinglés"></div><div class="menu-recents" role="group" aria-labelledby="menu-recents-t" hidden><p class="menu-etiq" id="menu-recents-t">Récents</p><div class="menu-recents-liste"></div></div></div>`;
+    brancherCreer($('.menu-creer', zone));
+  }
+  function dessinerAcces() {
+    const m = menu(), zone = m && $('.menu-acces', m);
+    if (!zone || typeof TABLEAU === 'undefined') return;
+    const neufs = accorder($('.menu-epingles', zone), epingles().map(k => [k, () => epingle(k)]), 'action');
+    if (accesPret && !calme()) neufs.forEach(el => animer(el, 'pop'));
+    recents();
+    if (typeof E !== 'undefined' && E.pret) accesPret = true;
+  }
+
+  // ---- les récents : la liste du script principal (lireRecentes), avec le genre et le nom d'aujourd'hui (descriptionRecente)
+  function lireRecents() {
+    if (typeof lireRecentes !== 'function' || typeof descriptionRecente !== 'function' || typeof E === 'undefined' || !E.pret) return [];
+    const xs = [];
+    for (const h of lireRecentes()) {
+      let d = null; try { d = descriptionRecente(h); } catch { d = null; }
+      if (d) xs.push({ href: h, ...d });
+      if (xs.length >= MAX_RECENTS) break;
+    }
+    return xs;
+  }
+  function recents() {
+    const m = menu(), zone = m && $('.menu-recents', m), xs = lireRecents();
+    if (!zone) return xs;
+    const liste = $('.menu-recents-liste', zone), neufs = accorder(liste, xs.map(r => [r.href, () => recent(r)]), 'href');
+    // (une fiche renommée garde son lien, son texte suit)
+    xs.forEach(r => { const el = $$('.menu-recent', liste).find(x => x.dataset.href === r.href), t = `${r.genre} · ${r.nom}`; if (el && el.title !== t) { el.title = t; $('.menu-rg', el).textContent = r.genre; $('.menu-rn', el).textContent = r.nom; } });
+    zone.hidden = !xs.length;
+    if (accesPret && !calme()) neufs.forEach(el => animer(el, 'ad-neuf'));
+    return xs;
+  }
+  // un autre onglet a noté une fiche : la liste est partagée (localStorage)
+  window.addEventListener('storage', e => { if (e.key === CLE_RECENTES_ONGLETS) recents(); });
+
+  // ---- « ＋ Créer »
+  let ignorer = false;
+  function actionsCreer() {
+    const xs = actionsDe().filter(a => estCreation(a) && present(a)).map(a => {
+      const base = { libelle: nomAction(a), icone: iconeAction(a, 16) };
+      return a[2] === 'prospect' ? { ...base, faire: nouvelleOpportunite } : { ...base, href: a[2] };
+    });
+    const b = $('.menu-creer');
+    if (b) b.setAttribute('aria-expanded', String(xs.length > 0));      // (ce fournisseur n'est appelé que pour ouvrir le menu)
+    return xs;
+  }
+  if (typeof GESTES !== 'undefined') GESTES.menu({ cible: ZONE_CREER, titre: 'Créer', actions: actionsCreer });
+  function creer() {
+    const b = $('.menu-creer'), zone = b && b.closest(ZONE_CREER);
+    if (!b || !zone || typeof GESTES === 'undefined') return false;
+    // (à droite du bouton, en haut aligné sur lui : le menu recouvre la page, jamais les rubriques ni le bouton ; gestes.js le rabat dans l'écran)
+    const r = b.getBoundingClientRect();
+    return GESTES.ouvrir(zone, { x: Math.round(r.right + 6), y: Math.round(r.top), source: 'clavier' });
+  }
+  function brancherCreer(b) {
+    b.addEventListener('click', e => { e.preventDefault(); if (ignorer && e.detail > 0) { ignorer = false; return; } ignorer = false; creer(); });
+  }
+  // (le pointerdown de gestes.js ferme le menu avant que le clic n'arrive : on note, avant lui, que le menu de « Créer » était ouvert
+  //  quand on a appuyé sur le bouton, et ce clic-là ne le rouvre pas ; le drapeau tombe au bout d'une seconde si le clic n'arrive
+  //  pas, et un clic au clavier (detail 0) n'est jamais ignoré)
+  window.addEventListener('pointerdown', e => {
+    const b = e.target.closest && e.target.closest('.menu-creer');
+    ignorer = !!b && b.getAttribute('aria-expanded') === 'true';
+    if (ignorer) setTimeout(() => { ignorer = false; }, 1000);
+  }, true);
+  document.addEventListener('gestes:menu-ferme', e => {
+    const zone = e.detail && e.detail.el;
+    if (!zone || !zone.matches || !zone.matches(ZONE_CREER)) return;
+    const b = $('.menu-creer', zone); if (b) b.setAttribute('aria-expanded', 'false');
+  });
+  if (typeof PREFS !== 'undefined') PREFS.surChangement(CLE_EPINGLES, dessinerAcces);
+  if (typeof APRES_CHANGEMENT !== 'undefined') APRES_CHANGEMENT.push(dessinerAcces);
 
   // ===================================================================================================== l'apparence : le thème, la densité
   const THEMES = [['nuit', 'Nuit', 'lune'], ['jour', 'Jour', 'soleil'], ['appareil', 'Appareil', 'moniteur']];
@@ -347,5 +554,5 @@ const CADRE = (() => {
     majBouton();
   });
 
-  return { poser, marquer, basculer, replie, badges, perimer, reglages, theme: choisirTheme, densite: choisirDensite, apparence };
+  return { poser, marquer, basculer, replie, badges, perimer, creer, epingles, estAuMenu, epinglable, mettreAuMenu, retirerDuMenu, deplacer, recents, nouvelleOpportunite, allerEtCliquer, reglages, theme: choisirTheme, densite: choisirDensite, apparence };
 })();

@@ -5,7 +5,9 @@
      touche Menu sur un élément ouvrent ses actions, celles que chaque interface déclare (fournisseurs : une cible CSS,
      des actions pour l'élément). Près du pointeur à l'ordinateur ; en feuille, depuis le bas, au téléphone. Au clavier :
      ↑ ↓ Début Fin, Entrée, Échap (le focus revient à l'élément) ; un clic à côté, le défilement, un changement de page
-     le ferment. Un élément [data-gestes-menu] (un bouton « ⋯ ») ouvre le menu de la cible qui le contient.
+     le ferment (chaque fermeture émet sur document l'événement « gestes:menu-ferme » ; detail.el : l'élément dont le menu
+     s'était ouvert).
+     Un élément [data-gestes-menu] (un bouton « ⋯ ») ouvre le menu de la cible qui le contient.
    - Les flèches (GESTES.fleches) : dans une liste, ↑ ↓ (← → aussi) passent d'une ligne à l'autre, Début et Fin aux bouts.
    - Le balayage (GESTES.glisser) : au doigt, vers la gauche ou la droite (le suivant, le précédent), jamais sur un cadre
      qui défile de côté.
@@ -145,6 +147,9 @@ const GESTES = (() => {
     const o = ouvert;
     ouvert = null;
     o.m.remove();
+    // (le menu n'a pas d'autre signal de fermeture : un bouton qui l'a ouvert, comme « ＋ Créer » du menu latéral, en lit celui-ci ;
+    // el est l'élément dont le menu s'est ouvert, pour que chacun reconnaisse le sien — rendre() ferme le précédent avant d'ouvrir le suivant)
+    document.dispatchEvent(new CustomEvent('gestes:menu-ferme', { detail: { el: o.el } }));
     if (rendreFocus && o.declencheur && o.declencheur.isConnected && typeof o.declencheur.focus === 'function' && !o.declencheur.closest('.gm')) o.declencheur.focus({ preventScroll: true });
   }
   // un clic ou un appui à côté, le défilement, un changement de taille ou de page ferment le menu

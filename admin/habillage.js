@@ -73,6 +73,14 @@ body { min-height: 100%; background: radial-gradient(1100px 540px at -5% -10%, c
 .reg-theme button:hover, .reg-densite:hover { background: rgba(255, 255, 255, .12); color: #fff; }
 .reg-theme button[aria-checked="true"], .reg-densite[aria-pressed="true"] { background: rgba(255, 255, 255, .2); color: #fff; box-shadow: inset 0 0 0 1.5px var(--saison-texte-nuit); }
 .reg-theme button:focus-visible, .reg-densite:focus-visible { outline-color: #fff; }
+/* les accès rapides : « ＋ Créer » au dégradé de la saison, les épinglés et les récents en blanc doux sur la nuit du menu */
+.menu-etiq { color: rgba(255, 255, 255, .55); font-family: var(--etiq); }
+.menu-creer { background: var(--principal); color: #fff; font-family: var(--etiq); font-size: 12px; letter-spacing: .05em; text-transform: uppercase; box-shadow: 0 6px 16px -8px color-mix(in srgb, var(--saison) 80%, transparent); transition: filter .15s, box-shadow .15s; }
+.menu-creer:hover, .menu-creer[aria-expanded="true"] { filter: brightness(1.14); }
+.menu-epingle, .menu-recent { color: rgba(255, 255, 255, .78); }
+.menu-epingle:hover, .menu-recent:hover { background: rgba(255, 255, 255, .12); color: #fff; }
+.menu-rg { color: rgba(255, 255, 255, .55); }
+.menu-creer:focus-visible { outline-color: #fff; }
 .menu-badge { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #f28a6c; color: #2a1218; font: 800 11px/18px var(--police); letter-spacing: 0; text-align: center; text-transform: none; }
 @container menu (max-width: 120px) {
   .menu-badge { position: absolute; top: 8px; right: 9px; min-width: 0; width: 8px; height: 8px; padding: 0; overflow: hidden; font-size: 0; }

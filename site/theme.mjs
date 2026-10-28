@@ -409,12 +409,15 @@ const contraste = (page) => page.evaluate(() => {
   repartir();
   const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1280, hauteur: 900, hash: '#/accueil' });
   await page.waitForSelector('.reg-theme', { timeout: 15000 });
+  // replié à 1 280 × 900, les rubriques, « ＋ », les épinglés, le repli et cette colonne dépassent la hauteur : le menu défile
+  // jusqu'à elle (le lot 4 : sur un écran bas, c'est le menu entier qui défile)
   const m = await page.evaluate(() => {
-    const aside = document.querySelector('#menu').getBoundingClientRect(), bs = [...document.querySelectorAll('.reg-theme [role=radio], .reg-densite')].map(b => { const r = b.getBoundingClientRect(); return { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height), titre: b.title }; });
+    const menu = document.querySelector('#menu'); menu.scrollTop = menu.scrollHeight;
+    const aside = menu.getBoundingClientRect(), bs = [...document.querySelectorAll('.reg-theme [role=radio], .reg-densite')].map(b => { const r = b.getBoundingClientRect(); return { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height), titre: b.title }; });
     return { aside: Math.round(aside.width), bs, bas: Math.round(innerHeight - Math.max(...bs.map(b => b.y + b.h))) };
   });
   const colonne = new Set(m.bs.map(b => b.x)).size === 1 && m.bs.every((b, i) => i === 0 || b.y >= m.bs[i - 1].y + m.bs[i - 1].h - 1);
-  ok('menu replié (64 px) · quatre icônes de 44 px en colonne, dans la largeur du menu, chacune avec une infobulle', m.aside === 64 && m.bs.length === 4 && m.bs.every(b => b.w >= 44 && b.h >= 44 && b.x >= 0 && b.x + b.w <= 64 && b.titre.length >= 3) && colonne && m.bas >= 0, JSON.stringify(m));
+  ok('menu replié (64 px) · quatre icônes de 44 px en colonne, dans la largeur du menu, chacune avec une infobulle, dans l’écran une fois le menu défilé', m.aside === 64 && m.bs.length === 4 && m.bs.every(b => b.w >= 44 && b.h >= 44 && b.x >= 0 && b.x + b.w <= 64 && b.titre.length >= 3) && colonne && m.bas >= 0, JSON.stringify(m));
   await radio(page, 'jour').click();
   await attendre(page, () => document.documentElement.dataset.theme === 'jour');
   ok('menu replié · le jour se choisit aussi de là', (await theme(page)) === 'jour');

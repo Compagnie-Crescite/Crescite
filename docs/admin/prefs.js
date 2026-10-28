@@ -8,7 +8,8 @@
    - Les clés en usage : accueil.tableau (la disposition du tableau de bord, tableau.js), planning.masques (les personnes
      masquées du planning, disponibilites.js ; l'espace de l'équipe, equipe/equipe.js, lit la même clé en tableau brut :
      sa forme ne change pas), representations.avant (le panneau « À compléter avant la tournée », index.html),
-     menu.replie (le menu latéral replié ou déplié, cadre.js), representations.vue (la dernière vue de Représentations : 'liste',
+     menu.replie (le menu latéral replié ou déplié, cadre.js), menu.epingles (les accès épinglés du menu latéral : une liste de clés
+     d'actions, écrite aussitôt ; cadre.js), representations.vue (la dernière vue de Représentations : 'liste',
      'tableur' ou 'carte', à l'ordinateur seulement ; lue par le lien du menu et la page d'ouverture, index.html), theme ('nuit',
      'jour' ou 'appareil') et densite ('confortable' ou 'compacte') : l'apparence, réglée dans le menu (cadre.js), dont le
      miroir de l'appareil est aussi lu par index.html,

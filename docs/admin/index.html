@@ -209,12 +209,33 @@ html.menu-replie { --large-menu: 64px; }
 .reg-theme { display: inline-flex; border-radius: 999px; }
 .reg-theme button, .reg-densite { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 44px; min-height: 44px; padding: 0; border: 0; border-radius: 999px; background: none; font: inherit; cursor: pointer; }
 .reg-theme button:focus-visible, .reg-densite:focus-visible { outline: 2px solid currentColor; outline-offset: -2px; }
-.menu a:focus-visible, .menu-replier:focus-visible { outline: 2px solid currentColor; outline-offset: -2px; }
+.menu a:focus-visible, .menu-replier:focus-visible, .menu-creer:focus-visible { outline: 2px solid currentColor; outline-offset: -2px; }
+/* les accès rapides (cadre.js), entre les rubriques et le bouton de repli : l'étiquette et « ＋ Créer » ne défilent jamais (la zone ne
+   descend pas sous leur hauteur : sur un écran bas, c'est le menu entier qui défile), les épinglés et les récents (.menu-defile)
+   prennent la place qui reste, une ligne au moins, et défilent d'eux-mêmes : le bouton de repli et les réglages restent au pied
+   de l'écran tant que la hauteur le permet (sa base nulle, flex: 1 1 0, sort la liste de la hauteur minimale de la zone) ; à la
+   souris, sur un écran de moins de 780 px de haut, les rubriques se resserrent pour que « Créer » reste dans l'écran */
+.menu-acces { display: flex; flex-direction: column; gap: 2px; flex: 1 1 auto; padding: 2px 0 8px; }
+.menu-defile { display: flex; flex-direction: column; gap: 2px; flex: 1 1 0; min-height: 44px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+@media (max-height: 779px) and (pointer: fine) { .menu .nav { gap: 0; padding: 6px 0 2px; } .menu .nav a { min-height: 38px; } }
+.menu-etiq { margin: 10px 20px 4px; font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--gris); }
+.menu-creer { display: flex; align-items: center; gap: 12px; width: calc(100% - 16px); min-height: 44px; margin: 4px 8px 6px; padding: 0 12px; border: 0; border-radius: 10px; background: var(--accent); color: var(--sur-accent); font: inherit; font-weight: 700; text-align: left; white-space: nowrap; cursor: pointer; }
+.menu-creer .ico { --ico: 20px; }
+.menu-epingles { display: flex; flex-direction: column; gap: 1px; }
+.menu-epingle, .menu-recent { position: relative; display: flex; align-items: center; gap: 12px; min-height: 36px; margin: 0 8px; padding: 0 12px; border-radius: 10px; color: var(--gris); font-size: 13.5px; font-weight: 600; text-decoration: none; white-space: nowrap; transition: background-color .15s, color .15s; }
+.menu-epingle .ico { --ico: 20px; }
+.menu-epingle:hover, .menu-recent:hover { background: var(--doux); color: var(--encre); }
+.menu-recents[hidden] { display: none; }
+.menu-recent { display: block; overflow: hidden; text-overflow: ellipsis; line-height: 36px; font-size: 13px; font-weight: 500; }
+.menu-rg { font-weight: 700; }
+@media (pointer: coarse) { .menu-epingle { min-height: 44px; } .menu-recent { line-height: 44px; } }
 /* replié (la colonne a moins de 120 px) : chaque lien garde son libellé pour les lecteurs d'écran (.menu-l passe en .sr) et
    son infobulle ; le badge devient un point sur l'icône (habillage.js) */
 @container menu (max-width: 120px) {
   .menu-l { position: absolute; width: 1px; height: 1px; flex: none; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; opacity: 0; }
-  .menu .nav a, .menu-replier { justify-content: center; gap: 0; padding: 0; }
+  .menu .nav a, .menu-replier, .menu-epingle { justify-content: center; gap: 0; padding: 0; }
+  .menu-creer { justify-content: center; gap: 0; padding: 0; }
+  .menu-etiq, .menu-recents { display: none; }
   .reg-apparence, .reg-theme { flex-direction: column; }
 }
 /* au téléphone (640 px et moins, le seuil de mobile.js), pas de menu : la barre du bas en tient lieu */
@@ -246,6 +267,10 @@ dialog.recherche::backdrop { background: rgba(23, 15, 26, .4); }
 .rch-corps b, .rch-corps small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rch-corps small { color: var(--gris); font-size: 13px; }
 .rch-type { flex: none; font-size: 12px; font-weight: 700; color: var(--gris); }
+/* la touche d'une commande (« G D », « Alt M »), à côté de son genre et non dedans : le genre reste un texte seul */
+.rch-touche { flex: none; display: inline-flex; gap: 4px; }
+/* sans clavier (un écran tactile, le téléphone), une touche n'a pas de sens : on ne la montre pas */
+@media (pointer: coarse), (max-width: 640px) { .rch-touche { display: none; } }
 .rch-liste mark { background: color-mix(in srgb, var(--accent) 16%, transparent); border-radius: 3px; color: inherit; text-decoration: underline 2px var(--accent); text-underline-offset: 3px; }
 /* le passage qui a trouvé la fiche (un téléphone, une adresse, un jour), sous sa ligne ; l'intitulé du second groupe */
 .rch-corps .rch-passage { font-size: 12.5px; }
@@ -1721,8 +1746,9 @@ const APRES_VUE = [ecrireFiltres];   // ce qui se pose une fois la vue dessinée
 // une fiche ouverte ailleurs qu'à sa place (depuis le tableau de bord, le Kanban, le planning…) s'ouvre dans un tiroir
 // (tiroir.js) : ces aides savent où elle est. racineActive : le tiroir ouvert, sinon la page
 const racineActive = () => (typeof TIROIR !== 'undefined' && TIROIR.racine()) || document;
-// l'adresse de la fiche change sans redessiner la vue (une date créée ou dupliquée, une fiche créée) ; dans un tiroir, l'adresse de la page reste la sienne
-function remplacerAdresse(h) { if (typeof TIROIR !== 'undefined' && TIROIR.ouvert()) return; history.replaceState({ n: E.n }, '', h); noterAdresse(); }
+// l'adresse de la fiche change sans redessiner la vue (une date créée ou dupliquée, une fiche créée) ; dans un tiroir, l'adresse de la page reste la sienne.
+// Une fiche créée compte comme une fiche ouverte : elle rejoint les récents (le menu latéral, la recherche)
+function remplacerAdresse(h) { if (typeof TIROIR !== 'undefined' && TIROIR.ouvert()) return; history.replaceState({ n: E.n }, '', h); noterAdresse(); noterRecente(h); }
 // l'adresse acceptée (la rubrique, la fiche ; un tiroir dans ?tiroir=…), et son rang dans l'historique (history.state.n :
 // une entrée neuve, celle d'un lien suivi, prend le rang suivant) ; on y revient quand on choisit de rester
 function noterAdresse() {
@@ -2041,6 +2067,10 @@ document.addEventListener('keydown', e => {
    Tout ce qui a une adresse s'y trouve : aussi les parties des rubriques (le tableur, la carte, les propositions…), les
    textes du site, les invitations des salles, les ateliers proposés, les documents, et le compte (le mot de passe, les
    raccourcis). Champ vide : les fiches ouvertes en dernier sur cet appareil (noterRecente), puis les prochaines dates.
+   C'est aussi la barre de commande du cadre : « Replier / Déplier le menu » (Alt M, seulement quand le menu existe), « Vue liste » (V L),
+   les entrées de partie « Tableur » (V T) et « Carte de tournée » (V C), et les douze rubriques (G puis une lettre) portent leur touche
+   (mettre({ …, touche: toucheRch(id du registre RACCOURCIS) })), écrite dans un <span class="rch-touche"> frère de .rch-type, jamais
+   dedans (le genre reste un texte seul).
    Le mot trouvé est souligné ; trouvé ailleurs que dans le titre et sa ligne (une adresse, un téléphone, un jour, un
    contact), le passage qui le contient s'ajoute dessous, souligné lui aussi : on voit pourquoi la fiche est là. */
 const SUR_MAC = /mac|iphone|ipad|ipod/i.test(navigator.userAgentData?.platform || navigator.platform || '');
@@ -2062,12 +2092,19 @@ const cleRch = s => ` ${norm(s).replace(/[’‘`]/g, "'").replace(/[^a-z0-9'/]+
 const motsRch = q => cleRch(q).trim().split(' ').filter(Boolean);
 const jourRch = j => { const d = new Date(`${j}T12:00:00`), n = +j.slice(8, 10), m = +j.slice(5, 7);
   return `${JOURS_RCH[d.getDay()]} ${n}${n === 1 ? ' 1er' : ''} ${AGENDA.MOIS[m - 1]} ${MC[m - 1]} ${j.slice(0, 4)} ${j.slice(8, 10)}/${j.slice(5, 7)}/${j.slice(0, 4)} ${n}/${m} ${j}`; };
+// la touche d'une commande (l'identifiant du registre RACCOURCIS), telle que la barre de commande l'écrit : « G D » (une séquence),
+// « Alt M » (un accord) ; dit en toutes lettres dans l'infobulle (« G puis D »). Rien si le registre ne la connaît pas
+function toucheRch(id) {
+  const dit = id && typeof RACCOURCIS !== 'undefined' ? RACCOURCIS.libelle(id) : '';
+  // (les trois vues n'agissent que dans la rubrique Représentations : l'infobulle le dit)
+  return dit ? { texte: dit.replace(/ puis /g, ' ').replace(/\+/g, ' '), dit: dit.replace(/\+/g, ' + ') + (/^vue\./.test(id) ? ', dans Représentations' : '') } : null;
+}
 function indexRch() {
   const xs = [], joursDe = new Map(), feuilles = new Map((E.feuilles || []).map(f => [f.date_id, f]));
   E.reps.forEach(r => { if (!r.jour) return; if (!joursDe.has(r.date_id)) joursDe.set(r.date_id, new Set()); joursDe.get(r.date_id).add(r.jour); });
   // (le genre compte dans les mots cherchés : « lieu volcan », « frais camille », « action nouvelle date »)
   const mettre = (o, plus = '') => xs.push({ ordre: 0, sous: '', passages: [], ...o, rang: TYPES_RCH.findIndex(t => t[0] === o.type), ct: cleRch(o.titre), c: cleRch(`${o.type} ${o.titre} ${o.sous || ''} ${plus} ${(o.passages || []).map(x => x.c).join(' ')}`) });
-  rubriquesVisibles().forEach(([k, l], i) => mettre({ type: 'Rubrique', titre: l, href: `#/${k}`, ordre: i / 100 }));
+  rubriquesVisibles().forEach(([k, l], i) => mettre({ type: 'Rubrique', titre: l, href: `#/${k}`, ordre: i / 100, touche: toucheRch(`rubrique.${k}`) }));
   E.spectacles.forEach(s => mettre({ type: 'Spectacle', titre: s.titre, sous: s.page ? '' : 'Ancien spectacle', href: `#/spectacles/${s.slug}`, couleur: couleurSp(s), ordre: s.page ? 0 : 1 }));
   (E.personnes || []).forEach(p => { const v = (E.privees || []).find(x => x.personne_id === p.id) || {};
     mettre({ type: 'Personne', titre: nomDe(p) || 'Sans nom', sous: (p.metiers || []).join(', '), href: `#/equipe/${p.id}`, passages: passagesRch([['Téléphone', v.telephone], ['Courriel', v.email], ['Ville', v.ville]]) }); });
@@ -2093,7 +2130,7 @@ function indexRch() {
   if (typeof TABLEAU !== 'undefined' && TABLEAU.ACTIONS) {
     TABLEAU.ACTIONS.filter(a => !a[3] || a[3]()).forEach(([k, l, href, , externe]) => { if (k === 'recherche') return;
       mettre({ type: 'Action', titre: l.replace(/^＋\s*/, '').replace(/\s*↗$/, ''), sous: externe ? 'sur le site' : '', href: href.startsWith('#') || externe ? href : '', externe: !!externe,
-        faire: href === 'prospect' ? () => { window.addEventListener('hashchange', () => requestAnimationFrame(() => $('#b-nouveau-prospect')?.click()), { once: true }); location.hash = '#/diffusion'; } : null }, 'commande'); });
+        faire: href === 'prospect' ? () => CADRE.nouvelleOpportunite() : null }, 'commande'); });
     mettre({ type: 'Action', titre: 'Tableau de bord', href: '#/accueil', ordre: 1 }, 'commande accueil');
     mettre({ type: 'Action', titre: 'Briefing de la semaine', sous: 'le résumé des sept jours, à copier ou à imprimer', faire: () => TABLEAU.ouvrirBriefing(), ordre: 1 }, 'commande résumé');
     mettre({ type: 'Rubrique', titre: 'Corbeille', sous: 'ce qui a été supprimé ces trente derniers jours', href: '#/corbeille' });
@@ -2102,18 +2139,25 @@ function indexRch() {
     try { TABLEAU.urgences().lignes.filter(x => !x.reporte).slice(0, 40).forEach(x => mettre({ type: 'À traiter', titre: x.titreTexte, sous: `${x.sujet}${sansBalises(x.sous) ? ` · ${sansBalises(x.sous)}` : ''}`, couleur: x.couleur, href: x.href,
       faire: () => { if (!TABLEAU.traiter(x.cle)) location.hash = x.href; } }, 'urgent traiter')); } catch (e) { console.error(e); }
   }
+  // replier ou déplier le menu latéral (cadre.js), seulement quand on le voit (à partir de 641 px, hors du téléphone installé) ; le
+  // « sous » fait trouver « replier » comme « déplier » dans les deux états
+  if (typeof CADRE !== 'undefined' && document.getElementById('menu')?.getClientRects().length)
+    mettre({ type: 'Action', titre: CADRE.replie() ? 'Déplier le menu' : 'Replier le menu', sous: 'replier ou déplier le menu latéral', faire: () => CADRE.basculer(), touche: toucheRch('menu.replier'), ordre: 1 }, 'commande');
   (E.frais || []).forEach(f => { const p = personne(f.personne_id); mettre({ type: 'Note de frais', titre: `${p ? nomDe(p) : 'Une personne'} · ${eurosRch(f.montant_ttc)}`, sous: [typeof CAT_FRAIS !== 'undefined' ? CAT_FRAIS[f.categorie] || f.categorie : f.categorie, f.date_depense ? jourCourt(f.date_depense) : '', STATUTS_FRAIS_RCH[f.statut] || f.statut].filter(Boolean).join(' · '), href: '#/equipe/frais', ordre: f.statut === 'en_attente' ? 0 : 1, passages: passagesRch([['Commentaire', f.commentaire]]) }); });
   (E.devis || []).forEach(v => mettre({ type: 'Devis', titre: v.structure_nom || 'Demande de devis', sous: [v.commune, spectacle(v.spectacle_id)?.titre, (STATUTS_DEVIS.find(x => x[0] === (v.statut || 'nouveau')) || [])[1]].filter(Boolean).join(' · '), href: `#/diffusion/devis/${v.id}`, passages: passagesRch([['Contact', v.contact_nom], ['Courriel', v.contact_email], ['Période souhaitée', v.periode_souhaitee]]) }));
   (E.prospects || []).forEach(p => mettre({ type: 'Diffusion', titre: p.structure || 'Piste', sous: [p.commune, spectacle(p.spectacle_id)?.titre, ((ETAPES_CRM.find(e => e[0] === p.etape) || [])[1] || '').replace(/^\d\.\s*/, '')].filter(Boolean).join(' · '), href: typeof TIROIR !== 'undefined' ? `#/diffusion/piste/${p.id}` : '#/diffusion', passages: passagesRch([['Contact', p.contact_nom], ['Courriel', p.contact_email]]) }));
   (E.propositions || []).forEach(p => mettre({ type: 'Proposition', titre: p.titre || 'Proposition de dates', sous: p.statut === 'ouverte' ? 'proposition ouverte' : 'proposition close', href: `#/planning/proposition/${p.id}`, ordre: p.statut === 'ouverte' ? 0 : 1 }));
   (E.seances || []).forEach(s => { const a = (E.ateliers || []).find(x => x.id === s.atelier_id), l = lieu(s.lieu_id); mettre({ type: 'Séance', titre: a?.titre || 'Séance d’atelier', sous: `${jourCourt(s.jour)}${l ? ` · ${l.nom || l.commune}` : ''}${s.classe ? ` · ${s.classe}` : ''}`, href: `#/ateliers/seances/${s.id}`, ordre: s.jour >= AUJ ? Date.parse(`${s.jour}T12:00:00Z`) / 864e5 : 1e9, passages: passagesRch([s.jour ? ['Jour', jourLettresRch(s.jour), jourRch(s.jour)] : null, ['Intervenants', s.intervenants]]) }); });
   // les parties des rubriques qui ont leur adresse (sous les noms de leurs boutons), le compte
-  [['#/representations/tableur', 'Tableur', 'Représentations'], ['#/representations/carte', 'Carte de tournée', 'Représentations'],
+  // (les trois vues de Représentations se disent aussi « vue » : « vue carte » ; leur touche, V puis L / T / C, ne vaut que dans la rubrique,
+  // mais la barre la montre toujours, son infobulle le dit)
+  [['#/representations', 'Vue liste', 'Représentations', toucheRch('vue.liste')], ['#/representations/tableur', 'Tableur', 'Représentations', toucheRch('vue.tableur'), 'vue'],
+    ['#/representations/carte', 'Carte de tournée', 'Représentations', typeof TOURNEE !== 'undefined' ? toucheRch('vue.carte') : null, 'vue'],
     E.equipeInstallee && E.sql5 !== false ? ['#/planning/propositions', 'Propositions', 'Planning'] : null,
     ['#/ateliers/seances', 'Séances', 'Ateliers'], ['#/ateliers/catalogue', 'Ateliers proposés', 'Ateliers'],
     E.equipeInstallee ? ['#/equipe/documents', 'Documents de la compagnie', 'Équipe'] : null,
     E.ideale && E.alertesInstallees ? ['#/diffusion/alertes', 'Alertes de tournée', 'Diffusion CRM'] : null]
-    .filter(Boolean).forEach(([href, titre, rub]) => mettre({ type: 'Rubrique', titre, sous: rub, href, ordre: .5 }));
+    .filter(Boolean).forEach(([href, titre, rub, touche, plus]) => mettre({ type: 'Rubrique', titre, sous: rub, href, ordre: .5, touche }, plus || ''));
   mettre({ type: 'Compte', titre: 'Mot de passe', sous: E.session?.user?.email || '', faire: () => $('#b-mdp')?.click() }, 'changer réglages');
   mettre({ type: 'Compte', titre: 'Raccourcis clavier', sous: 'les gestes et les touches de l’administration', faire: () => { if (typeof ouvrirAide === 'function') ouvrirAide($('#b-chercher')); } }, 'aide réglages');
   // l'apparence (cadre.js) : les mêmes commandes que les boutons du menu, qui servent aussi quand le menu est masqué
@@ -2176,6 +2220,26 @@ function lireRecentes() { try { const x = JSON.parse(localStorage.getItem(CLE_RE
 function noterRecente(href) {
   if (!FICHE_RECENTE.test(href || '')) return;
   try { localStorage.setItem(CLE_RECENTES, JSON.stringify([href, ...lireRecentes().filter(h => h !== href)].slice(0, 12))); } catch (e) { /* navigation privée : rien de gardé */ }
+  if (typeof CADRE !== 'undefined') CADRE.recents();      // (le menu latéral montre les cinq premières : cadre.js)
+}
+// ce qu'une fiche ouverte récemment se dit dans le menu latéral (cadre.js) : { genre, nom } d'aujourd'hui (« Date », « Bérénice, 5 nov. »),
+// pris dans E sans rien lire du DOM ; rien si la fiche n'existe plus (supprimée) ou si la base n'est pas là. Les genres sont ceux de TYPES_RCH
+function descriptionRecente(h) {
+  if (!E.pret) return null;
+  const genre = type => (TYPES_RCH.find(t => t[0] === type) || [type, type])[1], dit = (type, nom) => (nom ? { genre: genre(type), nom } : null);
+  let m;
+  if ((m = h.match(/^#\/(representations|feuilles)\/(\d+)$/))) { const d = E.dates.find(x => x.id === +m[2]); return d && dit(m[1] === 'feuilles' ? 'Feuille de route' : 'Date', `${spectacle(d.spectacle_id)?.titre || lieu(d.lieu_id)?.nom || lieu(d.lieu_id)?.commune || 'Sans titre'}, ${jourSansAn(d.debut).replace(/^\S+ /, '')}`); }
+  if ((m = h.match(/^#\/spectacles\/([a-z0-9-]+)$/))) return dit('Spectacle', E.spectacles.find(s => s.slug === m[1])?.titre);
+  if ((m = h.match(/^#\/equipe\/(\d+)$/))) { const p = (E.personnes || []).find(x => x.id === +m[1]); return p && dit('Personne', nomDe(p) || 'Sans nom'); }
+  if ((m = h.match(/^#\/lieux\/(\d+)$/))) { const l = E.lieux.find(x => x.id === +m[1]); return l && dit('Lieu', l.nom || l.commune); }
+  if ((m = h.match(/^#\/diffusion\/devis\/(\d+)$/))) { const v = (E.devis || []).find(x => x.id === +m[1]); return v && dit('Devis', v.structure_nom || 'Demande de devis'); }
+  if ((m = h.match(/^#\/diffusion\/piste\/(\d+)$/))) { const p = (E.prospects || []).find(x => x.id === +m[1]); return p && dit('Diffusion', p.structure || 'Piste'); }
+  if ((m = h.match(/^#\/pro\/(\d+)$/))) { const a = (E.acces || []).find(x => x.id === +m[1]); return a && dit('Invitation', a.nom || 'Invitation'); }
+  if ((m = h.match(/^#\/ateliers\/seances\/(\d+)$/))) { const s = (E.seances || []).find(x => x.id === +m[1]); return s && dit('Séance', (E.ateliers || []).find(x => x.id === s.atelier_id)?.titre || 'Séance d’atelier'); }
+  if ((m = h.match(/^#\/ateliers\/catalogue\/(\d+)$/))) { const a = (E.ateliers || []).find(x => x.id === +m[1]); return a && dit('Atelier', a.titre || 'Atelier'); }
+  if ((m = h.match(/^#\/planning\/proposition\/(\d+)$/))) { const p = (E.propositions || []).find(x => +x.id === +m[1]); return p && dit('Proposition', p.titre || 'Proposition de dates'); }
+  if ((m = h.match(/^#\/textes\/(.+)$/))) { let k; try { k = decodeURIComponent(m[1]); } catch (e) { return null; } return clesTextes().includes(k) ? dit('Texte du site', nomTexte(k)) : null; }
+  return null;
 }
 APRES_VUE.push(() => noterRecente(location.hash));
 function dialogueRch() {
@@ -2231,7 +2295,7 @@ function rendreRch() {
   $('#rch-entete').textContent = entete;
   // (champ vide, deux groupes : le second a son intitulé, une ligne qui n'est pas une option)
   const debuts = new Map((groupes || []).slice(1).map((g, k) => [groupes.slice(0, k + 1).reduce((n, x) => n + x[1], 0), g[0]]));
-  $('#rch-liste').innerHTML = xs.map((x, i) => `${debuts.has(i) ? `<li role="presentation" class="rch-groupe">${esc(debuts.get(i))}</li>` : ''}<li role="option" id="rch-o${i}" data-i="${i}" style="--i:${Math.min(i, 10)}" aria-selected="false"><span class="pastille"${x.couleur ? ` style="--c:${esc(x.couleur)}"` : ''}></span><span class="rch-corps"><b>${surlignerRch(x.titre, mots)}</b>${x.sous ? `<small>${surlignerRch(x.sous, mots)}</small>` : ''}${passageRch(x, mots)}</span><span class="rch-type">${TYPES_RCH[x.rang][1]}</span></li>`).join('');
+  $('#rch-liste').innerHTML = xs.map((x, i) => `${debuts.has(i) ? `<li role="presentation" class="rch-groupe">${esc(debuts.get(i))}</li>` : ''}<li role="option" id="rch-o${i}" data-i="${i}" style="--i:${Math.min(i, 10)}" aria-selected="false"><span class="pastille"${x.couleur ? ` style="--c:${esc(x.couleur)}"` : ''}></span><span class="rch-corps"><b>${surlignerRch(x.titre, mots)}</b>${x.sous ? `<small>${surlignerRch(x.sous, mots)}</small>` : ''}${passageRch(x, mots)}</span>${x.touche ? `<span class="rch-touche" title="Raccourci : ${esc(x.touche.dit)}">${x.touche.texte.split(' ').map(t => `<kbd>${esc(t)}</kbd>`).join(' ')}</span>` : ''}<span class="rch-type">${TYPES_RCH[x.rang][1]}</span></li>`).join('');
   q.setAttribute('aria-expanded', String(xs.length > 0));
   activerRch(0, false);
   $('#rch-liste').scrollTop = 0;

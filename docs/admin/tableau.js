@@ -9,6 +9,9 @@
      chiffres ; qui part bientôt ; la diffusion ; les propositions de dates ; les séances d'atelier ; les dernières
      modifications ; les spectacles ; un mémo. Chaque ligne mène là où l'on agit, le champ visé prenant le focus
      (data-viser). Une tuile dont la base n'a pas les tables (E.ideale, E.sql4, E.sql5, E.equipeInstallee) ne se montre pas.
+   - ACTIONS (les actions rapides possibles : clé, libellé, adresse, condition, externe, nom de l'icône ICONES) est lue aussi par le
+     menu latéral (cadre.js) : les « ＋ » font son menu « Créer », MENU_EPINGLES_DEFAUT dit ce qu'il épingle d'office (la tuile a sa
+     liste à elle, ACTIONS_DEFAUT : chacune son défaut, le menu contextuel des actions fait le pont, « Mettre dans le menu »).
    - Entièrement personnalisable, « Personnaliser » : l'ordre (glisser une tuile par son titre, ou ← →), la taille (une,
      deux colonnes ou toute la largeur), masquer ou remettre une tuile, la réduire ; les réglages de chaque tuile (⚙ : la
      période, le nombre de lignes, ce qu'elle suit) ; les colonnes de la grille ; la page d'ouverture de l'administration.
@@ -74,26 +77,30 @@ const TABLEAU = (() => {
   // ===================================================================================================== les tuiles
   const TAILLES = [['p', '1', 'Une colonne'], ['m', '2', 'Deux colonnes'], ['g', '⟷', 'Toute la largeur']];
   const JOURS = [[7, '7 jours'], [14, '14 jours'], [30, '30 jours'], [60, '60 jours'], [90, '90 jours']];
-  // les actions rapides possibles : clé, libellé, adresse (ou action spéciale), quand elle est là
+  // les actions rapides possibles : clé, libellé, adresse (ou action spéciale), quand elle est là, externe (un lien hors de
+  // l'administration), le nom de son icône dans admin/icones.js (le menu latéral, cadre.js, la montre dans « ＋ Créer » et chez les épinglés)
   const ACTIONS = [
-    ['date', '＋ Nouvelle date', '#/representations/nouvelle'],
-    ['proposer', '＋ Proposer des dates', '#/planning/proposer', () => E.equipeInstallee && E.sql5 !== false],
-    ['personne', '＋ Nouvelle fiche', '#/equipe/nouvelle', () => E.equipeInstallee],
-    ['lieu', '＋ Nouveau lieu', '#/lieux/nouveau'],
-    ['seance', '＋ Séance d’atelier', '#/ateliers/seances/nouvelle'],
-    ['invitation', '＋ Inviter une salle', '#/pro/nouvelle', () => E.sql4],
-    ['prospect', '＋ Opportunité de diffusion', 'prospect', () => E.ideale],
-    ['tableur', 'Tableur des séances', '#/representations/tableur'],
-    ['feuilles', 'Feuilles de route', '#/feuilles', () => E.equipeInstallee],
-    ['planning', 'Planning de l’équipe', '#/planning', () => E.equipeInstallee],
-    ['devis', 'Demandes de devis', '#/diffusion/devis', () => E.ideale],
-    ['frais', 'Notes de frais', '#/equipe/frais', () => E.ideale && E.equipeInstallee],
-    ['journal', 'Journal des modifications', '#/journal'],
-    ['site', 'Voir le site ↗', SITE, null, true],
-    ['editer', 'Modifier sur le site ↗', `${SITE}?edition`, null, true],
-    ['recherche', `Rechercher… ${RACCOURCI_RCH}`, 'recherche'],
+    ['date', '＋ Nouvelle date', '#/representations/nouvelle', null, false, 'plus'],
+    ['proposer', '＋ Proposer des dates', '#/planning/proposer', () => E.equipeInstallee && E.sql5 !== false, false, 'calendrier'],
+    ['personne', '＋ Nouvelle fiche', '#/equipe/nouvelle', () => E.equipeInstallee, false, 'personne'],
+    ['lieu', '＋ Nouveau lieu', '#/lieux/nouveau', null, false, 'lieux'],
+    ['seance', '＋ Séance d’atelier', '#/ateliers/seances/nouvelle', null, false, 'ateliers'],
+    ['invitation', '＋ Inviter une salle', '#/pro/nouvelle', () => E.sql4, false, 'mel'],
+    ['prospect', '＋ Opportunité de diffusion', 'prospect', () => E.ideale, false, 'diffusion'],
+    ['tableur', 'Tableur des séances', '#/representations/tableur', null, false, 'vue-tableur'],
+    ['feuilles', 'Feuilles de route', '#/feuilles', () => E.equipeInstallee, false, 'feuille'],
+    ['planning', 'Planning de l’équipe', '#/planning', () => E.equipeInstallee, false, 'planning'],
+    ['devis', 'Demandes de devis', '#/diffusion/devis', () => E.ideale, false, 'presse-papiers'],
+    ['frais', 'Notes de frais', '#/equipe/frais', () => E.ideale && E.equipeInstallee, false, 'euro'],
+    ['journal', 'Journal des modifications', '#/journal', null, false, 'journal'],
+    ['site', 'Voir le site ↗', SITE, null, true, 'externe'],
+    ['editer', 'Modifier sur le site ↗', `${SITE}?edition`, null, true, 'crayon'],
+    ['recherche', `Rechercher… ${RACCOURCI_RCH}`, 'recherche', null, false, 'loupe'],
   ];
   const ACTIONS_DEFAUT = ['date', 'proposer', 'personne', 'lieu', 'seance', 'invitation', 'prospect', 'tableur', 'editer', 'recherche'];
+  // ce que le menu latéral épingle d'office (cadre.js, la clé de préférence menu.epingles) : un raccourci permanent, là où la tuile
+  // « actions » est une page d'ouverture ; jamais les « ＋ » (ils sont dans « ＋ Créer ») ni la recherche (la loupe de l'en-tête)
+  const MENU_EPINGLES_DEFAUT = ['tableur', 'feuilles', 'planning', 'devis', 'frais', 'journal', 'site'];
   // ce qu'il y a à traiter : une catégorie par source, chacune avec ses lignes (tri : la plus urgente d'abord)
   const CATEGORIES = [
     { k: 'devis', titre: 'Demandes de devis à répondre', tout: '#/diffusion/devis', dispo: () => E.ideale,
@@ -630,7 +637,7 @@ const TABLEAU = (() => {
         T.edition = false; dessiner(); $('#tb-personnaliser')?.focus();
       } else if (t.matches('[data-tb-action]')) {
         if (t.dataset.tbAction === 'recherche') ouvrirRecherche();
-        else if (t.dataset.tbAction === 'prospect') { window.addEventListener('hashchange', () => requestAnimationFrame(() => $('#b-nouveau-prospect')?.click()), { once: true }); location.hash = '#/diffusion'; }
+        else if (t.dataset.tbAction === 'prospect') CADRE.nouvelleOpportunite();      // (cadre.js : aussi quand on est déjà sur la Diffusion)
       } else if (t.matches('[data-tb-sp]')) {
         session.dates = Object.assign({ spectacle: '', public: '', statut: '', q: '' }, session.dates || {}, { spectacle: t.dataset.tbSp }); garderFiltres(); location.hash = '#/representations';
       } else if (t.matches('.tb-tel')) {
@@ -1455,7 +1462,7 @@ dialog.tb-brief::backdrop { background: rgba(23, 15, 26, .4); }
     t.reglages.actions = valeurs('actions').actions.filter(x => x !== k);
     garder(); dessinerCorps('actions'); annoncerSr('Action retirée.');
   }
-  return { vue, charger, depart, TUILES, conf, normaliser, retirerAction, lienJournal, ACTIONS, CATEGORIES, urgences, traiter, epingler, reporter, REPORTS, vues: vuesDe, appliquerVue, formVue, ouvrirBriefing, briefing, texteBriefing, chercherMois, annulerJournal, recente, filtrer };
+  return { vue, charger, depart, TUILES, conf, normaliser, retirerAction, lienJournal, ACTIONS, MENU_EPINGLES_DEFAUT, CATEGORIES, urgences, traiter, epingler, reporter, REPORTS, vues: vuesDe, appliquerVue, formVue, ouvrirBriefing, briefing, texteBriefing, chercherMois, annulerJournal, recente, filtrer };
 })();
 // la route de la rubrique (admin/index.html)
 function vueTableau() { return TABLEAU.vue(); }

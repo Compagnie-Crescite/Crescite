@@ -37,6 +37,14 @@ transition de couleur ne se lance (`html.bascule` les coupe le temps d'un recalc
 coûterait cher), et seule l'icône choisie saute (`pop`, le ressort, 450 ms) ; les badges (« 12 » à traiter) sont posés sans mouvement, la pastille
 change de chiffre sans rouler (`cadre.mjs` en vérifie le calcul : aucune tâche de plus de 200 ms à `CPU=4`).
 
+Les accès rapides du menu latéral n'ajoutent rien au vocabulaire : un accès épinglé qui arrive (« Mettre dans le menu ») saute
+en ressort (`ad-pop`, 450 ms, par la classe `.pop`, ôtée à la fin de l'animation) ; une fiche récente qui apparaît dans
+« Récents » se pose (`ad-arrive`, 300 ms, le doux, par `.ad-neuf`) ; le menu « Créer » est un menu de `GESTES`, il paraît en
+`gm-paraitre` (140 ms) comme tous les autres. Rien de cela ne joue au premier dessin de la page (les accès déjà là ne sautent
+pas), ni quand un épinglé change de place (il est déplacé, pas recréé), et rien du tout sous « moins d'animations » ni avec
+`?anim=0` (`acces.mjs` le vérifie : aucune animation dans la zone, aucune classe d'arrivée ; le menu « Créer » s'ouvre en
+`gm-calme`).
+
 ## Les règles
 
 - **Rien ne bouge si l'appareil demande moins d'animations** (`prefers-reduced-motion: reduce`), ni avec `?anim=0`
@@ -82,8 +90,10 @@ latéral, ses raccourcis et ses badges), `champs.mjs` (la fiche d'une date : le 
 « Modifiée ailleurs », qui paraît en `ad-arrive`), `vues-dates.mjs` (les trois vues de Représentations : la pilule, les
 filtres communs, le fondu, le focus, la ligne visée, la vue retenue et les touches V puis L / T / C), `theme.mjs` (le
 thème et la densité : le jour, « appareil » qui suit le système, la compacte, le menu replié), `distribution.mjs` (la
-distribution à l'écran : la cellule d'une date, qui sera prévenu, la boîte d'impact, la fiche d'une date) et
-`fenetres.mjs` (les fenêtres ajustables : la poignée du tiroir et le séparateur de la liste). Ils ne touchent presque
+distribution à l'écran : la cellule d'une date, qui sera prévenu, la boîte d'impact, la fiche d'une date),
+`fenetres.mjs` (les fenêtres ajustables : la poignée du tiroir et le séparateur de la liste) et `acces.mjs` (les accès
+rapides du menu et la barre de commande : l'arrivée d'un épinglé en `ad-pop`, d'un récent en `ad-arrive`, le menu
+« Créer » en `gm-paraitre`). Ils ne touchent presque
 pas à ce vocabulaire : `cadre.mjs` mesure seulement que le repli anime la colonne une fois, et rien sous « moins
 d'animations », et que le compte des badges ne tient jamais la page plus de 200 ms à `CPU=4` ; `vues-dates.mjs`, que le
 passage entre les trois vues est un fondu ; `theme.mjs`, qu'aucune transition de couleur ne se lance au changement de
@@ -93,7 +103,8 @@ remplaçant, grises et barrées pour qui ne part pas) n'animent rien (ni animati
 100 ms, et qu'un écran de 30 dates se pose et se met en page en moins de 100 ms à `CPU=4` (les 120 d'un coup, 960 pastilles, coûtent plus de 100 ms de
 mise en page : le tableur les dessinera par tranches) ; `fenetres.mjs`, que la remise à la taille
 d'origine s'anime une fois (et d'un coup sous « moins d'animations »), que rien ne glisse ni ne se remesure pendant le
-geste, et qu'aucune tâche ne dépasse 200 ms à `CPU=4` pendant un glisser ; pour le reste, ils veillent à ce qu'une refonte ne casse rien. (La case de la matrice qui saute, `ad-pop`,
+geste, et qu'aucune tâche ne dépasse 200 ms à `CPU=4` pendant un glisser ; `acces.mjs`, les trois arrivées ci-dessus, et le
+silence sous « moins d'animations » ; pour le reste, ils veillent à ce qu'une refonte ne casse rien. (La case de la matrice qui saute, `ad-pop`,
 vient avec le mode Distribution du tableur.)
 
 ## Ce qui a été écarté
