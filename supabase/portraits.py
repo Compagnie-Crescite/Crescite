@@ -13,8 +13,7 @@ script fait de même pour ceux qui y sont déjà.
 
 Un nouveau nom plutôt que le même : le CDN de Supabase garde l'ancien fichier une heure sous son adresse. Les écritures
 passent par supabase/ecrire.py (ses contrôles, sa clé : SUPABASE_CLE_SERVICE, ou celle que le proxy de la session ajoute) ;
-à la première erreur, tout s'arrête, et
-une fiche ne pointe vers le nouveau fichier qu'une fois celui-ci déposé.
+à la première erreur, tout s'arrête, et une fiche ne pointe vers le nouveau fichier qu'une fois celui-ci déposé.
 """
 import io
 import json
