@@ -41,7 +41,7 @@ node site/champs.mjs               # la fiche d'une date : le schéma de ses cha
 node site/vues-dates.mjs           # les trois vues de Représentations (pilule, filtres communs, ligne visée), dans Chromium (après le build)
 node site/theme.mjs                # le thème (nuit, jour, appareil) et la densité, dans Chromium, sur la même base fictive (après le build)
 node site/distribution.mjs         # la distribution à l'écran : la cellule d'une date, qui sera prévenu, la fiche, l'impact, dans Chromium (après le build)
-node site/fenetres.mjs             # les fenêtres ajustables : la poignée du tiroir et le séparateur de la liste, dans Chromium (après le build)
+node site/fenetres.mjs             # les fenêtres ajustables : la poignée du tiroir, le séparateur de la liste, le coin des boîtes, les réglages du menu (après le build)
 node site/acces.mjs                # les accès rapides du menu et la recherche comme barre de commande, dans Chromium (après le build)
 bash site/bancs-admin.sh           # le build, puis tous les bancs de l'administration l'un après l'autre ; --tout y joint
                                    # ceux de l'espace de l'équipe (sinon, seulement si gestes.js, planning.js ou feuille.js changent)
@@ -383,11 +383,23 @@ compte du projet inscrit dans `crescite_admins`.
   téléphone ni au doigt (la poignée n'existe qu'à partir de 641 px avec un pointeur précis), ni dans l'espace de
   l'équipe, ni à l'impression. Pendant le geste, rien d'autre ne bouge (les lignes d'une liste ne glissent pas, le pied de
   la fiche ne se remesure pas). `node site/fenetres.mjs` le vérifie dans Chromium, hors ligne, sur une base fictive
-  (104 vérifications : la poignée et ses valeurs, un glisser qui n'écrit qu'une fois, la taille retrouvée et bornée à
+  (181 vérifications : la poignée et ses valeurs, un glisser qui n'écrit qu'une fois, la taille retrouvée et bornée à
   l'écran, le double-clic, les flèches, le bouton « ⋯ », le recul des tiroirs empilés, le séparateur de la liste sur les
   huit pages et après un enregistrement, le squelette du chargement, la remise de toutes les tailles et son « Annuler »,
-  le téléphone et le tactile, l'impression, aucune tâche de plus de 200 ms à `CPU=4` ; captures dans
-  `site/dist/shots-fenetres/`). Les coins des boîtes de dialogue, « Pleine largeur » et « Disposition d'origine » suivent.
+  le téléphone et le tactile, l'impression, les coins de chaque boîte et la taille qu'ils gardent, la feuille et son piège de
+  Tab, les fenêtres de la diffusion et leurs fermetures, « Pleine largeur » et « Disposition d'origine », aucune tâche de
+  plus de 200 ms à `CPU=4` ; captures dans `site/dist/shots-fenetres/`).
+  Les boîtes de dialogue ont, en bas à droite, un coin qui se tire dans les deux sens : la recherche, « Étendre »,
+  « Importer », « Choisir dans la troupe », le briefing de la semaine, l'aide « ? », la feuille de modification et les
+  deux fenêtres de la diffusion (l'opportunité, le courriel de relance). Chacune garde sa taille, une clé par famille
+  (`fenetres.recherche`, `.tab-dialogue`, `.tab-dialogue-large`, `.crm`, `.tb-brief`, `.gq-aide`, `.gf`), toujours bornée à
+  l'écran moins 24 px ; double-clic sur le coin, ou Entrée quand il a le focus : la taille d'origine. Les deux petites
+  questions de l'équipe (la période, le retrait) n'en ont pas. L'opportunité et le courriel de relance sont désormais
+  des fenêtres comme les autres (`boiteCrm`, dans `admin/index.html`) : posées sur la page, elles survivent à un redessin
+  en direct de la Diffusion, et l'opportunité garde sa question « Fermer sans enregistrer ? » quand une saisie est
+  commencée. Deux réglages au bas du menu latéral : « Pleine largeur » (le contenu et le pied de page ne plafonnent plus à
+  1 500 px ; clé `fenetres.pleine`) et « Disposition d'origine » (efface toutes les tailles gardées, d'un coup, avec une
+  annonce qui porte « Annuler »). À l'impression, ni poignée ni coin, et le briefing imprimé ignore la taille tirée.
 - **Le niveau supérieur** (dix modules chargés après les menus, chacun dans son fichier) :
   - **Les fiches en tiroir** (`admin/tiroir.js`) : une date, un lieu, une personne, une demande de devis ou une piste de
     diffusion s'ouvrent dans un panneau qui glisse à droite, depuis n'importe où (le tableau de bord, le Kanban, le
@@ -566,8 +578,10 @@ compte du projet inscrit dans `crescite_admins`.
   nom en petites capitales, la rubrique où l'on est en blanc avec un filet à la couleur de la saison. La bande reste collée
   sous l'en-tête quand la page défile. En bas, « ‹ Replier » : le menu passe à 64 px d'icônes (le nom en infobulle, et dit
   par les lecteurs d'écran), le contenu s'élargit, et la colonne glisse d'une largeur à l'autre (rien ne bouge si l'appareil
-  demande moins d'animations). Les flèches ↑ ↓ passent d'une rubrique à l'autre. Les annonces et la barre de sélection se
-  centrent sur le contenu, non sur la fenêtre.
+  demande moins d'animations). Sous lui, les réglages : « Pleine largeur » et « Disposition d'origine » (voir « Les
+  fenêtres ajustables » ; sur un écran bas ils tiennent sur une rangée d'icônes), puis l'apparence (voir « L'apparence »).
+  Les flèches ↑ ↓ passent d'une rubrique à l'autre. Les annonces et la barre de sélection se centrent sur le contenu, non
+  sur la fenêtre.
   - **Les raccourcis.** **Alt+M** replie ou déplie le menu (Option+M sur un Mac). **G puis une lettre** va à une
     rubrique : G puis T le Tableau de bord, D les Représentations (les dates), P le Planning, F les Feuilles de route, S les
     Spectacles, E l'Équipe, C la Diffusion (seulement quand la base l'a), O l'Espace pro, A les Ateliers, L les Lieux, X les
@@ -1137,7 +1151,7 @@ fait de même quand le compte connecté administre. Trois fonctions, à déploye
 **Les préférences.** Le sixième script, `supabase/migrations/20261025_crescite_preferences.sql`, s'exécute après les cinq
 autres, de la même façon, et peut être relancé. Il ajoute `crescite_preferences` : ce que chacun règle une fois et
 retrouve sur tous ses appareils, une valeur par compte et par clé. Chacun ne lit et n'écrit que les siennes,
-l'administration comprise ; le public n'y a aucun droit. Dix clés servent aujourd'hui : `accueil.tableau` (la
+l'administration comprise ; le public n'y a aucun droit. Voici les clés d'aujourd'hui : `accueil.tableau` (la
 disposition du tableau de bord), `planning.masques` (les personnes masquées du planning, en liste brute, que lit aussi
 l'espace de l'équipe), `representations.avant` (le panneau « À compléter avant la tournée » : ouvert ou fermé, 30, 60
 ou 90 jours), `menu.replie` (le menu latéral de l'administration, replié ou déplié : vrai ou faux, absente tant qu'on
@@ -1148,8 +1162,9 @@ aussitôt ; absente tant qu'on n'a rien changé, le menu montre alors le tableur
 devis, les frais, le journal et le site, voir « Le cadre et le menu latéral »), `theme` (`nuit`, `jour` ou `appareil` ;
 la nuit tant qu'on n'a pas choisi) et `densite` (`confortable` ou `compacte` ; voir « L'apparence »), puis `fenetres.tiroir` (la largeur du tiroir, en pixels) et `fenetres.liste` (la
 largeur de la colonne de la liste à côté d'une fiche, en pixels), absentes tant qu'on ne les a pas tirées, ramenées dans ce
-que l'écran permet à chaque lecture (voir « Les fenêtres ajustables ») ; les autres fenêtres ajustables auront leur clé
-`fenetres.…` en venant. Une clé nouvelle se nomme `rubrique.reglage`, en minuscules, et sa valeur garde la même forme d'une
+que l'écran permet à chaque lecture (voir « Les fenêtres ajustables »), puis `fenetres.pleine` (le contenu sur toute la
+largeur : vrai, ou absente) et une clé par famille de boîtes de dialogue (`fenetres.recherche`, `.tab-dialogue`,
+`.tab-dialogue-large`, `.crm`, `.tb-brief`, `.gq-aide`, `.gf` : la taille `{ l, h }` qu'on leur a donnée). Une clé nouvelle se nomme `rubrique.reglage`, en minuscules, et sa valeur garde la même forme d'une
 version à l'autre. Tous les modules passent par un seul outil, `admin/prefs.js` (`PREFS`), qui lit le compte en une
 requête à l'ouverture, répond ensuite sans attendre, et écrit sans faire attendre : le réglage est gardé sur l'appareil
 tout de suite (sous `crescite-prefs:<compte>` : une copie par compte, rien ne se mélange sur un ordinateur partagé),

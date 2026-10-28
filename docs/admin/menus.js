@@ -359,7 +359,8 @@
         { t: [['?']], d: 'Montrer ces raccourcis' },
         { t: [['Échap']], d: 'Fermer le tiroir, le menu, la recherche, la sélection' },
         { t: [['Maj', 'F10'], ['Menu']], d: 'Les actions de l’élément choisi, comme le clic droit' },
-        { t: [['Tab']], d: 'En tête de page : « Aller au contenu »' }] },
+        { t: [['Tab']], d: 'En tête de page : « Aller au contenu »' },
+        { g: 'Glisser le coin d’une boîte', d: 'En bas à droite de la recherche, du briefing, de cette aide, d’une feuille de modification… : régler sa taille (la poignée se règle aussi aux flèches) ; double-clic : la taille d’origine' }] },
       { titre: 'Une liste', ici: liste, lignes: [
         { t: [['↑'], ['↓']], d: 'La ligne précédente, la suivante (← → aussi)' },
         { t: [['Début'], ['Fin']], d: 'La première ligne, la dernière' },

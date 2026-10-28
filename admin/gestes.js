@@ -17,6 +17,9 @@
    - Le formulaire (GESTES.formulaire) : une feuille de modification, depuis le bas au téléphone, au centre à
      l'ordinateur, avec ses champs, Annuler, Enregistrer ; ce que l'espace de l'équipe ouvre d'un appui long pour
      modifier une date, ses horaires, son lieu, son équipe, son suivi, une note de frais…
+     Dans l'administration seule (html.admin, posé par index.html : l'espace de l'équipe ne le pose jamais), la feuille a, à
+     l'ordinateur, un coin en bas à droite qui se tire (FENETRES.equiperDialog, admin/fenetres.js, repéré à son apparition) ; le piège
+     de Tab de la feuille y compte cette poignée. Ni option d'appel, ni rien à faire pour les appelants.
    - Ne rien perdre (GESTES.garder, GESTES.saisie, GESTES.quitter, GESTES.oublier) : une saisie commencée (une feuille du
      formulaire changée, un formulaire gardé : une note, une fenêtre) ne se perd pas en silence ; la question se pose dans
      une boîte de la charte (« Rester », « Quitter sans enregistrer »), jamais par confirm(), et seulement si quelque chose
@@ -416,7 +419,7 @@ const GESTES = (() => {
       });
       form.addEventListener('keydown', e => {
         if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); abandonner(); return; }
-        if (e.key === 'Tab') { const xs = $$('input:not([type=hidden]), select, textarea, button', form).filter(x => !x.disabled && x.offsetParent !== null); if (!xs.length) return; const i = xs.indexOf(document.activeElement); if (e.shiftKey && (i <= 0)) { e.preventDefault(); xs[xs.length - 1].focus(); } else if (!e.shiftKey && i === xs.length - 1) { e.preventDefault(); xs[0].focus(); } }
+        if (e.key === 'Tab') { const xs = $$('input:not([type=hidden]), select, textarea, button, .poignee', form).filter(x => !x.disabled && x.offsetParent !== null); if (!xs.length) return; const i = xs.indexOf(document.activeElement); if (e.shiftKey && (i <= 0)) { e.preventDefault(); xs[xs.length - 1].focus(); } else if (!e.shiftKey && i === xs.length - 1) { e.preventDefault(); xs[0].focus(); } }
       });
       // le premier champ prend le focus, sauf si un doigt (ou le clavier) en a déjà choisi un : on ne le lui reprend pas
       requestAnimationFrame(() => { if (form.contains(document.activeElement)) return; ($('input:not([type=hidden]):not([type=checkbox]), select, textarea, [data-gf-seg] button[aria-pressed="true"], input[type=checkbox]', form) || $('button[type=submit]', form))?.focus({ preventScroll: true }); });

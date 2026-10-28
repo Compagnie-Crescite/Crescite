@@ -1451,7 +1451,7 @@ dialog.tb-brief::backdrop { background: rgba(23, 15, 26, .4); }
 .tb-brief-sous { margin: 10px 0 0; color: var(--gris); }
 .tb-brief-dates { list-style: none; padding: 0 !important; display: grid; gap: 8px; }
 .tb-brief-dates li { padding: 8px 12px; border-radius: 9px; background: var(--doux); border-left: 3px solid var(--c, var(--trait)); }
-@media print { html.tb-impression body > :not(#tb-brief) { display: none !important; } html.tb-impression dialog.tb-brief { position: static; border: 0; box-shadow: none; max-height: none; width: auto; } html.tb-impression .tb-brief-boutons { display: none; } html.tb-impression .tb-brief-corps { overflow: visible; } }
+@media print { html.tb-impression body > :not(#tb-brief) { display: none !important; } html.tb-impression dialog.tb-brief { position: static; border: 0; box-shadow: none; max-height: none !important; width: auto !important; height: auto !important; overflow: visible !important; } html.tb-impression dialog.tb-brief > .tb-brief-boite { height: auto; max-height: none; } html.tb-impression .tb-brief-boutons { display: none; } html.tb-impression .tb-brief-corps { overflow: visible; } }
 @media (prefers-reduced-motion: reduce) { .tb-replier svg { transition: none; } }
 </style>`);
 

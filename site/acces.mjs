@@ -31,7 +31,10 @@ const chercher = async (page, q) => { await page.keyboard.press('Control+k'); aw
 const fermerRecherche = async page => { await page.keyboard.press('Escape'); await page.waitForTimeout(150); };
 // la page qui vient d'arriver se cale encore (un défilement tardif ferme un menu ouvert, comme gestes.js le veut) : on attend 400 ms sans défilement
 const posee = page => page.evaluate(() => new Promise(fin => { let t; const fini = () => { window.removeEventListener('scroll', rearmer, true); fin(true); }, rearmer = () => { clearTimeout(t); t = setTimeout(fini, 400); }; window.addEventListener('scroll', rearmer, true); rearmer(); setTimeout(fini, 5000); }));
-const ouvrirMenu = async (page, sel) => { await page.focus(sel); await page.keyboard.press('Shift+F10'); await page.waitForSelector('.gm-boite'); };
+// un menu de gestes.js est ouvert quand sa boîte est là et que le focus y est entré (gestes.js l'y pose à l'image suivante : une touche
+// partie avant tomberait sur le bouton, et Échap ne fermerait rien)
+const menuOuvert = async page => { await page.waitForSelector('.gm-boite'); await page.waitForFunction(() => document.activeElement?.closest('.gm-boite'), null, { timeout: 2000 }).catch(() => {}); };
+const ouvrirMenu = async (page, sel) => { await page.focus(sel); await page.keyboard.press('Shift+F10'); await menuOuvert(page); };
 
 // ================================================================================ 1 · « ＋ Créer »
 {
@@ -45,7 +48,7 @@ const ouvrirMenu = async (page, sel) => { await page.focus(sel); await page.keyb
   ok('1 · « Créer » : un bouton de 44 px au moins, avec son icône, aria-haspopup="menu" et aria-expanded faux, sous l’étiquette « Accès rapides »', b.haspopup === 'menu' && b.expanded === 'false' && b.nom === 'Créer' && b.h >= 44 && b.svg && b.etiquette === 'Accès rapides', JSON.stringify(b));
   ok('1 · le bouton est au dégradé de la saison ; les accès rapides sont une navigation à eux, entre les rubriques et le bouton de repli, sans la classe .nav', /gradient/.test(b.fond) && b.ordre && !b.classeNav && b.repere === 'NAV', JSON.stringify(b));
   await page.click('.menu-creer');
-  await page.waitForSelector('.gm-boite');
+  await menuOuvert(page);
   const m = await page.evaluate(() => { const x = document.querySelector('.gm-boite'), c = document.querySelector('.menu-creer').getBoundingClientRect(), r = x.getBoundingClientRect();
     return { expanded: document.querySelector('.menu-creer').getAttribute('aria-expanded'), nom: x.getAttribute('aria-label'), role: x.getAttribute('role'), icones: [...x.querySelectorAll('[data-gm]')].every(i => i.querySelector('.gm-ic svg')), focus: document.activeElement?.dataset.gm,
       hors: r.left >= c.right - 1 || r.bottom <= c.top + 1 || r.top >= c.bottom - 1, dedans: r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight, hrefs: [...x.querySelectorAll('a[data-gm]')].map(a => a.getAttribute('href')) }; });
@@ -66,28 +69,28 @@ const ouvrirMenu = async (page, sel) => { await page.focus(sel); await page.keyb
   await posee(page);
   // Échap : le menu se ferme, le focus revient au bouton ; l'événement dit quel élément se ferme
   await page.evaluate(() => { window.__fermes = []; document.addEventListener('gestes:menu-ferme', e => window.__fermes.push(e.detail?.el?.className || '')); });
-  await page.click('.menu-creer'); await page.waitForSelector('.gm-boite');
+  await page.click('.menu-creer'); await menuOuvert(page);
   await page.keyboard.press('Escape'); await page.waitForTimeout(150);
   const e = await page.evaluate(() => ({ boites: document.querySelectorAll('.gm-boite').length, expanded: document.querySelector('.menu-creer').getAttribute('aria-expanded'), focus: document.activeElement?.classList.contains('menu-creer'), fermes: window.__fermes }));
   ok('1 · Échap ferme le menu, « Créer » repasse à aria-expanded faux et reprend le focus ; gestes.js a dit « gestes:menu-ferme » avec la zone du bouton pour détail', e.boites === 0 && e.expanded === 'false' && e.focus && e.fermes.length === 1 && /menu-creer-zone/.test(e.fermes[0]), JSON.stringify(e));
   // le second clic referme (le pointerdown de gestes.js a déjà fermé : sans garde, le clic rouvrirait)
-  await page.click('.menu-creer'); await page.waitForSelector('.gm-boite');
+  await page.click('.menu-creer'); await menuOuvert(page);
   await page.click('.menu-creer'); await page.waitForTimeout(300);
   ok('1 · un second clic sur « Créer » referme son menu (il ne le rouvre pas) : aria-expanded faux, aucune boîte', (await compte(page, '.gm-boite')) === 0 && (await page.getAttribute('.menu-creer', 'aria-expanded')) === 'false');
-  await page.click('.menu-creer'); await page.waitForSelector('.gm-boite');
+  await page.click('.menu-creer'); await menuOuvert(page);
   ok('1 · un troisième clic le rouvre', (await compte(page, '.gm-boite')) === 1 && (await page.getAttribute('.menu-creer', 'aria-expanded')) === 'true');
   await page.keyboard.press('Escape'); await page.waitForTimeout(100);
   // un autre menu ouvert : le clic sur « Créer » ferme l'autre et ouvre celui-ci
   await page.evaluate(() => { location.hash = '#/accueil'; });
   await page.waitForSelector(`${tuile('actions')} .tb-actions .btn`);
   await page.click(`${tuile('actions')} .tb-actions [data-action="lieu"]`, { button: 'right' });
-  await page.waitForSelector('.gm-boite');
+  await menuOuvert(page);
   const autre = await boite(page);
   await page.click('.menu-creer'); await page.waitForTimeout(250);
   ok('1 · un autre menu est ouvert (celui d’une action de la tuile) : « Créer » le remplace, sans le rouvrir ni se refermer', autre.some(x => /Retirer des actions rapides/.test(x)) && (await compte(page, '.gm-boite')) === 1 && (await boite(page))[0] === 'Nouvelle date' && (await page.getAttribute('.menu-creer', 'aria-expanded')) === 'true');
   await page.keyboard.press('Escape'); await page.waitForTimeout(100);
   // Maj+F10 sur le bouton : le même menu, et aria-expanded le dit
-  await page.focus('.menu-creer'); await page.keyboard.press('Shift+F10'); await page.waitForSelector('.gm-boite');
+  await page.focus('.menu-creer'); await page.keyboard.press('Shift+F10'); await menuOuvert(page);
   ok('1 · Maj+F10 sur « Créer » ouvre le même menu, aria-expanded vrai', (await boite(page)).length === 7 && (await page.getAttribute('.menu-creer', 'aria-expanded')) === 'true');
   await page.keyboard.press('Escape'); await page.waitForTimeout(100);
   ok('1 · aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
@@ -99,31 +102,31 @@ const ouvrirMenu = async (page, sel) => { await page.focus(sel); await page.keyb
   repartir();
   const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1440, hauteur: 900, hash: '#/accueil' });
   await page.waitForSelector('#menu .menu-creer', { timeout: 15000 });
-  await page.click('.menu-creer'); await page.waitForSelector('.gm-boite');
+  await page.click('.menu-creer'); await menuOuvert(page);
   await page.click('.gm-boite [data-gm]:has-text("Opportunité de diffusion")');
-  const venue = await attendre(page, () => document.querySelector('#crm-modale-zone [role="dialog"]'), null, 8000);
+  const venue = await attendre(page, () => document.querySelector('dialog.crm-boite[open]'), null, 8000);
   ok('2 · « Opportunité de diffusion » mène à #/diffusion puis clique « Nouvelle opportunité » : la fenêtre de la piste s’ouvre', venue && (await hash(page)) === '#/diffusion', await hash(page));
-  await page.keyboard.press('Escape'); await page.evaluate(() => { document.querySelector('#crm-modale-zone').innerHTML = ''; });
+  await page.keyboard.press('Escape'); await page.evaluate(() => { document.querySelectorAll('dialog.crm-boite').forEach(d => d.remove()); });
   await page.waitForTimeout(150);
-  ok('2 · … et la fenêtre est fermée avant la suite', (await compte(page, '#crm-modale-zone [role="dialog"]')) === 0);
+  ok('2 · … et la fenêtre est fermée avant la suite', (await compte(page, 'dialog.crm-boite')) === 0);
   // déjà sur la Diffusion : avant, le clic restait sans effet (aucun hashchange ne venait)
-  await page.click('.menu-creer'); await page.waitForSelector('.gm-boite');
+  await page.click('.menu-creer'); await menuOuvert(page);
   await page.click('.gm-boite [data-gm]:has-text("Opportunité de diffusion")');
-  const encore = await attendre(page, () => document.querySelector('#crm-modale-zone [role="dialog"]'), null, 8000);
+  const encore = await attendre(page, () => document.querySelector('dialog.crm-boite[open]'), null, 8000);
   ok('2 · déjà sur #/diffusion, le même geste ouvre la fenêtre tout de suite (il restait sans effet)', encore && (await hash(page)) === '#/diffusion', await hash(page));
-  await page.evaluate(() => { document.querySelector('#crm-modale-zone').innerHTML = ''; location.hash = '#/accueil'; });
+  await page.evaluate(() => { document.querySelectorAll('dialog.crm-boite').forEach(d => d.remove()); location.hash = '#/accueil'; });
   await page.waitForSelector(`${tuile('actions')} [data-action="prospect"]`);
   await page.click(`${tuile('actions')} [data-action="prospect"]`);
-  const tuileOk = await attendre(page, () => document.querySelector('#crm-modale-zone [role="dialog"]'), null, 8000);
+  const tuileOk = await attendre(page, () => document.querySelector('dialog.crm-boite[open]'), null, 8000);
   ok('2 · la tuile « actions » de l’accueil, elle aussi, ouvre la fenêtre de la piste', tuileOk && (await hash(page)) === '#/diffusion', await hash(page));
-  await page.evaluate(() => { document.querySelector('#crm-modale-zone').innerHTML = ''; location.hash = '#/diffusion'; });
+  await page.evaluate(() => { document.querySelectorAll('dialog.crm-boite').forEach(d => d.remove()); location.hash = '#/diffusion'; });
   await page.waitForTimeout(200);
-  await page.evaluate(() => { document.querySelector('#crm-modale-zone').innerHTML = ''; });
+  await page.evaluate(() => { document.querySelectorAll('dialog.crm-boite').forEach(d => d.remove()); });
   await chercher(page, 'opportunite');
   const prem = await options(page);
   ok('2 · la barre de commande : « opportunité » propose l’action, qui marche aussi sur la Diffusion', prem.some(o => o[0] === 'Opportunité de diffusion' && o[1] === 'Action'), JSON.stringify(prem.slice(0, 4)));
   await page.keyboard.press('Enter');
-  ok('2 · … Entrée sur la Diffusion ouvre la fenêtre de la piste', await attendre(page, () => document.querySelector('#crm-modale-zone [role="dialog"]'), null, 8000));
+  ok('2 · … Entrée sur la Diffusion ouvre la fenêtre de la piste', await attendre(page, () => document.querySelector('dialog.crm-boite[open]'), null, 8000));
   ok('2 · aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();
 }
@@ -185,13 +188,13 @@ const ouvrirMenu = async (page, sel) => { await page.focus(sel); await page.keyb
   // le clic droit sur l'action de la tuile (la tuile garde ses dix actions)
   await page.waitForSelector(`${tuile('actions')} .tb-actions [data-action="tableur"]`);
   await page.click(`${tuile('actions')} .tb-actions [data-action="tableur"]`, { button: 'right' });
-  await page.waitForSelector('.gm-boite');
+  await menuOuvert(page);
   const tuileMenu = await boite(page);
   ok('4 · le clic droit sur une action de la tuile déjà au menu propose « Retirer du menu » (et garde « Retirer des actions rapides »)', tuileMenu.some(x => /^Retirer du menu/.test(x)) && tuileMenu.some(x => /^Retirer des actions rapides/.test(x)) && !tuileMenu.some(x => /^Mettre dans le menu/.test(x)), JSON.stringify(tuileMenu));
   await page.click('.gm-boite [data-gm]:has-text("Retirer du menu")'); await page.waitForTimeout(300);
   ok('4 · … il le retire du menu sans toucher à la tuile', !(await epingles(page)).includes('tableur') && (await compte(page, `${tuile('actions')} .tb-actions > *`)) === 10);
   await page.click(`${tuile('actions')} .tb-actions [data-action="tableur"]`, { button: 'right' });
-  await page.waitForSelector('.gm-boite');
+  await menuOuvert(page);
   const tuileMenu2 = await boite(page);
   ok('4 · puis propose « Mettre dans le menu » ; ni « ＋ » ni « Rechercher » n’en proposent', tuileMenu2.some(x => /^Mettre dans le menu/.test(x)) && !tuileMenu2.some(x => /^Retirer du menu/.test(x)), JSON.stringify(tuileMenu2));
   await page.click('.gm-boite [data-gm]:has-text("Mettre dans le menu")'); await page.waitForTimeout(300);
@@ -199,7 +202,7 @@ const ouvrirMenu = async (page, sel) => { await page.focus(sel); await page.keyb
   ok('4 · la tuile garde ses dix actions, le premier élément est « ＋ Nouvelle date » (le banc du tableau de bord reste vert)', (await compte(page, `${tuile('actions')} .tb-actions > *`)) === 10 && (await texte(page, `${tuile('actions')} .tb-actions > *:first-child`)) === '＋ Nouvelle date');
   for (const k of ['date', 'recherche', 'prospect']) {
     await page.click(`${tuile('actions')} .tb-actions [data-action="${k}"]`, { button: 'right' });
-    await page.waitForSelector('.gm-boite');
+    await menuOuvert(page);
     ok(`4 · « ${k} » n’a pas de « Mettre dans le menu » (une création, ou la recherche)`, !(await boite(page)).some(x => /menu/.test(x)), JSON.stringify(await boite(page)));
     await page.keyboard.press('Escape'); await page.waitForTimeout(80);
   }
@@ -368,7 +371,7 @@ const ouvrirMenu = async (page, sel) => { await page.focus(sel); await page.keyb
     return { n: xs.length, titres: xs.every(a => a.title.length > 2), sr: xs.every(a => { const l = a.querySelector('.menu-l').getBoundingClientRect(); return Math.round(l.width) <= 1 && Math.round(l.height) <= 1; }), larges: Math.min(...xs.map(a => a.getBoundingClientRect().width)), svg: xs.every(a => a.querySelector('svg.ico')),
       creer: { w: Math.round(c.width), h: Math.round(c.height) }, creerMot: Math.round(document.querySelector('.menu-creer .menu-l').getBoundingClientRect().width) <= 1, recents: getComputedStyle(z).display, etiq: getComputedStyle(e).display, aside: Math.round(document.querySelector('#menu').getBoundingClientRect().width), deborde: document.documentElement.scrollWidth > innerWidth }; });
   ok('7 · replié : « ＋ » et les sept épinglés restent, des icônes (le nom en .sr d’1 px, en infobulle), 44 px au moins en largeur ; les récents et l’étiquette disparaissent', r.n === 7 && r.titres && r.sr && r.svg && r.larges >= 44 && r.creer.w >= 44 && r.creer.h >= 44 && r.creerMot && r.recents === 'none' && r.etiq === 'none' && r.aside === 64 && !r.deborde, JSON.stringify(r));
-  await page.click('.menu-creer'); await page.waitForSelector('.gm-boite');
+  await page.click('.menu-creer'); await menuOuvert(page);
   const mr = await page.evaluate(() => { const x = document.querySelector('.gm-boite').getBoundingClientRect(), c = document.querySelector('.menu-creer').getBoundingClientRect(); return { dedans: x.left >= 0 && x.top >= 0 && x.right <= innerWidth && x.bottom <= innerHeight, hors: x.left >= c.right - 1 || x.bottom <= c.top + 1 || x.top >= c.bottom - 1, n: document.querySelectorAll('.gm-boite [data-gm]').length }; });
   ok('7 · replié, « ＋ » ouvre le même menu, posé dans l’écran sans recouvrir le bouton', mr.n === 7 && mr.dedans && mr.hors, JSON.stringify(mr));
   await calme(page);
@@ -419,13 +422,13 @@ for (const [largeur, hauteur] of [[1440, 720], [1366, 768]]) {
   await page.waitForSelector('#menu .menu-epingle', { timeout: 15000 });
   await page.evaluate(() => localStorage.removeItem('crescite-admin-recentes'));
   await page.click('.menu-epingle[data-action="tableur"]', { button: 'right' });
-  await page.waitForSelector('.gm-boite');
+  await menuOuvert(page);
   const gm = await page.evaluate(() => document.querySelector('.gm-boite').getAnimations().map(a => a.animationName));
   ok('8 · le menu d’un épinglé est un menu de GESTES : il paraît en gm-paraitre (140 ms), rien d’ajouté dans index.html', gm.includes('gm-paraitre'), JSON.stringify(gm));
   await page.click('.gm-boite [data-gm]:has-text("Retirer du menu")');
   await page.waitForTimeout(600);
   await page.click(`${tuile('actions')} .tb-actions [data-action="tableur"]`, { button: 'right' });
-  await page.waitForSelector('.gm-boite');
+  await menuOuvert(page);
   await page.click('.gm-boite [data-gm]:has-text("Mettre dans le menu")');
   await page.waitForTimeout(40);
   const pop = await page.evaluate(() => { const a = document.querySelector('.menu-epingle[data-action="tableur"]'); return a ? a.getAnimations().map(x => [x.animationName, x.effect.getTiming().duration]) : null; });
@@ -449,17 +452,17 @@ for (const [largeur, hauteur] of [[1440, 720], [1366, 768]]) {
   const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1440, hauteur: 1000, hash: '#/accueil', reduit: true });
   await page.waitForSelector('#menu .menu-epingle', { timeout: 15000 });
   await page.click(`${tuile('actions')} .tb-actions [data-action="tableur"]`, { button: 'right' });
-  await page.waitForSelector('.gm-boite');
+  await menuOuvert(page);
   await page.click('.gm-boite [data-gm]:has-text("Retirer du menu")'); await page.waitForTimeout(500);
   await page.click(`${tuile('actions')} .tb-actions [data-action="tableur"]`, { button: 'right' });
-  await page.waitForSelector('.gm-boite');
+  await menuOuvert(page);
   await page.click('.gm-boite [data-gm]:has-text("Mettre dans le menu")');
   await page.waitForTimeout(60);
   await page.evaluate(() => { location.hash = '#/lieux/5'; });
   await page.waitForTimeout(60);
   const an = await page.evaluate(() => ({ menu: document.querySelector('.menu-acces').getAnimations({ subtree: true }).length, epingle: !!document.querySelector('.menu-epingle[data-action="tableur"]'), recent: document.querySelectorAll('.menu-recent').length, pop: document.querySelectorAll('.pop, .ad-neuf').length }));
   ok('8 · sous « moins d’animations » : « Mettre dans le menu » et un récent neuf arrivent sans que rien ne bouge (aucune animation dans les accès rapides, aucune classe d’arrivée)', an.epingle && an.recent === 1 && an.menu === 0 && an.pop === 0, JSON.stringify(an));
-  await page.click('.menu-creer'); await page.waitForSelector('.gm-boite');
+  await page.click('.menu-creer'); await menuOuvert(page);
   ok('8 · … le menu « Créer » s’ouvre calme (gm-calme, aucune animation)', await page.evaluate(() => document.querySelector('.gm').classList.contains('gm-calme') && document.querySelector('.gm-boite').getAnimations().length === 0));
   ok('8 · aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();
@@ -483,7 +486,7 @@ for (const [largeur, hauteur] of [[1440, 720], [1366, 768]]) {
   const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1440, hauteur: 900, hash: '#/accueil', prefsAbsentes: true });
   await page.waitForSelector('#menu .menu-epingle', { timeout: 15000 });
   await page.click('.menu-epingle[data-action="journal"]', { button: 'right' });
-  await page.waitForSelector('.gm-boite');
+  await menuOuvert(page);
   await page.click('.gm-boite [data-gm]:has-text("Retirer du menu")'); await page.waitForTimeout(500);
   await page.reload(); await page.waitForSelector('#menu .menu-epingle', { timeout: 15000 });
   ok('9 · sans le script SQL des préférences, les épinglés se gardent sur l’appareil : « Journal » retiré le reste au rechargement', !(await epingles(page)).includes('journal') && (await epingles(page)).length === 6, (await epingles(page)).join());

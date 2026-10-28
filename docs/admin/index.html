@@ -314,6 +314,9 @@ input:focus, select:focus, textarea:focus, .riche:focus { border-color: var(--ac
 
 /* mise en page */
 main { padding: 20px; max-width: 1500px; margin: 0 auto; }
+/* « Pleine largeur » (les réglages du menu, FENETRES) : le contenu et le pied de page ne plafonnent plus à 1 500 px */
+html.pleine-largeur main, html.pleine-largeur .pied-espace { max-width: none; }
+html.pleine-largeur .coque + .pied-espace { --marge-pied: 0px; }
 .tete { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 4px 0 16px; }
 .tete h1 { margin: 0 auto 0 0; font-size: 22px; }
 /* la fiche prend la place qui reste, jamais plus (minmax(0, 1fr)) : ce qu'elle contient s'y range, la page ne déborde pas ; la liste a la largeur que
@@ -751,6 +754,8 @@ dialog.tab-dialogue { width: min(560px, calc(100% - 24px)); max-width: none; pad
 dialog.tab-dialogue.large { width: min(900px, calc(100% - 24px)); }
 dialog.tab-dialogue::backdrop { background: rgba(23, 15, 26, .4); }
 .tab-dialogue-boite { display: grid; gap: 10px; padding: 18px 20px; }
+/* les fenêtres de la diffusion (l'opportunité, le courriel de relance : boiteCrm) : le titre et son ✕ sur une ligne */
+.crm-tete { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .tab-dialogue h2 { margin: 0; font-size: 18px; }
 .tab-dialogue p { margin: 0; }
 .tab-dialogue fieldset { display: grid; gap: 6px; margin: 0; padding: 8px 12px 10px; border: 1px solid var(--trait); border-radius: 10px; }
@@ -1285,7 +1290,7 @@ function corpsSquelette(rub) {
 function squeletteAdmin() {
   const k = (location.hash.match(/^#\/([a-z]+)/) || [])[1], rub = RUBRIQUES.some(r => r[0] === k) ? k : 'accueil';
   // (la coque aussi : un aside inerte de la même largeur, pour que le premier cadre() ne décale pas le contenu)
-  if (typeof FENETRES !== 'undefined') FENETRES.appliquerListe();     // (la colonne de la liste telle qu'on l'a réglée, avant le premier dessin)
+  if (typeof FENETRES !== 'undefined') FENETRES.appliquerMiseEnPage();     // (la colonne de la liste et la pleine largeur telles qu'on les a réglées, avant le premier dessin)
   $('#app').innerHTML = `${barreHtml(true)}<div class="coque attente"><aside class="menu menu-attente" aria-hidden="true" inert></aside><main class="ad-chargement" aria-busy="true"><div class="ad-squelette" aria-hidden="true">${corpsSquelette(rub)}</div><p class="sr" role="status">Chargement de la base…</p></main></div>`;
   majTemoin();
   tt('pieuvre');     // (la marque a sa pieuvre, comme dans la page : l'en-tête garde sa largeur)
@@ -4251,7 +4256,6 @@ function vueDiffusion(partie, id) {
     ${(() => { const perdues = prospects.filter(p => p.etape === 'refus'); return perdues.length ? `<details class="bloc crm-perdues"><summary>Pistes perdues <span class="crm-badge-nb">${perdues.length}</span></summary>
       <ul class="liste-simple">${perdues.map(p => `<li><b>${esc(p.structure)}</b><span class="compte">${esc([p.commune, spectacle(p.spectacle_id)?.titre, p.date_dernier_contact ? `dernier contact le ${jourCourt(p.date_dernier_contact)}` : ''].filter(Boolean).join(' · '))}</span>
         <button type="button" class="btn petit" data-crm-rouvrir="${p.id}" style="margin-left:auto">Rouvrir</button></li>`).join('')}</ul></details>` : ''; })()}
-    <div id="crm-modale-zone"></div>
   `;
 
   cadre('diffusion', tete + tableau);
@@ -4350,19 +4354,37 @@ function brancherDiffusion() {
   });
 }
 
+// La boîte de la diffusion (l'opportunité, le courriel de relance) : un dialog.tab-dialogue posé sur le corps de la page, comme « Étendre » et
+// « Importer » — une seule sorte de fenêtre, avec son coin à tirer (FENETRES), que le redessin en direct de la vue Diffusion n'emporte pas.
+// titre, contenu : ce qu'elle dit ; idTitre, idFermer : les ids de son titre et de son ✕ ; garder : une saisie commencée ne se perd pas d'un
+// Échap (GESTES.garder sur la boîte elle-même, la question « Fermer sans enregistrer ? »). Rend { dlg, fermer, fermerSans } : fermer pose la
+// question quand il le faut, fermerSans (un enregistrement réussi, « Relance faite ») non. À la fermeture, la boîte quitte la page ; un
+// changement de rubrique la ferme aussi (la question d'abord, si une saisie est commencée).
+function boiteCrm(titre, contenu, { garder = false, idTitre = 't-mod-crm', idFermer = 'b-fermer-mod-crm' } = {}) {
+  const dlg = document.createElement('dialog');
+  dlg.className = 'tab-dialogue crm-boite'; dlg.setAttribute('aria-labelledby', idTitre);
+  dlg.innerHTML = `<div class="tab-dialogue-boite"><div class="crm-tete"><h2 id="${idTitre}">${esc(titre)}</h2><button type="button" class="btn petit" id="${idFermer}" aria-label="Fermer" title="Fermer (Échap)">✕</button></div>${contenu}</div>`;
+  document.body.append(dlg);
+  // (changer de rubrique, le bouton précédent : la page se redessine sous la fenêtre, qui part avec elle — sauf une saisie commencée,
+  // qui pose d'abord sa question : la fermeture, alors, est celle de « Quitter sans enregistrer » ; le hashchange du script principal passe avant)
+  const surAdresse = () => { if (!dlg.isConnected) window.removeEventListener('hashchange', surAdresse); else if (!(garder && typeof GESTES !== 'undefined' && GESTES.saisie(dlg))) fermerSans(); };
+  dlg.addEventListener('close', () => { window.removeEventListener('hashchange', surAdresse); dlg.remove(); });
+  window.addEventListener('hashchange', surAdresse);
+  const fermerSans = () => { if (dlg.open) dlg.close(); else dlg.remove(); };
+  const fermer = async () => { if (!garder || await partirSansPerdre({ titre: 'Fermer sans enregistrer ?', ok: 'Fermer sans enregistrer', dans: dlg, avecFiche: false })) fermerSans(); };
+  if (garder && typeof GESTES !== 'undefined') {
+    GESTES.garder(dlg);
+    dlg.addEventListener('cancel', e => { if (GESTES.saisie(dlg)) { e.preventDefault(); fermer(); } });
+  }
+  $('#' + idFermer, dlg).addEventListener('click', fermer);
+  dlg.showModal();
+  return { dlg, fermer, fermerSans };
+}
 function ouvrirModaleProspect(p) {
-  const zone = $('#crm-modale-zone');
-  if (!zone) return;
   const nouveau = !p;
   const spList = E.spectacles || [];
 
-  zone.innerHTML = `
-    <div style="position:fixed;inset:0;z-index:90;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;padding:16px;">
-      <div role="dialog" aria-modal="true" aria-labelledby="t-mod-crm" style="background:var(--carte);border:1px solid var(--trait);border-radius:var(--rayon);max-width:560px;width:100%;max-height:92vh;overflow-y:auto;padding:22px;box-shadow:var(--ombre);">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <h2 id="t-mod-crm" style="margin:0;font-size:18px;">${nouveau ? 'Nouvelle opportunité' : 'Modifier l’opportunité'}</h2>
-          <button type="button" class="btn petit" id="b-fermer-mod-crm" aria-label="Fermer" title="Fermer (Échap)">✕</button>
-        </div>
+  const { fermer, fermerSans } = boiteCrm(nouveau ? 'Nouvelle opportunité' : 'Modifier l’opportunité', `
         <form id="f-prospect-crm" novalidate${p ? ` data-piste-id="${p.id}"` : ''}>
           <div class="champ">
             <label for="crm-structure">Lieu / Structure / Festival *</label>
@@ -4436,17 +4458,10 @@ function ouvrirModaleProspect(p) {
             <button type="submit" class="btn principal" id="b-sauver-crm">Enregistrer</button>
           </div>
         </form>
-      </div>
-    </div>
-  `;
+  `, { garder: true, idTitre: 't-mod-crm', idFermer: 'b-fermer-mod-crm' });
 
-  // une opportunité commencée ne se perd pas : ✕, Annuler, changer de rubrique posent la question si un champ a changé
-  if (typeof GESTES !== 'undefined') GESTES.garder($('#f-prospect-crm'));
-  const fermer = async () => { if (await partirSansPerdre({ titre: 'Fermer sans enregistrer ?', ok: 'Fermer sans enregistrer', dans: zone, avecFiche: false })) zone.innerHTML = ''; };
-  $('#b-fermer-mod-crm')?.addEventListener('click', fermer);
+  // une opportunité commencée ne se perd pas : ✕, Annuler, Échap, changer de rubrique posent la question si un champ a changé (boiteCrm)
   $('#b-annuler-crm')?.addEventListener('click', fermer);
-  // Échap la ferme aussi, comme les fenêtres de l'équipe et le tiroir (la question d'abord si elle est commencée)
-  zone.firstElementChild?.addEventListener('keydown', e => { if (e.key === 'Escape' && !e.defaultPrevented) { e.preventDefault(); e.stopPropagation(); fermer(); } });
   $('#crm-structure')?.focus({ preventScroll: true });
 
   $('#f-prospect-crm')?.addEventListener('submit', async e => {
@@ -4486,7 +4501,7 @@ function ouvrirModaleProspect(p) {
         if (error) throw error;
         Object.assign(p, donnes);
       }
-      zone.innerHTML = '';
+      fermerSans();
       const cible = nouveau ? E.prospects[E.prospects.length - 1] : p;
       if (donnes.etape === 'contrat_signe' && (nouveau || p.etape !== 'contrat_signe') && cible && !cible.date_convertie_id) annoncer('Opportunité enregistrée : cession confirmée.', { libelle: 'Créer la date', delai: 12000, action: () => creerDateDepuisPiste(cible) });
       else annoncer('Opportunité enregistrée.');
@@ -4500,8 +4515,6 @@ function ouvrirModaleProspect(p) {
 }
 
 function ouvrirModaleEmailRelance(p) {
-  const zone = $('#crm-modale-zone');
-  if (!zone) return;
   const sp = E.spectacles.find(s => s.id === p.spectacle_id);
   const titreSp = sp ? sp.titre : 'notre création';
   const prenomContact = (p.contact_nom || '').split(' ')[0] || 'Madame, Monsieur';
@@ -4520,13 +4533,7 @@ function ouvrirModaleEmailRelance(p) {
     + `Bien chaleureusement,\n\n`
     + `${pr.nom ? `${pr.nom}${pr.role ? `, ${pr.role}` : ''}` : 'L’équipe de diffusion'}\nCompagnie Crescite · Rouen\n${pr.email || 'contact@crescite.fr'}${pr.telephone ? ` · ${pr.telephone}` : ''}`;
 
-  zone.innerHTML = `
-    <div style="position:fixed;inset:0;z-index:90;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;padding:16px;">
-      <div style="background:var(--carte);border:1px solid var(--trait);border-radius:var(--rayon);max-width:620px;width:100%;max-height:92vh;overflow-y:auto;padding:22px;box-shadow:var(--ombre);">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-          <h2 style="margin:0;font-size:18px;">Modèle de courriel de relance</h2>
-          <button type="button" class="btn petit" id="b-fermer-mod-mel">✕</button>
-        </div>
+  const boite = boiteCrm('Modèle de courriel de relance', `
         <div class="champ">
           <label>Destinataire</label>
           <input type="text" readonly value="${esc(p.contact_email || 'Adresse non renseignée')}">
@@ -4545,12 +4552,9 @@ function ouvrirModaleEmailRelance(p) {
           <button type="button" class="btn" id="b-relance-faite" title="Dernier contact : aujourd’hui ; prochaine relance dans quinze jours">Relance faite</button>
           <button type="button" class="btn" id="b-fermer-mel">Fermer</button>
         </div>
-      </div>
-    </div>
-  `;
+  `, { idTitre: 't-mod-mel', idFermer: 'b-fermer-mod-mel' });
 
-  const fermer = () => { zone.innerHTML = ''; };
-  $('#b-fermer-mod-mel')?.addEventListener('click', fermer);
+  const fermer = boite.fermerSans;
   $('#b-fermer-mel')?.addEventListener('click', fermer);
   $('#b-relance-faite')?.addEventListener('click', async () => {
     const maj = { date_dernier_contact: aujourdhui(), date_prochaine_relance: AGENDA.iso(new Date(Date.now() + 15 * 864e5)) };
@@ -4939,7 +4943,7 @@ async function vueJournal() {
      le parcours d'une date, les garde-fous à la saisie, les séries et modèles de dates, les documents générés, les notes
      internes, le carnet des lieux, la carte de tournée, le téléphone -->
 <script src="corbeille.js"></script>
-<!-- les fenêtres ajustables : la poignée qu'on tire (bornes, mémoire avec le compte), la colonne de la liste ; avant le tiroir, qui s'en sert -->
+<!-- les fenêtres ajustables : la poignée qu'on tire (bornes, mémoire avec le compte), la colonne de la liste, le coin des boîtes de dialogue, « Pleine largeur » et « Disposition d'origine » ; avant le tiroir, qui s'en sert -->
 <script src="fenetres.js"></script>
 <script src="tiroir.js"></script>
 <script src="selection.js"></script>

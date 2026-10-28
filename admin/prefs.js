@@ -14,8 +14,9 @@
      'jour' ou 'appareil') et densite ('confortable' ou 'compacte') : l'apparence, réglée dans le menu (cadre.js), dont le
      miroir de l'appareil est aussi lu par index.html,
      fenetres.tiroir (la largeur du tiroir, en pixels) et fenetres.liste
-     (la colonne de la liste à côté d'une fiche, en pixels) : fenetres.js, une écriture par geste, au relâchement ; les clés
-     fenetres.* suivantes (le contenu sur toute la largeur, les boîtes de dialogue) viendront avec leur surface.
+     (la colonne de la liste à côté d'une fiche, en pixels) : fenetres.js, une écriture par geste, au relâchement ; puis
+     fenetres.pleine (le contenu sur toute la largeur : vrai, ou absente) et, une par famille de boîtes de dialogue,
+     fenetres.recherche, .tab-dialogue, .tab-dialogue-large, .crm, .tb-brief, .gq-aide et .gf (la taille { l, h } qu'on leur a donnée).
    - La lecture est synchrone : PREFS.charger() lit tout le compte en une requête (select cle, valeur, modifie_le), après
      quoi PREFS.lire(cle, defaut) répond depuis la mémoire, puis depuis le miroir de l'appareil, puis le défaut. Les
      modules attendent charger() (chargerTout) ; actualiser le rejoue avec { relire: true } sans écraser un réglage encore
@@ -37,7 +38,8 @@
    - Une seule annonce, par session : « Gardé avec votre compte » ou « Gardé sur cet appareil », au premier réglage d'un
      module qui ne le dit pas déjà (le tableau de bord le dit dans son panneau : il écrit muet).
    - Sans compte (E.session absente), rien n'est demandé à la base : seul le miroir « crescite-prefs:anonyme » sert.
-   PREFS.charger({ relire })   PREFS.lire(cle, defaut)   PREFS.ecrire(cle, valeur, { aussitot, muet })
+   PREFS.charger({ relire })   PREFS.lire(cle, defaut, { brut })   PREFS.ecrire(cle, valeur, { aussitot, muet })
+   (brut : la valeur gardée telle quelle, sans la borne du normaliseur — pour la rendre à l'identique, « Annuler » d'un « Disposition d'origine »)
    PREFS.surChangement(cle, fn)   PREFS.normaliser(cle, fn)   PREFS.etat() → 'ok' | 'absent' | 'erreur' | null
    PREFS.attendre() → une promesse tenue quand ce qui attendait d'être envoyé l'est */
 const PREFS = (() => {
@@ -104,14 +106,14 @@ const PREFS = (() => {
   }
 
   // ===================================================================================================== lire
-  function lire(cle, defaut) {
+  function lire(cle, defaut, { brut = false } = {}) {
     let v;
     if (repli(cle)) v = ancienneValeur(ancienne(cle));
     if (v === undefined && P.de === (uid() || null)) v = P.valeurs[cle];
     if (v === undefined) v = miroir().valeurs[cle];
     if (v === undefined || v === null) return defaut;
     const n = P.normaliseurs[cle];
-    return n ? n(v) : v;
+    return n && !brut ? n(v) : v;
   }
   function reinitialiser(u) { Object.assign(P, { de: u, valeurs: {}, etat: null, lecture: null }); Object.values(P.minuteurs).forEach(clearTimeout); P.minuteurs = {}; P.apres = {}; P.refus = false; }
   // le compte lu en une requête, une fois par session ; avec relire, une nouvelle lecture qui laisse en paix ce qui attend d'être envoyé

@@ -9,7 +9,8 @@
      rubrique un lien <a href="#/k" title="Représentations (G puis D)"> avec son icône, son nom en petites capitales (.menu-l)
      et la place d'un badge (.menu-badge, dont le chiffre est dans data-n) ; puis le bouton « Replier » (.menu-replier : aria-expanded, aria-controls,
      aria-keyshortcuts="Alt+M") et, sous lui, un <div class="menu-reglages"> vide, que les réglages d'interface rempliront (marquer n'y
-     touche pas ; CADRE.reglages() le remplit). ↑ ↓ passent d'une rubrique à l'autre (GESTES.fleches).
+     touche pas) : FENETRES.reglages y pose d'abord son bloc (.fen-reglages : « Pleine largeur », « Disposition d'origine »,
+     fenetres.js), puis CADRE.reglages() le sien, l'apparence, au pied de la colonne. ↑ ↓ passent d'une rubrique à l'autre (GESTES.fleches).
    - Le lien « Représentations » rouvre la dernière vue de la rubrique (la préférence `representations.vue`, écrite par le script principal
      à chaque route de la rubrique, à l'ordinateur seulement) : son href est #/representations, /tableur ou /carte, relu à chaque vue.
    - CADRE.marquer(rubrique) pose aria-current="page" sur la rubrique de la vue (aucune pour une page hors rubriques), et
@@ -154,6 +155,7 @@ const CADRE = (() => {
     bouton.addEventListener('click', () => basculer());
     if (typeof GESTES !== 'undefined') { GESTES.fleches(m, '.nav a', { horizontal: false }); GESTES.fleches(m, '.menu-creer, .menu-epingle, .menu-recent', { horizontal: false }); }
     if (typeof PREFS !== 'undefined') { appliquer(PREFS.lire(CLE)); appliquerTheme(themeVoulu()); appliquerDensite(densiteVoulue()); }
+    if (typeof FENETRES !== 'undefined') FENETRES.reglages($('.menu-reglages', m));     // (« Pleine largeur » et « Disposition d'origine », fenetres.js)
     reglages();
     majBouton();
   }

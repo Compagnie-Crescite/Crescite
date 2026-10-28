@@ -1,6 +1,7 @@
 'use strict';
 /* Les fenêtres ajustables : un seul outil pour tirer le bord d'une surface (le tiroir, la colonne de la liste à côté d'une
-   fiche, puis les boîtes de dialogue), la borner à l'écran et la retrouver telle qu'on l'a laissée sur tous ses appareils.
+   fiche, le coin des boîtes de dialogue), la borner à l'écran, la retrouver telle qu'on l'a laissée sur tous ses appareils, et
+   les deux réglages du menu qui s'y rapportent (« Pleine largeur », « Disposition d'origine »).
    Chargé après corbeille.js et avant tiroir.js ; il lit les préférences du compte (admin/prefs.js) et, pour la remise
    animée, CALME_ADMIN du script principal ; sans l'un d'eux (typeof), il fait ce qu'il peut. Il n'existe que dans
    l'administration, à l'ordinateur : rien du tout au téléphone ni au doigt (voir « Où l'outil dort »).
@@ -16,14 +17,14 @@
      hauteur en ligne, jamais un transform : aucune mesure ne se fait sous un transform.
    - Une seule écriture par geste : au relâchement, la valeur va dans la préférence `fenetres.<clé>` (PREFS.ecrire, aussitôt),
      jamais pendant le glisser, et jamais à l'ouverture d'une page. Les clés : fenetres.tiroir (la largeur du tiroir),
-     fenetres.liste (la colonne de la liste), fenetres.pleine (le contenu sur toute la largeur, lot suivant), et une par
-     boîte (fenetres.recherche, .tab-dialogue, .tab-dialogue-large, .tb-brief, .gq-aide, .gf), qui viendront avec leur coin.
-     Rien dans l'adresse.
+     fenetres.liste (la colonne de la liste), fenetres.pleine (le contenu sur toute la largeur : vrai, ou absente), et une par
+     famille de boîtes (fenetres.recherche, .tab-dialogue, .tab-dialogue-large, .crm, .tb-brief, .gq-aide, .gf), dont la valeur est
+     la taille { l, h }. Rien dans l'adresse.
    - Les bornes : chaque surface déclare la sienne (FENETRES.borner), une fonction de l'écran du moment (le tiroir : de
      480 px à la largeur de l'écran moins 80 px, pour que le voile reste cliquable ; la liste : de 340 px à 55 % de la largeur
      du contenu). Une valeur gardée est ramenée dans ces bornes à chaque lecture, et la surface suit quand la fenêtre change
-     de taille : une largeur réglée sur un grand écran reste lisible sur un petit. Une clé dont la surface n'est pas montée
-     se replie sur 94 % de l'écran.
+     de taille : une largeur réglée sur un grand écran reste lisible sur un petit (une boîte : de 320 px à l'écran moins 24 px
+     de large, de 200 px à l'écran moins 24 px de haut). Une clé dont la surface n'est pas montée se replie sur 94 % de l'écran.
    - La colonne de la liste (FENETRES.equiperDeux) : les huit pages à deux colonnes (Représentations, Lieux, Équipe,
      Ateliers, Textes, Espace pro, Demandes de devis, Planning › propositions) ont, entre la liste et la fiche, un séparateur
      (.sep-v) qui règle une seule largeur pour toutes : la variable --l-liste, posée sur <html> (héritée par toutes les .deux
@@ -31,11 +32,29 @@
      n'existe pas sous 1 100 px (où la fiche passe sous la liste). equiperDeux est sans effet quand il n'y a rien à faire :
      index.html l'appelle depuis cadre() et à chaque vue (APRES_VUE), si bien que le séparateur survit à un enregistrement
      qui redessine la page.
+   - Les boîtes de dialogue (FENETRES.equiperDialog) : la recherche, « Étendre », « Importer », « Choisir dans la troupe », le
+     briefing, l'aide « ? » et la feuille de modification (GESTES.formulaire) ont, en bas à droite, un coin qui se tire dans les
+     deux sens (une poignée à deux axes, de la même famille que les autres). Un observateur du corps de la page équipe toute
+     boîte qui s'y ajoute ou s'ouvre (elles naissent à la volée et partent en se fermant) ; la clé se déduit de la classe de
+     la boîte : « Étendre » a tab-dialogue, « Importer » et la troupe tab-dialogue-large, les fenêtres de la diffusion (l'opportunité, le
+     courriel de relance) crm. L'équipement est idempotent et rappelé à chaque ouverture : le briefing réécrit son contenu, et
+     son coin avec, à chaque fois. Les deux petites questions de l'équipe (periode-choix, retrait-choix) n'en ont pas. Les
+     boîtes sont centrées par une marge ou un transform : un côté qui grandit de Δ n'y déplace son bord que de Δ/2, le coin
+     écrit donc la largeur += 2·Δx et la hauteur += 2·Δy (la recherche, qui garde sa marge du haut, ne double que la
+     largeur). La taille tirée est une largeur et une hauteur en ligne, la hauteur plafonnée à l'écran moins 24 px, et la
+     classe dlg-taille dit à la boîte intérieure de la suivre (sans quoi les plafonds propres à chaque boîte annuleraient la
+     hauteur tirée). Dans la feuille de modification, le coin n'existe que sous html.admin (l'espace de l'équipe ne le pose
+     jamais) et le piège de Tab de la feuille le compte (gestes.js). À l'impression, ni poignée ni coin (habillage.js).
    - La remise : un double-clic ou Entrée sur la poignée (ou « Taille d'origine » du menu du tiroir) oublie la clé et ramène
      la surface à sa taille d'origine, en 220 ms (le « doux » de site/MOUVEMENT.md), une fois ; rien ne bouge sous
      prefers-reduced-motion ni ?anim=0 (la taille d'origine s'applique d'un coup). « Disposition d'origine »
      (FENETRES.toutOublier) oublie toutes les clés fenetres.* et rend ce qu'elles valaient, pour le « Annuler »
      (FENETRES.rendre).
+   - Les réglages du menu (FENETRES.reglages, appelé par cadre.js sous « Replier ») : « Pleine largeur » (un interrupteur :
+     html.pleine-largeur lève le plafond de 1 500 px du contenu et du pied de page) et « Disposition d'origine » (efface
+     toutes les clés fenetres.* d'un coup, avec une annonce qui porte « Annuler »). Ils sont sous « Replier », au-dessus de l'apparence
+     (cadre.js), l'un sous l'autre ; sur un écran bas (moins de 820 px), ils tiennent sur une rangée d'icônes. « Annuler » rend la valeur gardée telle quelle (PREFS.lire avec { brut }), non bornée à l'écran du moment. Comme les
+     poignées, ils ne comptent qu'à l'ordinateur : la pleine largeur gardée dort au téléphone et au doigt.
    - Où l'outil dort : la poignée n'est créée qu'à partir de 641 px de large avec un pointeur précis
      ((min-width: 641px) and (pointer: fine)) ; au téléphone et au doigt, les surfaces gardent leur taille d'origine.
    FENETRES.poignee(el, { cle, axe: 'x' | 'y' | 'xy', bord: 'gauche' | 'droite' | 'bas' | 'coin', min, max, minY, maxY, lire,
@@ -51,12 +70,14 @@
    FENETRES.de(el) → { lire, defaut, regler(v, { anime }), origine({ anime }) } : la commande d'une surface équipée
    FENETRES.taille(cle) → la valeur gardée, bornée, ou null     FENETRES.garder(cle, v)     FENETRES.oublier(cle)
    FENETRES.toutOublier() → ce qui était gardé    FENETRES.rendre(avant)    FENETRES.borner(cle, () => ({ min, max, minY, maxY }))
-   FENETRES.normaliser(cle, v)    FENETRES.equiperDeux()    FENETRES.appliquerListe()    FENETRES.actif() */
+   FENETRES.normaliser(cle, v)    FENETRES.equiperDeux()    FENETRES.equiperDialog(dlg, cle?) → le coin de la boîte (ou null)
+   FENETRES.reglages(zone) → dessine les deux réglages dans le conteneur donné    FENETRES.appliquerListe()
+   FENETRES.appliquerMiseEnPage() (la colonne de la liste et la pleine largeur, avant le premier dessin)    FENETRES.actif() */
 const FENETRES = (() => {
   const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const html = document.documentElement;
   const PREFIXE = 'fenetres.';
-  const CLES = ['tiroir', 'liste', 'pleine', 'recherche', 'tab-dialogue', 'tab-dialogue-large', 'tb-brief', 'gq-aide', 'gf'];
+  const CLES = ['tiroir', 'liste', 'pleine', 'recherche', 'tab-dialogue', 'tab-dialogue-large', 'crm', 'tb-brief', 'gq-aide', 'gf'];
   const MEDIA = '(min-width: 641px) and (pointer: fine)', DEUX_COLONNES = '(min-width: 1101px)';
   const DOUX = [.2, .8, .2, 1], DUREE = 220;
   const mq = q => typeof matchMedia === 'function' && matchMedia(q).matches;
@@ -87,19 +108,27 @@ const FENETRES = (() => {
   // le tiroir : de 480 px à l'écran moins 80 px (le voile reste cliquable) ; la liste : de 340 px à 55 % du contenu
   borner('tiroir', () => ({ min: 480, max: innerWidth - 80 }));
   // la largeur du contenu : celle de la grille quand elle est là, de la page sinon ; au squelette du chargement (ni #vue ni .deux : la
-  // page n'est pas encore dessinée), celle qu'elle aura : l'écran moins le menu, plafonné à 1 500 px, moins ses deux marges de 20 px
+  // page n'est pas encore dessinée), celle qu'elle aura : l'écran moins le menu, plafonné à 1 500 px sauf en pleine largeur, moins ses deux marges de 20 px
   const largeurContenu = () => {
     const d = $('#vue .deux'), v = $('#vue');
     if (d) return d.clientWidth;
     if (v) return v.clientWidth - 40;
     const menu = parseFloat(getComputedStyle(html).getPropertyValue('--large-menu')) || 0;
-    return Math.min(1500, innerWidth - menu) - 40;
+    return (html.classList.contains('pleine-largeur') ? innerWidth - menu : Math.min(1500, innerWidth - menu)) - 40;
   };
   borner('liste', () => ({ min: 340, max: Math.max(340, Math.floor(largeurContenu() * .55)) }));
+  // les boîtes de dialogue : de 320 px à l'écran moins 24 px de large, de 200 px à l'écran moins 24 px de haut (100vw - 24px, 100dvh - 24px)
+  const BOITES = ['recherche', 'tab-dialogue', 'tab-dialogue-large', 'crm', 'tb-brief', 'gq-aide', 'gf'];
+  BOITES.forEach(c => borner(c, () => ({ min: 320, max: Math.max(320, innerWidth - 24), minY: 200, maxY: Math.max(200, innerHeight - 24) })));
+  // (la recherche garde sa marge du haut, 9 % de l'écran : elle ne descend que jusqu'à 12 px du bas, pour que son coin reste atteignable)
+  const margeRecherche = () => Math.max(12, Math.round(innerHeight * .09));
+  borner('recherche', () => ({ min: 320, max: Math.max(320, innerWidth - 24), minY: 200, maxY: Math.max(200, innerHeight - margeRecherche() - 12) }));
 
   // ===================================================================================================== la mémoire
   const lireBrut = cle => (typeof PREFS === 'undefined' ? null : PREFS.lire(PREFIXE + cle, null));
   const taille = cle => normaliser(cle, lireBrut(cle));
+  // la valeur gardée telle quelle, sans la borne de l'écran du moment (pour « Annuler » : une largeur réglée sur un grand écran n'est pas perdue)
+  const lireTelle = cle => (typeof PREFS === 'undefined' ? null : PREFS.lire(PREFIXE + cle, null, { brut: true }));
   function garder(cle, v) { if (typeof PREFS !== 'undefined') PREFS.ecrire(PREFIXE + cle, v, { aussitot: true }); }
   const oublier = cle => garder(cle, null);
   // PREFS applique la borne à chaque lecture (« pleine » est un oui / non : rien à borner)
@@ -107,7 +136,7 @@ const FENETRES = (() => {
   // « Disposition d'origine » : toutes les clés fenetres.* à null ; rend ce qu'elles valaient (pour « Annuler » : rendre)
   function toutOublier() {
     const avant = {};
-    CLES.forEach(c => { const v = lireBrut(c); if (v !== null && v !== undefined) { avant[c] = v; garder(c, null); } });
+    CLES.forEach(c => { const v = lireTelle(c); if (v !== null && v !== undefined) { avant[c] = v; garder(c, null); } });
     remettre();
     return avant;
   }
@@ -117,8 +146,10 @@ const FENETRES = (() => {
   }
   // les surfaces qu'on voit reprennent la valeur gardée (ou leur origine) sans attendre qu'on les rouvre
   function remettre() {
-    appliquerListe();
+    appliquerMiseEnPage();
+    $$('[data-fenetres]').forEach(d => appliquerDialog(d, d.dataset.fenetres));     // (les boîtes ouvertes ou gardées dans la page reprennent leur taille)
     vivantes.forEach(c => { if (c.p.isConnected) c.reappliquer(); else vivantes.delete(c); });
+    majReglages();
   }
 
   // ===================================================================================================== la poignée
@@ -197,16 +228,16 @@ const FENETRES = (() => {
 
     // ---- la remise (et « Plus large » du menu) : animée une fois, sauf si l'appareil demande le calme
     let tour = 0, touche = 0, visee = null;                      // (visee : la taille où va la remise en cours, pour la finir si l'on saisit la poignée)
-    function deplacer(vers, anime) {
+    function deplacer(vers, anime, fin = null) {
       cancelAnimationFrame(tour); visee = null;
       const de = lire();
-      if (!anime || calme() || vers.every((x, i) => x === de[i])) { poser(vers); return; }
+      if (!anime || calme() || vers.every((x, i) => x === de[i])) { poser(vers); if (fin) fin(); return; }
       html.classList.add('redim'); html.dataset.redim = axe; visee = vers;
       const t0 = performance.now();
       const pas = maintenant => {
         const k = Math.min(1, (maintenant - t0) / DUREE), e = courbe(k);
         poser(vers.map((x, i) => (x === null ? null : Math.round(de[i] + (x - de[i]) * e))));
-        if (k < 1) tour = requestAnimationFrame(pas); else { html.classList.remove('redim'); delete html.dataset.redim; visee = null; poser(vers); }
+        if (k < 1) tour = requestAnimationFrame(pas); else { html.classList.remove('redim'); delete html.dataset.redim; visee = null; poser(vers); if (fin) fin(); }
       };
       tour = requestAnimationFrame(pas);
     }
@@ -219,7 +250,8 @@ const FENETRES = (() => {
     }
     function origine({ anime = true } = {}) {
       clearTimeout(touche); touche = 0;
-      deplacer(encadrerVec(defautVec()), anime);
+      // (apresOrigine : la taille d'origine est atteinte ; une boîte efface alors sa taille en ligne et retrouve celle de son contenu)
+      deplacer(encadrerVec(defautVec()), anime, o.apresOrigine ? () => { o.apresOrigine(); dernier = lire(); majAria(); } : null);
       if (o.garder) o.garder(null); else if (cle && lireBrut(cle) !== null) oublier(cle);
       dire('Taille d’origine');
     }
@@ -328,7 +360,7 @@ const FENETRES = (() => {
     s.style.left = `${Math.round(l.getBoundingClientRect().right - deux.getBoundingClientRect().left + 6)}px`;
   }
   function equiperDeux() {
-    appliquerListe();
+    appliquerMiseEnPage();
     const deux = $('#vue .deux'), possible = !!deux && actif() && mq(DEUX_COLONNES);
     $$('.sep-v').forEach(s => { if (!possible || !deux.contains(s)) s.remove(); });
     if (!possible) return;
@@ -353,7 +385,125 @@ const FENETRES = (() => {
   }
   if (typeof APRES_VUE !== 'undefined') APRES_VUE.push(equiperDeux);
   if (typeof PREFS !== 'undefined') PREFS.surChangement(PREFIXE + 'liste', () => { if (!html.classList.contains('redim')) { appliquerListe(); equiperDeux(); vivantes.forEach(c => { if (c.cle === 'liste' && c.p.isConnected) c.reappliquer(); }); } });
-  appliquerListe();
+
+  // ===================================================================================================== pleine largeur
+  // « Pleine largeur » : le contenu ne plafonne plus à 1 500 px (html.pleine-largeur lève le plafond de main et du pied de page,
+  // index.html) ; comme la colonne de la liste, seulement là où le réglage se défait (l'ordinateur)
+  const pleine = () => lireBrut('pleine') === true;
+  function appliquerPleine() { html.classList.toggle('pleine-largeur', actif() && pleine()); }
+  // la mise en page du compte : la colonne de la liste (--l-liste) et le plein écran (html.pleine-largeur), posées avant le premier dessin
+  function appliquerMiseEnPage() { appliquerListe(); appliquerPleine(); }
+  if (typeof PREFS !== 'undefined') PREFS.surChangement(PREFIXE + 'pleine', () => { appliquerPleine(); majReglages(); });
+  appliquerMiseEnPage();
+
+  // ===================================================================================================== les boîtes de dialogue
+  // Un coin en bas à droite (une poignée sur deux axes) pour la recherche, « Étendre », « Importer », « Choisir dans la troupe », le
+  // briefing, l'aide « ? » et la feuille de modification (GESTES.formulaire). Chaque famille de boîtes a sa clé, la taille { l, h }
+  // qu'on lui a donnée : fenetres.recherche, .tab-dialogue (Étendre), .tab-dialogue-large (Importer, la troupe), .crm (les fenêtres de la
+  // diffusion), .tb-brief, .gq-aide, .gf. Les deux petites questions de l'équipe (periode-choix, retrait-choix) ne sont pas équipées.
+  const SEL_BOITES = 'dialog.recherche, dialog.tab-dialogue, dialog.tb-brief, dialog.gq-aide';
+  const PETITES_QUESTIONS = ['periode-choix', 'retrait-choix'];
+  function cleDe(el) {
+    if (el.matches('.gf-boite')) return 'gf';
+    if (PETITES_QUESTIONS.includes(el.id)) return null;
+    if (el.matches('dialog.recherche')) return 'recherche';
+    if (el.matches('dialog.tb-brief')) return 'tb-brief';
+    if (el.matches('dialog.gq-aide')) return 'gq-aide';
+    if (el.matches('dialog.crm-boite')) return 'crm';                       // (l'opportunité et le courriel de relance : une boîte haute, qui ne partage pas la taille de « Étendre »)
+    if (el.matches('dialog.tab-dialogue')) return el.classList.contains('large') ? 'tab-dialogue-large' : 'tab-dialogue';
+    return null;
+  }
+  // toutes sont centrées par une marge ou un transform ; la recherche garde sa marge du haut : elle ne grandit vers le bas que de Δ
+  const centreDe = cle => (cle === 'recherche' ? 'x' : 'xy');
+  // la taille en ligne : largeur et hauteur, plafonnées à l'écran moins 24 px ; dlg-taille dit à la boîte intérieure de suivre (CSS ci-dessous)
+  function poserTaille(el, v, cle) {
+    if (v.l !== null && v.l !== undefined) { el.style.width = `${v.l}px`; el.style.maxWidth = 'none'; }
+    if (v.h !== null && v.h !== undefined) { el.style.height = `${v.h}px`; el.style.maxHeight = cle === 'recherche' ? 'calc(100dvh - max(12px, 9vh) - 12px)' : 'calc(100dvh - 24px)'; el.classList.add('dlg-taille'); }
+  }
+  function effacerTaille(el) {
+    el.style.width = el.style.height = el.style.maxWidth = el.style.maxHeight = '';
+    el.classList.remove('dlg-taille');
+  }
+  // la taille de la boîte sans taille en ligne, celle de son contenu (la taille d'origine : mesurée au geste, la boîte ouverte)
+  function naturel(el) {
+    const avant = [el.style.width, el.style.height, el.style.maxWidth, el.style.maxHeight], taillee = el.classList.contains('dlg-taille');
+    effacerTaille(el);
+    const r = el.getBoundingClientRect();
+    [el.style.width, el.style.height, el.style.maxWidth, el.style.maxHeight] = avant;
+    if (taillee) el.classList.add('dlg-taille');
+    return { l: Math.round(r.width), h: Math.round(r.height) };
+  }
+  // la taille gardée (ou rien) pour cette boîte, posée d'un coup
+  function appliquerDialog(el, cle) {
+    const t = actif() ? taille(cle) : null;
+    if (t && typeof t === 'object') poserTaille(el, t, cle); else effacerTaille(el);
+  }
+  // idempotent : rappelée à chaque ouverture (le briefing réécrit son contenu, et son coin avec, à chaque fois) et quand le coin disparaît
+  function equiperDialog(el, cle) {
+    if (!el || !html.classList.contains('admin') || !actif()) return null;
+    cle = cle || cleDe(el);
+    if (!cle) return null;
+    appliquerDialog(el, cle);
+    let coin = $(':scope > .dlg-coin', el);
+    if (!coin) {
+      coin = poignee(el, { cle, axe: 'xy', bord: 'coin', centre: centreDe(cle), libelle: 'Taille de la fenêtre',
+        defaut: () => naturel(el), ecrire: v => poserTaille(el, v, cle), apresOrigine: () => effacerTaille(el) });
+      if (!el.dataset.fenetres) {
+        el.dataset.fenetres = cle;
+        if (el.localName === 'dialog' && typeof MutationObserver === 'function') {
+          new MutationObserver(() => { if (el.isConnected && !$(':scope > .dlg-coin', el)) equiperDialog(el, cle); }).observe(el, { childList: true });
+        }
+      }
+    } else vivantes.forEach(c => { if (c.el === el) c.reappliquer(); });
+    return coin;
+  }
+  function equiperBoite(n) {
+    if (!(n instanceof Element)) return;
+    if (n.matches(SEL_BOITES)) { if (n.open) equiperDialog(n); }
+    else if (n.matches('.gf')) { const f = $('.gf-boite', n); if (f) equiperDialog(f, 'gf'); }
+  }
+  // les boîtes naissent à la volée et partent en se fermant : l'observateur équipe celles qui s'ajoutent au corps de la page, et celles
+  // qui s'ouvrent (la recherche et le briefing restent dans la page, fermés)
+  if (typeof MutationObserver === 'function' && document.body) {
+    new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(equiperBoite))).observe(document.body, { childList: true });
+    new MutationObserver(ms => ms.forEach(m => equiperBoite(m.target))).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['open'] });
+    $$(SEL_BOITES).forEach(equiperBoite);
+  }
+
+  // ===================================================================================================== les réglages du menu
+  // « Pleine largeur » (un interrupteur) et « Disposition d'origine » (efface toutes les tailles gardées, avec « Annuler »), dessinés dans le
+  // conteneur que cadre.js donne (les réglages du menu latéral)
+  const icone = nom => (typeof ICONES !== 'undefined' ? ICONES.svg(nom, { taille: 20 }) : '');
+  function majReglages() {
+    const b = $('#fen-pleine');
+    if (b) b.setAttribute('aria-pressed', String(pleine()));
+  }
+  function reglages(zone) {
+    if (!zone || $('.fen-reglages', zone)) return null;
+    const g = document.createElement('div');
+    g.className = 'fen-reglages'; g.setAttribute('role', 'group'); g.setAttribute('aria-label', 'Fenêtres');
+    g.innerHTML = `<button type="button" class="fen-reglage" id="fen-pleine" aria-pressed="false" title="Pleine largeur : le contenu ne plafonne plus à 1 500 px">${icone('moniteur')}<span class="menu-l">Pleine largeur</span></button>
+      <button type="button" class="fen-reglage" id="fen-origine" title="Disposition d’origine : la taille du tiroir, de la liste et des fenêtres redevient celle d’origine">${icone('actualiser')}<span class="menu-l">Disposition d’origine</span></button>`;
+    zone.append(g);
+    $('#fen-pleine', g).addEventListener('click', () => {
+      const v = !pleine();
+      garder('pleine', v ? true : null);
+      appliquerPleine(); majReglages();
+      dire(v ? 'Pleine largeur' : 'Largeur d’origine');
+    });
+    $('#fen-origine', g).addEventListener('click', () => {
+      const avant = toutOublier();
+      if (typeof annoncer !== 'function') return;
+      if (!Object.keys(avant).length) { annoncer('La disposition est déjà celle d’origine.'); return; }
+      // tout de suite, sans question : l'annonce porte « Annuler », qui rend ce que les clés valaient
+      annoncer('Disposition d’origine remise : les tailles du tiroir, de la liste et des fenêtres sont effacées.', { libelle: 'Annuler', delai: 8000, action: () => {
+        rendre(avant);
+        annoncer('La disposition d’avant est revenue.');
+      } });
+    });
+    majReglages();
+    return g;
+  }
 
   // ---- la fenêtre change de taille : une fois par image
   let imageFenetre = 0;
@@ -397,9 +547,37 @@ const FENETRES = (() => {
    par appui à CPU=4). Le curseur reste celui de la poignée : elle a capturé le pointeur. */
 html.redim body { -webkit-user-select: none; user-select: none; }
 html.redim .tiroir, html.redim .tiroir-voile, html.redim .deux, html.redim .liste, html.redim .editeur, html.redim .pied-ed, html.redim dialog, html.redim .poignee, html.redim .poignee::after { transition: none !important; }
+/* une boîte équipée ne défile jamais par elle-même : le coin, posé en absolu, défilerait avec le contenu et quitterait l'angle. C'est sa
+   boîte intérieure qui défile ; tab-dialogue passe en colonne pour que cette boîte se raccourcisse au plafond de la boîte (la recherche, le
+   briefing, l'aide et la feuille avaient déjà leur défilement à l'intérieur) */
+dialog.dlg-taille, dialog[data-fenetres] { overflow: hidden; }
+dialog[data-fenetres] > .tab-dialogue-boite { min-height: 0; overflow: auto; overscroll-behavior: contain; }
+dialog.tab-dialogue[data-fenetres]:not(.troupe-choix)[open] { display: flex; flex-direction: column; }
+/* une boîte à qui l'on a donné une hauteur : sa boîte intérieure la suit (sans cela, les plafonds propres à chaque boîte — la recherche
+   580 px, la troupe 720 px — annuleraient la hauteur tirée) ; le coin reste en place */
+dialog.dlg-taille > .tab-dialogue-boite { height: 100%; max-height: none; align-content: start; overflow: auto; }
+dialog.dlg-taille > .tb-brief-boite, dialog.dlg-taille > .gq-boite { height: 100%; max-height: none; }
+dialog.dlg-taille .tb-brief-corps { flex: 1 1 auto; min-height: 0; }
+/* « Pleine largeur » et « Disposition d'origine », dans les réglages du menu (le logement sous « Replier », qui a déjà ses 8 px de
+   marge) : comme le bouton « Replier », l'un sous l'autre */
+.fen-reglages { display: flex; flex-direction: column; gap: 2px; }
+.fen-reglage { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; margin: 0; padding: 0 12px; border: 0; border-radius: 10px; background: none; color: var(--gris); font: inherit; font-weight: 600; text-align: left; white-space: nowrap; cursor: pointer; }
+.fen-reglage:hover { background: var(--doux); color: var(--encre); }
+.fen-reglage[aria-pressed="true"] { background: var(--accent-doux); color: var(--encre); }
+.fen-reglage:focus-visible { outline: 2px solid currentColor; outline-offset: -2px; }
+@container menu (max-width: 120px) { .fen-reglage { justify-content: center; gap: 0; padding: 0; } }
+/* un écran bas (moins de 820 px) : les deux réglages tiennent sur une rangée d'icônes de 36 px (leur nom reste lu et en infobulle), pour
+   que le menu défile le moins possible ; dans le menu replié, ils restent l'un sous l'autre */
+@media (max-height: 820px) {
+  .fen-reglages { flex-direction: row; }
+  .fen-reglage { flex: 1 1 0; width: auto; min-height: 36px; margin: 0; padding: 0; justify-content: center; gap: 0; }
+  .fen-reglage .menu-l { position: absolute; width: 1px; height: 1px; flex: none; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+@container menu (max-width: 120px) { @media (max-height: 820px) { .fen-reglages { flex-direction: column; } } }
+@media not all and (min-width: 641px) and (pointer: fine) { .fen-reglages { display: none; } }
 html.still .poignee::after { transition: none; }
 @media (prefers-reduced-motion: reduce) { .poignee::after { transition: none; } }`;
   document.head.append(style);
 
-  return { poignee, de, taille, garder, oublier, toutOublier, rendre, borner, normaliser, equiperDeux, appliquerListe, actif, CLES: CLES.slice() };
+  return { poignee, de, taille, garder, oublier, toutOublier, rendre, borner, normaliser, equiperDeux, equiperDialog, appliquerListe, appliquerMiseEnPage, reglages, actif, CLES: CLES.slice() };
 })();

@@ -11,11 +11,17 @@
 // qui fasse glisser les lignes, retrouvé après un enregistrement à sa place, absent sous 1 100 px, lu par le squelette) ;
 // le geste lui-même (html.redim, transitions coupées, rien d'écrit avant le relâchement, aucune tâche > 200 ms à CPU=4) ;
 // la remise animée une fois, et pas du tout sous « moins d'animations » ; « Disposition d'origine » et son « Annuler »
-// (toutOublier, rendre) ; le téléphone et le doigt, où il n'y a aucune poignée ; l'impression, qui n'en montre pas.
+// (toutOublier, rendre) ; le téléphone et le doigt, où il n'y a aucune poignée ; l'impression, qui n'en montre pas ; le coin de
+// chaque boîte (la recherche, le briefing rouvert, l'aide, la feuille de modification et son piège de Tab, « Importer », la
+// troupe ; les deux petites questions n'en ont pas) ; les fenêtres de la diffusion (l'opportunité, le courriel de relance :
+// des dialog.tab-dialogue sur la page, leurs fermetures, la question « Fermer sans enregistrer ? ») ; « Pleine largeur » et
+// « Disposition d'origine » dans les réglages du menu ; un écran bas (1 440 × 700 px : le coin d'une boîte qui défile reste dans l'angle,
+// l'opportunité a sa clé fenetres.crm, les réglages du menu tiennent sur une rangée au-dessus de « Replier », qui garde le bas) et « Annuler »
+// qui rend la largeur gardée sur un plus grand écran sans la borner.
 // Les captures vont dans site/dist/shots-fenetres/. Sort en erreur si une vérification manque.
 import fs from 'node:fs';
 import path from 'node:path';
-import { chromium, ICI, UID, URL0, DB, ECRITURES, resultats, ok, calme, ouvrir, texte, compte, tuile, bilan } from './admin-fictif.mjs';
+import { chromium, ICI, UID, URL0, DB, ECRITURES, MODIFS, resultats, ok, calme, ouvrir, texte, compte, tuile, bilan } from './admin-fictif.mjs';
 
 const CAPT = path.join(ICI, 'dist', 'shots-fenetres');
 // une exception en route (un élément qui manque) : ce qui a été vérifié jusque-là est dit avant la sortie en erreur
@@ -23,6 +29,8 @@ process.on('uncaughtException', e => { for (const [etat, nom, detail] of resulta
 const navigateur = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined });
 fs.mkdirSync(CAPT, { recursive: true });
 const attendre = (page, fn, arg = null, ms = 6000) => page.waitForFunction(fn, arg, { timeout: ms }).then(() => true, () => false);
+// une pause franche (la remise écrit 30 ms après le relâchement) : une seconde écriture tardive serait comptée
+const pause = async (page, ms = 350) => { await page.waitForTimeout(ms); return true; };
 const ecrites = cle => ECRITURES.filter(e => e.cle === cle);
 const repartir = () => { DB.crescite_preferences = []; ECRITURES.length = 0; };
 const garder = (cle, valeur) => DB.crescite_preferences.push({ user_id: UID, cle, valeur });
@@ -438,13 +446,19 @@ async function ouvrirTiroir(page) {
 
 // ================================================================================ 9 · le téléphone et le doigt : aucune poignée
 {
-  repartir(); garder('fenetres.tiroir', 1000); garder('fenetres.liste', 560);
+  repartir(); garder('fenetres.tiroir', 1000); garder('fenetres.liste', 560); garder('fenetres.pleine', true); garder('fenetres.gf', { l: 700, h: 500 });
   const tel = await ouvrir(navigateur, { largeur: 390, hauteur: 800, hash: '#/accueil' });
   await tel.page.waitForSelector('#vue', { timeout: 15000 });
   await tel.page.waitForTimeout(600);
   await tel.page.evaluate(() => { location.hash = '#/representations/101'; });
   await attendre(tel.page, () => document.querySelector('#ed-date #s-org'), null, 8000);
   ok('9 · à 390 px, aucune .poignee dans la page (ni séparateur)', (await compte(tel.page, '.poignee, .sep-v, .dlg-coin')) === 0);
+  ok('9 · à 390 px, la pleine largeur gardée dort (html.pleine-largeur absente)', await tel.page.evaluate(() => !document.documentElement.classList.contains('pleine-largeur')));
+  await tel.page.evaluate(() => { GESTES.formulaire({ titre: 'Essai', champs: [{ k: 'a', l: 'Un champ' }], enregistrer: async () => true }); });
+  await tel.page.waitForSelector('.gf .gf-boite', { timeout: 3000 });
+  await tel.page.waitForTimeout(300);
+  ok('9 · la feuille de modification à 390 px n’a aucun coin, ni la taille gardée', (await compte(tel.page, '.gf-boite')) === 1 && (await compte(tel.page, '.dlg-coin, .poignee')) === 0 && await tel.page.$eval('.gf-boite', e => !e.style.width && !e.style.height));
+  await tel.page.keyboard.press('Escape');
   await tel.ctx.close();
   const tac = await ouvrir(navigateur, { largeur: 1280, hauteur: 800, hash: '#/accueil', tactile: true });
   await tac.page.waitForSelector(`${tuile('prochaines')} .tb-l`, { timeout: 15000 });
@@ -459,6 +473,12 @@ async function ouvrirTiroir(page) {
   await attendre(tac.page, () => document.querySelector('#vue .deux'), null, 8000);
   await tac.page.waitForTimeout(300);
   ok('9 · de même pour le séparateur de la liste, et la colonne garde 460 px', (await compte(tac.page, '.poignee, .sep-v')) === 0 && (await tac.page.$eval('.deux > .liste', e => Math.round(e.getBoundingClientRect().width))) === 460);
+  await tac.page.evaluate(() => { location.hash = '#/accueil'; });
+  await tac.page.waitForSelector(`${tuile('prochaines')} .tb-l`, { timeout: 15000 });
+  await tac.page.keyboard.press('Control+k');
+  await tac.page.waitForSelector('#recherche[open]', { timeout: 3000 });
+  await tac.page.waitForTimeout(400);
+  ok('9 · à 1 280 px avec un écran tactile, la recherche n’a pas de coin', (await compte(tac.page, '.dlg-coin')) === 0);
   ok('9 · aucune erreur de script', tac.erreurs.length === 0 && tel.erreurs.length === 0, [...tac.erreurs, ...tel.erreurs].join(' / '));
   await tac.ctx.close();
 }
@@ -495,7 +515,405 @@ async function ouvrirTiroir(page) {
   const l2 = await page.evaluate(() => window.__longues.slice());
   console.log(`tâches longues pendant un glisser de la liste à CPU=4 (ms) : ${JSON.stringify(l2)}`);
   ok('10 · aucune tâche > 200 ms pendant un glisser de la colonne de la liste, à CPU=4', l2.every(d => d < 200), JSON.stringify(l2));
+  await page.goto(`${URL0}#/accueil`);
+  await page.waitForSelector(`${tuile('prochaines')} .tb-l`, { timeout: 15000 });
+  await page.keyboard.press('Control+k');
+  await page.waitForSelector('#recherche[open]', { timeout: 4000 });
+  await attendre(page, () => document.querySelector('#recherche > .dlg-coin'), null, 3000);
+  await page.waitForTimeout(800);
+  await page.evaluate(() => { window.__longues.length = 0; window.__pret = performance.now(); });
+  await tirer(page, '#recherche > .dlg-coin', 200, 80);
+  await tirer(page, '#recherche > .dlg-coin', -100, -40);
+  await page.waitForTimeout(700);
+  const l3 = await page.evaluate(() => window.__longues.slice());
+  console.log(`tâches longues pendant deux glisser du coin de la recherche à CPU=4 (ms) : ${JSON.stringify(l3)}`);
+  ok('10 · aucune tâche > 200 ms pendant un glisser du coin de la recherche, à CPU=4', l3.every(d => d < 200), JSON.stringify(l3));
   ok('10 · aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+
+// ================================================================================ 11 · les boîtes : le coin de la recherche
+const coinDe = sel => `${sel} > .dlg-coin`;
+const rect = (page, sel) => page.$eval(sel, e => { const r = e.getBoundingClientRect(); return { l: Math.round(r.left), t: Math.round(r.top), r: Math.round(r.right), b: Math.round(r.bottom), w: Math.round(r.width), h: Math.round(r.height) }; });
+const enLigne = (page, sel) => page.$eval(sel, e => ({ l: e.style.width, h: e.style.height, max: e.style.maxHeight, classe: e.classList.contains('dlg-taille') }));
+async function ouvrirRecherche(page) {
+  await page.keyboard.press('Control+k');
+  await page.waitForSelector('#recherche[open]', { timeout: 4000 });
+  await attendre(page, () => document.querySelector('#recherche > .dlg-coin'), null, 3000);
+  await calme(page);
+}
+repartir();
+const GR = await ouvrir(navigateur, { largeur: 1600, hauteur: 1000, hash: '#/accueil' });      // (une seule page, de la section 11 à la 13)
+{
+  const { page, erreurs } = GR;
+  await page.waitForSelector(`${tuile('prochaines')} .tb-l`, { timeout: 15000 });
+  await ouvrirRecherche(page);
+  const c = await page.$eval(coinDe('#recherche'), e => ({ role: e.getAttribute('role'), nom: e.getAttribute('aria-label'), tab: e.tabIndex, curseur: getComputedStyle(e).cursor, classe: e.className, touch: getComputedStyle(e).touchAction, l: Math.round(e.getBoundingClientRect().width) }));
+  ok('11 · la recherche a un coin en bas à droite : un séparateur nommé, dans l’ordre du clavier, curseur nwse-resize, zone de 16 px', c.role === 'separator' && /Taille de la fenêtre/.test(c.nom) && c.tab === 0 && c.curseur === 'nwse-resize' && c.touch === 'none' && c.l === 16 && /dlg-coin/.test(c.classe), JSON.stringify(c));
+  ok('11 · sa position : le coin est dans l’angle bas droit de la boîte', await page.evaluate(() => { const d = document.querySelector('#recherche').getBoundingClientRect(), k = document.querySelector('#recherche > .dlg-coin').getBoundingClientRect(); return Math.abs(k.right - d.right) <= 2 && Math.abs(k.bottom - d.bottom) <= 2; }));
+  ok('11 · rien n’est écrit à l’ouverture, ni de taille en ligne', ECRITURES.length === 0 && (await enLigne(page, '#recherche')).l === '');
+  const avant = await rect(page, '#recherche');
+  await page.screenshot({ path: `${CAPT}/coin-recherche-avant.png`, fullPage: false });
+  await tirer(page, coinDe('#recherche'), 120, 60);
+  await attendre(page, () => true);
+  await page.waitForTimeout(300);
+  const apres = await rect(page, '#recherche'), li = await enLigne(page, '#recherche');
+  ok('11 · tirer le coin de 120 px à droite et 60 px en bas : le bord droit suit le pointeur à ± 2 px (la boîte est centrée : largeur += 2 × Δ)', Math.abs(apres.r - avant.r - 120) <= 2 && Math.abs(apres.l - avant.l + 120) <= 2 && Math.abs(apres.b - avant.b - 60) <= 2 && apres.t === avant.t, JSON.stringify({ avant, apres }));
+  ok('11 · la taille est en ligne (width et height), avec le plafond de hauteur de l’écran (le plafond de 580 px de la feuille de style n’annule plus rien)', /^\d+px$/.test(li.l) && /^\d+px$/.test(li.h) && /max\(12px, 9vh\)/.test(li.max) && li.classe, JSON.stringify(li));
+  ok('11 · la boîte intérieure de la recherche remplit la nouvelle hauteur', await page.evaluate(() => { const d = document.querySelector('#recherche').getBoundingClientRect(), b = document.querySelector('#recherche .rch-boite').getBoundingClientRect(); return Math.abs(b.height - d.height) <= 4; }));
+  ok('11 · une seule écriture au relâchement : fenetres.recherche = { l, h } à la taille tirée', await pause(page) && ecrites('fenetres.recherche').length === 1 && ecrites('fenetres.recherche')[0].valeur?.l === apres.w && ecrites('fenetres.recherche')[0].valeur?.h === apres.h, JSON.stringify(ecrites('fenetres.recherche')));
+  await page.screenshot({ path: `${CAPT}/coin-recherche.png`, fullPage: false });
+  // les bornes : l’écran moins 24 px
+  await tirer(page, coinDe('#recherche'), 2000, 2000);
+  await page.waitForTimeout(300);
+  const max = await rect(page, '#recherche');
+  ok('11 · tirée trop loin, la boîte s’arrête à l’écran : 100vw − 24 px de large (1 576), et en hauteur ce que la marge du haut laisse (1 000 − 90 − 12 = 898 : le coin reste atteignable)', max.w === 1576 && max.h === 898 && max.b <= 1000, JSON.stringify(max));
+  await tirer(page, coinDe('#recherche'), -3000, -3000);
+  await page.waitForTimeout(300);
+  const min = await rect(page, '#recherche');
+  ok('11 · rétrécie à fond, elle s’arrête à 320 × 200', min.w === 320 && min.h === 200, JSON.stringify(min));
+  // la même taille à la prochaine ouverture
+  await page.keyboard.press('Escape');
+  await attendre(page, () => !document.querySelector('#recherche[open]'));
+  await ouvrirRecherche(page);
+  const r2 = await rect(page, '#recherche');
+  ok('11 · la recherche rouverte a la taille gardée, et un seul coin', r2.w === 320 && r2.h === 200 && (await compte(page, '#recherche .dlg-coin')) === 1, JSON.stringify(r2));
+  ok('11 · le champ de recherche garde le focus (le coin ne le prend pas)', await page.evaluate(() => document.activeElement?.id === 'rch-q'));
+  // la remise : double-clic
+  await page.mouse.dblclick(...Object.values(await milieu(page, coinDe('#recherche'))));
+  ok('11 · un double-clic sur le coin rend la taille d’origine : la taille en ligne s’efface (640 px, le contenu)', await attendre(page, () => { const d = document.querySelector('#recherche'); return !d.style.width && !d.style.height && !d.classList.contains('dlg-taille'); }, null, 3000) && Math.round((await rect(page, '#recherche')).w) === 640, JSON.stringify(await rect(page, '#recherche')));
+  ok('11 · et la clé fenetres.recherche est oubliée (écrite à null)', await pause(page) && ecrites('fenetres.recherche').at(-1)?.valeur === null, JSON.stringify(ecrites('fenetres.recherche').map(e => e.valeur)));
+  // Entrée sur le coin
+  await page.focus(coinDe('#recherche'));
+  const k0 = await rect(page, '#recherche');
+  await page.keyboard.press('ArrowRight'); await page.keyboard.press('Shift+ArrowDown');
+  const k = await rect(page, '#recherche');
+  ok('11 · au clavier, → élargit la boîte de 16 px (656) et Maj + ↓ l’allonge de 64 px', k.w === 656 && k.h === k0.h + 64, JSON.stringify({ k0, k }));
+  await page.keyboard.press('Enter');
+  ok('11 · Entrée sur le coin : la taille d’origine', await attendre(page, () => !document.querySelector('#recherche').style.width, null, 3000));
+  ok('11 · Échap ferme la recherche, le focus sur le coin ou ailleurs', await (async () => { await page.keyboard.press('Escape'); return attendre(page, () => !document.querySelector('#recherche[open]')); })());
+  ok('11 · aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
+}
+
+// ================================================================================ 12 · le briefing, l'aide, la feuille, Importer
+{
+  repartir();
+  const { page, erreurs } = GR;
+  // ---- le briefing : son contenu est réécrit à chaque ouverture, le coin doit revenir
+  await page.click('#tb-briefing');
+  await page.waitForSelector('#tb-brief[open]', { timeout: 3000 });
+  await attendre(page, () => document.querySelector('#tb-brief > .dlg-coin'));
+  ok('12 · le briefing a son coin', (await compte(page, coinDe('#tb-brief'))) === 1 && await page.$eval(coinDe('#tb-brief'), e => e.dataset.poignee === 'tb-brief'));
+  const b0 = await rect(page, '#tb-brief');
+  await tirer(page, coinDe('#tb-brief'), -100, -60);
+  await page.waitForTimeout(300);
+  const b1 = await rect(page, '#tb-brief');
+  ok('12 · tirer le coin du briefing vers le haut et la gauche le rétrécit (boîte centrée : 2 × Δ)', Math.abs(b0.w - b1.w - 200) <= 2 && Math.abs(b0.h - b1.h - 120) <= 2, JSON.stringify({ b0, b1 }));
+  ok('12 · sa boîte intérieure suit la hauteur tirée (le corps défile dedans, le coin reste en place)', await page.evaluate(() => { const d = document.querySelector('#tb-brief').getBoundingClientRect(), b = document.querySelector('#tb-brief .tb-brief-boite').getBoundingClientRect(); return Math.abs(b.height - d.height) <= 4; }));
+  ok('12 · fenetres.tb-brief est écrit une fois', await pause(page) && ecrites('fenetres.tb-brief').length === 1, JSON.stringify(ecrites('fenetres.tb-brief')));
+  // l'impression du briefing : la taille tirée ne la tronque pas
+  await page.evaluate(() => document.documentElement.classList.add('tb-impression'));
+  await page.emulateMedia({ media: 'print' });
+  const imp = await rect(page, '#tb-brief');
+  ok('12 · à l’impression du briefing, la largeur et la hauteur tirées ne comptent plus (auto !important), et le coin n’est pas montré', imp.w > b1.w + 100 && imp.h !== b1.h && await page.$eval(coinDe('#tb-brief'), e => getComputedStyle(e).display === 'none'), JSON.stringify({ b1, imp }));
+  await page.emulateMedia({ media: 'screen' });
+  await page.evaluate(() => document.documentElement.classList.remove('tb-impression'));
+  await page.click('#tb-brief [data-tb-brief-fermer]');
+  await attendre(page, () => !document.querySelector('#tb-brief[open]'));
+  await page.click('#tb-briefing');
+  await page.waitForSelector('#tb-brief[open]', { timeout: 3000 });
+  await attendre(page, () => document.querySelector('#tb-brief > .dlg-coin'));
+  const b2 = await rect(page, '#tb-brief');
+  ok('12 · le briefing rouvert : le coin est toujours là (un seul), à la taille gardée', (await compte(page, coinDe('#tb-brief'))) === 1 && b2.w === b1.w && b2.h === b1.h, JSON.stringify({ b1, b2 }));
+  ok('12 · le briefing rouvert reprend le focus sur « Fermer »', await page.evaluate(() => document.activeElement?.matches('[data-tb-brief-fermer]')));
+  await page.click('#tb-brief [data-tb-brief-fermer]');
+  await attendre(page, () => !document.querySelector('#tb-brief[open]'));
+
+  // ---- l'aide « ? »
+  await page.keyboard.press('?');
+  await page.waitForSelector('dialog.gq-aide[open]', { timeout: 3000 });
+  await attendre(page, () => document.querySelector('dialog.gq-aide > .dlg-coin'));
+  await calme(page);
+  ok('12 · l’aide « ? » a son coin, et le focus reste sur « Fermer »', (await compte(page, 'dialog.gq-aide > .dlg-coin')) === 1 && await page.evaluate(() => document.activeElement?.matches('[data-gq-fermer]')));
+  const a0 = await rect(page, 'dialog.gq-aide');
+  await tirer(page, 'dialog.gq-aide > .dlg-coin', 80, 10);
+  await page.waitForTimeout(300);
+  const a1 = await rect(page, 'dialog.gq-aide');
+  ok('12 · tirer le coin de l’aide l’agrandit (+ 160 de large, + 20 de haut : elle touchait presque le bas de l’écran), centrée', Math.abs(a1.w - a0.w - 160) <= 2 && Math.abs(a1.h - a0.h - 20) <= 2, JSON.stringify({ a0, a1 }));
+  ok('12 · l’aide tirée garde le centre de l’écran et son corps défile dedans', Math.abs((a1.l + a1.r) / 2 - 800) <= 2 && await page.evaluate(() => { const d = document.querySelector('dialog.gq-aide').getBoundingClientRect(), b = document.querySelector('dialog.gq-aide .gq-boite').getBoundingClientRect(); return Math.abs(b.height - d.height) <= 4; }), JSON.stringify(a1));
+  ok('12 · fenetres.gq-aide est écrit une fois', await pause(page) && ecrites('fenetres.gq-aide').length === 1);
+  await page.keyboard.press('Escape');
+  await attendre(page, () => !document.querySelector('dialog.gq-aide'));
+
+  // ---- la feuille de modification (TRAITER)
+  await page.click(`${tuile('urgent')} [data-traiter="options:105"]`);
+  await page.waitForSelector('.gf .gf-boite', { timeout: 5000 });
+  await attendre(page, () => document.querySelector('.gf-boite > .dlg-coin'));
+  await calme(page);
+  ok('12 · la feuille TRAITER a son coin, à 1 600 px', (await compte(page, '.gf-boite > .dlg-coin')) === 1 && await page.$eval('.gf-boite > .dlg-coin', e => e.dataset.poignee === 'gf'));
+  // le piège de Tab de la feuille compte la poignée : depuis le dernier bouton, Tab y va, puis revient au premier champ
+  await page.focus('.gf-boite button[type=submit]');
+  await page.keyboard.press('Tab');
+  const surCoin = await page.evaluate(() => document.activeElement?.classList.contains('poignee'));
+  await page.keyboard.press('Tab');
+  const apresCoin = await page.evaluate(() => ({ dedans: !!document.activeElement?.closest('.gf-boite'), coin: document.activeElement?.classList.contains('poignee') }));
+  ok('12 · Tab depuis le dernier bouton de la feuille atteint le coin, puis revient au premier champ (la feuille garde le focus)', surCoin && apresCoin.dedans && !apresCoin.coin, JSON.stringify(apresCoin));
+  await page.evaluate(() => document.querySelector('.gf-boite input:not([type=hidden]), .gf-boite select, .gf-boite textarea, .gf-boite button').focus());
+  await page.keyboard.press('Shift+Tab');
+  ok('12 · Maj + Tab depuis le premier élément de la feuille va au coin (le dernier de la feuille)', await page.evaluate(() => document.activeElement?.classList.contains('poignee')));
+  const f0 = await rect(page, '.gf-boite');
+  await tirer(page, '.gf-boite > .dlg-coin', 70, 50);
+  await page.waitForTimeout(300);
+  const f1 = await rect(page, '.gf-boite');
+  ok('12 · tirer le coin de la feuille : son bord droit suit le pointeur (la feuille est centrée par un transform : 2 × Δ)', Math.abs(f1.r - f0.r - 70) <= 2 && Math.abs(f1.b - f0.b - 50) <= 2, JSON.stringify({ f0, f1 }));
+  ok('12 · fenetres.gf est écrit une fois, la page garde le défilement bloqué (gf-ouvert)', await pause(page) && ecrites('fenetres.gf').length === 1 && await page.evaluate(() => document.documentElement.classList.contains('gf-ouvert')), JSON.stringify(ecrites('fenetres.gf')));
+  await page.screenshot({ path: `${CAPT}/coin-feuille.png`, fullPage: false });
+  await page.focus('.gf-boite > .dlg-coin');
+  await page.keyboard.press('Escape');
+  ok('12 · Échap, le focus sur le coin, ferme la feuille inchangée', await attendre(page, () => !document.querySelector('.gf')));
+  // la suivante s'ouvre à la taille gardée
+  await page.click(`${tuile('urgent')} [data-traiter="options:105"]`);
+  await page.waitForSelector('.gf .gf-boite', { timeout: 5000 });
+  await attendre(page, () => document.querySelector('.gf-boite > .dlg-coin'));
+  await calme(page);
+  const f2 = await rect(page, '.gf-boite');
+  ok('12 · la feuille suivante s’ouvre à la taille gardée', Math.abs(f2.w - f1.w) <= 2 && Math.abs(f2.h - f1.h) <= 2, JSON.stringify({ f1, f2 }));
+  await page.keyboard.press('Escape');
+  await attendre(page, () => !document.querySelector('.gf'));
+
+  // ---- Importer (tab-dialogue-large), et les petites questions de l'équipe, qui ne sont pas équipées
+  await page.evaluate(() => { location.hash = '#/representations/tableur'; });
+  await page.waitForSelector('#tab-importer', { timeout: 10000 });
+  await page.click('#tab-importer');
+  await page.waitForSelector('dialog.tab-dialogue.large[open]', { timeout: 4000 });
+  await attendre(page, () => document.querySelector('dialog.tab-dialogue.large > .dlg-coin'));
+  ok('12 · « Importer » a son coin, de la clé tab-dialogue-large', await page.$eval('dialog.tab-dialogue.large > .dlg-coin', e => e.dataset.poignee === 'tab-dialogue-large'));
+  const i0 = await rect(page, 'dialog.tab-dialogue.large');
+  await tirer(page, 'dialog.tab-dialogue.large > .dlg-coin', 50, 30);
+  await page.waitForTimeout(300);
+  const i1 = await rect(page, 'dialog.tab-dialogue.large');
+  ok('12 · tirer le coin d’« Importer » l’agrandit (+ 100 × + 60)', Math.abs(i1.w - i0.w - 100) <= 2 && Math.abs(i1.h - i0.h - 60) <= 2, JSON.stringify({ i0, i1 }));
+  ok('12 · sa boîte intérieure suit la hauteur (le tableau d’aperçu garde sa place)', await page.evaluate(() => { const d = document.querySelector('dialog.tab-dialogue.large').getBoundingClientRect(), b = document.querySelector('dialog.tab-dialogue.large .tab-dialogue-boite').getBoundingClientRect(); return Math.abs(b.height - d.height) <= 4; }));
+  ok('12 · fenetres.tab-dialogue-large est écrit une fois', await pause(page) && ecrites('fenetres.tab-dialogue-large').length === 1);
+  await page.keyboard.press('Escape');
+  await attendre(page, () => !document.querySelector('dialog.tab-dialogue'));
+  // des dialogs à la volée, comme periode-choix, retrait-choix (rien) et troupe-choix (comme Importer)
+  const q = await page.evaluate(async () => {
+    const faire = (id, classe) => { const d = document.createElement('dialog'); d.id = id; d.className = classe; d.innerHTML = '<div class="tab-dialogue-boite"><h2>Essai</h2><button type="button">Fermer</button></div>'; document.body.append(d); d.showModal(); return d; };
+    const a = faire('retrait-choix', 'tab-dialogue'), b = faire('periode-choix', 'tab-dialogue periode-choix'), c = faire('troupe-choix', 'tab-dialogue large troupe-choix');
+    await new Promise(r => setTimeout(r, 200));
+    const rep = { retrait: a.querySelectorAll(':scope > .dlg-coin').length, periode: b.querySelectorAll(':scope > .dlg-coin').length, troupe: c.querySelectorAll(':scope > .dlg-coin').length, cle: c.querySelector(':scope > .dlg-coin')?.dataset.poignee };
+    a.close(); b.close(); c.close(); a.remove(); b.remove(); c.remove();
+    return rep;
+  });
+  ok('12 · les deux petites questions (retrait-choix, periode-choix) n’ont pas de coin ; troupe-choix en a un, de la clé d’Importer', q.retrait === 0 && q.periode === 0 && q.troupe === 1 && q.cle === 'tab-dialogue-large', JSON.stringify(q));
+  ok('12 · aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
+}
+
+// ================================================================================ 13 · les fenêtres de la diffusion : des dialog.tab-dialogue
+{
+  repartir();
+  const prospects0 = JSON.parse(JSON.stringify(DB.crescite_diffusion_prospects));      // (la base commune est rendue telle quelle après)
+  const { page, erreurs } = GR;
+  await page.evaluate(() => { location.hash = '#/diffusion'; });
+  await page.waitForSelector('#b-nouveau-prospect', { timeout: 15000 });
+  await page.click('#b-nouveau-prospect');
+  await page.waitForSelector('dialog.tab-dialogue[open] #f-prospect-crm', { timeout: 4000 });
+  await attendre(page, () => document.querySelector('dialog.crm-boite > .dlg-coin'));
+  const o = await page.evaluate(() => { const d = document.querySelector('#f-prospect-crm').closest('dialog'); return { parent: d.parentNode === document.body, modal: d.matches(':modal'), nom: d.getAttribute('aria-labelledby') && document.getElementById(d.getAttribute('aria-labelledby'))?.textContent, zone: !!document.getElementById('crm-modale-zone'), cle: d.querySelector(':scope > .dlg-coin')?.dataset.poignee, focus: document.activeElement?.id }; });
+  ok('13 · « Nouvelle opportunité » est un dialog.tab-dialogue modal posé sur le corps de la page, nommé par son titre, avec son coin (sa clé à elle : crm, pas celle d’« Étendre »)', o.parent && o.modal && o.nom === 'Nouvelle opportunité' && o.cle === 'crm', JSON.stringify(o));
+  ok('13 · la zone #crm-modale-zone n’existe plus, et le focus est sur le premier champ', !o.zone && o.focus === 'crm-structure', JSON.stringify(o));
+  await page.screenshot({ path: `${CAPT}/opportunite.png`, fullPage: false });
+  // un redessin en direct de la vue Diffusion n'emporte plus la fenêtre
+  await page.evaluate(() => { vueDiffusion(); });
+  await page.waitForTimeout(500);
+  ok('13 · un redessin de la vue Diffusion (le temps réel) laisse la fenêtre ouverte', (await compte(page, 'dialog[open] #f-prospect-crm')) === 1);
+  await page.keyboard.press('Escape');
+  ok('13 · Échap la ferme, sans question quand rien n’est saisi : la fenêtre quitte la page', await attendre(page, () => !document.querySelector('#f-prospect-crm')) && !(await page.$('dialog.gq[open]')));
+  await page.click('#b-nouveau-prospect');
+  await page.waitForSelector('#f-prospect-crm', { timeout: 4000 });
+  await page.fill('#crm-structure', 'Le Rayon Vert');
+  await page.keyboard.press('Escape');
+  ok('13 · Échap, une saisie commencée : la question « Fermer sans enregistrer ? », la fenêtre reste', await attendre(page, () => !!document.querySelector('dialog.gq[open]')) && (await compte(page, '#f-prospect-crm')) === 1 && /Fermer sans enregistrer/.test(await texte(page, 'dialog.gq h2')), await texte(page, 'dialog.gq h2'));
+  await page.waitForTimeout(450);      // (la question ignore les clics de ses 350 premières ms)
+  await page.click('dialog.gq [data-gq="non"]');
+  ok('13 · « Rester » : la saisie est là, le focus revient dans la fenêtre', (await page.$eval('#crm-structure', e => e.value)) === 'Le Rayon Vert' && await attendre(page, () => !!document.activeElement?.closest('#f-prospect-crm, dialog.crm-boite')));
+  await page.click('#b-annuler-crm');
+  ok('13 · Annuler pose la même question', await attendre(page, () => !!document.querySelector('dialog.gq[open]')));
+  await page.waitForTimeout(450);
+  await page.click('dialog.gq [data-gq="oui"]');
+  ok('13 · « Fermer sans enregistrer » ferme et retire la fenêtre', await attendre(page, () => !document.querySelector('#f-prospect-crm, dialog.crm-boite')));
+  // l'enregistrement : la fenêtre part, sans question
+  await page.click('#b-nouveau-prospect');
+  await page.waitForSelector('#f-prospect-crm', { timeout: 4000 });
+  await page.fill('#crm-structure', 'Théâtre du Rayon Vert'); await page.fill('#crm-commune', 'Saint-Valery-en-Caux');
+  await page.click('#b-sauver-crm');
+  ok('13 · Enregistrer ferme la fenêtre sans question, et la piste est écrite', await attendre(page, () => !document.querySelector('#f-prospect-crm, dialog.crm-boite'), null, 5000) && !(await page.$('dialog.gq[open]')) && MODIFS.some(m => m.table === 'crescite_diffusion_prospects' && m.post?.some(r => r.structure === 'Théâtre du Rayon Vert')), JSON.stringify(MODIFS.slice(-2)));
+  // changer de rubrique ferme la fenêtre qui n'a rien de commencé
+  await page.click('#b-nouveau-prospect');
+  await page.waitForSelector('#f-prospect-crm', { timeout: 4000 });
+  await page.evaluate(() => { location.hash = '#/accueil'; });
+  ok('13 · changer de rubrique, rien de saisi : la fenêtre se ferme et on part', await attendre(page, () => location.hash === '#/accueil' && !document.querySelector('#f-prospect-crm')), await page.evaluate(() => location.hash));
+  await page.evaluate(() => { location.hash = '#/diffusion'; });
+  await page.waitForSelector('[data-crm-email]', { timeout: 10000 });
+  // le courriel de relance
+  await page.click('[data-crm-email]');
+  await page.waitForSelector('dialog.crm-boite[open] #mel-corps', { timeout: 4000 });
+  await attendre(page, () => document.querySelector('dialog.crm-boite > .dlg-coin'));
+  const m = await page.evaluate(() => { const d = document.querySelector('#mel-corps').closest('dialog'); return { modal: d.matches(':modal'), nom: d.getAttribute('aria-labelledby') && document.getElementById(d.getAttribute('aria-labelledby'))?.textContent, coin: d.querySelectorAll(':scope > .dlg-coin').length, garde: d.dataset.garde !== undefined }; });
+  ok('13 · le courriel de relance est un dialog.tab-dialogue modal avec son coin, et il n’est pas gardé (rien d’important à y saisir)', m.modal && /courriel de relance/.test(m.nom) && m.coin === 1 && !m.garde, JSON.stringify(m));
+  await page.fill('#mel-objet', 'Un autre objet');
+  await page.keyboard.press('Escape');
+  ok('13 · Échap ferme le courriel, sans question même modifié, et le retire de la page', await attendre(page, () => !document.querySelector('#mel-corps')) && !(await page.$('dialog.gq[open]')));
+  await page.click('[data-crm-email]');
+  await page.waitForSelector('#mel-corps', { timeout: 4000 });
+  await page.click('#b-fermer-mod-mel');
+  ok('13 · le ✕ du courriel le ferme', await attendre(page, () => !document.querySelector('#mel-corps')));
+  await page.click('[data-crm-email]');
+  await page.waitForSelector('#mel-corps', { timeout: 4000 });
+  await page.click('#b-fermer-mel');
+  ok('13 · « Fermer » du courriel le ferme', await attendre(page, () => !document.querySelector('#mel-corps')));
+  await page.click('[data-crm-email]');
+  await page.waitForSelector('#b-relance-faite', { timeout: 4000 });
+  const nM = MODIFS.length;
+  await page.click('#b-relance-faite');
+  ok('13 · « Relance faite » écrit la relance en base, ferme le courriel et le retire de la page', await attendre(page, () => !document.querySelector('#mel-corps, dialog.crm-boite')) && MODIFS.length > nM && MODIFS.slice(nM).some(x => x.table === 'crescite_diffusion_prospects' && x.body?.date_prochaine_relance), JSON.stringify(MODIFS.slice(nM)));
+  ok('13 · aucun dialog ne reste dans la page', (await compte(page, 'dialog[open]')) === 0);
+  ok('13 · aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
+  await GR.ctx.close();
+  DB.crescite_diffusion_prospects = prospects0;
+}
+
+// ================================================================================ 14 · « Pleine largeur » et « Disposition d'origine » (les réglages du menu)
+{
+  repartir();
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1920, hauteur: 1000, hash: '#/lieux' });
+  await page.waitForSelector('#fen-pleine', { timeout: 15000 });
+  await page.waitForSelector('.deux > .liste', { timeout: 15000 });
+  const base = await page.evaluate(() => ({ main: Math.round(document.querySelector('main').getBoundingClientRect().width), pied: Math.round(document.querySelector('.pied-espace')?.getBoundingClientRect().width || 0), pressed: document.getElementById('fen-pleine').getAttribute('aria-pressed'), dans: !!document.getElementById('fen-pleine').closest('.menu-reglages'), libelles: [...document.querySelectorAll('.fen-reglage .menu-l')].map(e => e.textContent) }));
+  ok('14 · les deux réglages sont dans le menu : « Pleine largeur » (un interrupteur, éteint) et « Disposition d’origine »', base.dans && base.pressed === 'false' && base.libelles.join('|') === 'Pleine largeur|Disposition d’origine', JSON.stringify(base));
+  ok('14 · à 1 920 px, le contenu et le pied de page plafonnent à 1 500 px', base.main === 1500 && base.pied === 1500, JSON.stringify(base));
+  await page.click('#fen-pleine');
+  await page.waitForTimeout(300);
+  const p = await page.evaluate(() => ({ cls: document.documentElement.classList.contains('pleine-largeur'), main: Math.round(document.querySelector('main').getBoundingClientRect().width), pied: Math.round(document.querySelector('.pied-espace')?.getBoundingClientRect().width || 0), pressed: document.getElementById('fen-pleine').getAttribute('aria-pressed'), menu: Math.round(document.querySelector('.menu').getBoundingClientRect().width) }));
+  ok('14 · « Pleine largeur » pose html.pleine-largeur : main prend toute la place à côté du menu (plus de 1 500 px)', p.cls && p.main > 1500 && p.main === 1920 - p.menu && p.pressed === 'true', JSON.stringify(p));
+  ok('14 · le pied de page n’est plus plafonné non plus (il existe, et dépasse 1 500 px)', p.pied > 1500, JSON.stringify(p));
+  await page.screenshot({ path: `${CAPT}/pleine-largeur.png`, fullPage: false });
+  ok('14 · fenetres.pleine est écrit : vrai', await pause(page) && ecrites('fenetres.pleine').at(-1)?.valeur === true, JSON.stringify(ecrites('fenetres.pleine')));
+  await page.reload();
+  await page.waitForSelector('#fen-pleine', { timeout: 15000 });
+  ok('14 · rechargée, la page retrouve la pleine largeur (et le bouton le dit)', await page.evaluate(() => document.documentElement.classList.contains('pleine-largeur') && document.getElementById('fen-pleine').getAttribute('aria-pressed') === 'true'));
+  await page.click('#fen-pleine');
+  await page.waitForTimeout(200);
+  ok('14 · un second clic rend les 1 500 px (la clé est oubliée)', await page.evaluate(() => !document.documentElement.classList.contains('pleine-largeur') && Math.round(document.querySelector('main').getBoundingClientRect().width) === 1500) && ecrites('fenetres.pleine').at(-1)?.valeur === null, JSON.stringify(ecrites('fenetres.pleine')));
+  // « Disposition d'origine » : tout oublier, avec « Annuler »
+  repartir(); garder('fenetres.tiroir', 900); garder('fenetres.liste', 520); garder('fenetres.pleine', true); garder('fenetres.recherche', { l: 700, h: 420 });
+  await page.reload();
+  await page.waitForSelector('.deux > .liste', { timeout: 15000 });
+  await page.waitForSelector('#fen-origine', { timeout: 15000 });
+  ok('14 · les tailles gardées sont lues : colonne 520 px, pleine largeur', (await racine(page, '--l-liste')) === '520px' && await page.evaluate(() => document.documentElement.classList.contains('pleine-largeur')));
+  await page.click('#fen-origine');
+  await attendre(page, () => document.querySelector('.annonce'));
+  await page.waitForTimeout(500);
+  const ec = ECRITURES.filter(e => /^fenetres\./.test(e.cle));
+  ok('14 · « Disposition d’origine » met à null chaque clé fenetres.* gardée (quatre écritures, une par clé)', ec.length === 4 && ec.every(e => e.valeur === null), JSON.stringify(ec));
+  ok('14 · la colonne de la liste, la pleine largeur : tout redevient celui d’origine tout de suite', (await racine(page, '--l-liste')) === '' && await page.evaluate(() => !document.documentElement.classList.contains('pleine-largeur') && Math.round(document.querySelector('.deux > .liste').getBoundingClientRect().width) === 460));
+  const an = await page.evaluate(() => { const a = document.querySelector('.annonce:last-of-type'); return { texte: a?.textContent || '', annuler: !!a?.querySelector('[data-tt="retour"], button') }; });
+  ok('14 · l’annonce dit ce qui est fait et porte « Annuler »', /Disposition d’origine remise/.test(an.texte) && /Annuler/.test(an.texte) && an.annuler, JSON.stringify(an));
+  await page.screenshot({ path: `${CAPT}/disposition-origine.png`, fullPage: false });
+  await page.click('.annonce:last-of-type button');
+  await page.waitForTimeout(500);
+  ok('14 · « Annuler » rend chaque clé comme elle était (colonne 520 px, pleine largeur, la taille de la recherche)', (await racine(page, '--l-liste')) === '520px' && await page.evaluate(() => document.documentElement.classList.contains('pleine-largeur')) && ecrites('fenetres.pleine').at(-1)?.valeur === true && JSON.stringify(ecrites('fenetres.recherche').at(-1)?.valeur) === JSON.stringify({ l: 700, h: 420 }) && ecrites('fenetres.tiroir').at(-1)?.valeur === 900, JSON.stringify(ECRITURES.map(e => [e.cle, e.valeur])));
+  // rien à oublier : une annonce qui le dit, et aucune écriture
+  await page.click('#fen-origine');
+  await page.waitForTimeout(400);
+  ECRITURES.length = 0;
+  await page.click('#fen-origine');
+  await page.waitForTimeout(400);
+  ok('14 · quand tout est déjà d’origine, rien n’est écrit et l’annonce le dit', ECRITURES.length === 0 && /déjà celle d’origine/.test(await page.evaluate(() => document.querySelector('.annonce:last-of-type')?.textContent || '')), JSON.stringify(ECRITURES));
+  // le menu replié (à 1 280 px, 64 px) : les deux réglages sont des icônes, leur nom reste lisible aux lecteurs d'écran
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.waitForTimeout(500);
+  const r = await page.evaluate(() => ({ menu: Math.round(document.querySelector('.menu').getBoundingClientRect().width), l: [...document.querySelectorAll('.fen-reglage')].map(b => ({ nom: b.textContent.trim(), larg: Math.round(b.getBoundingClientRect().width), vu: Math.round(b.querySelector('.menu-l').getBoundingClientRect().width) })) }));
+  ok('14 · le menu replié (64 px) : les deux réglages sont des boutons d’icône, leur nom reste lisible aux lecteurs d’écran (.menu-l réduit à 1 px)', r.menu === 64 && r.l.length === 2 && r.l.every(b => b.larg > 30 && b.vu <= 1) && r.l[0].nom === 'Pleine largeur', JSON.stringify(r));
+  ok('14 · aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+
+// ================================================================================ 15 · un écran bas : le coin reste dans l'angle quand la boîte défile, le menu, « Annuler » sans perte
+{
+  repartir();
+  const prospects0 = JSON.parse(JSON.stringify(DB.crescite_diffusion_prospects));
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1440, hauteur: 700, hash: '#/diffusion' });
+  await page.waitForSelector('#b-nouveau-prospect', { timeout: 15000 });
+  await page.click('#b-nouveau-prospect');
+  await page.waitForSelector('dialog.crm-boite[open] #f-prospect-crm', { timeout: 4000 });
+  await attendre(page, () => document.querySelector('dialog.crm-boite > .dlg-coin'));
+  // la position du coin dans la boîte (sa distance aux bords bas et droit), et ce qu'on touche au milieu du coin
+  const coin = () => page.evaluate(() => {
+    const d = document.querySelector('dialog.crm-boite'), c = d.querySelector(':scope > .dlg-coin'), r = c.getBoundingClientRect(), b = d.getBoundingClientRect();
+    const touche = document.elementsFromPoint(r.left + r.width / 2, r.top + r.height / 2)[0];
+    const i = d.querySelector('.tab-dialogue-boite');
+    return { bas: Math.round(b.bottom - r.bottom), droite: Math.round(b.right - r.right), touche: touche === c, dlgDefile: d.scrollHeight > d.clientHeight + 1, interieurDefile: i.scrollHeight > i.clientHeight + 1, haut: Math.round(b.height), top: i.scrollTop };
+  });
+  const avant = await coin();
+  ok('15 · à 1 440 × 700 px, l’opportunité est plus haute que l’écran : sa boîte intérieure défile, la boîte elle-même jamais', avant.interieurDefile && !avant.dlgDefile, JSON.stringify(avant));
+  ok('15 · au repos, le coin est dans l’angle bas droit de la boîte (à 2 px) et reçoit le pointeur', avant.bas <= 2 && avant.droite <= 2 && avant.touche, JSON.stringify(avant));
+  await page.evaluate(() => { const i = document.querySelector('dialog.crm-boite .tab-dialogue-boite'); i.scrollTop = i.scrollHeight; });
+  await page.waitForTimeout(150);
+  const apres = await coin();
+  ok('15 · la boîte défilée jusqu’en bas, le coin n’a pas bougé : toujours dans l’angle, toujours au-dessus des champs', apres.top > 50 && apres.bas <= 2 && apres.droite <= 2 && apres.touche && !apres.dlgDefile, JSON.stringify(apres));
+  await page.screenshot({ path: `${CAPT}/opportunite-basse.png`, fullPage: false });
+  // le coin tire encore : la clé est la sienne, écrite une fois
+  await tirer(page, 'dialog.crm-boite > .dlg-coin', -60, -40);
+  ok('15 · tirer le coin de l’opportunité écrit fenetres.crm une fois, et pas fenetres.tab-dialogue', await pause(page) && ecrites('fenetres.crm').length === 1 && ecrites('fenetres.tab-dialogue').length === 0, JSON.stringify(ECRITURES.map(e => e.cle)));
+  const tiree = await coin();
+  ok('15 · la boîte tirée plus basse, le coin reste dans l’angle et la boîte intérieure défile toujours dedans', tiree.bas <= 2 && tiree.droite <= 2 && tiree.touche && !tiree.dlgDefile, JSON.stringify(tiree));
+  await page.keyboard.press('Escape');
+  await attendre(page, () => !document.querySelector('dialog.crm-boite'));
+  // « Étendre » ne reprend pas la taille de l'opportunité (une autre clé)
+  ok('15 · « Étendre » (fenetres.tab-dialogue) ne reçoit pas la taille de l’opportunité', await page.evaluate(() => FENETRES.taille('tab-dialogue') === null && FENETRES.taille('crm') !== null));
+
+  // le menu d'un écran bas : les deux réglages sont sous « Replier », sur une rangée, au-dessus de l'apparence. Avec les douze
+  // rubriques, les accès rapides (lot 4) et l'apparence (lot 5), le menu défile à ces hauteurs (le lot 4 : sur un écran bas, c'est le
+  // menu entier qui défile) : on le fait défiler jusqu'en bas, et tout doit être dans la fenêtre
+  const auBas = () => page.evaluate(() => {
+    const m = document.querySelector('.menu'); m.scrollTop = m.scrollHeight;
+    const r = document.querySelector('.menu-replier').getBoundingClientRect(), g = [...document.querySelectorAll('.fen-reglage')].map(b => b.getBoundingClientRect()), a = document.querySelector('.reg-apparence')?.getBoundingClientRect();
+    return { replierBas: Math.round(r.bottom), fenetre: innerHeight, reglagesHaut: Math.round(Math.min(...g.map(x => x.top))), reglagesBas: Math.round(Math.max(...g.map(x => x.bottom))), apparenceHaut: a ? Math.round(a.top) : null,
+      rangee: g.length === 2 && Math.abs(g[0].top - g[1].top) < 2, colonne: g.length === 2 && g[1].top > g[0].top + 20, h: Math.round(g[0].height) };
+  });
+  const ordre = x => x.reglagesHaut >= x.replierBas - 1 && (x.apparenceHaut === null || x.reglagesBas <= x.apparenceHaut + 1);
+  const menu = await auBas();
+  ok('15 · à 700 px de haut, les deux réglages tiennent sur une rangée de 36 px, sous « Replier » et au-dessus de l’apparence', menu.rangee && menu.h === 36 && ordre(menu), JSON.stringify(menu));
+  ok('15 · et le menu défilé jusqu’en bas les montre entiers dans la fenêtre', menu.reglagesBas <= menu.fenetre, JSON.stringify(menu));
+  await page.setViewportSize({ width: 1440, height: 768 });
+  await page.waitForTimeout(300);
+  const m768 = await auBas();
+  ok('15 · à 768 px de haut (un portable courant), les deux réglages restent sur une rangée, dans l’ordre, et le menu défilé jusqu’en bas les montre', m768.rangee && ordre(m768) && m768.reglagesBas <= m768.fenetre, JSON.stringify(m768));
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.waitForTimeout(300);
+  const haut = await auBas();
+  ok('15 · à 900 px de haut, les deux réglages gardent leurs 44 px, l’un sous l’autre, dans l’ordre, et le menu défilé jusqu’en bas les montre', haut.colonne && haut.h >= 44 && ordre(haut) && haut.reglagesBas <= haut.fenetre, JSON.stringify(haut));
+  await page.evaluate(() => { document.querySelector('.menu').scrollTop = 0; });
+  ok('15 · aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+  DB.crescite_diffusion_prospects = prospects0;
+}
+{
+  // « Disposition d'origine » puis « Annuler » sur une fenêtre plus petite que celle où la largeur a été réglée : rien n'est perdu
+  repartir(); garder('fenetres.tiroir', 1500);
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1100, hauteur: 800, hash: '#/accueil' });
+  await page.waitForSelector('#fen-origine', { timeout: 15000 });
+  ECRITURES.length = 0;
+  await page.click('#fen-origine');
+  await page.waitForSelector('.annonce button', { timeout: 3000 });
+  await pause(page);
+  await page.click('.annonce:last-of-type button');
+  await pause(page);
+  const e = ecrites('fenetres.tiroir').map(x => x.valeur);
+  ok('15 · à 1 100 px, « Disposition d’origine » puis « Annuler » rend la largeur gardée telle quelle (1 500), pas celle que l’écran permet (1 020)', e.length === 2 && e[0] === null && e[1] === 1500, JSON.stringify(e));
+  ok('15 · aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();
 }
 

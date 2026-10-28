@@ -91,7 +91,8 @@ latéral, ses raccourcis et ses badges), `champs.mjs` (la fiche d'une date : le 
 filtres communs, le fondu, le focus, la ligne visée, la vue retenue et les touches V puis L / T / C), `theme.mjs` (le
 thème et la densité : le jour, « appareil » qui suit le système, la compacte, le menu replié), `distribution.mjs` (la
 distribution à l'écran : la cellule d'une date, qui sera prévenu, la boîte d'impact, la fiche d'une date),
-`fenetres.mjs` (les fenêtres ajustables : la poignée du tiroir et le séparateur de la liste) et `acces.mjs` (les accès
+`fenetres.mjs` (les fenêtres ajustables : la poignée
+du tiroir, le séparateur de la liste, le coin des boîtes et les réglages du menu) et `acces.mjs` (les accès
 rapides du menu et la barre de commande : l'arrivée d'un épinglé en `ad-pop`, d'un récent en `ad-arrive`, le menu
 « Créer » en `gm-paraitre`). Ils ne touchent presque
 pas à ce vocabulaire : `cadre.mjs` mesure seulement que le repli anime la colonne une fois, et rien sous « moins
@@ -103,7 +104,8 @@ remplaçant, grises et barrées pour qui ne part pas) n'animent rien (ni animati
 100 ms, et qu'un écran de 30 dates se pose et se met en page en moins de 100 ms à `CPU=4` (les 120 d'un coup, 960 pastilles, coûtent plus de 100 ms de
 mise en page : le tableur les dessinera par tranches) ; `fenetres.mjs`, que la remise à la taille
 d'origine s'anime une fois (et d'un coup sous « moins d'animations »), que rien ne glisse ni ne se remesure pendant le
-geste, et qu'aucune tâche ne dépasse 200 ms à `CPU=4` pendant un glisser ; `acces.mjs`, les trois arrivées ci-dessus, et le
+geste, et qu'aucune tâche ne dépasse 200 ms à `CPU=4` pendant un glisser (le coin d'une boîte suit le pointeur de la même façon, et sa remise à la taille d'origine est la
+même) ; `acces.mjs`, les trois arrivées ci-dessus, et le
 silence sous « moins d'animations » ; pour le reste, ils veillent à ce qu'une refonte ne casse rien. (La case de la matrice qui saute, `ad-pop`,
 vient avec le mode Distribution du tableur.)
 
