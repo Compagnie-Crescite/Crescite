@@ -215,7 +215,7 @@ html.ed-actif body { padding-bottom: var(--bas0); }
   /* (l'accueil : le haut posé sur la scène, sans fond, sa marque repliée sous le nom de la scène ; la loupe d'un anneau, comme
      la pause de la scène, qui passe à gauche, en face d'elle ; le nom de la scène entre les deux) */
   .top { transition: box-shadow var(--k-survol) var(--k-doux), background-color var(--k-survol) var(--k-doux); }
-  .top.sur-scene { background-color: transparent; box-shadow: none; }
+  .top.sur-scene { background-color: transparent; box-shadow: none; pointer-events: none; }   /* (rien à toucher en elle : le mot, dessous, se caresse) */
   .top.sur-scene .marque { opacity: 0; visibility: hidden; transition-delay: 0s, 0s, 0s, var(--k-survol); }
   .top.sur-scene .loupe-b { background: color-mix(in srgb, var(--sc-c, var(--saison)) 50%, transparent); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, #fff 60%, transparent); }
   .scene .sc-h { padding: calc(22px + env(safe-area-inset-top)) 64px 0; }
@@ -374,7 +374,7 @@ section.bloc.sans-filet { border-top: 0; padding-top: clamp(28px, 4vw, 48px); }
    haute que lui, la liste du téléphone) */
 .scene { position: relative; isolation: isolate; overflow: hidden; overflow: clip; min-height: 100svh; contain: size layout style; color: #fff; user-select: none; -webkit-user-select: none;
   background: radial-gradient(78% 88% at 50% 40%, var(--sc-a) 0%, var(--sc-b) 58%, var(--sc-c) 100%); }
-.scene.sur-bras { cursor: pointer; }
+.scene.sur-bras, .scene.sur-tete { cursor: pointer; }
 /* (le jeu : la tentacule qu'on tire ; la lampe qui suit le pointeur, derrière la pieuvre, sur la photo : un calque déplacé sans
    être repeint, absent tant qu'elle est éteinte) */
 .scene.tire, .scene.tire * { cursor: grabbing !important; }
@@ -394,8 +394,21 @@ section.bloc.sans-filet { border-top: 0; padding-top: clamp(28px, 4vw, 48px); }
    page, mais ne se voit pas ; c'est « crescite », sous la pieuvre (.sc-mot), qui le dit, et qui devient le nom de la barre
    quand on descend) */
 .scene .sc-h { color: transparent; }
-.sc-mot { position: absolute; left: 0; top: 0; z-index: 1; display: block; width: 0; height: auto; fill: #fff; opacity: 0; pointer-events: none; will-change: transform, opacity;
-  filter: drop-shadow(0 4px 5px rgba(0, 0, 0, .5)); }
+.sc-mot { position: absolute; left: 0; top: 0; z-index: 3; display: block; width: 0; height: auto; margin: 0; padding: 0; border: 0; background: none; color: #fff; opacity: 0; cursor: pointer; will-change: transform, opacity;
+  -webkit-tap-highlight-color: transparent; }
+.sc-mot svg { display: block; width: 100%; height: auto; fill: currentColor; overflow: visible; filter: drop-shadow(0 4px 5px rgba(0, 0, 0, .5)); }
+.sc-mot:focus-visible { outline: 2px solid #fff; outline-offset: 8px; border-radius: 6px; }
+/* (il flotte : il monte et descend doucement, un peu de travers ; caressé, il fait la gelée, ou se trémousse, ou bondit) */
+html:not(.still) .sc-mot > span { display: block; animation: mot-flotte 4.6s ease-in-out infinite; }
+html:not(.still) .sc-mot.c-0 svg { animation: mot-gelee .8s cubic-bezier(.3, .7, .4, 1); }
+html:not(.still) .sc-mot.c-1 svg { animation: mot-calin 1.1s ease-in-out; }
+html:not(.still) .sc-mot.c-2 svg { animation: mot-ronron 1.1s linear; }
+html:not(.still) .sc-mot.c-3 svg { animation: mot-bond .9s cubic-bezier(.3, .7, .4, 1); }
+@keyframes mot-flotte { 0%, 100% { translate: 0 0; rotate: -1deg; } 50% { translate: 0 -6px; rotate: 1deg; } }
+@keyframes mot-gelee { 0% { scale: 1; } 15% { scale: 1.18 .82; } 32% { scale: .88 1.12; } 50% { scale: 1.07 .94; } 70% { scale: .97 1.03; } 100% { scale: 1; } }
+@keyframes mot-calin { 0%, 100% { rotate: 0deg; } 25% { rotate: -6deg; } 55% { rotate: 5deg; } 80% { rotate: -2deg; } }
+@keyframes mot-ronron { 0%, 100% { translate: 0 0; } 10%, 30%, 50%, 70%, 90% { translate: -1.5px .5px; } 20%, 40%, 60%, 80% { translate: 1.5px -.5px; } }
+@keyframes mot-bond { 0% { translate: 0 0; scale: 1; } 18% { translate: 0 3px; scale: 1.1 .88; } 45% { translate: 0 -14px; scale: .94 1.08; } 72% { translate: 0 0; scale: 1.06 .94; } 100% { translate: 0 0; scale: 1; } }
 .sc-pause { position: absolute; z-index: 4; right: var(--gout); top: 14px; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 1.5px solid color-mix(in srgb, #fff 60%, transparent); border-radius: 50%;
   background: color-mix(in srgb, var(--sc-c) 50%, transparent); color: #fff; cursor: pointer; }
 @media (hover: hover) { .sc-pause:hover { border-color: #fff; } }
@@ -4654,7 +4667,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   const faireScene = () => {
     const el = document.createElement('section');
     el.className = 'scene'; el.id = 'scene'; el.setAttribute('aria-labelledby', 'scene-h');
-    el.innerHTML = `<div class="sc-diapo" aria-hidden="true"><div class="sc-cadre"></div></div><div class="sc-lampe" aria-hidden="true"></div><canvas class="sc-toile" aria-hidden="true"></canvas><svg class="sc-mot" viewBox="355 937 827 163" aria-hidden="true" focusable="false"><path d="${D.logo.motPath}"/></svg>
+    el.innerHTML = `<div class="sc-diapo" aria-hidden="true"><div class="sc-cadre"></div></div><div class="sc-lampe" aria-hidden="true"></div><canvas class="sc-toile" aria-hidden="true"></canvas><button type="button" class="sc-mot" aria-label="${esc(L.caresser || 'Caresser la pieuvre')}"><span><svg viewBox="355 937 827 163" aria-hidden="true" focusable="false"><path d="${D.logo.motPath}"/></svg></span></button>
       <h1 class="sc-h" id="scene-h" tabindex="-1" data-edit="site.nom"></h1>
       <button type="button" class="sc-pause" aria-pressed="false"><svg class="i-p" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 2.5h3v11h-3zM9.5 2.5h3v11h-3z"/></svg><svg class="i-l" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.5 2.2l9.2 5.8-9.2 5.8z"/></svg></button>
       <ul class="sc-titres"></ul>`;
@@ -4688,6 +4701,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // où elle commence à pousser. Sans mouvement : là d'emblée
     let couronne = null, toileC = null;
     const motEl = $('.sc-mot', el);
+    // la caresse (voir caresser) : la réaction en cours (genre, depuis quand, de quel côté), les caresses rapprochées, la lueur,
+    // les cœurs qui montent
+    const CAR = { genre: -1, t0: -1e9, cote: 1, n: 0, tN: -1e9, lueur: 0, coeurs: [], tPrec: 0 };
     let motPos = { x: 0, y: 0, w: 0 }, motG = 0, motOp = '', motRaf = 0;   // (« crescite » : sa place, sa venue, son opacité)
     // la profondeur, dans la seule toile : la pieuvre et ses tentacules qui mènent aux spectacles se peignent d'abord ; puis,
     // dessous (destination-over), leur ombre : la toile recopiée en noir dans une toile cinq fois plus petite (OMBRE), que
@@ -4909,7 +4925,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       // (la fenêtre qui passe d'un côté à l'autre de 760 px : le haut se pose sur la scène, ou retourne sous elle ; son fond suit
       // le nom de la scène, que l'observateur ne relit pas tant qu'il ne bouge pas)
       // (« crescite » sous la pieuvre : sa place et sa largeur, celles de la couronne (motCouronne))
-      motPos = { x: ox + COEUR[0] * s - 827 * .38 * s / 2, y: oy + (351 - 30 - 163 * .38) * s, w: 827 * .38 * s };
+      motPos = { x: ox + COEUR[0] * s - 827 * .38 * s / 2, y: oy + (351 - 110 - 163 * .38) * s, w: 827 * .38 * s };
       motEl.style.width = motPos.w.toFixed(1) + 'px'; motEl.style.transform = `translate(${motPos.x.toFixed(1)}px, ${motPos.y.toFixed(1)}px)`;
       if (affiche) { if (yMenu == null) { Menu.surScene(); majMot(); } else { Menu.el.classList.remove('sur-scene'); Menu.sousPieuvre(yMenu); majMot(); } }
       // les deux bouts du texte de chaque titre (tx0, tx1), par rapport à lui : c'est le texte que la tentacule souligne, pas le
@@ -5019,7 +5035,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       // (le jeu : le regard et le sursaut s'ajoutent à sa vie ; le sursaut agite ses tentacules)
       const pe = vivant && eveil !== null ? jouer(now, dtI) : 0;
       theta += JEU.rT; dxT += JEU.rx; dyT += JEU.ry;
-      const ondeJ = onde + 2.2 * pe;
+      const ca = vivant ? caresse(now) : null;
+      if (ca) { theta += ca.th; dxT += ca.dx; dyT += ca.dy; }
+      const ondeJ = onde + 2.2 * pe + (ca ? ca.onde : 0);
       // (la pieuvre ouverte : un de ses bras tient un titre, ou fait un geste ; ses tentacules décoratives se déploient alors)
       const ouverte = eveil !== null && BRAS.some(b => !b.t.decor && (b.but || b.geste));
       for (const a of BRAS) {
@@ -5073,6 +5091,10 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         if (gC < 1) occupe = true;
       }
       b.x0 -= 4; b.y0 -= 4; b.x1 += 18; b.y1 += 22;   // (l'ombre, décalée et adoucie)
+      // (les cœurs de la caresse, et la lueur autour de la tête)
+      const cxT = ox + bob.x + COEUR[0] * s, cyT = oy + bob.y + 560 * s;
+      if (CAR.coeurs.length || CAR.lueur > .01) { const R = 1042 * s * .7; b.x0 = Math.min(b.x0, cxT - R); b.x1 = Math.max(b.x1, cxT + R); b.y0 = Math.min(b.y0, cyT - R * 1.2); b.y1 = Math.max(b.y1, cyT + R); occupe = true; }
+      for (const c of CAR.coeurs) { b.x0 = Math.min(b.x0, c.x - 30); b.x1 = Math.max(b.x1, c.x + 30); b.y0 = Math.min(b.y0, c.y - 30); b.y1 = Math.max(b.y1, c.y + 30); }
       // le rebond de la pose : à la relève, le corps se ramasse puis se détend, bras compris (ils ne partent qu'ensuite)
       const kp = anime && eveil !== null ? (relaye ? 1 : 1 - .05 * choc((now - eveil) / 700)) * (secousse ? 1 - .035 * choc((now - secousse) / 520) : 1) : 1, cxh = ox + bob.x + COEUR[0] * s, cyh = oy + bob.y + COEUR[1] * s;
       const u = boite && kp === 1 ? { x0: Math.min(b.x0, boite.x0), y0: Math.min(b.y0, boite.y0), x1: Math.max(b.x1, boite.x1), y1: Math.max(b.y1, boite.y1) } : { x0: 0, y0: 0, x1: W, y1: H };
@@ -5108,6 +5130,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
           // (les plus enfoncées d'abord : elles passent derrière les autres ; celle qu'on regarde, devant tout)
           for (const a of [...BRAS].sort((x, y) => x.t.profondeur() - y.t.profondeur())) if (a !== ab) trace(a);
           if (ab) trace(ab);
+          dessinerCoeurs();
           // (les tentacules posées flottent, portées par les remous (PIEUVRE, flotter) : c'est ce mouvement qui invite à les
           // remonter ; plus de lueur qui court dessus)
           // (les titres et leurs dates sont devant, par-dessus la toile : rien n'y est effacé, les bras passent derrière les
@@ -5123,6 +5146,12 @@ html.still .sc-image { transition: opacity .35s ease !important; }
           // (elle vient en douceur à l'éveil : la pieuvre de l'ouverture, qu'elle relaie, n'en a pas)
           ctx.globalAlpha = .42 * (anime ? lisse(0, 1, (now - eveil) / 900) : 1); ctx.drawImage(cvO, x0, y0, x1 - x0, y1 - y0, x0 * k + 5 * dpr, y0 * k + 9 * dpr, (x1 - x0) * k, (y1 - y0) * k);
           if (couronne) { ctx.globalAlpha = .4; ctx.setTransform(repere); dessinerCouronne(gC, cxh, cyh); }
+          if (CAR.lueur > .01) {   // (caressée, elle rayonne : une lueur douce derrière sa tête)
+            ctx.setTransform(repere); ctx.globalAlpha = 1;
+            const R = 1042 * s * (.42 + .12 * CAR.lueur), x = ox + bob.x + COEUR[0] * s, y = oy + bob.y + 560 * s, g = ctx.createRadialGradient(x, y, R * .1, x, y, R);
+            g.addColorStop(0, `rgba(255, 214, 236, ${(.42 * CAR.lueur).toFixed(3)})`); g.addColorStop(1, 'rgba(255, 214, 236, 0)');
+            ctx.fillStyle = g; ctx.fillRect(x - R, y - R, 2 * R, 2 * R);
+          }
           ctx.restore();
           ctx.setTransform(1, 0, 0, 1, 0, 0);
         }
@@ -5148,7 +5177,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       // s'arrime)
       const tel = TEL.matches, m = Menu.el.getBoundingClientRect(), y = el.getBoundingClientRect().top + motPos.y;
       const p = tel ? clamp((y - 4) / 30, 0, 1) : Math.min(clamp((y - 4) / 120, 0, 1), clamp((m.top - 10) / 260, 0, 1)), op = (.86 * motG * p).toFixed(3);
-      if (op !== motOp) { motOp = op; motEl.style.opacity = op; }
+      if (op !== motOp) { motOp = op; motEl.style.opacity = op; motEl.style.visibility = +op ? '' : 'hidden'; }
+      // (sans mouvement, la caresse n'a rien à faire bouger : le mot n'est plus qu'un mot)
+      const vif = motionOK(); if (motEl.tabIndex !== (vif ? 0 : -1)) { motEl.tabIndex = vif ? 0 : -1; motEl.toggleAttribute('aria-hidden', !vif); motEl.style.cursor = vif ? '' : 'default'; }
       // (au téléphone, la barre reste sans fond, son nom et sa loupe repliés, tant que le mot est là)
       Menu.el.classList.toggle('sur-scene', tel && p > 0);
     }
@@ -5168,6 +5199,73 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       c.globalCompositeOperation = 'destination-in'; c.fillStyle = f; c.fillRect(-1e4, -1e4, 3e4, 3e4); c.globalCompositeOperation = 'source-over';
       ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(toileC, 0, 0); ctx.restore();
     }
+
+    /* ---------- la caresse ----------
+       Un clic (un toucher) sur « crescite », ou sur la tête de la pieuvre : on la caresse. Elle fond : elle rayonne d'une lueur
+       rose, des petits cœurs montent de sa tête, et tout tremble avec elle (sa tête, la couronne, le mot, les tentacules qui
+       ondulent depuis leurs racines), de l'une de quatre façons, au hasard, jamais deux fois la même de suite : la gelée (elle
+       tremblote, s'aplatit et s'étire), le câlin (elle penche la tête vers la main et s'y frotte), le ronron (un frisson rapide,
+       ses tentacules frémissent), le bond de joie (elle se ramasse et saute). Caressée encore (dans la seconde et demie), elle en
+       redemande : plus fort, plus de cœurs ; à la cinquième, elle fond tout à fait (une gerbe de cœurs). Moins d'animations :
+       rien ne bouge */
+    const DUREE_C = [900, 1400, 1300, 1000];
+    function caresser(x) {
+      if (!motionOK() || pause) return;
+      const now = performance.now();
+      CAR.n = now - CAR.tN < 1500 ? Math.min(CAR.n + 1, 6) : 1; CAR.tN = now;
+      let g; do g = Math.floor(Math.random() * 4); while (g === CAR.genre && Math.random() < .9);
+      CAR.genre = g; CAR.t0 = now; CAR.cote = x == null ? (Math.random() < .5 ? -1 : 1) : x < ox + COEUR[0] * s ? -1 : 1;
+      CAR.lueur = Math.max(CAR.lueur, .55 + .09 * CAR.n);
+      const nb = CAR.n >= 5 ? 16 : 3 + 2 * CAR.n, cx = ox + bob.x + COEUR[0] * s, cy = oy + bob.y + 470 * s, Lp = 1042 * s;
+      const C = ['#ffffff', '#ffc2de', '#ff8fc7', themeSaison().v];
+      for (let i = 0; i < nb; i++) {
+        const a = -Math.PI / 2 + (Math.random() - .5) * (CAR.n >= 5 ? 2.6 : 1.5), v = (60 + Math.random() * 90) * (CAR.n >= 5 ? 1.5 : 1);
+        CAR.coeurs.push({ x: cx + (Math.random() - .5) * Lp * .25, y: cy + (Math.random() - .5) * Lp * .1, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t0: now + i * 45, vie: 1300 + Math.random() * 900,
+          r: (5 + Math.random() * 6) * Math.max(.8, Math.min(1.4, Lp / 420)), col: C[Math.floor(Math.random() * C.length)], ph: Math.random() * 6.3 });
+      }
+      if (CAR.coeurs.length > 90) CAR.coeurs.splice(0, CAR.coeurs.length - 90);
+      motEl.classList.remove('c-0', 'c-1', 'c-2', 'c-3'); void motEl.offsetWidth; motEl.classList.add('c-' + g);
+      if (navigator.vibrate && matchMedia('(pointer: coarse)').matches) { try { navigator.vibrate(CAR.n >= 5 ? [10, 30, 10, 30, 16] : 8); } catch (e) { /* (refusé : rien) */ } }
+      reveil();
+    }
+    // une image de la caresse : ce qu'elle ajoute à la tête (th, dx, dy, en unités du dessin) et à l'ondulation ; les cœurs avancent
+    function caresse(now) {
+      const dts = Math.min(.05, (now - (CAR.tPrec || now)) / 1000); CAR.tPrec = now;
+      CAR.lueur *= Math.pow(.35, dts);
+      for (let i = CAR.coeurs.length - 1; i >= 0; i--) {
+        const c = CAR.coeurs[i];
+        if (now < c.t0) continue;
+        if (now - c.t0 > c.vie) { CAR.coeurs.splice(i, 1); continue; }
+        c.vx *= Math.pow(.4, dts); c.vy = c.vy * Math.pow(.5, dts) - 30 * dts;
+        c.x += (c.vx + Math.sin((now - c.t0) / 260 + c.ph) * 18) * dts; c.y += c.vy * dts;
+      }
+      const t = (now - CAR.t0) / 1000, d = (DUREE_C[CAR.genre] || 0) / 1000;
+      if (CAR.genre < 0 || t >= d) return null;
+      const u = t / d, k = 1 + .22 * Math.min(CAR.n - 1, 4), RAD = Math.PI / 180, cote = CAR.cote, env = Math.sin(Math.PI * u);
+      switch (CAR.genre) {
+        case 0: { const e = Math.exp(-4.2 * t); return { th: 4 * k * RAD * Math.sin(t * 17) * e, dx: 6 * k * Math.sin(t * 13 + 1) * e, dy: -16 * k * Math.sin(t * 22) * e, onde: 3 * e }; }
+        case 1: return { th: cote * (7 * env + 1.6 * Math.sin(t * 10) * env) * k * RAD, dx: cote * 16 * k * env, dy: -4 * env, onde: 1.6 * env };
+        case 2: { const e = Math.sqrt(env); return { th: .8 * RAD * Math.sin(t * 61) * e, dx: 3.2 * k * Math.sin(t * 95) * e, dy: 2.4 * k * Math.sin(t * 77) * e, onde: 4 * e }; }
+        default: {
+          // (le bond : elle se ramasse (vers le bas), saute, retombe, rebondit deux fois en s'apaisant)
+          const dy = u < .15 ? 12 * k * (u / .15) : u < .55 ? 12 * k - (60 * k + 12 * k) * Math.sin(Math.PI * (u - .15) / .8) : -14 * k * Math.abs(Math.sin(Math.PI * (u - .55) / .225)) * (1 - u) / .45;
+          return { th: cote * 3 * RAD * env, dx: 0, dy, onde: 2.4 * env };
+        }
+      }
+    }
+    // les cœurs : ils montent de sa tête en se balançant, grossissent un peu, puis pâlissent
+    function dessinerCoeurs() {
+      const now = performance.now();
+      for (const c of CAR.coeurs) {
+        if (now < c.t0) continue;
+        const u = (now - c.t0) / c.vie, a = u < .12 ? u / .12 : Math.pow(1 - (u - .12) / .88, 1.4), r = c.r * (.7 + .5 * Math.min(1, u * 3));
+        ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(Math.sin((now - c.t0) / 300 + c.ph) * .25); ctx.scale(r / 10, r / 10);
+        ctx.globalAlpha = a; ctx.fillStyle = c.col;
+        ctx.beginPath(); ctx.moveTo(0, 9); ctx.bezierCurveTo(-13, 0, -9, -11, 0, -4); ctx.bezierCurveTo(9, -11, 13, 0, 0, 9); ctx.fill();
+        ctx.restore();
+      }
+    }
+    motEl.addEventListener('click', () => caresser(null));
 
     /* ---------- le jeu (voir JEU) ---------- */
     // le regard et le sursaut, une image : la tête (JEU.rT, rx, ry, ajoutés à theta, dxT, dyT) ; rend l'ampleur du sursaut
@@ -5280,6 +5378,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         T = a ? a.T.reduce((x, y) => (d(y) < d(x) ? y : x)) : null;
       }
       if (T !== brasSurvol) { brasSurvol = T; el.classList.toggle('sur-bras', !!T); }
+      // (sur sa tête, la main : on peut la caresser)
+      el.classList.toggle('sur-tete', !T && eveil !== null && motionOK() && ((pointeur.x - ox - bob.x) / s - 700) ** 2 / 240 ** 2 + ((pointeur.y - oy - bob.y) / s - 560) ** 2 / 230 ** 2 < 1);
       reveil();
     }
     el.addEventListener('pointermove', bouger, { passive: true });
@@ -5288,8 +5388,10 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     el.addEventListener('click', e => {
       if (e.target.closest('a, button')) return;
       if (performance.now() - JEU.avale < 500) { JEU.avale = 0; return; }
-      const r = el.getBoundingClientRect(), a = brasSous({ x: e.clientX - r.left, y: e.clientY - r.top }, mobile ? 30 : 16, true);
-      if (a && a.tenu) { e.preventDefault(); remonter(a.tenu); }
+      const r = el.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, a = brasSous({ x, y }, mobile ? 30 : 16, true);
+      if (a && a.tenu) { e.preventDefault(); remonter(a.tenu); return; }
+      // (sur sa tête (l'arche, l'œil) : on la caresse)
+      if (eveil !== null && ((x - ox - bob.x) / s - 700) ** 2 / 240 ** 2 + ((y - oy - bob.y) / s - 560) ** 2 / 230 ** 2 < 1) caresser(x);
     });
     el.addEventListener('pointerdown', e => { if (e.pointerType === 'touch' && !mobile && survol && !e.target.closest('.sc-t')) { survol = null; reveil(); } }, { passive: true });
     function ecouter(T) {
@@ -9249,14 +9351,16 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     succion.getAnimations().forEach(a => a.cancel());
     succion.animate([{ opacity: .95, scale: 1.5 }, { opacity: .9, scale: .82, offset: .55 }, { opacity: 0, scale: .9 }], { duration: 380, easing: SOUPLE });
   };
+  // (pas pour un geste qui joue avec la pieuvre elle-même : la caresser, tirer une tentacule ; elle doit y répondre à l'instant)
+  const avecPieuvre = t => t && t.closest && t.closest('.scene') && !t.closest('a[href]');
   addEventListener('pointerdown', e => {
-    Scene.suspendre(650);
+    if (!avecPieuvre(e.target)) Scene.suspendre(650);
     if (e.button > 0) return;
     const c = e.target.closest && e.target.closest('a[href], button, summary, label, [role="button"]');
     if (!c || c.closest('.scene, .intro, .frise, [class^="ed-"], [class*=" ed-"]')) return;
     ventouse(e.clientX, e.clientY, c);
   }, { capture: true, passive: true });
-  addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') Scene.suspendre(650); }, { capture: true, passive: true });
+  addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && !avecPieuvre(e.target)) Scene.suspendre(650); }, { capture: true, passive: true });
   // (un geste dans la page qui la refait sur place, un filtre, une date, une lettre de recherche : les créatures laissent passer
   // leurs images le temps qu'il se fasse, 450 ms ; la petite pieuvre de l'en-tête dessinait les siennes, 10 ms par image au
   // bureau, dans les images mêmes du geste, au-delà de 50 ms. Un lien qui change de page a son moment à lui, route())

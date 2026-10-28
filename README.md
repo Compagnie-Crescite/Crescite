@@ -70,7 +70,9 @@ sa tête et refont le logo de la compagnie autour d'elle, « crescite » dessous
 sous la pieuvre et ses tentacules colorées, qui portent une ombre douce et flottent au premier plan. En haut de
 l'accueil, pas de barre : seulement « crescite », au-dessus de la pieuvre, qui devient « Compagnie Crescite » dans la
 barre quand on descend (il s'efface pendant qu'elle déplie son nom) ; la loupe n'est que dans cette barre, et le bouton
-pause ne paraît qu'au clavier. La page de chaque spectacle prend son
+pause ne paraît qu'au clavier. « crescite » flotte ; on caresse la pieuvre d'un clic sur lui ou sur sa tête : elle
+fond (une lueur rose, des cœurs qui montent) et tout tremble avec elle, la couronne et le mot compris, de l'une de quatre
+façons au hasard (la gelée, le câlin, le ronron, le bond de joie) ; caressée encore, elle en redemande. La page de chaque spectacle prend son
 univers (couleurs, police de titre, motif, photos, citations) et se lit selon trois entrées, ses onglets : « Je viens voir
 un spectacle », « Je souhaite programmer », « Je représente un établissement scolaire » (`#/spectacle/berenice/voir`,
 `…/programmer`, `…/etablissement`) ; la dernière entrée choisie sert de défaut. Les anciennes adresses (`#/voir`,
