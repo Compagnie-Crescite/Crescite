@@ -106,15 +106,12 @@
   // (sur les cartes du jour et de la nuit, celles d'index.html ; sans univers, la couleur de la saison, posée par le build)
   const saison = () => getComputedStyle(document.documentElement).getPropertyValue('--saison').trim();
   const couleurs = s => { const c = s?.univers?.couleurs || {}, u = [c.scene, c.accent, c.texte, saison()].find(hexa) || '#5f565a'; return `--ul:${lisible(u, '#fffdf9')};--us:${lisible(u, '#2e2128')}`; };
-  // la police du titre (celle de son univers), chargée pour ce seul titre
+  // la police du titre (celle de son univers), rangée avec celles du site (../polices/polices.css) : le navigateur ne la
+  // télécharge que si un titre s'en sert ; absente de scripts/polices.py, la police de secours
   function police(s) {
     const p = s?.univers?.polices, fam = txt(p?.titre);
     if (!fam || !/^[A-Za-z0-9 -]{2,40}$/.test(fam) || !s.titre) return '';
     const g = [100, 200, 300, 400, 500, 600, 700, 800, 900].includes(+p.titreGraisse) ? +p.titreGraisse : 600;
-    const l = document.createElement('link');
-    l.rel = 'stylesheet'; l.crossOrigin = 'anonymous';
-    l.href = `https://fonts.googleapis.com/css2?family=${fam.replace(/ /g, '+')}:wght@${g}&display=swap&text=${encodeURIComponent([...new Set(String(s.titre))].join(''))}`;
-    document.head.append(l);
     return `font-family:'${fam}', var(--serif);font-weight:${g}`;
   }
   const photo = f => f ? `${PUBLIC}/${String(f).split('/').map(encodeURIComponent).join('/')}` : '';

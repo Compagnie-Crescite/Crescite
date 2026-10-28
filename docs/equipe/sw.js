@@ -10,7 +10,7 @@
    d'abord par le réseau.
 
    Jamais gardés : l'authentification, la fonction d'envoi, les liens signés des documents, et toute écriture. */
-const VERSION = 'ca4cd1f93259';
+const VERSION = '62963c1fffc6';
 const DEV = VERSION.startsWith('__');
 const COQUILLE = `crescite-equipe-coquille-${VERSION}`;   // l'application elle-même, par version
 const OUTILS = 'crescite-equipe-outils';                  // ce qu'elle charge à la demande (pdfmake pour les PDF)
@@ -57,8 +57,9 @@ self.addEventListener('fetch', e => {
     else if (url.pathname.startsWith('/storage/v1/object/public/')) e.respondWith(media(req, e));
     return;
   }
-  if (url.origin === 'https://fonts.googleapis.com' || url.origin === 'https://fonts.gstatic.com') { e.respondWith(media(req, e)); return; }
   if (url.origin !== self.location.origin) return;
+  // les polices du site (../polices/), gardées au passage comme les photos
+  if (url.pathname.startsWith(new URL('../polices/', self.registration.scope).pathname)) { e.respondWith(media(req, e)); return; }
   const portee = new URL(self.registration.scope);
   if (req.mode === 'navigate') {
     if (url.pathname === portee.pathname || url.pathname === `${portee.pathname}index.html`) e.respondWith(page(req));

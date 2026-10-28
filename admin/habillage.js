@@ -5,8 +5,8 @@
    colorées, des tuiles à icônes, des boutons en dégradé. Chargé en dernier : ses règles passent après celles d'index.html
    et des modules (equipe.js, planning.js, disponibilites.js, tableau.js, gestes.js, menus.js), qui gardent la structure
    et le comportement ; ici, rien que l'apparence, la nuit (par défaut) comme le jour (data-theme="jour"), aux couleurs
-   (--accent, --carte, --trait, --doux…) que tout le monde lit. Les polices viennent de Google Fonts (index.html) ; sans
-   elles, le système. */
+   (--accent, --carte, --trait, --doux…) que tout le monde lit. Les polices sont rangées à côté du site (../polices/, que lit
+   index.html) ; sans elles, le système. */
 (() => {
   document.head.insertAdjacentHTML('beforeend', `<style id="styles-habillage">
 /* ===================================================================================================== les couleurs */

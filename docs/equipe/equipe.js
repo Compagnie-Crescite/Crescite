@@ -224,22 +224,12 @@
     if (d) return couleurs(d.spectacle).u;
     return getComputedStyle(document.documentElement).getPropertyValue('--magenta').trim() || couleurSaison();
   }
-  // la police du titre d'un spectacle (celle de son univers), chargée à la demande pour ce seul titre
-  const POLICES = new Set();
+  // la police du titre d'un spectacle (celle de son univers), rangée avec celles du site (../polices/polices.css) : le
+  // navigateur ne la télécharge que si un titre s'en sert ; absente de scripts/polices.py, la police de secours
   function police(sp) {
     const p = sp && sp.univers && sp.univers.polices, fam = p && txt(p.titre);
     if (!fam || !/^[A-Za-z0-9 -]{2,40}$/.test(fam) || !sp.titre) return null;
     const g = [100, 200, 300, 400, 500, 600, 700, 800, 900].includes(+p.titreGraisse) ? +p.titreGraisse : 600;
-    const lettres = [...new Set(String(sp.titre))].join('');
-    const cle = `${fam}|${g}|${lettres}`;
-    if (!POLICES.has(cle)) {
-      POLICES.add(cle);
-      const l = document.createElement('link');
-      l.rel = 'stylesheet';
-      l.crossOrigin = 'anonymous';
-      l.href = `https://fonts.googleapis.com/css2?family=${fam.replace(/ /g, '+')}:wght@${g}&display=swap&text=${encodeURIComponent(lettres)}`;
-      document.head.append(l);
-    }
     return { famille: `'${fam}', var(--serif)`, graisse: g };
   }
   const photoDe = sp => {
