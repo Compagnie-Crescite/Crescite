@@ -4,6 +4,9 @@ Dépôt de travail pour la reprise en main du site [crescite.fr](https://crescit
 L'audit complet, les 10 évolutions proposées et la feuille de route sont dans le document privé
 « Audit crescite.fr et Crescite 2.0 » (Claude Docs). Ce dépôt contient les pièces techniques publiables.
 
+**En cas de panne** (le site ne répond plus, la base est injoignable, les courriels ne partent plus), ou pour
+l'éviter : [`PANNE.md`](PANNE.md).
+
 > Ce dépôt est **public**. Le logo 2.0 et les photos des spectacles (droits des photographes) n'y sont
 > volontairement pas versionnés : ils vont dans `private/`, dossier exclu par `.gitignore`. L'audit (avec ses
 > constats de sécurité) reste dans le document privé.
@@ -60,7 +63,20 @@ bash site/bancs-admin.sh           # le build, puis tous les bancs de l'administ
 node site/reactivite.mjs /tmp/x index --strict  # les budgets de réactivité du site, au bureau et au téléphone ralenti ×4
 AXE=<axe.min.js> node site/passe-site.mjs       # la passe finale : axe, 360 px, erreurs, nuit, sur chaque route
 python3 data/site_crescite.py      # relève de nouveau le texte de l'ancien crescite.fr (data/site-crescite.json)
+python3 scripts/polices.py         # télécharge de nouveau les polices dans site/polices/ (seulement pour en ajouter une)
+python3 supabase/portraits.py --essai  # réduit à 800 px les portraits déjà déposés (sans --essai : la clé service du projet de la compagnie)
 ```
+
+**Les polices** sont rangées dans le site (`site/polices/` : woff2, latin et latin étendu, avec leurs licences ; le build
+les copie dans `polices/` à côté des pages) : aucune page ne demande rien à Google Fonts, et le site marche tel quel chez
+n'importe quel hébergeur. Une nouvelle police (celle du titre d'un nouvel univers) s'ajoute à `FAMILLES` dans
+`scripts/polices.py`, qu'on relance avant le build ; absente de la liste, elle laisse sa place à la police de secours.
+
+**La bande passante de Supabase.** Le plan gratuit compte ce que le stockage sert ; en octobre 2026, les portraits de
+l'équipe (2 000 px, 270 Ko chacun, téléchargés à chaque visite et par chaque contrôle du site) l'avaient épuisée.
+L'administration envoie désormais un portrait à 800 px (`PORTRAIT_PX`), `supabase/portraits.py` réduit ceux qui y
+sont déjà, et les contrôles dans Chromium (`onglets`, `passe-site`, `reactivite`, `shoot`) demandent chaque fichier du
+stockage une seule fois par machine (`site/stockage-local.mjs`, `STOCKAGE=0` pour ne rien demander).
 
 Un seul site, celui de la compagnie (les dix maquettes et le premier prototype qui l'ont précédé ont été retirés en
 octobre 2026 ; ils restent dans l'historique du dépôt). Son texte vient des sources et de rien d'autre : le texte de
@@ -69,7 +85,21 @@ contact), plus Cassandres, création 2027, **le dossier scolaire de Bérénice**
 son action culturelle** (`data/univers-spectacles.json`, repris des pages d'adrienvada.fr et du dossier artistique
 2027-2028) ; s'ajoutent seulement la **carte des tournées** (`site/src/carte.js`) et quelques intitulés de rubrique
 (`D.site.libelles`). Il **s'ouvre sur le logo en grand** (`site/src/intro.js`) : au clic, à la molette ou en glissant
-vers le bas, ses tentacules ondulent, il grossit et le site apparaît à travers lui. La page de chaque spectacle prend son
+vers le bas, ses tentacules ondulent, il grossit et le site apparaît à travers lui. D'ici là, la pieuvre joue avec le
+pointeur : elle le regarde, une de ses queues s'allonge jusqu'à lui et s'y enroule quand il s'arrête de son côté, elle
+sursaute quand il fonce sur elle ; on peut l'attraper et la tirer (lâchée assez loin, ou d'un coup sec, elle part ; sinon
+elle revient d'un ressort), et une lampe la suit derrière elle. Au départ, ses tentacules se déplient vers les spectacles
+pendant que leurs racines rejoignent la tête (plus de nœud au-dessus du corps), et la pieuvre de l'accueil continue le
+jeu : elle regarde la souris, sursaute, la lampe la suit, et une tentacule tendue se laisse tirer (au doigt, après un
+appui tenu), puis revient tenir son titre d'un ressort. Quand chaque titre est tenu, de nouvelles tentacules poussent de
+sa tête et refont le logo de la compagnie autour d'elle, « crescite » dessous, sobrement (la couronne) : au loin, pâle,
+sous la pieuvre et ses tentacules colorées, qui portent une ombre douce et flottent au premier plan. En haut de
+l'accueil, pas de barre : seulement « crescite », au-dessus de la pieuvre, qui devient « Compagnie Crescite » dans la
+barre quand on descend (il s'efface pendant qu'elle déplie son nom) ; la loupe n'est que dans cette barre, et le bouton
+pause ne paraît qu'au clavier. « crescite » flotte ; on caresse la pieuvre d'un clic sur lui ou sur sa tête : elle
+tremble, la couronne et le mot avec elle, de l'une de quatre façons au hasard (la gelée, le câlin, le ronron, le bond de
+joie), et la poursuite la trouve, comme au théâtre (un faisceau de lumière chaude descend sur elle, puis s'éteint) ;
+caressée encore, elle en redemande. La page de chaque spectacle prend son
 univers (couleurs, police de titre, motif, photos, citations) et se lit selon trois entrées, ses onglets : « Je viens voir
 un spectacle », « Je souhaite programmer », « Je représente un établissement scolaire » (`#/spectacle/berenice/voir`,
 `…/programmer`, `…/etablissement`) ; la dernière entrée choisie sert de défaut. Les anciennes adresses (`#/voir`,
@@ -146,8 +176,8 @@ tentacule attrape le médaillon du métier qu'on lit, qui s'anime. Choisir quelq
 sa fiche s'ouvre par-dessus sa photo (plus bas) ; la pieuvre sursaute, puis ses tentacules, lumineuses, vont tenir la
 fiche et ses autres places (`c.tenir`), à la place des fils des liens.
 
-**Le rideau et la page qui se compose.** Ouvrir une page par le menu (ou arriver sur le site ailleurs que par l'ouverture
-de l'accueil) fait tomber un court noir, le rideau (`Rideau`, dans `index.html`) : la pieuvre y nage au milieu, une
+**Le rideau et la page qui se compose.** Passer d'une partie du menu à une autre (jamais vers l'accueil, ni à l'arrivée
+sur le site : lancé à sa racine, le site s'ouvre toujours sur le logo, `INTRO`) fait tomber un court noir, le rideau (`Rideau`, dans `index.html`) : la pieuvre y nage au milieu, une
 créature aux vraies tentacules, à la couleur de la saison. Après 420 ms, le rideau s'ouvre en deux comme au théâtre
 (480 ms), la pieuvre remonte à sa place dans le menu, et la page, déjà là dessous (son titre a le focus), se compose
 (`composer`) : un trait de lumière descend l'écran et chaque ligne s'écrit quand il l'atteint, de gauche à droite (un
@@ -371,8 +401,8 @@ compte du projet inscrit dans `crescite_admins`.
     l'appareil sans le script 6, les menus (clic droit, appui long, Maj+F10) et leurs actions directes, les flèches,
     précédent / suivant, le Kanban glissé, le téléphone, le sombre, les repères de la page ; captures dans `site/dist/shots-tableau/`).
 - **L'habillage** (`admin/habillage.js`, chargé en dernier : rien que l'apparence) : les polices du site (Ubuntu pour
-  les titres, Open Sans pour le texte, Raleway pour les étiquettes en capitales espacées, par Google Fonts ; sans
-  réseau, le système), les neutres du site et la couleur de la saison, un en-tête et un menu latéral de nuit (la pieuvre et la rubrique
+  les titres, Open Sans pour le texte, Raleway pour les étiquettes en capitales espacées, rangées à côté du site dans
+  `polices/` ; sans elles, le système), les neutres du site et la couleur de la saison, un en-tête et un menu latéral de nuit (la pieuvre et la rubrique
   courante à la couleur de la saison), des cartes douces et un dégradé de la saison pour ce qui s'enregistre, chaque tuile du tableau
   de bord avec son icône et sa couleur (corail pour ce qui attend, ambre pour la tournée, indigo pour les dates, sauge
   pour les chiffres, prune pour l'équipe, ciel pour la diffusion), un bandeau du jour en tête du tableau (bonjour, le
@@ -424,8 +454,8 @@ compte du projet inscrit dans `crescite_admins`.
     `site/dist/shots-planche/planche.html` : une grille de vignettes sur trois colonnes, une table des matières, et sous chaque
     vignette sa légende (la page, la largeur, le thème, le menu, le lot du plan, la police effective), avec en tête la date et la
     version du code (l'identifiant court du commit, « + modifications locales » s'il n'est pas propre, et la branche). Un clic sur
-    une vignette l'ouvre en grand. Les polices de Google (Ubuntu, Open Sans, Raleway) sont demandées ; sans réseau, ce sont celles
-    du système, et chaque légende le dit (« polices du système »). Rien de cela n'est commité.
+    une vignette l'ouvre en grand. Les polices du site (Ubuntu, Open Sans, Raleway, rangées dans `polices/`) sont servies ;
+    sans elles, ce sont celles du système, et chaque légende le dit (« polices du système »). Rien de cela n'est commité.
 - **Les fenêtres ajustables** (`admin/fenetres.js`, chargé avant le tiroir) : à l'ordinateur, le bord d'une surface se tire.
   Une poignée est une bande invisible de 6 px au bord ; au survol ou au clavier, une ligne de 2 px à la couleur de la
   saison paraît, et le curseur dit le sens. Le bord gauche du tiroir se tire (de 480 px à l'écran moins 80 px : le voile

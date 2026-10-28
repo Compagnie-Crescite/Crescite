@@ -46,10 +46,9 @@
 <meta name="apple-mobile-web-app-title" content="Admin Crescite">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <title>Administration · Compagnie Crescite</title>
-<!-- les polices de la compagnie (celles du site) : Ubuntu pour les titres, Open Sans pour le texte, Raleway pour les étiquettes ; sans réseau, le système -->
-<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Open+Sans:wght@400;500;600;700&family=Raleway:wght@600;700;800&display=swap" crossorigin>
+<!-- les polices de la compagnie (celles du site) : Ubuntu pour les titres, Open Sans pour le texte, Raleway pour les étiquettes ;
+     rangées à côté du site, dans polices/ (scripts/polices.py) -->
+<link rel="stylesheet" href="../polices/polices.css">
 <style>
 /* La charte du site public (site/src/index.html) : ses neutres (le papier, l'encre, le filet), ses polices, sa
    nuit par défaut ; l'accent est la couleur de la saison (règle 22 du contrat), que site/build.py pose après cette
@@ -1358,11 +1357,13 @@ function propre(html) {
   return [...t.content.childNodes].map(sortie).join('').replace(/(<br\/>\s*)+$/, '').replace(/&nbsp;/g, ' ').trim();
 }
 
-// des photos plus légères avant l'envoi : 2 000 px au plus, en WebP
-async function optimiser(fichier) {
+// des photos plus légères avant l'envoi : 2 000 px au plus, en WebP ; 800 px pour un portrait (PORTRAIT_PX), qui ne
+// s'affiche jamais à plus de 250 px : chaque visite le télécharge chez Supabase, dont le plan gratuit compte la bande passante
+const PORTRAIT_PX = 800;
+async function optimiser(fichier, max = 2000) {
   try {
     const img = await createImageBitmap(fichier);
-    const k = Math.min(1, 2000 / Math.max(img.width, img.height));
+    const k = Math.min(1, max / Math.max(img.width, img.height));
     const c = document.createElement('canvas');
     c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
     c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
@@ -1370,8 +1371,8 @@ async function optimiser(fichier) {
     return blob && blob.size < fichier.size ? blob : fichier;
   } catch { return fichier; }
 }
-async function envoyerPhoto(fichier, dossier) {
-  const blob = await optimiser(fichier);
+async function envoyerPhoto(fichier, dossier, max) {
+  const blob = await optimiser(fichier, max);
   const ext = blob.type === 'image/webp' ? 'webp' : (fichier.name.split('.').pop() || 'jpg').toLowerCase();
   const chemin = `${dossier}/${Date.now().toString(36)}-${slugifier(fichier.name.replace(/\.[^.]+$/, '')) || 'photo'}.${ext}`;
   const { error } = await sb.storage.from('crescite').upload(chemin, blob, { contentType: blob.type || fichier.type, upsert: false, cacheControl: '31536000' });
@@ -3930,7 +3931,7 @@ const SPEC_SPECTACLE = {
     { k: 'univers.couleurs.texte', t: 'couleur', l: 'Texte' }, { k: 'univers.couleurs.texte2', t: 'couleur', l: 'Texte secondaire' },
     { k: 'univers.couleurs.accent', t: 'couleur', l: 'Accent' }, { k: 'univers.couleurs.accent2', t: 'couleur', l: 'Accent pour du texte' },
     { k: 'univers.couleurs.scene', t: 'couleur', l: 'Couleur de scène (cartes, listes)' }, { k: 'univers.couleurs.lueur', t: 'texte', l: 'Lueur', ph: 'rgba(207,55,35,0.22)' },
-    { k: 'univers.polices.titre', t: 'texte', l: 'Police des titres', aide: 'Une police Google Fonts : Ubuntu, Cormorant Garamond…' },
+    { k: 'univers.polices.titre', t: 'texte', l: 'Police des titres', aide: 'Une police rangée dans le site : Ubuntu, Cormorant Garamond, Anton, Bodoni Moda… (une nouvelle s’y ajoute par scripts/polices.py)' },
     { k: 'univers.polices.titreGraisse', t: 'nombre', l: 'Graisse des titres', ph: '700' },
     { k: 'univers.polices.texte', t: 'texte', l: 'Police du texte' }, { k: 'univers.polices.etiquette', t: 'texte', l: 'Police des étiquettes' },
   ],

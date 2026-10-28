@@ -8,6 +8,7 @@ import { createServer } from 'node:http';
 import { readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { join, extname, resolve } from 'node:path';
 import { createRequire } from 'node:module';
+import { garderStockage } from './stockage-local.mjs';   // (les portraits du stockage : une fois par machine)
 
 const PW = process.env.PLAYWRIGHT_MODULE || '/opt/node22/lib/node_modules/playwright/index.mjs';
 const args = process.argv.slice(2), opt = k => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : null; };
@@ -25,7 +26,7 @@ await new Promise(ok => serveur.listen(+(opt('--port') || 0), '127.0.0.1', ok));
 const BASE = `http://127.0.0.1:${serveur.address().port}/index.html?base=0&anim=0&intro=0`;
 
 const { chromium } = await import(PW);
-const browser = await chromium.launch({ args: ['--no-sandbox'] });
+const browser = garderStockage(await chromium.launch({ args: ['--no-sandbox'] }));
 // les routes : les pages du menu et leurs sous-pages, chaque spectacle et ses onglets, les textes légaux, une adresse inconnue
 const routes = await (async () => {
   const p = await browser.newPage(); await p.goto(BASE + '#/', { waitUntil: 'load' }); await p.waitForTimeout(800);

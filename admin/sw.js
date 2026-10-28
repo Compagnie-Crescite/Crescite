@@ -14,9 +14,11 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url), portee = new URL(self.registration.scope);
   if (url.origin !== self.location.origin) return;
-  // la page (quelle que soit la suite de l'adresse) et ce qu'elle charge à côté d'elle, ou des icônes de l'espace de l'équipe
+  // la page (quelle que soit la suite de l'adresse) et ce qu'elle charge à côté d'elle, des icônes de l'espace de l'équipe
+  // ou les polices du site
   const page = req.mode === 'navigate';
-  if (!page && !url.pathname.startsWith(portee.pathname) && !url.pathname.startsWith(new URL('../equipe/icones/', portee).pathname)) return;
+  if (!page && !url.pathname.startsWith(portee.pathname) && !url.pathname.startsWith(new URL('../equipe/icones/', portee).pathname)
+      && !url.pathname.startsWith(new URL('../polices/', portee).pathname)) return;
   e.respondWith((async () => {
     const c = await caches.open(COQUILLE);
     try {

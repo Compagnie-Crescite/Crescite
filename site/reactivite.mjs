@@ -18,6 +18,7 @@
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { loadavg } from 'node:os';
 import { pathToFileURL } from 'node:url';
+import { garderStockage } from './stockage-local.mjs';   // (les portraits du stockage : une fois par machine)
 
 const PW = process.env.PLAYWRIGHT_MODULE || '/opt/node22/lib/node_modules/playwright/index.mjs';
 export const BUDGETS = { inpBureau: 100, inpTelephone: 200, contenuBureau: 150, tacheGeste: 50, cls: 0.05 };
@@ -201,7 +202,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   if (!out || !names.length) { console.error('usage : node site/reactivite.mjs <dossier de sortie> m03 [m04 …] [--strict] [--dist <dossier>]'); process.exit(2); }
   mkdirSync(out, { recursive: true });
   const { chromium } = await import(PW);
-  const browser = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--no-sandbox'] });
+  const browser = garderStockage(await chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--no-sandbox'] }));
   const rapport = {}, tous = [];
   let code = 0;
   fin: for (const n of names) {

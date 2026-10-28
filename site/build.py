@@ -447,7 +447,7 @@ LIBELLES = {
     "public": "Public", "ateliers": "Ateliers", "duree": "Durée", "jauge": "Jauge", "format": "Format",
     "distribution": "Distribution", "representations": "Représentations", "lieuxDiffusion": "Lieux de diffusion",
     "ficheTechnique": "Fiche technique", "conditionsAccueil": "Conditions d’accueil", "bandeAnnonce": "Bande-annonce",
-    "ecrire": "Écrire à la compagnie", "leSpectacle": "Le spectacle", "lesSpectacles": "Les spectacles",
+    "ecrire": "Écrire à la compagnie", "leSpectacle": "Le spectacle", "lesSpectacles": "Les spectacles", "ancienneDistribution": "Ancienne distribution", "distributionsPrecedentes": "Distributions précédentes",
     "ouverture": "Ouverture", "dates": "Dates", "photos": "Photos", "dossierScolaire": "Dossier scolaire",
     "modifierSite": "Modifier le site",
     # « Je souhaite programmer » : ce qu'il faut à un programmateur ou un directeur de salle
@@ -679,7 +679,8 @@ def equipe_data():
                              "photo": f"{STOCKAGE}/{quote(photos[p['slug']][0])}" if p["slug"] in photos else None,
                              "credit": photos[p["slug"]][1] if p["slug"] in photos else None} for p in E["personnes"]}
     equipes = {slug: [{"personne": x["personne"], "categorie": x["categorie"], "fonction": x.get("fonction", ""),
-                       "role": x.get("role"), "alternance": x.get("alternance")} for x in lignes if x.get("publie", True)]
+                       "role": x.get("role"), "alternance": x.get("alternance"),
+                       "enTournee": x.get("en_tournee", True)} for x in lignes if x.get("publie", True)]
                for slug, lignes in E["distributions"].items()}
     return personnes, equipes
 
@@ -1113,6 +1114,19 @@ def poser_saison(page):
     page.write_text(html.replace("</head>", style, 1), encoding="utf-8")
 
 
+def polices(dest):
+    """Les polices du site (site/polices/, écrites par scripts/polices.py), une seule fois dans dest/polices/ : le site les
+    lit par polices/polices.css, l'administration et les trois espaces par ../polices/polices.css. Aucune requête vers
+    Google Fonts ; sans ce dossier (polices pas encore téléchargées), chaque page prend les polices du système."""
+    import shutil
+    src = SRC.parent / "polices"
+    if not (src / "polices.css").exists():
+        print("polices : site/polices/ est vide (python3 scripts/polices.py) ; les pages prennent les polices du système")
+        return
+    shutil.rmtree(dest / "polices", ignore_errors=True)
+    shutil.copytree(src, dest / "polices", ignore=shutil.ignore_patterns(".*"))
+
+
 def admin(dest):
     """L'administration (admin/index.html, son client Supabase et l'outil des lignes d'agenda), à côté des maquettes, avec
     les outils communs qu'elle charge ou chargera : tentacules.js, frise.js (FRISE) et mouvement.js (MOUVEMENT). Elle
@@ -1302,6 +1316,7 @@ await navigateur.close();
         h = hashlib.sha256()
         fichiers = sorted(f for f in out.rglob("*") if f.is_file() and f != sw)
         fichiers += [dest / "admin" / x for x in ("vendor/supabase.js", "agenda.js", "feuille.js", "tentacules.js", "gestes.js", "planning.js", "logo.js")]
+        fichiers += [dest / "polices" / "polices.css"]
         for f in fichiers:
             if f.is_file():
                 h.update(str(f.relative_to(dest)).encode())
@@ -1369,6 +1384,7 @@ def pages(D, files, names):
         (docs / f"{n}.html").write_text(html, encoding="utf-8")
     # l'ancienne adresse du site (docs/index.html, celle des courriels déjà envoyés) mène à l'index, son adresse gardée
     (docs / "synthese.html").write_text(ANCIENNE_ADRESSE, encoding="utf-8")
+    polices(docs)
     admin(docs)
     equipe(docs)
     pro(docs)
@@ -1389,6 +1405,7 @@ def main():
         out = DIST / f"{n}.html"
         out.write_text(assemble(n, D, photo_urls), encoding="utf-8")
         print(f"wrote {out.relative_to(ROOT)} ({out.stat().st_size / 1024:.0f} Ko)")
+    polices(DIST)
     admin(DIST)
     equipe(DIST)
     pro(DIST)

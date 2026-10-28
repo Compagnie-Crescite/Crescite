@@ -4,9 +4,10 @@
 // Variables : PLAYWRIGHT_MODULE (chemin du module playwright), CHROMIUM (exécutable), PARALLELE (captures à la fois).
 const PW = process.env.PLAYWRIGHT_MODULE || '/opt/node22/lib/node_modules/playwright/index.mjs';
 const { chromium } = await import(PW);
+const { garderStockage } = await import('./stockage-local.mjs');   // (les portraits du stockage : une fois par machine)
 const [out, ...names] = process.argv.slice(2);
 const dist = new URL('./dist/', import.meta.url);
-const browser = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--no-sandbox'] });
+const browser = garderStockage(await chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--no-sandbox'] }));
 const VUES = [
   ['home', { width: 1440, height: 900 }, {}],
   ['show', { width: 1440, height: 900 }, { hash: '#/spectacle/berenice/voir' }],

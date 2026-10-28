@@ -7,7 +7,7 @@
 //   largeur, hauteur, hash   la fenêtre (1 600 × 1 000) et l'adresse d'ouverture
 //   sombre                   le réglage du système (colorScheme), pas le thème de l'administration
 //   reduit                   prefers-reduced-motion: reduce
-//   polices                  ne pas couper les polices de Google (coupées par défaut : hors ligne, celles du système)
+//   polices                  servir les polices du site (site/dist/polices/, que build.py y range ; coupées par défaut : celles du système)
 //   prefsAbsentes            la base n'a pas crescite_preferences (le script SQL 6 n'est pas passé)
 //   tactile                  hasTouch et isMobile (par défaut sous 600 px de large, forçable à toute largeur)
 //   latence                  une base lente : ce nombre de ms à chaque lecture
@@ -29,15 +29,15 @@ import { fileURLToPath } from 'node:url';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || '/opt/node22/lib/node_modules/playwright/index.mjs');
 
 const ICI = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.resolve(ICI, '..');
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.json': 'application/json', '.svg': 'image/svg+xml', '.ttf': 'font/ttf', '.png': 'image/png' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.json': 'application/json', '.svg': 'image/svg+xml', '.ttf': 'font/ttf', '.png': 'image/png', '.css': 'text/css', '.woff2': 'font/woff2' };
 // admin/ tel qu'il est publié : ses fichiers, et les outils communs que build.py copie à côté (agenda.js, tentacules.js…) ;
 // après le build, ce qu'il écrit lui-même vient de site/dist/ : la page (les couleurs de la saison posées), le logo et
-// les icônes ; le reste, des sources
+// les icônes, et les polices du site (polices/, à côté d'admin/) ; le reste, des sources
 const DIST = path.join(ICI, 'dist');
 const serveur = http.createServer((req, res) => {
   const chemin = decodeURIComponent(new URL(req.url, 'http://x').pathname), rel = chemin.replace(/^\/admin\//, '');
-  const ecrit = chemin.startsWith('/equipe/icones/') ? [path.join(DIST, chemin)] : ['index.html', 'logo.js'].includes(rel) ? [path.join(DIST, 'admin', rel)] : [];
-  const p = (chemin.startsWith('/equipe/') ? ecrit : [...ecrit, path.join(ROOT, 'admin', rel), path.join(ICI, 'src', rel)])
+  const ecrit = chemin.startsWith('/equipe/icones/') || chemin.startsWith('/polices/') ? [path.join(DIST, chemin)] : ['index.html', 'logo.js'].includes(rel) ? [path.join(DIST, 'admin', rel)] : [];
+  const p = (chemin.startsWith('/equipe/') || chemin.startsWith('/polices/') ? ecrit : [...ecrit, path.join(ROOT, 'admin', rel), path.join(ICI, 'src', rel)])
     .find(f => f.startsWith(ROOT) && fs.existsSync(f) && fs.statSync(f).isFile());
   if (!p) { res.writeHead(404); return res.end(); }
   res.writeHead(200, { 'content-type': TYPES[path.extname(p)] || 'application/octet-stream', 'cache-control': 'no-store' });
@@ -158,7 +158,7 @@ async function ouvrir(navigateur, { largeur = 1600, hauteur = 1000, hash = '', s
   if (!DB.crescite_admins.some(a => a.user_id === uid)) DB.crescite_admins.push({ user_id: uid, nom: uid });
   let refus = refuser;   // (une seule réponse d'erreur)
   // la base simulée : REST lu depuis DB, les écritures de préférences gardées ; le temps réel ne répond jamais
-  if (!polices) await ctx.route(/fonts\.g(oogleapis|static)\.com/, r => r.abort());   // (hors ligne : les polices du système)
+  if (!polices) await ctx.route(/\/polices\/|fonts\.g(oogleapis|static)\.com/, r => r.abort());   // (sans les polices du site : celles du système, comme hors ligne)
   await ctx.route(/supabase\.co\//, async route => {
     const req = route.request(), url = new URL(req.url()), table = url.pathname.split('/').pop(), objet = /pgrst\.object/.test(req.headers().accept || '');
     const json = (status, body, headers = {}) => route.fulfill({ status, contentType: 'application/json', headers, body: JSON.stringify(body) });

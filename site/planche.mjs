@@ -7,8 +7,9 @@
 // vignettes sur trois colonnes, chacune avec sa légende (la page, la largeur, le thème, le menu, le lot du plan, la police
 // effective), la date et la version du code (l'identifiant court du commit, « + modifications locales » s'il n'est pas propre,
 // et la branche) en tête ; un clic sur une vignette l'ouvre en grand ; une table des matières mène à chaque page.
-//   - Les polices : celles de Google (Ubuntu, Open Sans, Raleway) sont demandées ; sans réseau, ce sont celles du système, et la
-//     légende de chaque vignette le dit (« polices du système »). Ici, couper le réseau est donc sans danger.
+//   - Les polices : celles du site (Ubuntu, Open Sans, Raleway), que build.py range dans site/dist/polices/, sont servies ; si le
+//     dossier manque (python3 scripts/polices.py ne les a pas encore téléchargées), ce sont celles du système, et la légende de
+//     chaque vignette le dit (« polices du système »).
 //   - Les préférences : le harnais garde les écritures d'un contexte au suivant ; avant chaque ouverture, la base fictive est
 //     remise à la graine du contexte (le jour : theme = jour ; le menu replié : menu.replie = vrai ; la nuit et le menu déplié
 //     ne demandent rien, ce sont les défauts). À 1 280 px de large, le menu est replié par la feuille elle-même ; le déplier
@@ -94,7 +95,7 @@ async function photographier({ page: p, largeur, theme, menu, entier = false }) 
         await calmer(page);
       }
     }
-    // les polices : celles de Google ont-elles été chargées ? (hors ligne, celles du système)
+    // les polices : celles du site ont-elles été chargées ? (sans site/dist/polices/, celles du système)
     const polices = await page.evaluate(async (familles) => {
       await document.fonts.ready;
       const chargees = new Set([...document.fonts].filter(f => f.status === 'loaded').map(f => f.family.replace(/["']/g, '')));
@@ -124,7 +125,7 @@ for (const p of ESSAIS) await photographier({ page: p, largeur: 1600, theme: 'nu
 // ---- planche.html : une section par page, douze vignettes (3 largeurs × nuit/jour × menu déplié/replié) sur trois colonnes
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const polices = [...new Set(vignettes.flatMap(v => v.polices))];
-const policeEffective = polices.length ? `Polices chargées : ${polices.join(', ')}` : 'Polices du système (le réseau n’a pas donné celles de Google : Ubuntu, Open Sans, Raleway)';
+const policeEffective = polices.length ? `Polices chargées : ${polices.join(', ')}` : 'Polices du système (site/dist/polices/ n’a pas donné celles du site : Ubuntu, Open Sans, Raleway)';
 const sections = [...PAGES, ...ESSAIS].map(p => {
   const vs = vignettes.filter(v => v.page === p);
   return `<section id="${p.id}" aria-labelledby="t-${p.id}">
