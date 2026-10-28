@@ -737,6 +737,7 @@ for (const [nom, options] of [['« moins d’animations »', { reduit: true, has
 // et 300 dates de deux spectacles sans filtre (ce que donne le bouton Distribution quand aucun spectacle n'est choisi : une vingtaine de colonnes)
 async function budget({ nom, dates, parSpectacle, deux = false, filtre = true }) {
   garnir();
+  DB.crescite_preferences = [];   // (le budget d'avant a gardé tableur.mode = distribution : sans cela, la page s'ouvrirait déjà en matrice, et « l'ouverture » ne mesurerait pas le passage du Simple)
   DB.crescite_equipes.length = 0;   // (Léa en renfort ferait une colonne de plus : le compte des personnes est celui qu'on pose ici)
   const sps = deux ? [1, 2] : [1];
   sps.forEach((sp, r) => {

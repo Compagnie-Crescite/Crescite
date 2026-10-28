@@ -174,9 +174,19 @@ deux spectacles sans filtre (une vingtaine de colonnes), ne tient aucune tâche 
 comme après un clic de case (les cases sont du texte et du CSS, jamais un SVG par case ; la matrice se pose par
 tranches d'environ quatre cents cases, six lignes au moins ; le clic mesuré est celui d'une main, la souris puis le
 bouton qui descend et remonte : le « click » d'un robot, qui enchaîne tout dans une seule tâche, compte jusqu'à 360 ms
-sans filtre). Limite connue : à une trentaine de colonnes sans filtre de spectacle (300 dates, deux spectacles), la
-matrice frôle les 200 ms (de 150 à 350 ms mesurés à l'ouverture, selon la machine) ; filtrer un spectacle ramène à une
-douzaine de colonnes ; `fenetres.mjs`, que la remise à la taille d'origine s'anime une fois (et d'un coup sous « moins
+sans filtre). Le budget tient parce que le navigateur ne parcourt plus six mille couches à chaque passage de la souris
+et ne repeint plus le tableau entier pour une case qui change : chaque ligne de la matrice est son propre empilement
+(`position: relative; z-index: 0`, rien de visible ne change : le navigateur ne repeint que la ligne touchée), et les cases
+ne sont ni positionnées ni contenues (`position`, `contain`, `will-change` en feraient chacune une couche : le survol de la
+souris, refait à chaque dessin, passait de 7 à 25 ms à `CPU=4`) ; seule la case qui porte le point d'indisponibilité
+(`avec-alerte`) est positionnée. La matrice pose d'abord six lignes, la tranche suivante vient dans la tâche d'après. Le
+passage du Simple à la matrice de 300 dates sans filtre coûtait 195 à 260 ms en première tâche, parce que le clic faisait
+tout dans sa propre tâche (la grille refaite, puis la mise en page que le navigateur force à la fin d'un clic pour savoir
+sous quoi est la souris) : le bouton « Distribution » dit son mode aussitôt et la matrice se pose dans la tâche d'après
+(Simple et Complet, plus légers, se posent d'un coup, dans le clic ; le cadre se replace dans la première tranche, qui met
+de toute façon en page). Chaque budget du banc repart des préférences vides : la matrice s'ouvre toujours depuis le Simple.
+Mesuré sur trois passages, la plus longue tâche : de 99 à 191 ms à l'ouverture, de 116 à 130 ms après un clic. Le clic d'une case reste
+en trois tâches courtes (l'écriture, le retour de la ligne, le pied et le clignotement) ; `fenetres.mjs`, que la remise à la taille d'origine s'anime une fois (et d'un coup sous « moins
 d'animations »), que rien ne glisse ni ne se remesure pendant le geste, et qu'aucune tâche ne dépasse 200 ms à `CPU=4`
 pendant un glisser (le coin d'une boîte suit le pointeur de la même façon, et sa remise à la taille d'origine est la
 même) ; `fenetres-2.mjs`, qu'aucune tâche ne dépasse 200 ms à `CPU=4` pendant un glisser du détail du planning, de la

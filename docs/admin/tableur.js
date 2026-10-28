@@ -46,7 +46,7 @@
    « tout » pour un lieu, un spectacle, une personne, une distribution) et rafraichirListes(ids) le donne à la grille, qui ne refait
    que les lignes de ces dates (dessinerLignes) ; un redessin entier (dessiner) ne remplace que les lignes dont le HTML a changé. Une saison entière
    (trois cents dates) se pose par tranches (PREMIERES, TRANCHE : les premières lignes d'abord, le reste de tâche en tâche ; la matrice, qui a une colonne par personne,
-   en pose moins à la fois) pour qu'aucune tâche ne dépasse 200 ms à CPU=4 ; viser une ligne pas encore posée (le clavier, « Voir ») pose d'un coup ce qui reste.
+   en pose moins à la fois : six d'abord ; ses lignes sont chacune un empilement à part et ses cases ne sont pas des couches, voir index.html) pour qu'aucune tâche ne dépasse 200 ms à CPU=4 ; viser une ligne pas encore posée (le clavier, « Voir ») pose d'un coup ce qui reste.
    En Complet, une case « de la date » (spectacle, lieu, statut, nature, distribution, billetterie, suivi) vaut pour toutes les
    séances de la date : les autres lignes de la date la répètent en gris et s'éclairent avec elle. Ce qui est vide reste vide ; une colonne vide sur toute la vue se replie (« Colonnes vides » la montre). Les colonnes
    se tirent du schéma de la date (SCHEMA_DATE, script principal : colonneDe) et sont à la carte, à l'ordinateur : la
@@ -151,7 +151,7 @@ const TABLEUR = (() => {
   // htmls : le HTML de chaque ligne, rendues : combien sont dans le DOM, suite : la minuterie de la tranche suivante (le dessin par tranches)
   const T = { f: null, v: null, mode: 'simple', cols: [], figees: new Set(), tournant: null, geste: false, nettoyer: [], lignes: [], actif: { l: 0, c: 0 }, ancre: null, edition: null, pop: null, pile: [],
     file: Promise.resolve(), recents: new Map(), textes: null, aRafraichir: false, attente: 0, brouillon: { jour: '', spectacle: null, lieu: null }, neuve: null, htmls: null, sigLignes: '',
-    erreurs: new Map(), refus: new Map(), echec: null, ignorees: new Map(), hBarre: 0, suite: null, rendues: 0 };
+    erreurs: new Map(), refus: new Map(), echec: null, ignorees: new Map(), hBarre: 0, suite: null, rendues: 0, marques: [], cadreEnAttente: false };
   const natif = () => typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
   const PUBLICS = [['tout_public', 'Tout public'], ['scolaire', 'Scolaire'], ['autre', 'Autre']];
   const STATUTS = [['option', 'Option'], ['confirmee', 'Confirmée'], ['annulee', 'Annulée'], ['reportee', 'Reportée']];
@@ -643,7 +643,8 @@ const TABLEUR = (() => {
       // celui-là pose tout, sauf quand les tranches d'avant n'avaient pas fini (le temps réel de la première seconde) : il ne pose alors que
       // de quoi remplir le cadre là où l'on est (jusqu'à la case active et au bas de ce qu'on voit), le reste suit en tranches
       const inachevees = garder && T.htmls && T.rendues < T.htmls.length;
-      let premieres = garder || total <= PREMIERES + tranche() ? total : PREMIERES;
+      const d = premieresDe();
+      let premieres = garder || total <= d + tranche() ? total : d;
       if (inachevees) {
         const active = avant.ligne === 'neuve' ? T.lignes.length : T.lignes.findIndex(x => x.cle === avant.ligne), pas = corps.firstElementChild?.offsetHeight || 44;
         premieres = Math.min(total, Math.max(PREMIERES, active + 1, Math.ceil((avant.haut + cadreT.clientHeight) / pas) + 1));
@@ -674,7 +675,9 @@ const TABLEUR = (() => {
         clignoter(cellule(i, j), c, maintenant - (T.recents.get(x.d.id) || 0) < 4000 ? 'enregistree' : 'vient-d-ailleurs');
       }));
     }
-    placerCadre();
+    // (dans la matrice, quand des tranches suivent, le cadre se replace dans la première : le replacer lit sa place, donc met en page, dans la tâche du clic, ce qui vient
+    // d'être posé — vingt et une colonnes — et la tranche, qui force de toute façon la mise en page, le fait sans la payer deux fois)
+    if (modeMatrice() && T.htmls && T.rendues < T.htmls.length) T.cadreEnAttente = true; else placerCadre();
   }
   // ———— le dessin par tranches : une saison entière (trois cents dates, six cents séances) mise en page d'un bloc coûte plus de 200 ms à
   // CPU=4. dessiner() n'en pose donc que les premières (PREMIERES, douze : de quoi voir la grille aussitôt, la tranche suivante arrive dans la tâche d'après) ; les autres suivent, TRANCHE par TRANCHE, chacune dans sa tâche (le
@@ -683,6 +686,9 @@ const TABLEUR = (() => {
   // (finirTranches) ; un nouveau dessin complet abandonne les tranches qui restaient. T.htmls porte le HTML de toutes les lignes, T.rendues
   // le nombre de celles qui sont dans le DOM.
   const PREMIERES = 12, TRANCHE = 30;
+  // (la matrice, qui a une colonne par personne, n'en pose d'abord que six : douze lignes de treize colonnes à mettre en page d'un coup tenaient
+  // l'ouverture près de 150 ms à CPU=4 ; la tranche suivante arrive dans la tâche d'après, sans que l'écran ait le temps de le remarquer)
+  const premieresDe = () => (modeMatrice() ? 6 : PREMIERES);
   // (la matrice a une colonne par personne : une tranche de trente lignes de trente colonnes pèse trois fois celle du Simple ; elle se pose par
   // tranches d'environ quatre cents cases, six lignes au moins)
   const tranche = () => (modeMatrice() ? Math.max(6, Math.min(TRANCHE, Math.floor(400 / Math.max(1, T.cols.length)))) : TRANCHE);
@@ -694,6 +700,7 @@ const TABLEUR = (() => {
     for (let k = de; k < a; k++) html.push(T.htmls[k] ?? (T.htmls[k] = htmlLigne(ligne(k), k)));
     corps.insertAdjacentHTML('beforeend', html.join(''));
     miseEnPage(corps);
+    if (T.cadreEnAttente) { T.cadreEnAttente = false; placerCadre(); }
     T.rendues = a;
     if (T.actif.l >= de && T.actif.l < a) marquer(false);
   }
@@ -781,10 +788,13 @@ const TABLEUR = (() => {
         clignoter(neuf.children[j], c, maintenant - (T.recents.get(x.d.id) || 0) < 4000 ? 'enregistree' : 'vient-d-ailleurs');
       });
     });
-    $('#tab-compte').textContent = phraseCompte(ps.filter(c => !T.cols.includes(c) && admise(c, rg)), rg);
+    // (le cadre ne se replace que si la phrase du compte a changé : le replacer lit la place du cadre, donc remet la grille en page)
+    const compte = $('#tab-compte'), phrase = phraseCompte(ps.filter(c => !T.cols.includes(c) && admise(c, rg)), rg);
+    const change = compte.textContent !== phrase;
+    if (change) compte.textContent = phrase;
     majPied();
     marquer(focus);
-    placerCadre();
+    if (change) placerCadre();
   }
 
   // ———— l'en-tête : refait seulement quand la liste des colonnes change (sinon une poignée qu'on tire serait détruite), mis à
@@ -911,11 +921,23 @@ const TABLEUR = (() => {
   // ———— le bas de la matrice : « n dates » par personne (sur combien des dates à l'écran elle est de la partie, remplaçante comprise)
   function majPied() {
     const pied = $('#tab-pied'); if (!pied) return;
-    if (!modeMatrice() || !T.lignes.length) { pied.innerHTML = ''; return; }
+    if (!modeMatrice() || !T.lignes.length) { if (pied.forme !== '') { pied.innerHTML = ''; pied.forme = ''; } return; }
     const derniere = derniereFigee();
-    pied.innerHTML = `<tr role="row" aria-rowindex="${nbLignes() + 2}">${T.cols.map((c, j) => `<td role="gridcell" aria-colindex="${j + 1}" class="c-${c.k}${c.classe ? ` ${c.classe}` : ''}${T.figees.has(c.k) ? ` figee${c.k === derniere ? ' derniere' : ''}` : ''}">${c.total ? esc(pl(c.total(T.lignes), 'date')) : j === 0 ? 'Part sur' : ''}</td>`).join('')}</tr>`;
+    const cases = T.cols.map((c, j) => ({ classe: `c-${c.k}${c.classe ? ` ${c.classe}` : ''}${T.figees.has(c.k) ? ` figee${c.k === derniere ? ' derniere' : ''}` : ''}`, texte: c.total ? pl(c.total(T.lignes), 'date') : j === 0 ? 'Part sur' : '' }));
+    // (la forme du pied — le rang de sa ligne, la classe de chaque case — ne change qu'avec les colonnes ; tant qu'elle est la même, seuls les totaux qui ont
+    // changé sont réécrits : refaire les vingt et une cases collantes du bas remet toute la grille en page et en peinture à chaque case basculée)
+    const forme = `${nbLignes() + 2}|${cases.map(x => x.classe).join('|')}`, rang = pied.firstElementChild;
+    if (pied.forme === forme && rang?.children.length === cases.length) { cases.forEach((x, j) => { const td = rang.children[j]; if (td.textContent !== x.texte) td.textContent = x.texte; }); return; }
+    pied.innerHTML = `<tr role="row" aria-rowindex="${nbLignes() + 2}">${cases.map((x, j) => `<td role="gridcell" aria-colindex="${j + 1}" class="${x.classe}">${esc(x.texte)}</td>`).join('')}</tr>`;
+    pied.forme = forme;
   }
-  const cellule = (l, c) => $(`#tab-corps ${T.neuve && l === T.lignes.length ? 'tr[data-neuve]' : `tr[data-l="${l}"]`} td[data-c="${c}"]`);
+  // (la ligne l est le l-ième <tr> du corps et la case c le c-ième <td> de la ligne : on y va par le rang, au lieu de faire parcourir à un sélecteur
+  // les six mille cases d'une matrice ; le sélecteur reste le recours quand le rang ne tombe pas juste — la ligne n'est pas encore posée, le message « Aucune date »)
+  const cellule = (l, c) => {
+    const corps = $('#tab-corps'), neuve = T.neuve && l === T.lignes.length, tr = corps && (neuve ? corps.lastElementChild : corps.children[l]);
+    const td = tr && (neuve ? tr.hasAttribute('data-neuve') : tr.dataset.l === String(l)) ? tr.children[c] : null;
+    return td && td.dataset.c === String(c) ? td : $(`#tab-corps ${neuve ? 'tr[data-neuve]' : `tr[data-l="${l}"]`} td[data-c="${c}"]`);
+  };
   // le nombre de lignes de la grille (la ligne vide du bas du Simple comprise) et la ligne d'un rang : T.lignes, puis cette ligne-là
   const nbLignes = () => T.lignes.length + (T.neuve ? 1 : 0);
   const ligne = l => T.lignes[l] || (T.neuve && l === T.lignes.length ? T.neuve : undefined);
@@ -923,17 +945,19 @@ const TABLEUR = (() => {
   const plage = () => { const a = T.ancre || T.actif; return { l0: Math.min(a.l, T.actif.l), l1: Math.max(a.l, T.actif.l), c0: Math.min(a.c, T.actif.c), c1: Math.max(a.c, T.actif.c) }; };
   // la case active (tabindex 0), la plage choisie (aria-selected), et la même case de la date sur ses autres séances
   function marquer(focus = false) {
-    $$('#tab-corps td.actif, #tab-corps td.choisie, #tab-corps td.meme-date').forEach(td => { td.classList.remove('actif', 'choisie', 'meme-date'); td.tabIndex = -1; td.removeAttribute('aria-selected'); });
+    // (les cases marquées au dernier appel sont retenues : parcourir le corps pour les retrouver coûte, dans une matrice, six mille cases à chaque clic)
+    T.marques.forEach(td => { td.classList.remove('actif', 'choisie', 'meme-date'); td.tabIndex = -1; td.removeAttribute('aria-selected'); });
+    T.marques = [];
     // le bouton « Supprimer » dit sur quoi il agit : la séance de la case active, ou les lignes choisies
     const bs = $('#tab-suppr'), pg = plage(), xs = T.lignes.slice(pg.l0, pg.l1 + 1);
     if (bs) { bs.hidden = !xs.length; bs.textContent = xs.length > 1 ? `Supprimer ces ${xs.length} ${modeSimple() ? 'dates' : xs.every(y => y.r) ? 'séances' : 'lignes'}…` : xs.length ? `Supprimer ${xs[0].r ? 'la séance' : 'la date'} du ${jourCourt(xs[0].r?.jour || xs[0].d.debut)}…` : ''; }
     const x = ligne(T.actif.l), c = T.cols[T.actif.c];
     if (!x || !c) return;
-    if (T.ancre) { const p = plage(); for (let l = p.l0; l <= p.l1; l++) for (let j = p.c0; j <= p.c1; j++) { const td = cellule(l, j); if (td) { td.classList.add('choisie'); td.setAttribute('aria-selected', 'true'); } } }
-    if (c.niveau !== 'seance' && x.n > 1) T.lignes.forEach((y, l) => { if (y.d.id === x.d.id && l !== T.actif.l) cellule(l, T.actif.c)?.classList.add('meme-date'); });
+    if (T.ancre) { const p = plage(); for (let l = p.l0; l <= p.l1; l++) for (let j = p.c0; j <= p.c1; j++) { const td = cellule(l, j); if (td) { td.classList.add('choisie'); td.setAttribute('aria-selected', 'true'); T.marques.push(td); } } }
+    if (c.niveau !== 'seance' && x.n > 1) T.lignes.forEach((y, l) => { if (y.d.id === x.d.id && l !== T.actif.l) { const autre = cellule(l, T.actif.c); if (autre) { autre.classList.add('meme-date'); T.marques.push(autre); } } });
     const td = cellule(T.actif.l, T.actif.c);
     if (!td) return;
-    td.classList.add('actif'); td.tabIndex = 0;
+    td.classList.add('actif'); td.tabIndex = 0; T.marques.push(td);
     if (focus) td.focus({ preventScroll: true });
   }
   // amener la case en vue, sous l'en-tête et à droite des colonnes figées
@@ -982,7 +1006,14 @@ const TABLEUR = (() => {
   function brancher() {
     brancherFiltresDates(T.f, () => { garderFiltres(); T.actif = { l: 0, c: 0 }; T.ancre = null; dessiner(); });
     $('#tab-vides').addEventListener('change', e => { ecrireReglages({ vides: e.target.checked }); dessiner({ garder: true }); });
-    $$('.tab-modes [data-mode]').forEach(b => b.addEventListener('click', () => changerMode(b.dataset.mode)));
+    // (la matrice, elle, se pose dans la tâche d'après : le bouton dit son mode aussitôt, la grille suit. Refaire une saison entière sur vingt colonnes dans la tâche du clic,
+    // c'est y ajouter la mise en page que le navigateur force à la fin d'un clic pour savoir sous quoi est la souris : plus de 200 ms à CPU=4. Simple et Complet, plus légers, se posent d'un coup)
+    $$('.tab-modes [data-mode]').forEach(b => b.addEventListener('click', () => {
+      const mode = b.dataset.mode;
+      if (mode !== 'distribution' || !modeValide(mode) || mode === T.mode) { changerMode(mode); return; }
+      $$('.tab-modes [data-mode]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+      setTimeout(() => changerMode(mode), 0);
+    }));
     $('#tab-tete').addEventListener('click', e => {
       if (e.target.closest('#tab-tri')) { basculerTri(); $('#tab-tri')?.focus(); return; }
       const menu = e.target.closest('.mat-menu');   // le ⋯ d'une colonne de la matrice : le même menu que le clic droit sur l'en-tête
@@ -1022,7 +1053,14 @@ const TABLEUR = (() => {
     corps.addEventListener('dblclick', e => { const td = e.target.closest('td[data-c]'); if (td && !T.edition && !td.classList.contains('tab-fiche') && !td.classList.contains('mat')) editer(); });   // (la case d'une matrice a déjà basculé au clic : un double-clic ne la rebascule pas)
     corps.addEventListener('click', e => {
       const pres = e.target.closest('td.mat');   // une case de la matrice : un clic la bascule (Maj+clic choisit une plage, sans écrire)
-      if (pres) { if (!e.shiftKey && !e.ctrlKey && !e.metaKey && !T.edition && e.detail < 2) { const tr = pres.parentNode; activer(+tr.dataset.l, +pres.dataset.c); editer(); } return; }
+      if (pres) {
+        if (!e.shiftKey && !e.ctrlKey && !e.metaKey && !T.edition && e.detail < 2) {
+          const tr = pres.parentNode, l = +tr.dataset.l, c = +pres.dataset.c;
+          if (!(T.actif.l === l && T.actif.c === c && !T.ancre && pres === document.activeElement)) activer(l, c);   // (la souris enfoncée l'a déjà rendue active : la marquer et l'amener en vue une seconde fois remet la grille en page pour rien)
+          editer();
+        }
+        return;
+      }
       const td = e.target.closest('td.tab-fiche'); if (!td || !td.textContent) return;
       const tr = td.parentNode;
       ouvrirFiche(tr.hasAttribute('data-neuve') ? T.lignes.length : +tr.dataset.l, +td.dataset.c);
@@ -1398,7 +1436,7 @@ const TABLEUR = (() => {
       if (c.type === 'jour' && !date) el.placeholder = 'jj/mm/aaaa';
       if (c.type === 'heure' && !heure) el.placeholder = '20h30';
     }
-    td.classList.add('en-edition');
+    td.classList.add('en-edition'); td.parentNode.classList.add('en-saisie');   // (la ligne passe devant les suivantes dans la matrice : la zone de saisie déborde de la case)
     td.append(el);
     // la zone de texte des notes reprend la taille qu'on lui a donnée (resize: both) ; fermerEdition la garde
     if (c.type === 'long' && typeof FENETRES !== 'undefined' && FENETRES.actif()) {
@@ -1460,7 +1498,7 @@ const TABLEUR = (() => {
     T.edition = null;
     ed.cal?.fermer();
     if (ed.taille0 && el.isConnected && typeof FENETRES !== 'undefined' && (el.offsetWidth !== ed.taille0[0] || el.offsetHeight !== ed.taille0[1])) FENETRES.garder(`tab-ed-${col.k}`, { l: el.offsetWidth, h: el.offsetHeight });
-    el.remove(); td.classList.remove('en-edition');
+    el.remove(); td.classList.remove('en-edition'); td.parentNode?.classList.remove('en-saisie');
     if (valider && JSON.stringify(v) !== JSON.stringify(col.val(x))) { td.innerHTML = esc(apercu(col, v)); td.classList.add('en-cours'); if (T.htmls) T.htmls[ed.l] = null; ecrire([{ x, col, v }]); }
     else rattraper();
     if (aller === 'bas') activer(T.actif.l + 1, T.actif.c, { focus });

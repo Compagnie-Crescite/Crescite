@@ -373,12 +373,17 @@ const DISTRIBUTION = (() => {
     const motif = al.length ? `indisponible${al[0].motif ? ` (${al[0].motif})` : ''}` : '';
     const dit = `${nom} · ${jour} : ${DIT[v] || 'pas sur cette date'}${motif ? `, ${motif}` : ''}`;
     const titre = motif ? `${nom} est ${motif} ${al[0].jours.length > 1 ? 'ces jours-là' : 'ce jour-là'}` : passee ? 'Date passée : les indisponibilités ne se regardent que pour les dates à venir' : '';
-    return `<button type="button" class="mat-case ${v || 'vide'}" tabindex="-1" aria-pressed="${v === 'part' || v === 'remplacant'}" aria-label="${esc(dit)}"${titre ? ` title="${esc(titre)}"` : ''}><span aria-hidden="true">${GLYPHE[v]}</span>${al.length ? '<i class="mat-alerte" aria-hidden="true"></i>' : ''}</button>`;
+    return `<button type="button" class="mat-case ${v || 'vide'}${al.length ? ' avec-alerte' : ''}" tabindex="-1" aria-pressed="${v === 'part' || v === 'remplacant'}" aria-label="${esc(dit)}"${titre ? ` title="${esc(titre)}"` : ''}><span aria-hidden="true">${GLYPHE[v]}</span>${al.length ? '<i class="mat-alerte" aria-hidden="true"></i>' : ''}</button>`;
   }
   function colonnes(f, lignes, hote = {}) {
     const ds = (lignes || []).map(x => x.d);
     const sps = f?.spectacle ? [+f.spectacle] : [...new Set(ds.map(d => +d.spectacle_id))];
-    if (E.equipeInstallee && E.sql5 !== false && !alertesChargees && typeof GARDEFOUS !== 'undefined' && GARDEFOUS.charger) { alertesChargees = true; GARDEFOUS.charger().then(() => hote.redessiner?.()); }
+    if (E.equipeInstallee && E.sql5 !== false && !alertesChargees && typeof GARDEFOUS !== 'undefined' && GARDEFOUS.charger) {
+      // (la matrice se redessine quand les indisponibilités arrivent — sauf si elles étaient déjà là à la première pose, ou s'il n'y en a aucune à venir : aucune case ne change, et ce second dessin coûterait une tâche de plus au moment d'ouvrir la matrice)
+      alertesChargees = true;
+      const dejaLues = GARDEFOUS.pretes?.();
+      GARDEFOUS.charger().then(xs => { if (!dejaLues && xs?.length) hote.redessiner?.(); });
+    }
     // qui : la tournée de chaque spectacle, puis les renforts rencontrés sur les dates à l'écran
     const gens = new Map();
     sps.forEach(sp => distributionDe(sp).filter(x => x.en_tournee).forEach(x => { if (!gens.has(x.personne_id)) gens.set(x.personne_id, { pid: x.personne_id, sp, renfort: false, fonction: '' }); }));

@@ -829,7 +829,7 @@ dialog.tab-dialogue::backdrop { background: rgba(23, 15, 26, .4); }
 .mat-tel { font-size: 11px; font-weight: 500; }
 .mat-menu { position: absolute; right: 0; top: 4px; min-width: 24px; min-height: 24px; padding: 0 5px; border: 0; border-radius: 6px; background: none; color: var(--gris); font: 700 16px/1 var(--titres); cursor: pointer; }
 .mat-menu:hover, .mat-menu:focus-visible { background: var(--accent-doux); color: var(--encre); }
-.mat-case { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; min-height: calc(var(--pas, 10px) * 2 + 23px); padding: 0; border: 0; background: none; color: var(--encre); font: inherit; font-size: 17px; line-height: 1; cursor: pointer; }
+.mat-case { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; min-height: calc(var(--pas, 10px) * 2 + 23px); padding: 0; border: 0; background: none; color: var(--encre); font: inherit; font-size: 17px; line-height: 1; cursor: pointer; }
 .mat-case.part { color: var(--ok); font-weight: 700; }
 .mat-case.absent { color: var(--gris); text-decoration: line-through; opacity: .8; }
 .mat-case.remplacant { color: var(--ambre); }
@@ -839,6 +839,7 @@ dialog.tab-dialogue::backdrop { background: rgba(23, 15, 26, .4); }
 .mat-case.vide:hover > span::before { content: '·'; }
 .mat-case.grise { background: repeating-linear-gradient(135deg, transparent 0 6px, color-mix(in srgb, var(--gris) 14%, transparent) 6px 7px); cursor: not-allowed; }
 .mat-case:focus-visible { outline: none; }
+.mat-case.avec-alerte { position: relative; }   /* (seule la case qui porte le point d'indisponibilité est positionnée : une case positionnée est une couche à part, et six mille couches rendent chaque survol de la souris dix fois plus long) */
 .mat-alerte { position: absolute; right: 10px; top: 8px; width: 9px; height: 9px; border-radius: 50%; background: var(--corail); box-shadow: 0 0 0 2px var(--carte); }
 .tableur.matrice td.mat.en-cours::before { right: 4px; top: 4px; }
 .tableur.matrice tr.debut-groupe:not(:first-child) td { border-top: 2px solid var(--c, var(--accent)); }
@@ -849,6 +850,14 @@ dialog.tab-dialogue::backdrop { background: rgba(23, 15, 26, .4); }
 .tableur.matrice tfoot td.figee { z-index: 3; }
 .tableur:not(.matrice) tfoot { display: none; }
 .btn.tab-etendre[hidden] { display: none; }
+/* Le budget de la matrice (aucune tâche de plus de 200 ms à CPU=4, trois cents dates et vingt colonnes, soit trente mille éléments) : chaque ligne est son propre
+   empilement (position et z-index posés, rien de visible ne change), si bien que le navigateur ne repeint que la ligne dont une case a changé et réutilise
+   le dessin des trois cents autres. Les cases, elles, ne sont ni positionnées ni contenues : chacune serait une couche à part, que le navigateur parcourt une à une
+   à chaque survol de la souris. La ligne où l'on écrit passe devant les suivantes : sa zone de saisie déborde de la case. */
+@media (min-width: 641px) {
+  .tableur.matrice tbody tr { position: relative; z-index: 0; }
+  .tableur.matrice tbody tr.en-saisie { z-index: 1; }
+}
 @media (prefers-reduced-motion: no-preference) { .mat-case.saute { animation: ad-pop .45s cubic-bezier(.3, 1.6, .5, 1); } }   /* la case qui vient de basculer saute (le ressort) ; ad-pop est plus bas, dans le bloc des animations */
 /* la fenêtre d'une case de distribution (DISTRIBUTION.fenetre) : 520 px, au plus la hauteur de l'écran, un corps qui défile (une tournée de dix
    personnes dépasse l'écran) ; deux blocs, des puces de métier au-dessus, qui sera prévenu en pied */

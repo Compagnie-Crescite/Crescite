@@ -708,7 +708,8 @@ compte du projet inscrit dans `crescite_admins`.
     un clic, Espace et Entrée qui basculent, la case qui saute, le point d'indisponibilité, la date annulée grisée, le menu
     ⋯ « Régler sa période », la plage et « Étendre à… », un groupe de lignes par spectacle, le bas du tableau, rien qui bouge
     sous « moins d'animations » ni avec `?anim=0`) et son budget (120 dates de dix personnes, 300 dates de douze personnes, 300 dates de deux spectacles sans filtre (une vingtaine de colonnes) : aucune tâche de plus de
-    200 ms à `CPU=4`, à l'ouverture comme après un clic de case ; au-delà, vers trente colonnes sans filtre de spectacle, la matrice frôle les 200 ms ; le double-clic qui ne bascule qu'une fois, Suppr qui dit qui est prévenu,
+    200 ms à `CPU=4`, à l'ouverture depuis le Simple comme après un clic de case ; chaque budget repart des préférences vides, la matrice s'ouvre donc toujours depuis le Simple ;
+    mesuré sur trois passages, la plus longue tâche : de 99 à 191 ms à l'ouverture, de 116 à 130 ms après un clic) ; le double-clic qui ne bascule qu'une fois, Suppr qui dit qui est prévenu,
     les dates annulées jamais écrites par « Étendre à… », les boutons ⋯ absents à l'impression) : 171 vérifications, des captures dans
     `site/dist/shots-distribution/` (`distribution-cellule.png`, `distribution-fiche.png`, `distribution-impact.png`,
     `distribution-fenetre.png`, `distribution-matrice.png`).

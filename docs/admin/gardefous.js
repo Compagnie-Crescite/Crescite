@@ -8,7 +8,8 @@
    Chargé après parcours.js (l'équipe du formulaire) et tiroir.js.
    GARDEFOUS.poser(zone, F, d0)   GARDEFOUS.alertes(F, d0)   GARDEFOUS.piste(form)
    GARDEFOUS.indisposDe(pid, jours) : les indisponibilités à venir d'une personne qui touchent ces jours (la matrice de la
-   distribution, distribution.js) ; vide tant que charger() n'a pas répondu, ou sans le cinquième script */
+   distribution, distribution.js) ; vide tant que charger() n'a pas répondu, ou sans le cinquième script
+   GARDEFOUS.pretes() : la lecture des indisponibilités est-elle arrivée ? */
 const GARDEFOUS = (() => {
   const LOIN = 150;   // km, à vol d'oiseau
   let indispos = null, chargement = null;
@@ -105,5 +106,7 @@ const GARDEFOUS = (() => {
 #crm-gardefous { margin: 6px 0 12px; }
 #crm-gardefous .gardefous { margin: 0; }`;
   document.head.append(style);
-  return { poser, alertes, piste, charger, km, indisposDe };
+  // la lecture des indisponibilités est-elle arrivée ? (la matrice ne se redessine à son arrivée que si sa première pose s'est faite sans elle)
+  const pretes = () => indispos !== null;
+  return { poser, alertes, piste, charger, km, indisposDe, pretes };
 })();
