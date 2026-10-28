@@ -387,6 +387,12 @@ section.bloc.sans-filet { border-top: 0; padding-top: clamp(28px, 4vw, 48px); }
 .sc-cadre::after { content: ""; position: absolute; inset: 0; background: radial-gradient(72% 78% at 50% 44%, transparent 28%, color-mix(in srgb, var(--sc-c) 72%, transparent) 100%); }
 .sc-toile { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
 .sc-h { position: relative; z-index: 2; margin: 0; padding: 26px var(--gout) 0; text-align: center; font: 600 .8rem/1.3 var(--etiq); letter-spacing: .32em; text-transform: uppercase; color: var(--sc-terne); }
+/* (en haut de l'accueil, pas de nom en barre : le titre de la page reste à sa place, pour les lecteurs d'écran et la mise en
+   page, mais ne se voit pas ; c'est « crescite », sous la pieuvre (.sc-mot), qui le dit, et qui devient le nom de la barre
+   quand on descend) */
+.scene .sc-h { color: transparent; }
+.sc-mot { position: absolute; left: 0; top: 0; z-index: 1; display: block; width: 0; height: auto; fill: #fff; opacity: 0; pointer-events: none; will-change: transform, opacity;
+  filter: drop-shadow(0 4px 5px rgba(0, 0, 0, .5)); }
 .sc-pause { position: absolute; z-index: 4; right: var(--gout); top: 14px; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 1.5px solid color-mix(in srgb, #fff 60%, transparent); border-radius: 50%;
   background: color-mix(in srgb, var(--sc-c) 50%, transparent); color: #fff; cursor: pointer; }
 @media (hover: hover) { .sc-pause:hover { border-color: #fff; } }
@@ -3133,14 +3139,14 @@ article.u { --onglets: 58px; }
      et non par son opacité : une scène entière en mouvement ou pâlie se recompose à part, avec la page sous elle, à chaque
      image (au défilement, et au premier geste de l'accueil) */
   html:not(.still) .scene { view-timeline: --scene block; }
-  html:not(.still) :is(.sc-toile, .sc-h, .sc-t) { animation: scene-part linear backwards; animation-timeline: --scene; animation-range: exit 0% exit 100%; }
+  html:not(.still) :is(.sc-toile, .sc-mot, .sc-h, .sc-t) { animation: scene-part linear backwards; animation-timeline: --scene; animation-range: exit 0% exit 100%; }
   html:not(.still) .scene::after { content: ""; position: absolute; inset: 0; z-index: 9; background: var(--papier); opacity: 0; pointer-events: none;
     animation: scene-voile linear backwards; animation-timeline: --scene; animation-range: exit 0% exit 100%; }
   @keyframes scene-part { from { translate: 0 0; } to { translate: 0 28svh; } }
   @keyframes scene-voile { from { opacity: 0; } to { opacity: .8; } }
   /* (au téléphone, la scène est une liste plus haute que l'écran : rien n'y glisse, chaque titre se lit jusqu'à quitter
      l'écran, et le voile ne vient qu'à la fin, quand le menu, sous le dernier titre, monte s'arrimer) */
-  html:not(.still) .scene.mobile :is(.sc-toile, .sc-h, .sc-t) { animation: none; }
+  html:not(.still) .scene.mobile :is(.sc-toile, .sc-mot, .sc-h, .sc-t) { animation: none; }
   html:not(.still) .scene.mobile::after { animation-range: exit 55% exit 100%; }
   /* 4. les spectacles voisins montent : au bout de la page d'un spectacle, la vignette de chacun se lève dans son cercle */
   html:not(.still) .voisin-v img { animation: voisin-monte linear backwards; animation-timeline: view(); animation-range: entry 0% entry 100%; }
@@ -4642,14 +4648,14 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   const faireScene = () => {
     const el = document.createElement('section');
     el.className = 'scene'; el.id = 'scene'; el.setAttribute('aria-labelledby', 'scene-h');
-    el.innerHTML = `<div class="sc-diapo" aria-hidden="true"><div class="sc-cadre"></div></div><div class="sc-lampe" aria-hidden="true"></div><canvas class="sc-toile" aria-hidden="true"></canvas>
+    el.innerHTML = `<div class="sc-diapo" aria-hidden="true"><div class="sc-cadre"></div></div><div class="sc-lampe" aria-hidden="true"></div><canvas class="sc-toile" aria-hidden="true"></canvas><svg class="sc-mot" viewBox="355 937 827 163" aria-hidden="true" focusable="false"><path d="${D.logo.motPath}"/></svg>
       <h1 class="sc-h" id="scene-h" tabindex="-1" data-edit="site.nom"></h1>
       <button type="button" class="sc-pause" aria-pressed="false"><svg class="i-p" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 2.5h3v11h-3zM9.5 2.5h3v11h-3z"/></svg><svg class="i-l" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.5 2.2l9.2 5.8-9.2 5.8z"/></svg></button>
       <ul class="sc-titres"></ul>`;
     const cv = $('.sc-toile', el), ctx = cv.getContext('2d'), cadreD = $('.sc-cadre', el), ul = $('.sc-titres', el), tete = $('.sc-h', el), bPause = $('.sc-pause', el);
     // (au téléphone, le haut posé sur la scène reste sans fond, sa marque repliée, tant que le nom de la scène est à l'écran :
     // Menu.surScene)
-    if ('IntersectionObserver' in window) new IntersectionObserver(es => { const e = es[es.length - 1]; Menu.el.classList.toggle('sur-scene', affiche && e.isIntersecting && TEL.matches); }).observe(tete);
+    // (au téléphone, le haut reste sans fond tant que « crescite » est sous lui : majMot, au défilement)
     // la pieuvre : le corps du logo et huit tentacules qui en partent (la marque : ni la base ni l'administration n'y touchent)
     const BOX = D.arms.box, TS = PIEUVRE.creer();
     TS.forEach(t => { t.collant = true; });   // (déployée une fois, une tentacule reste accrochée à la tête : remontée, elle s'y enroule)
@@ -4675,6 +4681,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // logo d'un seul tenant, PIEUVRE.logo), emportée par la tête vivante comme les autres. { TS, t0 } : ses tentacules, l'instant
     // où elle commence à pousser. Sans mouvement : là d'emblée
     let couronne = null, toileC = null;
+    const motEl = $('.sc-mot', el);
+    let motPos = { x: 0, y: 0, w: 0 }, motG = 0, motOp = '', motRaf = 0;   // (« crescite » : sa place, sa venue, son opacité)
     // la profondeur, dans la seule toile : la pieuvre et ses tentacules qui mènent aux spectacles se peignent d'abord ; puis,
     // dessous (destination-over), leur ombre : la toile recopiée en noir dans une toile cinq fois plus petite (OMBRE), que
     // l'agrandissement adoucit, décalée vers le bas ; puis, plus bas encore, la couronne, au loin, pâle. Aucun calque en plus,
@@ -4894,7 +4902,10 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       el.style.height = H + 'px';
       // (la fenêtre qui passe d'un côté à l'autre de 760 px : le haut se pose sur la scène, ou retourne sous elle ; son fond suit
       // le nom de la scène, que l'observateur ne relit pas tant qu'il ne bouge pas)
-      if (affiche) { if (yMenu == null) { Menu.surScene(); Menu.el.classList.toggle('sur-scene', tete.getBoundingClientRect().bottom > 0); } else { Menu.el.classList.remove('sur-scene'); Menu.sousPieuvre(yMenu); } }
+      // (« crescite » sous la pieuvre : sa place et sa largeur, celles de la couronne (motCouronne))
+      motPos = { x: ox + COEUR[0] * s - 827 * .38 * s / 2, y: oy + 932 * s, w: 827 * .38 * s };
+      motEl.style.width = motPos.w.toFixed(1) + 'px'; motEl.style.transform = `translate(${motPos.x.toFixed(1)}px, ${motPos.y.toFixed(1)}px)`;
+      if (affiche) { if (yMenu == null) { Menu.surScene(); majMot(); } else { Menu.el.classList.remove('sur-scene'); Menu.sousPieuvre(yMenu); majMot(); } }
       // les deux bouts du texte de chaque titre (tx0, tx1), par rapport à lui : c'est le texte que la tentacule souligne, pas le
       // médaillon. Mesuré une fois le côté posé (la classe droite renverse le médaillon)
       TIT.forEach(T => T.el.classList.toggle('droite', T.droite));
@@ -5121,14 +5132,24 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const reveil = () => { if (!raf && affiche && visible && !document.hidden) raf = requestAnimationFrame(image); };
     // « crescite » sous la couronne, sobre : au tiers de sa taille du logo (38 %), centré sous la pieuvre, juste sous ses boucles
     // (leur bas : 904 unités ; le mot du logo : 355 à 1182 en largeur, 937 à 1100 en hauteur), un peu adouci ; par-dessus les
-    // tentacules qui descendent vers les titres (elles passent dessous : il se lit), venu en dernier
-    let MOT = null;
+    // tentacules qui descendent vers les titres (elles passent dessous : il se lit), venu en dernier. C'est le nom de la page
+    // en haut de l'accueil (le titre, .sc-h, ne se voit pas) : quand on descend, il s'efface en arrivant sous le haut de
+    // l'écran (au téléphone, sous la barre), et la barre déplie alors son nom, « Compagnie Crescite » (.sur-scene) : il le devient
     function motCouronne(g) {
       const gm = clamp((g - .55) / .45, 0, 1);
-      if (!gm) return;
-      ctx.save(); ctx.transform(s, 0, 0, s, ox + bob.x, oy + bob.y); ctx.translate(COEUR[0], 932); ctx.scale(.38, .38); ctx.translate(-768, -937);
-      ctx.globalAlpha = .82 * gm; ctx.fillStyle = ENCRE; ctx.fill(MOT || (MOT = new Path2D(D.logo.motPath))); ctx.restore();
+      if (gm !== motG) { motG = gm; majMot(); }
     }
+    function majMot() {
+      if (!affiche) return;
+      // (au téléphone, le mot passe sous la barre, toujours en haut ; au bureau, le menu, posé sous la scène, monte s'arrimer en
+      // haut de l'écran et y déplie le nom : le mot s'efface pendant qu'il monte, et n'est plus là quand il s'arrime)
+      const tel = TEL.matches, m = Menu.el.getBoundingClientRect();
+      const p = tel ? clamp((el.getBoundingClientRect().top + motPos.y - m.bottom - 8) / 90, 0, 1) : clamp((m.top - 10) / 260, 0, 1), op = (.86 * motG * p).toFixed(3);
+      if (op !== motOp) { motOp = op; motEl.style.opacity = op; }
+      // (au téléphone, la barre reste sans fond, son nom replié, tant que le mot est sous elle)
+      Menu.el.classList.toggle('sur-scene', tel && p > 0);
+    }
+    addEventListener('scroll', () => { if (affiche && !motRaf) motRaf = requestAnimationFrame(() => { motRaf = 0; majMot(); }); }, { passive: true });
     // la couronne, au loin (peinte sous l'ombre et la pieuvre, dans le repère de la pieuvre, l'opacité posée) : le logo vivant ;
     // en poussant (g < 1), elle paraît depuis la tête, d'un front doux qui s'élargit (peinte à part, effacée au-delà du front)
     function dessinerCouronne(g, cx, cy) {
