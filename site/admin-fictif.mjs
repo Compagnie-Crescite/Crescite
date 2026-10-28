@@ -48,7 +48,9 @@ const URL0 = `http://127.0.0.1:${serveur.address().port}/admin/index.html`;
 
 // ---- la base fictive, autour d'aujourd'hui
 const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-const plus = n => { const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() + n); return iso(d); };
+// (les jours se comptent à Paris, le fuseau des pages : entre 23 h et minuit UTC, la date du conteneur serait encore la veille de la leur)
+const AUJ_PARIS = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+const plus = n => { const [a, m, j] = AUJ_PARIS.split('-').map(Number); return new Date(Date.UTC(a, m - 1, j + n)).toISOString().slice(0, 10); };
 const saisonDe = j => { const a = +j.slice(0, 4), m = +j.slice(5, 7); return m >= 9 ? `${a}-${a + 1}` : `${a - 1}-${a}`; };
 const ilYA = (min) => new Date(Date.now() - min * 6e4).toISOString();
 const UID = 'u-essai';

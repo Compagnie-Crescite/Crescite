@@ -396,7 +396,8 @@ fs.mkdirSync(CAPT, { recursive: true });
   await page.click('.gm-boite [data-gm]:has-text("Épingler en haut")');
   await page.waitForTimeout(300);
   ok('5 · épinglée, la ligne passe en tête de son sujet, marquée', await page.$eval(`${tuile('urgent')} a.tb-l[data-cle="heures:105"]`, a => a.closest('.tb-lt').classList.contains('epingle') && a.closest('.tb-cat').querySelector('.tb-lt') === a.closest('.tb-lt')).catch(() => false));
-  await page.evaluate(() => TABLEAU.reporter('heures:105', new Date(Date.now() + 86400e3).toISOString().slice(0, 10)));
+  // (demain à Paris, le fuseau de la page : toISOString dirait la date de Greenwich, encore « aujourd'hui » à Paris entre 23 h et minuit UTC)
+  await page.evaluate(() => { const d = new Date(Date.now() + 86400e3); TABLEAU.reporter('heures:105', `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`); });
   await page.waitForTimeout(300);
   ok('5 · reportée à demain, la ligne se cache ; « Montrer 1 ligne reportée »', (await compte(page, `${tuile('urgent')} a.tb-l[data-cle="heures:105"]`)) === 0 && /1 ligne reportée/.test(await texte(page, `${tuile('urgent')} [data-tb-reportees]`)), await texte(page, `${tuile('urgent')} [data-tb-reportees]`));
   await page.click(`${tuile('urgent')} [data-tb-reportees]`);
