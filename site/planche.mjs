@@ -1,11 +1,11 @@
-// La planche de relecture de l'administration : un outil pour les yeux d'Adrien, pas un banc de non-régression (on ne le lance
-// pas avec la chaîne ordinaire ; il tient en cinq à six minutes). Dix pages de l'administration, en vraies polices, en nuit et
+// La planche de relecture de l'administration : un outil pour les yeux d'Adrien, pas un banc qui garde le code (on ne le lance
+// pas avec la chaîne ordinaire ; il tient en trois minutes au calme, six sous charge). Dix pages de l'administration, en vraies polices, en nuit et
 // en jour, à trois largeurs, le menu déplié puis replié, plus les pages d'essai « états » et « icônes » : 122 captures, réunies
 // dans une page HTML à lire d'un trait.
 //   node site/planche.mjs               ou   bash site/bancs-admin.sh --planche   (à la fin de la chaîne)
 // Il écrit dans site/dist/shots-planche/ (jamais commité) : les PNG et planche.html. Ouvrir planche.html : une grille de
 // vignettes sur trois colonnes, chacune avec sa légende (la page, la largeur, le thème, le menu, le lot du plan, la police
-// effective), la date et la version du code (l'identifiant court du dépôt, « + modifications locales » s'il n'est pas propre,
+// effective), la date et la version du code (l'identifiant court du commit, « + modifications locales » s'il n'est pas propre,
 // et la branche) en tête ; un clic sur une vignette l'ouvre en grand ; une table des matières mène à chaque page.
 //   - Les polices : celles de Google (Ubuntu, Open Sans, Raleway) sont demandées ; sans réseau, ce sont celles du système, et la
 //     légende de chaque vignette le dit (« polices du système »). Ici, couper le réseau est donc sans danger.
@@ -16,7 +16,8 @@
 //   - Avant chaque capture, le banc vérifie ce qu'il va montrer : le thème (data-theme), le menu (html.menu-replie, ou son
 //     absence, et --large-menu : 64 px replié, 240 px déplié) ; une page qui ne dit pas ce qu'on attend n'est pas photographiée
 //     sans le dire (la vérification est rouge).
-// Sort en erreur si une capture manque, si une légende est incomplète ou si une page lève une erreur de script.
+// Sort en erreur si une capture manque, si une page ne montre pas le thème ou le menu qu'elle annonce, si la version du code n'a pas
+// pu être lue, ou si une page lève une erreur de script.
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -109,7 +110,7 @@ async function photographier({ page: p, largeur, theme, menu, entier = false }) 
     await page.screenshot({ path: path.join(CAPT, fichier), fullPage: entier });
     const policesTexte = polices.length ? `polices ${polices.join(', ')}` : 'polices du système';
     const legende = `${p.nom} · ${px(largeur)} · ${theme === 'jour' ? 'jour' : 'nuit'} · menu ${menu === 'replie' ? 'replié' : 'déplié'} · lot ${p.lot} · ${policesTexte}`;
-    vignettes.push({ page: p, largeur, theme, menu, fichier, legende, alt: `Capture de ${legende}`, polices, themeOk, menuOk, erreurs: erreurs.slice() });
+    vignettes.push({ page: p, largeur, theme, menu, fichier, legende, alt: `Capture : ${legende}`, polices, themeOk, menuOk, erreurs: erreurs.slice() });
   } finally { await ctx.close(); }
 }
 
@@ -188,8 +189,8 @@ const sur = vignettes.filter(v => fs.existsSync(path.join(CAPT, v.fichier)) && f
 ok(`planche · ${attendu} captures : ${PAGES.length} pages × 12 contextes (3 largeurs × nuit et jour × menu déplié et replié), plus les deux pages d’essai`, vignettes.length === attendu && vignettes.length >= 120 && sur.length === attendu, `${vignettes.length} prises, ${sur.length} fichiers lisibles`);
 ok('planche · chaque capture montre le thème et le menu qu’elle annonce (data-theme, html.menu-replie, --large-menu)', manques.length === 0, manques.join(' / '));
 const incompletes = vignettes.filter(v => !(v.legende.includes(v.theme === 'jour' ? 'jour' : 'nuit') && v.legende.includes(px(v.largeur)) && /menu (déplié|replié)/.test(v.legende) && /polices/.test(v.legende)));
-ok('planche · chaque légende porte le thème, la largeur, l’état du menu et la police effective', incompletes.length === 0, incompletes.map(v => v.fichier).join(', '));
-ok('planche · planche.html a un alt par vignette, une table des matières, la date, le commit et la branche', (html.match(/<img /g) || []).length === attendu && (html.match(/ alt="Capture de [^"]+"/g) || []).length === attendu && /id="matieres"/.test(html) && html.includes(esc(version)) && html.includes(esc(branche)) && /\d{4}/.test(datee));
+ok('planche · chaque légende porte le thème, la largeur, l’état du menu et la police effective (sa forme)', incompletes.length === 0, incompletes.map(v => v.fichier).join(', '));
+ok('planche · planche.html a un alt par vignette, une table des matières, la date, le commit et la branche', (html.match(/<img /g) || []).length === attendu && (html.match(/ alt="Capture : [^"]+"/g) || []).length === attendu && /id="matieres"/.test(html) && commit !== 'inconnu' && html.includes(esc(version)) && html.includes(esc(branche)) && html.includes(esc(datee)), JSON.stringify({ commit, branche, datee }));
 const bruit = vignettes.filter(v => v.erreurs.length);
 ok('planche · aucune erreur de script sur les 122 pages', bruit.length === 0, bruit.map(v => `${v.fichier} : ${v.erreurs.join(' / ')}`).join(' // '));
 console.log(`\n  ${policeEffective}\n  planche : ${path.relative(ROOT, path.join(CAPT, 'planche.html'))}`);

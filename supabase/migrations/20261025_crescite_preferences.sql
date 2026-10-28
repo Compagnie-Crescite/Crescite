@@ -48,9 +48,11 @@
 --                           tb-brief, gq-aide, gf), tirée par son coin.
 --   fenetres.tableur-h, .tab-pop-lieu, .tab-pop-distribution, .tab-ed-notes
 --                           la hauteur du cadre du tableur ; la taille des fenêtres posées sur une case et de la zone des notes.
---   tableur.colonnes        { complet: { ordre, masquees, figees, largeurs, vides }, simple: { … } } : les colonnes du tableur à la carte,
---                           par mode (admin/tableur.js) ; absente tant qu'on n'a rien changé. « Disposition d'origine » (le menu)
---                           efface toutes les clés fenetres.*, celle-ci et menu.replie, avec « Annuler ».
+--   tableur.colonnes        { complet: { ordre, masquees, figees, largeurs, vides, jeu, montrees }, simple: { … } } : les colonnes du
+--                           tableur à la carte, par mode (admin/tableur.js) ; absente tant qu'on n'a rien changé. « Disposition
+--                           d'origine » (le menu) efface toutes les clés fenetres.*, celle-ci et menu.replie, avec « Annuler ».
+--   tableur.mode            'simple', 'complet' ou 'distribution' : le mode du tableur (admin/tableur.js), écrit aussitôt au clic
+--                           du segment ; absente : Simple.
 -- Rien à migrer dans la base : les clés sont des lignes, pas des colonnes.
 
 begin;

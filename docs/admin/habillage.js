@@ -10,16 +10,16 @@
 
    Trois choses y sont écrites une fois pour toute l'administration :
    - Le jeu d'états des commandes (boutons, boutons des feuilles, segments, puces, outils des tuiles, liens du menu, pilule
-     des vues, flèches du petit calendrier ; la barre du bas du téléphone n'a que le pressé et le focus). Au repos : la carte
+     des vues, flèches du petit calendrier ; la barre du bas du téléphone garde les siens, mobile.js). Au repos : la carte
      et son trait. Au survol : le bord et un fond doux teintés de la saison (--survol-bord, --survol-fond, que le menu et
      l'en-tête de nuit redéfinissent en blanc translucide). Pressé : la commande s'enfonce de 3 % (scale(.97)) et son fond
      s'assombrit à peine (--presse-fond). Au clavier : un anneau de 3 px à la couleur de la saison, à 2 px (3 px en dedans
      dans un segment et dans la pilule des vues, qui rognent leur contenu). Désactivée : à moitié transparente. Occupée
      (aria-busy, sur un bouton seulement) : le curseur « en cours », plus de clic, le libellé s'efface sous un petit anneau
      qui tourne (le même mouvement que le témoin du direct, temoin-tourne), fixe sous « réduire les animations » ; un
-     bouton occupé est aussi désactivé (gestes.js pose les deux) mais garde son opacité entière. Le survol et le pressé
-     ne touchent ni une commande choisie (aria-pressed, aria-current, aria-checked), ni un bouton principal, ni
-     « ＋ Créer », ni une commande désactivée. Les variantes (.principal, .danger, .lien, .petit) gardent leurs règles.
+     bouton occupé est aussi désactivé (gestes.js pose les deux) mais garde son opacité entière. Le survol et le fond
+     pressé ne recolorent ni une commande choisie (aria-pressed, aria-current, aria-checked), ni un bouton principal, ni
+     « ＋ Créer », ni une commande désactivée ; l'enfoncement vaut pour toute commande active. Les variantes (.principal, .danger, .lien, .petit) gardent leurs règles.
      La poignée (fenetres.js) a le sien : sa ligne à la couleur de la saison au survol, au focus et pendant le geste.
      Le témoin du direct, la barre de lecture du planning et le squelette ont aussi un aria-busy et leur propre
      apparence : le jeu ne les vise pas.
@@ -31,8 +31,6 @@
   /* les commandes du jeu d'états ; « :where(html.admin) .gf-btn » : les boutons des feuilles de gestes.js (partagé avec
      l'espace de l'équipe) ne sont habillés que dans l'administration, sans rien ajouter à la spécificité du groupe */
   const COMMANDES = '.btn, :where(html.admin) .gf-btn, .seg a, .seg button, .puce, .tb-ico, .menu a, .menu button, .vues a, .tab-cal button';
-  // la barre du bas du téléphone (mobile.js) : le pressé et le focus seulement, sans rien déplacer
-  const BARRE_BAS = '.ob-item, .ob-tete-btn, .ob-fermer';
   // ce que le survol et le pressé ne recolorent pas : une commande désactivée, choisie, principale
   const SANS_SURVOL = '[disabled], [aria-disabled="true"], [aria-pressed="true"], [aria-current="page"], [aria-checked="true"], .principal, .menu-creer';
   // les boutons qui peuvent être occupés (aria-busy) ; le témoin, le planning et le squelette ont le leur
@@ -188,15 +186,15 @@ h1, h2, h3, .tete h1, .editeur h2, .bloc h3, .connexion h1, .fr-tete h1, dialog 
    Chaque état est écrit ici une fois (voir l'en-tête) ; les règles de groupe sont des :is() dont la spécificité est celle de
    leur membre le plus précis, et les exclusions des :where() : une variante (.principal, .danger, .lien, la bande de nuit)
    plus précise reprend la main sans avoir à les défaire. */
-:is(${COMMANDES}, ${BARRE_BAS}) { transition: transform .12s cubic-bezier(.2, .8, .2, 1), background-color .12s, border-color .12s, color .12s, box-shadow .12s, filter .12s; }
+:is(${COMMANDES}) { transition: transform .12s cubic-bezier(.2, .8, .2, 1), background-color .12s, border-color .12s, color .12s, box-shadow .12s, filter .12s; }
 /* (la pilule du thème et la densité : aucune transition de couleur, le thème change d'un coup) */
 .menu .reg-theme button, .menu .reg-densite { transition: none; }
 :is(${COMMANDES}):where(:not(${SANS_SURVOL}))${SURVOL} { background-color: var(--survol-fond, color-mix(in srgb, var(--accent-doux) 55%, var(--carte))); border-color: var(--survol-bord, color-mix(in srgb, var(--accent) 45%, var(--trait))); }
-:is(${COMMANDES}, ${BARRE_BAS}):where(:not([disabled], [aria-disabled="true"]))${PRESSE} { transform: scale(.97); }
+:is(${COMMANDES}):where(:not([disabled], [aria-disabled="true"]))${PRESSE} { transform: scale(.97); }
 :is(${COMMANDES}):where(:not(${SANS_SURVOL}))${PRESSE} { background-color: var(--presse-fond, color-mix(in srgb, var(--accent-doux) 85%, var(--carte))); }
 /* au clavier : l'anneau commun d'index.html (3 px à la couleur de la saison, à 2 px), en dedans là où le parent rogne */
 [data-etat="clavier"] { outline: 3px solid var(--accent); outline-offset: 2px; }
-:is(.seg, .vues) ${CLAVIER}, :is(${BARRE_BAS})${CLAVIER} { outline-offset: -3px; }
+:is(.seg, .vues) ${CLAVIER} { outline-offset: -3px; }
 :is(.seg, .vues) :is([aria-pressed="true"], [aria-current="page"])${CLAVIER} { outline-color: var(--sur-accent, #fff); }
 .tb-ico${CLAVIER} { outline: 3px solid var(--accent); outline-offset: 2px; }
 /* la poignée (fenetres.js) : sa ligne paraît au survol, au focus et pendant le geste ; ici aussi, posée par data-etat */

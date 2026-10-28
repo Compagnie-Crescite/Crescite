@@ -2,14 +2,14 @@
 // (admin-fictif.mjs, ouvrir({ reduit: true }) : prefers-reduced-motion: reduce).
 //   node site/reduit.mjs
 // Quatre gestes, tous au clavier, enchaînés dans la même page : le repli du menu (Alt+M), l'ouverture d'un tiroir (Entrée sur
-// une ligne de la liste des dates), la remise d'une poignée (Entrée sur « Disposition d'origine ») et le passage du tableur de
+// une ligne des prochaines dates, au tableau de bord), la remise d'une poignée (Entrée sur « Disposition d'origine ») et le passage du tableur de
 // Simple à Complet (Entrée sur le bouton « Complet »). Après chaque geste :
 //   - aucune animation à durée non nulle : document.getAnimations() filtré par
 //     `!(a instanceof CSSTransition) || a.effect.getTiming().duration > 0` est vide (une transition CSS à durée nulle n'est pas
 //     une animation) ; et aucune transition ne s'est lancée pendant le geste (l'événement transitionrun, écouté dès avant) ;
 //   - les valeurs finales déjà en place à 0 puis à 50 ms (--large-menu et la classe du menu, la place du tiroir, --l-liste et la
 //     largeur de la liste, la classe du mode du tableur) : l'immobilité est une arrivée instantanée, pas une absence d'arrivée.
-// Un témoin garde la sonde honnête : le même repli du menu et la même ouverture de tiroir, sans « réduire », laissent bien des
+// Une contre-épreuve garde la sonde honnête : le même repli du menu et la même ouverture de tiroir, sans « réduire », laissent bien des
 // animations dans la page. Les captures vont dans site/dist/shots-reduit/. Sort en erreur si une vérification manque.
 import fs from 'node:fs';
 import path from 'node:path';

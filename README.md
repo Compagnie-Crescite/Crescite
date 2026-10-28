@@ -29,6 +29,9 @@ python3 site/build.py --captures   # avec des captures de relecture (Playwright 
 python3 site/build.py --pages      # en plus, le site publié dans docs/
 node site/onglets.mjs /tmp/x index # parcourt les vues du site et signale les anomalies
 node site/mouvement-equipe.mjs     # les dix effets de l'espace de l'équipe, dans Chromium, hors ligne (après le build)
+node site/prefs.mjs                # où chaque réglage de l'administration est gardé : avec le compte ou sur l'appareil (après le build)
+node site/code-salles.mjs          # le code d'accès des salles, dans Chromium, sur la même base fictive (après le build)
+node site/gestes-equipe.mjs        # les gestes de l'espace de l'équipe, que l'administration partage (après le build)
 node site/mouvement-admin.mjs      # le mouvement de l'administration, dans Chromium, sur une base fictive (après le build)
                                    # le vocabulaire de ce mouvement : site/MOUVEMENT.md
 node site/tableau.mjs              # le tableau de bord et l'en-tête de l'administration, dans Chromium, sur la même base fictive
@@ -50,7 +53,7 @@ node site/fenetres-2.mjs           # les fenêtres qui restent : le détail du p
 node site/carte-travail.mjs        # la carte de tournée comme vue de travail : le menu des pastilles, le survol, Maj+clic, le zoom, « Voir sur la carte » (après le build)
 node site/habillage.mjs            # l'habillage final : le jeu d'états des commandes, l'étiquette, les vides, « mouvement réduit », les pages d'essai, le jour relu (après le build)
 node site/reduit.mjs               # la passe « moins d'animations » : quatre gestes au clavier, aucune animation, les valeurs finales déjà en place (après le build)
-node site/planche.mjs              # la planche de relecture, à la demande (5 à 6 minutes) : les captures en vraies polices et planche.html, dans site/dist/shots-planche/ (après le build)
+node site/planche.mjs              # la planche de relecture, à la demande (trois minutes au calme, six sous charge) : les captures en vraies polices et planche.html, dans site/dist/shots-planche/ (après le build)
 bash site/bancs-admin.sh           # le build, puis tous les bancs de l'administration l'un après l'autre ; --tout y joint
                                    # ceux de l'espace de l'équipe (sinon, seulement si gestes.js, planning.js ou feuille.js changent) ;
                                    # --planche y ajoute, à la fin, la planche de relecture (jamais lancée sans cette option)
@@ -387,7 +390,7 @@ compte du projet inscrit dans `crescite_admins`.
     qui rognent leur contenu) ; désactivée, elle est à moitié transparente ; occupée (`aria-busy`, sur un bouton seulement),
     son libellé s'efface sous un petit anneau qui tourne (fixe sous « réduire les animations »). Ce qui est choisi, un bouton
     principal ou désactivé ne change pas au survol ; la poignée (`fenetres.js`) a le sien (sa ligne). La barre du bas du
-    téléphone n'a que le pressé et le focus. Les boutons des feuilles (`gestes.js`, partagé avec l'espace de l'équipe) ne sont
+    téléphone garde les siens : rien n'y change. Les boutons des feuilles (`gestes.js`, partagé avec l'espace de l'équipe) ne sont
     habillés que dans l'administration. Les outils des tuiles font 32 px à la souris et 44 px au doigt.
   - *L'étiquette.* Les titres de section (« NOVEMBRE », « À TRAITER », « DATE » du tiroir, les en-têtes du tableur, les
     étiquettes de la recherche) parlent d'une seule voix, en capitales espacées de 11 px (classe `.etiquette` pour un nouvel
@@ -399,7 +402,7 @@ compte du projet inscrit dans `crescite_admins`.
   - *Les pages d'essai.* `#/essai/etats` dessine les six états (repos, survol, pressé, clavier, désactivé, occupé) sur six
     commandes, avec les règles mêmes de l'habillage (le survol, le pressé et le clavier y sont posés par `data-etat`) ;
     `#/essai/icones` montre les icônes. Ni l'une ni l'autre n'est dans le menu ni dans la recherche.
-  - `node site/habillage.mjs` garde tout cela (71 vérifications, moins de 20 s) : le focus et son décalage dans les segments, un
+  - `node site/habillage.mjs` garde tout cela (72 vérifications, moins de 20 s) : le focus et son décalage dans les segments, un
     bouton occupé (curseur, opacité, anneau, blanc sur le menu), les champs, les outils de 32 et de 44 px, la règle des étiquettes
     sur chacun de ses porteurs (dont les titres « À venir » des deux listes et le mois d'une date à précision « mois »), la
     tentacule des vides (liste, tableur, carte), les deux pages d'essai (chaque état lu dans le style calculé, au repos comme à la
@@ -411,16 +414,16 @@ compte du projet inscrit dans `crescite_admins`.
     ligne), remettre les poignées (Entrée sur « Disposition d'origine »), passer le tableur de Simple à Complet. Après chacun,
     aucune animation à durée non nulle ni aucune transition lancée, et les valeurs finales (la largeur du menu, la place du
     tiroir, la largeur des listes, le mode du tableur) déjà en place tout de suite puis 50 ms plus tard : l'immobilité est une
-    arrivée instantanée, pas une absence d'arrivée. Un témoin, sans « moins d'animations », montre qu'avec les animations permises
+    arrivée instantanée, pas une absence d'arrivée. Une contre-épreuve, sans « moins d'animations », montre qu'avec les animations permises
     le menu et le tiroir glissent bien. Captures dans `site/dist/shots-reduit/`.
-  - *La planche de relecture.* `node site/planche.mjs` (environ 5 à 6 minutes, à la demande : ce n'est pas un banc de
-    non-régression, la chaîne ordinaire ne le lance pas ; `bash site/bancs-admin.sh --planche` le lance à la fin de la chaîne)
+  - *La planche de relecture.* `node site/planche.mjs` (environ trois minutes au calme, jusqu'à six sous charge, à la demande :
+    ce n'est pas un banc qui garde le code, la chaîne ordinaire ne le lance pas ; `bash site/bancs-admin.sh --planche` le lance à la fin de la chaîne)
     photographie dix pages de l'administration (le tableau de bord, la liste des dates, le tableur en Simple, en Complet et en
     Distribution, la carte, une fiche en tiroir, le planning, l'équipe, la diffusion), à 1 280, 1 600 et 1 920 px, en nuit et en
     jour, le menu déplié puis replié, plus les pages d'essai des états et des icônes : 122 captures. Ouvrir
     `site/dist/shots-planche/planche.html` : une grille de vignettes sur trois colonnes, une table des matières, et sous chaque
     vignette sa légende (la page, la largeur, le thème, le menu, le lot du plan, la police effective), avec en tête la date et la
-    version du code (l'identifiant court du dépôt, « + modifications locales » s'il n'est pas propre, et la branche). Un clic sur
+    version du code (l'identifiant court du commit, « + modifications locales » s'il n'est pas propre, et la branche). Un clic sur
     une vignette l'ouvre en grand. Les polices de Google (Ubuntu, Open Sans, Raleway) sont demandées ; sans réseau, ce sont celles
     du système, et chaque légende le dit (« polices du système »). Rien de cela n'est commité.
 - **Les fenêtres ajustables** (`admin/fenetres.js`, chargé avant le tiroir) : à l'ordinateur, le bord d'une surface se tire.
@@ -439,7 +442,7 @@ compte du projet inscrit dans `crescite_admins`.
   téléphone ni au doigt (la poignée n'existe qu'à partir de 641 px avec un pointeur précis), ni dans l'espace de
   l'équipe, ni à l'impression. Pendant le geste, rien d'autre ne bouge (les lignes d'une liste ne glissent pas, le pied de
   la fiche ne se remesure pas). `node site/fenetres.mjs` le vérifie dans Chromium, hors ligne, sur une base fictive
-  (199 vérifications : la poignée et ses valeurs, un glisser qui n'écrit qu'une fois, la taille retrouvée et bornée à
+  (201 vérifications : la poignée et ses valeurs, un glisser qui n'écrit qu'une fois, la taille retrouvée et bornée à
   l'écran, le double-clic, les flèches, le bouton « ⋯ », le recul des tiroirs empilés, le séparateur de la liste sur les
   huit pages et après un enregistrement, le squelette du chargement, la remise de toutes les tailles et son « Annuler »,
   le téléphone et le tactile, l'impression, les coins de chaque boîte et la taille qu'ils gardent, la feuille et son piège de
@@ -1443,8 +1446,8 @@ Représentations), `menu.epingles` (les accès épinglés du menu latéral : la 
 planning, les devis, les frais, le journal et le site, voir « Le cadre et le menu latéral »), `theme` (`nuit`, `jour` ou
 `appareil` ; la nuit tant qu'on n'a pas choisi) et `densite` (`confortable` ou `compacte` ; voir « L'apparence »), puis
 `tableur.colonnes` (les colonnes du tableur à la carte, par mode : ordre, masquées, colonnes figées, largeurs,
-« Colonnes vides », jeu choisi, colonnes montrées ; voir Représentations), `tableur.mode` (le mode du tableur, `simple` ou `complet` ; voir
-Représentations), puis `fenetres.tiroir` (la largeur du tiroir, en pixels), `fenetres.liste` (la
+« Colonnes vides », jeu choisi, colonnes montrées ; voir Représentations), `tableur.mode` (le mode du tableur, `simple`, `complet` ou
+`distribution` ; absente : Simple ; voir Représentations), puis `fenetres.tiroir` (la largeur du tiroir, en pixels), `fenetres.liste` (la
 largeur de la colonne de la liste à côté d'une fiche, en pixels), `fenetres.pl-detail` (la colonne du détail d'un jour
 du planning), `fenetres.tn` (la colonne de la carte de tournée) et `fenetres.a4-zoom` (le zoom de la page A4 : un
 pourcentage de 50 à 200, ou `auto` pour « Ajuster ») ; pour le tableur, `fenetres.tableur-h` (la hauteur de son cadre),

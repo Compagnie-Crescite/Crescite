@@ -1326,7 +1326,7 @@ const TABLEAU = (() => {
 .tb-ico { display: inline-grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 1px solid transparent; border-radius: 7px; background: none; color: var(--gris); cursor: pointer; font-weight: 700; }
 .tb-ico[aria-expanded="true"] { background: var(--doux); color: var(--encre); }      /* (survol, pressé, désactivé, occupé : le jeu d'états, habillage.js) */
 /* à la souris, 32 px (la rangée d'outils d'une tuile ne tient pas en 44 px) ; au doigt, 44 px (habillage.js) */
-@media (pointer: fine) { .tb-ico { width: 32px; height: 32px; } }
+@media (min-width: 641px) and (pointer: fine) { .tb-ico { width: 32px; height: 32px; } }
 .tb-replier svg { transition: transform .15s; }
 .tb-tuile.replie .tb-replier svg { transform: rotate(-90deg); }
 .tb-tuile.replie .tb-corps, .tb-tuile.replie .tb-reglages { display: none; }

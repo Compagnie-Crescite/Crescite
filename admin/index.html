@@ -802,7 +802,7 @@ dialog.tab-dialogue::backdrop { background: rgba(23, 15, 26, .4); }
 .tableur .tab-jj { display: block; box-sizing: border-box; height: 43px; padding: 5px 0 0; font-size: 9px; line-height: 1; }
 .tableur .tab-jj i { display: block; min-height: 9px; font-style: normal; }
 .tableur .tab-jj b { display: block; font-size: 19px; line-height: 1; }
-.tableur .tab-jj b.mois { font-size: 17px; }
+.tableur .tab-jj b.mois { margin: 0; font-size: 17px; }      /* (sans la marge d'un titre .mois : l'année reste dans la tuile) */
 .tab-heures { display: inline-flex; flex-wrap: nowrap; align-items: center; gap: 4px; }
 .tab-heure { flex: none; padding: 2px 9px; border-radius: 999px; background: var(--doux); color: var(--encre); font: 600 13px/1.4 var(--titres); }
 .tab-heure.annulee { background: var(--alerte-doux); color: var(--alerte); text-decoration: line-through; }

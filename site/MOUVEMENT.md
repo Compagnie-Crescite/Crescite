@@ -136,11 +136,12 @@ vérification manque.
 `reduit.mjs` ouvre l'administration avec « moins d'animations » et joue au clavier quatre gestes (Alt+M, Entrée sur une ligne qui ouvre
 un tiroir, Entrée sur « Disposition d'origine », Simple → Complet) : après chacun, `document.getAnimations()` (hors transitions à durée nulle)
 est vide, aucune transition ne s'est lancée, et les valeurs finales (`--large-menu`, la place du tiroir, la largeur des listes, la classe du mode)
-sont déjà posées à 0 puis à 50 ms. Un témoin sans « moins d'animations » montre qu'avec les animations permises le menu et le tiroir glissent bien.
-`planche.mjs`, lui, n'est pas un banc de non-régression : c'est la planche de relecture d'Adrien (122 captures en vraies polices, en nuit et en
-jour, à trois largeurs, le menu déplié et replié), lancée à la demande par `bash site/bancs-admin.sh --planche` ou seule.
+sont déjà posées à 0 puis à 50 ms. Une contre-épreuve sans « moins d'animations » montre qu'avec les animations permises le menu et le tiroir glissent bien.
+`planche.mjs`, lui, n'est pas un banc qui garde le code : c'est la planche de relecture d'Adrien (122 captures, en vraies polices quand le
+réseau les donne, en nuit et en jour, à trois largeurs, le menu déplié et replié), lancée à la demande par `bash site/bancs-admin.sh --planche` ou seule.
 
-`bash site/bancs-admin.sh` enchaîne aussi `prefs.mjs` (où chaque réglage est gardé : avec le compte ou sur
+`bash site/bancs-admin.sh` enchaîne aussi `habillage.mjs` (le jeu d'états, l'étiquette, les vides, et la règle unique
+de « moins d'animations », qui met toutes les durées à zéro), `prefs.mjs` (où chaque réglage est gardé : avec le compte ou sur
 l'appareil), `tableur.mjs` (le tableur des représentations, en Complet), `tableur-complet.mjs` (le tableur Complet,
 chaque champ atteignable : les jeux de colonnes, la diffusion et sa case d'export, Ctrl+Entrée et l'icône « fiche »,
 le garde-fou d'une période, « Détacher », l'import), `tableur-simple.mjs` (le tableur Simple : une ligne par date, ses

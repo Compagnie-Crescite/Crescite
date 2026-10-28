@@ -228,6 +228,9 @@ const fin = (nom, erreurs) => ok(`${nom} · aucune erreur de script`, erreurs.le
   await attendre(page, () => document.querySelector('#tab-corps .tab-jj b.mois'), null, 15000);
   const j = await page.evaluate(() => { const lire = e => { const s = getComputedStyle(e); return { famille: s.fontFamily, espace: s.letterSpacing, taille: s.fontSize }; }; const m = document.querySelector('#tab-corps .tab-jj b.mois'), n = document.querySelector('#tab-corps .tab-jj b:not(.mois)'); return { mois: m && lire(m), jour: n && lire(n) }; });
   ok('4 · le mois d’une date à précision « mois » (tuile du tableur) garde la police et l’espacement du numéro de jour voisin (Ubuntu, sans espacement), non ceux d’une étiquette', !!j.mois && !!j.jour && j.mois.famille === j.jour.famille && /Ubuntu/.test(j.mois.famille) && j.mois.espace === j.jour.espace && j.mois.espace !== '1.1px' && j.mois.taille === '17px', JSON.stringify(j));
+  // (la marge d'un titre .mois, posée sur ce <b>, poussait l'année sous le bord rogné de la tuile)
+  const an = await page.evaluate(() => { const m = document.querySelector('#tab-corps .tab-jj b.mois'), t = m.closest('.tab-jj'), i = m.nextElementSibling, r = t.getBoundingClientRect(), ri = i.getBoundingClientRect(), rm = m.getBoundingClientRect(); return { annee: i.textContent, haut: Math.round(rm.top - r.top), bas: Math.round(r.bottom - ri.bottom), marge: getComputedStyle(m).margin }; });
+  ok('4 · … et l’année tient dans la tuile, sous le mois (pas de marge de titre sur le mois)', /^\d{4}$/.test(an.annee) && an.bas >= 0 && an.marge === '0px', JSON.stringify(an));
   fin('4 (précision mois)', erreurs);
   await ctx.close();
   DB.crescite_dates.length = 0; DB.crescite_dates.push(...AVANT);

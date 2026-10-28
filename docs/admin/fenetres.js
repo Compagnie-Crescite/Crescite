@@ -92,7 +92,8 @@
    FENETRES.normaliser(cle, v)    FENETRES.zoomA4(v) → 'auto' | 50 … 200 | null    FENETRES.equiperDeux()
    FENETRES.equiperDialog(dlg, cle?) → le coin de la boîte (ou null)
    FENETRES.reglages(zone) → dessine les deux réglages dans le conteneur donné    FENETRES.appliquerListe()
-   FENETRES.appliquerMiseEnPage() (la colonne de la liste et la pleine largeur, avant le premier dessin)    FENETRES.actif() */
+   FENETRES.appliquerMiseEnPage() (la colonne de la liste et la pleine largeur, avant le premier dessin)    FENETRES.actif()
+   FENETRES.CLES (les clés fenetres.* d'ici, une copie) */
 const FENETRES = (() => {
   const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const html = document.documentElement;

@@ -2,7 +2,7 @@
 # Tous les bancs de l'administration, l'un après l'autre : le filet à passer avant de rendre un lot.
 #   bash site/bancs-admin.sh            construit, vérifie les modules, lance les bancs de l'administration
 #   bash site/bancs-admin.sh --tout     … et, toujours, ceux de l'espace de l'équipe (gestes-equipe, mouvement-equipe)
-#   bash site/bancs-admin.sh --planche  … et, à la toute fin, la planche de relecture (site/planche.mjs : 5 à 6 minutes,
+#   bash site/bancs-admin.sh --planche  … et, à la toute fin, la planche de relecture (site/planche.mjs : trois à six minutes,
 #                                       site/dist/shots-planche/planche.html) ; sans cette option, elle n'est jamais lancée
 #   BASE=<réf> bash site/bancs-admin.sh la référence du diff (par défaut origin/ccr-ab0239c0-lqdc60)
 #
@@ -17,8 +17,8 @@
 #      absent est rouge ;
 #   4. les bancs de l'espace de l'équipe (BANCS_EQUIPE), quand le diff contre BASE touche admin/gestes.js,
 #      admin/planning.js ou admin/feuille.js — modules que l'équipe partage — ou toujours avec --tout ;
-#      avec --planche, la planche de relecture vient après tout cela, une seule fois, sans relance (un outil de relecture,
-#      pas un banc de non-régression) ;
+#      avec --planche, la planche de relecture vient après tout cela, une seule fois, sans relance, et seulement si tout est vert
+#      (un outil de relecture, pas un banc : il n'entre pas dans le compte des bancs) ;
 #   5. un résumé : chaque banc, son compte, sa durée.
 # Pour ajouter le banc d'un lot : une ligne dans BANCS (ou BANCS_EQUIPE), en queue de liste. Sort en erreur au premier banc
 # rouge (après sa relance), ou si un module manque.
@@ -131,7 +131,10 @@ titre "résumé"
 printf '%-18s %-34s %s\n' "banc" "compte" "durée"
 for l in "${RESUME[@]}"; do echo "$l"; done
 if [ -n "$ROUGE" ]; then
-  echo; echo "ROUGE : la chaîne s'est arrêtée sur le banc « $ROUGE »." >&2
+  [ "$PLANCHE" -eq 1 ] && [ "$ROUGE" != planche ] && printf '%-18s %-34s %s\n' planche "non lancée (un banc est rouge)" "-"
+  echo; echo "ROUGE : la chaîne s'est arrêtée sur « $ROUGE »." >&2
   exit 1
 fi
-echo; echo "VERT : ${#LISTE[@]} bancs."
+# (la planche n'est pas un banc : elle se compte à part)
+if [ "$PLANCHE" -eq 1 ]; then echo; echo "VERT : $(( ${#LISTE[@]} - 1 )) bancs, et la planche de relecture."
+else echo; echo "VERT : ${#LISTE[@]} bancs."; fi

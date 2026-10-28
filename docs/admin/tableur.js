@@ -94,7 +94,7 @@
 
    Son API (la globale TABLEUR) :
      TABLEUR.vue(f)           la vue #/representations/tableur (lue par le routage du script principal) ; f : les filtres
-                              communs, session.dates (f.mode : le mode, 'simple' ou 'complet', que la vue y reporte). Si f.cible porte l'identifiant d'une date (« Voir dans le tableur »),
+                              communs, session.dates (f.mode : le mode, 'simple', 'complet' ou 'distribution', que la vue y reporte). Si f.cible porte l'identifiant d'une date (« Voir dans le tableur »),
                               la vue arrive sur sa ligne : case active, en vue, cerclée un instant (visee sur chaque case) ;
                               la cible est oubliée aussitôt. Le tri vit dans session.vues.tableur, les colonnes dans la préférence.
      TABLEUR.lireJour(t, ref) un jour tapé ou collé (« 5/11 », « 05-11-2026 », « 2026/11/05 », « 5 nov 26 », « jeu. 5 nov. 2026 ») →
