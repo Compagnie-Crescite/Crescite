@@ -43,6 +43,7 @@ qu'attendre.
 | Les liens des courriels mènent à une page introuvable | Le secret `SITE_URL` n'est pas réglé : les fonctions prennent alors `adrienvada.fr/Crescite`, qui ne sert plus le site | Supabase → Edge Functions → Secrets : `SITE_URL` = l'adresse du site, sans `/` final. |
 | Le flux d'agenda ne s'ouvre plus (« Missing authorization header ») | Un redéploiement de la fonction a recoché « Verify JWT » | Supabase → Edge Functions → `crescite-agenda` → Details : décocher, enregistrer. Idem pour `crescite-courriel`, `crescite-pro` et `crescite-push`. |
 | On ne peut plus publier | GitHub en panne, ou la clé Cloudflare a expiré | Scénario B ; ou une nouvelle clé Cloudflare (« Cloudflare Pages : Modifier »). |
+| Supabase écrit que le quota est dépassé (« egress », bande passante) | Les fichiers du stockage (surtout les portraits) téléchargés à chaque visite, ou par des contrôles du site lancés en boucle | Supabase → Organization → Usage : quel projet, quelle ligne. Les portraits passent à 800 px (`python3 supabase/portraits.py`) ; les contrôles du site gardent le stockage sur le disque (`site/stockage-local.mjs`). Au-delà, la formule Pro (environ 25 $ par mois). |
 
 ## 3. Les scénarios
 

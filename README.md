@@ -38,12 +38,19 @@ node site/reactivite.mjs /tmp/x index --strict  # les budgets de réactivité du
 AXE=<axe.min.js> node site/passe-site.mjs       # la passe finale : axe, 360 px, erreurs, nuit, sur chaque route
 python3 data/site_crescite.py      # relève de nouveau le texte de l'ancien crescite.fr (data/site-crescite.json)
 python3 scripts/polices.py         # télécharge de nouveau les polices dans site/polices/ (seulement pour en ajouter une)
+python3 supabase/portraits.py --essai  # réduit à 800 px les portraits déjà déposés (sans --essai : la clé service du projet de la compagnie)
 ```
 
 **Les polices** sont rangées dans le site (`site/polices/` : woff2, latin et latin étendu, avec leurs licences ; le build
 les copie dans `polices/` à côté des pages) : aucune page ne demande rien à Google Fonts, et le site marche tel quel chez
 n'importe quel hébergeur. Une nouvelle police (celle du titre d'un nouvel univers) s'ajoute à `FAMILLES` dans
 `scripts/polices.py`, qu'on relance avant le build ; absente de la liste, elle laisse sa place à la police de secours.
+
+**La bande passante de Supabase.** Le plan gratuit compte ce que le stockage sert ; en octobre 2026, les portraits de
+l'équipe (2 000 px, 270 Ko chacun, téléchargés à chaque visite et par chaque contrôle du site) l'avaient épuisée.
+L'administration envoie désormais un portrait à 800 px (`PORTRAIT_PX`), `supabase/portraits.py` réduit ceux qui y
+sont déjà, et les contrôles dans Chromium (`onglets`, `passe-site`, `reactivite`, `shoot`) demandent chaque fichier du
+stockage une seule fois par machine (`site/stockage-local.mjs`, `STOCKAGE=0` pour ne rien demander).
 
 Un seul site, celui de la compagnie (les dix maquettes et le premier prototype qui l'ont précédé ont été retirés en
 octobre 2026 ; ils restent dans l'historique du dépôt). Son texte vient des sources et de rien d'autre : le texte de

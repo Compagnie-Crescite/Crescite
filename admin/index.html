@@ -1011,11 +1011,13 @@ function propre(html) {
   return [...t.content.childNodes].map(sortie).join('').replace(/(<br\/>\s*)+$/, '').replace(/&nbsp;/g, ' ').trim();
 }
 
-// des photos plus légères avant l'envoi : 2 000 px au plus, en WebP
-async function optimiser(fichier) {
+// des photos plus légères avant l'envoi : 2 000 px au plus, en WebP ; 800 px pour un portrait (PORTRAIT_PX), qui ne
+// s'affiche jamais à plus de 250 px : chaque visite le télécharge chez Supabase, dont le plan gratuit compte la bande passante
+const PORTRAIT_PX = 800;
+async function optimiser(fichier, max = 2000) {
   try {
     const img = await createImageBitmap(fichier);
-    const k = Math.min(1, 2000 / Math.max(img.width, img.height));
+    const k = Math.min(1, max / Math.max(img.width, img.height));
     const c = document.createElement('canvas');
     c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
     c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
@@ -1023,8 +1025,8 @@ async function optimiser(fichier) {
     return blob && blob.size < fichier.size ? blob : fichier;
   } catch { return fichier; }
 }
-async function envoyerPhoto(fichier, dossier) {
-  const blob = await optimiser(fichier);
+async function envoyerPhoto(fichier, dossier, max) {
+  const blob = await optimiser(fichier, max);
   const ext = blob.type === 'image/webp' ? 'webp' : (fichier.name.split('.').pop() || 'jpg').toLowerCase();
   const chemin = `${dossier}/${Date.now().toString(36)}-${slugifier(fichier.name.replace(/\.[^.]+$/, '')) || 'photo'}.${ext}`;
   const { error } = await sb.storage.from('crescite').upload(chemin, blob, { contentType: blob.type || fichier.type, upsert: false, cacheControl: '31536000' });

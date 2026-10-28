@@ -373,8 +373,8 @@ function editeurPersonne(id) {
 const PORTRAITS = 'crescite-equipe';
 const portraitPrive = p => /^portraits\//.test(p || '');
 async function envoyerPortrait(fichier, publique) {
-  if (publique) return envoyerPhoto(fichier, 'equipe');
-  const blob = await optimiser(fichier);
+  if (publique) return envoyerPhoto(fichier, 'equipe', PORTRAIT_PX);
+  const blob = await optimiser(fichier, PORTRAIT_PX);
   const ext = blob.type === 'image/webp' ? 'webp' : (fichier.name.split('.').pop() || 'jpg').toLowerCase();
   const chemin = `portraits/${Date.now().toString(36)}-${slugifier(fichier.name.replace(/\.[^.]+$/, '')) || 'photo'}.${ext}`;
   const { error } = await sb.storage.from(PORTRAITS).upload(chemin, blob, { contentType: blob.type || fichier.type, upsert: false });
