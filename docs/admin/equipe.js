@@ -236,7 +236,8 @@ function editeurPersonne(id) {
     <div class="bloc" id="pe-acces"></div>
     <div class="bloc" id="pe-suivi"><h3>Notes de suivi <span class="aide" style="font-weight:400">— jamais lues par la personne</span></h3>${champ({ k: 'notes', t: 'long', lignes: 4, ph: 'Contrats, disponibilités…' }, N)}</div>
     ${p0 ? '<div class="bloc" id="pe-spectacles"></div><div class="bloc" id="pe-dates"></div>' : ''}${p0 && typeof NOTES !== 'undefined' ? '<div class="bloc" id="pe-notes"></div>' : ''}
-    ${pied(p0 ? 'Tout est enregistré' : 'Nouvelle fiche', p0 ? '<button type="button" class="btn danger" id="pe-suppr">Supprimer</button>' : '')}`;
+    ${pied(p0 ? 'Tout est enregistré' : 'Nouvelle fiche', p0 ? '<button type="button" class="btn danger" id="pe-suppr">Supprimer</button>' : '', { replier: piedReplie() })}`;
+  suivrePied($('.pied-ed', zone));
   $('[data-chemin="email"]', zone).type = 'email';
   $('[data-chemin="telephone"]', zone).type = 'tel';
   if (p0) { sousChamp($('[data-chemin="telephone"]', zone), v => mentionAppris('crescite_personnes_privees', p0.id, 'telephone', v)); sousChamp($('[data-chemin="email"]', zone)); sousChamp($('[data-chemin="urgence"]', zone)); }
@@ -3020,7 +3021,8 @@ function editeurAcces(id) {
       ${champ(SPEC_ACCES[3], F)}
     </div>
     ${a0 ? `<div class="bloc"><div class="pro-journal-tete"><h3 aria-level="2">Journal</h3><button type="button" class="btn petit" id="pro-actualiser">Actualiser</button></div><div id="pro-journal">${typeof attenteLignes === 'function' ? attenteLignes(3, 44) : '<p class="aide">Chargement…</p>'}</div></div>` : ''}
-    ${pied(a0 ? 'Tout est enregistré' : 'Nouvelle invitation', a0 ? '<button type="button" class="btn danger" id="pro-suppr">Supprimer</button>' : '')}`;
+    ${pied(a0 ? 'Tout est enregistré' : 'Nouvelle invitation', a0 ? '<button type="button" class="btn danger" id="pro-suppr">Supprimer</button>' : '', { replier: piedReplie() })}`;
+  suivrePied($('.pied-ed', zone));
   const courriel = $('[data-chemin="courriel"]', zone);
   if (courriel) { courriel.type = 'email'; courriel.autocomplete = 'off'; }
   relier($('#pro-f', zone), F, SPEC_ACCES);

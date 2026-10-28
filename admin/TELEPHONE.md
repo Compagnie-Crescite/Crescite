@@ -128,8 +128,10 @@ les changer.
 Équipe, Ateliers, Textes, Devis et Espace pro (index.html:3457, 4167, 4218, 4333, 4439, 4914 ; equipe.js:232, 3007) ; le
 banc le contrôle rubrique par rubrique. Le « + » caché dès qu'il y a un `.pied-ed` le retire aussi des sous-pages qui en
 ont un (equipe.js:446-447) : « Créer » reste à un retour arrière, c'est voulu. `inert` ne doit pas rendre « Annuler »
-injoignable : `#annonces` est exclu, et le banc le vérifie. Le pied replié cherche `#pied-autres` et `.pied-plus` dans tout
-le document (index.html:2710-2717) : sans danger tant qu'une seule fiche est ouverte.
+injoignable : `#annonces` est exclu, et le banc le vérifie. Le pied replié cherchait `#pied-autres` et `.pied-plus` dans
+tout le document (index.html:2710-2717) ; or une date ouverte en tiroir au-dessus d'une fiche fait deux pieds repliés à la
+fois (la relecture du lot l'a trouvé) : chaque pied a donc son menu, avec son propre id, et le banc ouvre le « Plus » du
+tiroir au-dessus d'une personne.
 
 ### Lot 2 : tout au doigt (petit)
 

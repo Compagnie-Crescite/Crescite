@@ -56,6 +56,7 @@ node site/fenetres-2.mjs           # les fenêtres qui restent : le détail du p
 node site/carte-travail.mjs        # la carte de tournée comme vue de travail : le menu des pastilles, le survol, Maj+clic, le zoom, « Voir sur la carte » (après le build)
 node site/habillage.mjs            # l'habillage final : le jeu d'états des commandes, l'étiquette, les vides, « mouvement réduit », les pages d'essai, le jour relu (après le build)
 node site/reduit.mjs               # la passe « moins d'animations » : quatre gestes au clavier, aucune animation, les valeurs finales déjà en place (après le build)
+node site/telephone.mjs            # l'administration au téléphone (390 × 844) : le bas de l'écran dégagé, les fiches en plein écran, le « + », les pieds, la feuille de « Plus » (après le build)
 node site/planche.mjs              # la planche de relecture, à la demande (trois minutes au calme, six sous charge) : les captures en vraies polices et planche.html, dans site/dist/shots-planche/ (après le build)
 bash site/bancs-admin.sh           # le build, puis tous les bancs de l'administration l'un après l'autre ; --tout y joint
                                    # ceux de l'espace de l'équipe (sinon, seulement si gestes.js, planning.js ou feuille.js changent) ;
@@ -446,6 +447,20 @@ compte du projet inscrit dans `crescite_admins`.
     tiroir, la largeur des listes, le mode du tableur) déjà en place tout de suite puis 50 ms plus tard : l'immobilité est une
     arrivée instantanée, pas une absence d'arrivée. Une contre-épreuve, sans « moins d'animations », montre qu'avec les animations permises
     le menu et le tiroir glissent bien. Captures dans `site/dist/shots-reduit/`.
+  - *Le téléphone.* `node site/telephone.mjs` (69 vérifications, moins de 40 s, 390 × 844 au doigt ; le banc du plan
+    `admin/TELEPHONE.md`, une section par lot) : le lot 1 mesure que les fiches (date, personne, lieu, et six autres
+    rubriques) commencent à 140 px du haut au plus, leur tête invisible mais son titre lu des lecteurs d'écran et hors
+    de portée de Tab ; que le « + » est caché dans une feuille de route, un spectacle et le tableur, et le reste quand
+    la vue change ; que dix routes nommées ont chacune leur « + », et qu'au bout de la page rien ne passe sous lui ;
+    qu'une annonce se pose au-dessus du « + », et au-dessus du pied d'une fiche (une date, un lieu) ; que le pied d'une
+    date ouverte en tiroir est au bas du tiroir, que le détail d'un jour du planning est au-dessus de la barre, que le
+    pied des six fiches tient sur une rangée avec « Supprimer » dans « Plus », et qu'une date ouverte en tiroir
+    au-dessus d'une fiche a son propre « Plus » (il ouvre ses actions, pas celles de la fiche du dessous) ; que « Plus »
+    et « Créer » rendent le focus (même quand le toucher ne le donne pas, comme sur l'iPhone), retiennent Tab
+    (vingt-quatre appuis de plus, dans les deux sens), laissent « Annuler » joignable, glissent en 200 ms au « doux » et
+    ne bougent pas sous « moins d'animations » ; et, à 1 440 × 900, que la tête, les pieds et les classes de sept fiches
+    sont ceux d'avant (le banc mesure, il ne compare pas le DOM entier) ; à `CPU=4`, qu'aucun traitement ne bloque la
+    page plus de 200 ms. Captures dans `site/dist/shots-telephone/`.
   - *La planche de relecture.* `node site/planche.mjs` (environ trois minutes au calme, jusqu'à six sous charge, à la demande :
     ce n'est pas un banc qui garde le code, la chaîne ordinaire ne le lance pas ; `bash site/bancs-admin.sh --planche` le lance à la fin de la chaîne)
     photographie dix pages de l'administration (le tableau de bord, la liste des dates, le tableur en Simple, en Complet et en
@@ -622,13 +637,24 @@ compte du projet inscrit dans `crescite_admins`.
     ses horaires habituels (Spectacles → Déroulé type), gardés dans `crescite_textes` (`modele-date:<slug>`), qui
     préremplissent une nouvelle date.
   - **Le téléphone** (`admin/mobile.js`, sous 640 px) : une barre d'onglets en bas (Tableau, Dates, Planning, Équipe,
-    Plus : les autres rubriques, la carte, la corbeille, la recherche), un bouton « + » flottant (une date, une fiche, un
-    lieu, une opportunité, une proposition, une séance), le menu latéral masqué, les fiches en plein écran,
-    leur pied et les annonces au-dessus de la barre. L'administration **s'installe sur le téléphone** comme l'espace de
-    l'équipe (`admin/manifest.webmanifest`, `admin/sw.js`, ses icônes) : « Installer », en tête de « Plus », donne
-    l'invite du navigateur, ou sur l'iPhone la marche à suivre dans Safari ; installée, elle s'ouvre en plein écran
-    (« Admin Crescite »). Son service passe toujours d'abord par le réseau (elle écrit dans la base) et ne garde la page
-    et ses scripts que pour s'ouvrir hors connexion ; il ne garde jamais rien de la base.
+    Plus : les autres rubriques, la carte, la corbeille, la recherche), un bouton « + » flottant (une date, une fiche,
+    un lieu, une opportunité, une proposition, une séance), le menu latéral masqué, les fiches en plein écran, leur pied
+    et les annonces au-dessus de la barre. Une fiche ouverte (une date, une personne, un lieu, un atelier, une séance,
+    un devis, une invitation) commence en haut de l'écran, sous son fil d'Ariane : le titre de la rubrique, les vues et
+    « Nouvelle… » restent à l'écran du dessus (le titre reste lu des lecteurs d'écran). Le « + » n'apparaît plus là où
+    il gênait : il est caché dans une fiche, une feuille de route, un spectacle et le tableur, c'est-à-dire dès que la
+    vue a ses propres boutons en bas (« Enregistrer », « Supprimer la date… ») ; une annonce (« Date enregistrée ·
+    Annuler ») se pose au-dessus de lui, ou au-dessus du pied d'une fiche ; « Mentions légales » aussi se pose au-dessus
+    de lui ; le détail d'un jour du planning s'arrête au-dessus de la barre. Le pied d'une fiche tient sur une rangée
+    (l'état, « Plus », « Enregistrer ») et « Supprimer » est dans « Plus » ; une date ouverte en tiroir depuis le
+    tableau de bord a son pied collé au bas du tiroir ; un champ amené à l'écran ne se cache plus sous le pied. « Plus »
+    et « Créer » rendent le focus au bouton touché en se fermant, retiennent Tab dans leur feuille (le reste de la page
+    ne répond plus, sauf les annonces) et glissent en 200 ms, au « doux » (la courbe du tiroir, qui dure 220 ms). Rien
+    ne change à 641 px et plus, et le téléphone n'écrit aucune préférence du compte. L'administration **s'installe sur
+    le téléphone** comme l'espace de l'équipe (`admin/manifest.webmanifest`, `admin/sw.js`, ses icônes) : « Installer »,
+    en tête de « Plus », donne l'invite du navigateur, ou sur l'iPhone la marche à suivre dans Safari ; installée, elle
+    s'ouvre en plein écran (« Admin Crescite »). Son service passe toujours d'abord par le réseau (elle écrit dans la
+    base) et ne garde la page et ses scripts que pour s'ouvrir hors connexion ; il ne garde jamais rien de la base.
   - **Les notes internes** (`admin/notes.js`, le quinzième script `supabase/migrations/20261103_crescite_notes.sql`) :
     un fil sur chaque date, lieu, personne et piste ; `@Prénom Nom` mentionne quelqu'un de l'équipe (l'autocomplétion
     propose les fiches) et la base le prévient dans son espace ; épingler, modifier, supprimer avec « Annuler » ; une

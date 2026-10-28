@@ -27,7 +27,11 @@ const MOBILE = (() => {
   window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); invite = e; });
   window.addEventListener('appinstalled', () => { invite = null; if (typeof annoncer === 'function') annoncer('L’administration est installée : retrouvez-la sur votre écran d’accueil.'); });
   if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js', { scope: './' }).catch(e => { if (navigator.onLine) console.warn('service de l’administration', e); });
-  let barre = null, bouton = null, feuilleOuverte = null;
+  let barre = null, bouton = null, feuilleOuverte = null, retourFocus = null, inertes = [];
+  // le « + » se cache là où la vue a ses propres boutons en bas (le pied d'une fiche, la ligne d'état du tableur : « Enregistrer »,
+  // « Supprimer la date… » ne doivent jamais passer dessous), dans une fiche ouverte ou en création, et dans une feuille de route,
+  // un spectacle ou le tableur (qui ont l'un ou l'autre) : une seule règle, pour la pose et pour l'observateur
+  const plusCache = () => /(nouvelle|nouveau|\d+)$/.test(location.hash) || !!$('.deux.edition') || !!$('#vue .pied-ed, #vue .tab-ligne-etat');
   function poser() {
     // (le squelette du chargement, au téléphone, a déjà l'en-tête du téléphone : il garde html.ob-actif)
     if (!actif() || !E.pret || !$('#vue')) { if (barre) { barre.remove(); barre = null; } if (bouton) { bouton.remove(); bouton = null; } document.documentElement.classList.toggle('ob-actif', actif() && !!$('.barre.attente')); return; }
@@ -35,21 +39,24 @@ const MOBILE = (() => {
     if (!barre) {
       barre = document.createElement('nav'); barre.className = 'ob-barre'; barre.setAttribute('aria-label', 'Rubriques');
       barre.innerHTML = `${ONGLETS.map(([k, l, i]) => `<a href="#/${k}" data-ob="${k}">${icone(i)}<span>${l}</span></a>`).join('')}<button type="button" data-ob="plus" aria-haspopup="dialog">${icone('points')}<span>Plus</span></button>`;
-      barre.addEventListener('click', e => { const b = e.target.closest('[data-ob="plus"]'); if (b) { e.preventDefault(); feuillePlus(); } });
+      barre.addEventListener('click', e => { const b = e.target.closest('[data-ob="plus"]'); if (b) { e.preventDefault(); feuillePlus(b); } });
       document.body.append(barre);
       bouton = document.createElement('button'); bouton.type = 'button'; bouton.className = 'ob-plus'; bouton.setAttribute('aria-label', 'Créer'); bouton.title = 'Créer…'; bouton.innerHTML = icone('plus');
-      bouton.addEventListener('click', feuilleCreer);
+      bouton.addEventListener('click', e => feuilleCreer(e.currentTarget));
       document.body.append(bouton);
     }
     const r = rubrique(), tabs = new Set(ONGLETS.map(o => o[0]));
     $$('[data-ob]', barre).forEach(a => { const ici = a.dataset.ob === r || (a.dataset.ob === 'plus' && !tabs.has(r)); if (ici) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
-    bouton.hidden = /^#\/[a-z]+\/(nouvelle|nouveau|\d+)$/.test(location.hash) || !!$('.deux.edition');
+    bouton.hidden = plusCache();
   }
   // une feuille qui monte du bas : des liens et des actions ; un élément { groupe } est un intertitre, { html } un texte, demi le range sur
   // deux colonnes avec ses voisins, courant le marque comme la rubrique où l'on est, nouvel l'ouvre dans un autre onglet ;
-  // tete, un bouton { libelle, icone, faire } à droite du titre
-  function feuille(titre, items, tete = null) {
-    fermerFeuille();
+  // tete, un bouton { libelle, icone, faire } à droite du titre ; ouvreur, le bouton qui l'ouvre (sur un iPhone, un bouton touché ne prend pas
+  // le focus : on ne peut pas le lire dans document.activeElement, qui ne sert que de repli)
+  function feuille(titre, items, tete = null, ouvreur = null) {
+    fermerFeuille(false);
+    // (le bouton qui l'ouvre, retenu avant que la page ne devienne inerte : la feuille le retrouve en se fermant)
+    retourFocus = ouvreur || (document.activeElement && document.activeElement !== document.body ? document.activeElement : null);
     const m = document.createElement('div'); m.className = 'ob-voile';
     const classe = x => `ob-item${x.demi ? ' demi' : ''}`, corps = x => `${x.icone || ''}<span>${esc(x.libelle)}${x.nouvel ? '\u00a0↗' : ''}${x.detail ? `<small>${esc(x.detail)}</small>` : ''}</span>`;
     m.innerHTML = `<div class="ob-feuille" role="dialog" aria-modal="true" aria-label="${esc(titre)}"><span class="gm-poignee" aria-hidden="true"></span><div class="ob-tete"><h2>${esc(titre)}</h2>${tete ? `<button type="button" class="ob-tete-btn" data-ob-tete>${tete.icone || ''}<span>${esc(tete.libelle)}</span></button>` : ''}</div>
@@ -62,26 +69,36 @@ const MOBILE = (() => {
       if (tete && e.target.closest('[data-ob-tete]')) { fermerFeuille(); tete.faire(); return; }
       const b = e.target.closest('[data-ob-i]'); if (!b) return;
       const x = items.filter(Boolean)[+b.dataset.obI];
-      fermerFeuille();
+      fermerFeuille(!!(x && x.faire));   // (un lien mène ailleurs : la page d'arrivée a son propre focus)
       if (x && x.faire) { e.preventDefault(); x.faire(); }
     });
     document.body.append(m);
+    // le reste de la page est inerte tant que la feuille est ouverte (Tab y reste), sauf les annonces : « Annuler » reste joignable
+    inertes = [...document.body.children].filter(n => n !== m && n.id !== 'annonces' && !n.inert && n.tagName !== 'SCRIPT' && n.tagName !== 'STYLE');
+    inertes.forEach(n => { n.inert = true; });
     requestAnimationFrame(() => { m.classList.add('la'); ($('.ob-item[aria-current]', m) || $('.ob-item', m))?.focus({ preventScroll: true }); });
     feuilleOuverte = m;
   }
-  function fermerFeuille() { if (!feuilleOuverte) return; const m = feuilleOuverte; feuilleOuverte = null; m.classList.remove('la'); setTimeout(() => m.remove(), 200); }
+  // rendre : le focus retourne au bouton qui avait ouvert la feuille, s'il est encore dans la page
+  function fermerFeuille(rendre = true) {
+    if (!feuilleOuverte) return;
+    const m = feuilleOuverte, retour = retourFocus; feuilleOuverte = null; retourFocus = null;
+    inertes.forEach(n => { n.inert = false; }); inertes = [];
+    m.classList.remove('la'); setTimeout(() => m.remove(), 200);
+    if (rendre && retour && retour.isConnected) retour.focus({ preventScroll: true });
+  }
   const allerEtCliquer = (href, sel) => { const essayer = n => { const b = $(sel); if (b) { b.click(); return; } if (n > 0) requestAnimationFrame(() => essayer(n - 1)); }; if (location.hash === href) return essayer(40); window.addEventListener('hashchange', () => setTimeout(() => essayer(40), 20), { once: true }); location.hash = href; };
   // « Plus » : les autres rubriques sur deux colonnes (elles tiennent toutes dans l'écran, sans défiler, même à 360 px), celle
   // où l'on est marquée ; puis la carte, la corbeille, la recherche ; puis le compte, ôté de l'en-tête au téléphone (ses
   // boutons y restent, cachés : la feuille les déclenche)
-  function feuillePlus() {
+  function feuillePlus(ouvreur = null) {
     const tabs = new Set(ONGLETS.map(o => o[0])), r = rubrique(), carte = location.hash.startsWith('#/representations/carte');
     const items = rubriquesVisibles().filter(([k]) => !tabs.has(k)).map(([k, l]) => ({ libelle: l, href: `#/${k}`, demi: true, courant: k === r }));
     items.push({ libelle: 'Carte de tournée', href: '#/representations/carte', demi: true, courant: carte }, { libelle: 'Gestes et raccourcis', demi: true, faire: () => { if (typeof ouvrirAide === 'function') ouvrirAide($('.ob-barre [data-ob="plus"]')); } }, { libelle: 'Corbeille', detail: 'ce qui a été supprimé ces trente derniers jours', href: '#/corbeille', courant: r === 'corbeille' }, { libelle: 'Rechercher', detail: 'une date, une personne, un lieu…', faire: () => ouvrirRecherche() });
     if ($('#b-sortir')) items.push({ groupe: 'Compte' }, { libelle: 'Voir le site', href: SITE, nouvel: true, demi: true }, { libelle: 'Modifier sur le site', href: `${SITE}?edition`, nouvel: true, demi: true },
       { libelle: 'Mot de passe', demi: true, faire: () => $('#b-mdp')?.click() }, { libelle: 'Se déconnecter', demi: true, faire: () => $('#b-sortir')?.click() });
     // l'installation, à droite du titre (la feuille tient dans l'écran sans défiler, même à 360 × 800)
-    feuille('Les autres rubriques', items, installee() ? null : { libelle: 'Installer', icone: icone('installer'), faire: installer });
+    feuille('Les autres rubriques', items, installee() ? null : { libelle: 'Installer', icone: icone('installer'), faire: installer }, ouvreur);
   }
   async function installer() {
     if (invite) {
@@ -93,7 +110,7 @@ const MOBILE = (() => {
       : '<p>Dans le menu de votre navigateur, choisissez <b>Installer l’application</b> ou <b>Ajouter à l’écran d’accueil</b>. Ce navigateur ne le propose pas ? Ouvrez cette page dans Chrome, Edge ou Safari.</p>';
     feuille('Installer l’application', [{ html: `<p>L’administration s’ouvre alors en un geste depuis l’écran d’accueil, en plein écran.</p>${etapes}` }]);
   }
-  function feuilleCreer() {
+  function feuilleCreer(ouvreur = null) {
     feuille('Créer', [
       { libelle: 'Une date', href: '#/representations/nouvelle' },
       E.equipeInstallee ? { libelle: 'Une fiche dans l’équipe', href: '#/equipe/nouvelle' } : null,
@@ -101,14 +118,14 @@ const MOBILE = (() => {
       E.ideale ? { libelle: 'Une opportunité de diffusion', faire: () => allerEtCliquer('#/diffusion', '#b-nouveau-prospect') } : null,
       E.equipeInstallee && E.sql5 !== false ? { libelle: 'Une proposition de dates à l’équipe', href: '#/planning/proposer' } : null,
       { libelle: 'Une séance d’atelier', href: '#/ateliers/seances/nouvelle' },
-    ]);
+    ], null, ouvreur);
   }
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && feuilleOuverte) { e.preventDefault(); fermerFeuille(); } });
-  window.addEventListener('hashchange', () => { fermerFeuille(); setTimeout(poser, 0); });
+  window.addEventListener('hashchange', () => { fermerFeuille(false); setTimeout(poser, 0); });
   if (typeof matchMedia === 'function') matchMedia(MQ).addEventListener('change', poser);
   // la page se dessine (cadre) : la barre se pose dès que l'administration est là, et le « + » se cache dans une fiche
   let poserPlusTard = null;
-  new MutationObserver(() => { clearTimeout(poserPlusTard); poserPlusTard = setTimeout(() => { if (!barre) { if (actif() && E.pret && $('#vue')) poser(); } else bouton.hidden = !!$('.deux.edition') || /nouvelle|nouveau/.test(location.hash); }, 50); }).observe(document.body, { childList: true, subtree: true });
+  new MutationObserver(() => { clearTimeout(poserPlusTard); poserPlusTard = setTimeout(() => { if (!barre) { if (actif() && E.pret && $('#vue')) poser(); } else bouton.hidden = plusCache(); }, 50); }).observe(document.body, { childList: true, subtree: true });
   const style = document.createElement('style');
   style.textContent = `
 @media (max-width: 640px) {
@@ -136,6 +153,21 @@ const MOBILE = (() => {
   html.ob-actif .pied-espace { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
   html.ob-actif .pied-ed { bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
   html.ob-actif #annonces { bottom: calc(82px + env(safe-area-inset-bottom, 0px)); }
+  /* ce que le pied et le détail du planning laissent à la barre ; un champ amené à l'écran ne se cache pas sous le pied */
+  html.ob-actif { --pl-bas: calc(64px + env(safe-area-inset-bottom, 0px)); scroll-padding-bottom: calc(150px + env(safe-area-inset-bottom, 0px)); }
+  /* le « + » (54 px à 76 px du bas) : les annonces et le pied commun se posent au-dessus de lui, jamais dessous */
+  html.ob-actif:has(.ob-plus:not([hidden])) #annonces { bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
+  html.ob-actif:has(.ob-plus:not([hidden])) .pied-espace { padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
+  /* une fiche a son pied collé au-dessus de la barre (64 px + sa rangée de 66 px) : l'annonce se pose au-dessus de lui, pas dessus */
+  html.ob-actif:has(.pied-ed) #annonces { bottom: calc(150px + env(safe-area-inset-bottom, 0px)); }
+  /* le pied d'un tiroir est collé en bas du tiroir, qui n'a pas de barre : la règle ci-dessus (la barre) ne le concerne pas ;
+     -20 px, le bas de .tiroir-corps au téléphone (tiroir.js en rend 24 à l'ordinateur) */
+  html.ob-actif .tiroir-corps .pied-ed { bottom: -20px; }
+  /* une fiche ouverte commence en haut de l'écran : le titre de la rubrique, les vues et « Nouvelle… » restent à l'écran du dessus
+     (le titre reste lu, le fil d'Ariane de la fiche dit où l'on est) */
+  html.ob-actif .tete:has(~ .deux.edition) { margin: 0; }
+  html.ob-actif .tete:has(~ .deux.edition) > :not(h1) { display: none; }
+  html.ob-actif .tete:has(~ .deux.edition) > h1 { position: absolute; width: 1px; height: 1px; margin: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .ob-barre { position: fixed; left: 0; right: 0; bottom: 0; z-index: 48; display: grid; grid-template-columns: repeat(5, 1fr); padding: 4px 4px calc(4px + env(safe-area-inset-bottom, 0px)); background: color-mix(in srgb, var(--carte) 94%, transparent); backdrop-filter: blur(10px); border-top: 1px solid var(--trait); }
   .ob-barre a, .ob-barre button { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px 4px; border: 0; border-radius: 12px; background: none; color: var(--gris); text-decoration: none; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; }
   .ob-barre [aria-current="page"] { color: var(--accent); background: var(--accent-doux); }
@@ -143,9 +175,9 @@ const MOBILE = (() => {
   .ob-plus[hidden] { display: none; }
   html.tiroir-ouvert .ob-plus, html.tiroir-ouvert .ob-barre { display: none; }
 }
-.ob-voile { position: fixed; inset: 0; z-index: 70; background: rgba(23, 15, 26, 0); transition: background .2s; }
+.ob-voile { position: fixed; inset: 0; z-index: 70; background: rgba(23, 15, 26, 0); transition: background .2s cubic-bezier(.2, .8, .2, 1); }
 .ob-voile.la { background: rgba(23, 15, 26, .45); }
-.ob-feuille { position: absolute; left: 0; right: 0; bottom: 0; max-height: 88vh; overflow: auto; padding: 8px 14px calc(14px + env(safe-area-inset-bottom, 0px)); background: var(--carte); color: var(--encre); border-radius: 18px 18px 0 0; box-shadow: 0 -12px 40px -16px rgba(0, 0, 0, .5); transform: translateY(100%); transition: transform .22s cubic-bezier(.3, .7, .3, 1); }
+.ob-feuille { position: absolute; left: 0; right: 0; bottom: 0; max-height: 88vh; overflow: auto; padding: 8px 14px calc(14px + env(safe-area-inset-bottom, 0px)); background: var(--carte); color: var(--encre); border-radius: 18px 18px 0 0; box-shadow: 0 -12px 40px -16px rgba(0, 0, 0, .5); transform: translateY(100%); transition: transform .2s cubic-bezier(.2, .8, .2, 1); }
 .ob-voile.la .ob-feuille { transform: none; }
 .ob-feuille h2 { margin: 6px 0 10px; font-size: 16px; }
 .ob-tete { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
