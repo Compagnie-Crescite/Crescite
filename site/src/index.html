@@ -4670,6 +4670,11 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     let secousse = 0, remonte = null;   // l'instant où une tentacule a été remontée (le corps sursaute), et le spectacle remonté
     let relaye = false;                  // (l'éveil a pris le relais de l'ouverture : la pieuvre est déjà posée, en mouvement, sans rebond)
     let theta = 0, dxT = 0, dyT = 0;     // la tête vivante : son angle, son déplacement (unités du dessin)
+    // la couronne : une fois chaque titre tenu par sa tentacule, de nouvelles tentacules poussent de la tête et refont le logo
+    // de la compagnie autour d'elle (ses huit boucles, ses franges), « crescite » dessous ; une pieuvre au repos à part (le
+    // logo d'un seul tenant, PIEUVRE.logo), emportée par la tête vivante comme les autres. { TS, t0 } : ses tentacules, l'instant
+    // où elle commence à pousser. Sans mouvement : là d'emblée
+    let couronne = null, toileC = null;
     // le jeu, comme à l'ouverture (INTRO) : elle regarde le pointeur (la tête se tourne un peu vers lui, en plus de sa vie) ; il
     // fonce sur elle : elle sursaute (le corps se ramasse, la tête recule, ses tentacules s'agitent), puis se rassure ; une
     // lampe la suit, derrière elle. On attrape une tentacule tendue et on la tire : elle s'étire jusqu'au pointeur, de plus en
@@ -4894,6 +4899,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       // (un bras en route, ou tendu, garde son trajet : une mise en page en plein déploiement, la barre de défilement qui revient
       // à la fin de l'ouverture, une police qui arrive, ne le renvoie pas au repos pour repartir de zéro)
       BRAS.forEach(a => (a.t.cible || a.t.q < 1 ? a.t.reposer(ox, oy, s) : a.t.poser(ox, oy, s)));
+      if (couronne) couronne.TS.forEach(t => t.poser(ox, oy, s));
       attribuer(); tenirTous();
       if (pres) pres.plan = null;   // (la présentation se replanifie sur cette mise en page)
       dpr = Math.min(2, devicePixelRatio || 1);
@@ -5029,6 +5035,19 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       // la région à repeindre : les bras et le logo de cette image, et ceux de la précédente (en px de la toile)
       const b = { x0: LB.x0, y0: LB.y0, x1: LB.x1, y1: LB.y1 };
       for (const a of BRAS) { const r = a.t.boite(6); b.x0 = Math.min(b.x0, r.x0); b.y0 = Math.min(b.y0, r.y0); b.x1 = Math.max(b.x1, r.x1); b.y1 = Math.max(b.y1, r.y1); }
+      // la couronne : elle pousse dès que chaque titre est tenu (toutes les tentacules arrivées) ; ses tentacules suivent la tête
+      const tenus = BRAS.filter(a => a.T.length);
+      if (!couronne && eveil !== null && !pres && tenus.length && tenus.every(a => a.tenu && a.but === a.tenu && a.t.q >= 1 && a.t.mouvement() > .99)) {
+        couronne = { TS: PIEUVRE.creer(), t0: anime ? now : -1e9 };
+        couronne.TS.forEach(t => t.poser(ox, oy, s));
+      }
+      const gC = couronne ? (anime ? clamp((now - couronne.t0) / 2200, 0, 1) : 1) : 0;
+      if (couronne) {
+        for (const t of couronne.TS) { const tT = t.suivreTete(ox, oy, s, theta, dxT, dyT); t.avancer(dtI, { temps: tVie, onde: ondeJ * .8, bob, tourne: tT }); }
+        const m = 40 * s + 8;
+        b.x0 = Math.min(b.x0, ox + bob.x + 250 * s - m); b.y0 = Math.min(b.y0, oy + bob.y + 340 * s - m); b.x1 = Math.max(b.x1, ox + bob.x + 1292 * s + m); b.y1 = Math.max(b.y1, oy + bob.y + 1000 * s + m);
+        if (gC < 1) occupe = true;
+      }
       // le rebond de la pose : à la relève, le corps se ramasse puis se détend, bras compris (ils ne partent qu'ensuite)
       const kp = anime && eveil !== null ? (relaye ? 1 : 1 - .05 * choc((now - eveil) / 700)) * (secousse ? 1 - .035 * choc((now - secousse) / 520) : 1) : 1, cxh = ox + bob.x + COEUR[0] * s, cyh = oy + bob.y + COEUR[1] * s;
       const u = boite && kp === 1 ? { x0: Math.min(b.x0, boite.x0), y0: Math.min(b.y0, boite.y0), x1: Math.max(b.x1, boite.x1), y1: Math.max(b.y1, boite.y1) } : { x0: 0, y0: 0, x1: W, y1: H };
@@ -5045,6 +5064,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         if (eveil !== null) {
           ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
           if (kp !== 1) { ctx.translate(cxh, cyh); ctx.scale(kp, kp); ctx.translate(-cxh, -cyh); }
+          if (couronne) dessinerCouronne(gC, cxh, cyh);
           ctx.save(); ctx.transform(s, 0, 0, s, ox + bob.x, oy + bob.y);
           PIEUVRE.corpsVivant(ctx, TS, theta, dxT, dyT, ENCRE);
           ctx.restore();
@@ -5063,6 +5083,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
           // (les plus enfoncées d'abord : elles passent derrière les autres ; celle qu'on regarde, devant tout)
           for (const a of [...BRAS].sort((x, y) => x.t.profondeur() - y.t.profondeur())) if (a !== ab) trace(a);
           if (ab) trace(ab);
+          if (couronne) motCouronne(gC);
           // (les tentacules posées flottent, portées par les remous (PIEUVRE, flotter) : c'est ce mouvement qui invite à les
           // remonter ; plus de lueur qui court dessus)
           // (les titres et leurs dates sont devant, par-dessus la toile : rien n'y est effacé, les bras passent derrière les
@@ -5078,6 +5099,32 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       else if (une && occupe) reveil();
     }
     const reveil = () => { if (!raf && affiche && visible && !document.hidden) raf = requestAnimationFrame(image); };
+    // « crescite » sous la couronne, sobre : au tiers de sa taille du logo (38 %), centré sous la pieuvre, juste sous ses boucles
+    // (leur bas : 904 unités ; le mot du logo : 355 à 1182 en largeur, 937 à 1100 en hauteur), un peu adouci ; par-dessus les
+    // tentacules qui descendent vers les titres (elles passent dessous : il se lit), venu en dernier
+    let MOT = null;
+    function motCouronne(g) {
+      const gm = clamp((g - .55) / .45, 0, 1);
+      if (!gm) return;
+      ctx.save(); ctx.transform(s, 0, 0, s, ox + bob.x, oy + bob.y); ctx.translate(COEUR[0], 932); ctx.scale(.38, .38); ctx.translate(-768, -937);
+      ctx.globalAlpha = .82 * gm; ctx.fillStyle = ENCRE; ctx.fill(MOT || (MOT = new Path2D(D.logo.motPath))); ctx.restore();
+    }
+    // la couronne, peinte sous la pieuvre (sous sa tête et ses tentacules) : le logo vivant ; en poussant (g < 1), elle paraît
+    // depuis la tête, d'un front doux qui s'élargit (peinte à part, effacée au-delà du front)
+    function dessinerCouronne(g, cx, cy) {
+      const peindre = c => PIEUVRE.logo(c, couronne.TS, { ox, oy, s, theta, dx: dxT, dy: dyT, bob }, ENCRE);
+      if (g >= 1) { peindre(ctx); return; }
+      if (!toileC) toileC = document.createElement('canvas');
+      if (toileC.width !== cv.width || toileC.height !== cv.height) { toileC.width = cv.width; toileC.height = cv.height; }
+      const c = toileC.getContext('2d'), R = 1180 * s * (.15 + .85 * g * (2 - g));
+      c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, toileC.width, toileC.height);
+      c.setTransform(ctx.getTransform());
+      peindre(c);
+      const f = c.createRadialGradient(cx, cy, R * .55, cx, cy, R);
+      f.addColorStop(0, '#000'); f.addColorStop(1, 'rgba(0,0,0,0)');
+      c.globalCompositeOperation = 'destination-in'; c.fillStyle = f; c.fillRect(-1e4, -1e4, 3e4, 3e4); c.globalCompositeOperation = 'source-over';
+      ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(toileC, 0, 0); ctx.restore();
+    }
 
     /* ---------- le jeu (voir JEU) ---------- */
     // le regard et le sursaut, une image : la tête (JEU.rT, rx, ry, ajoutés à theta, dxT, dyT) ; rend l'ampleur du sursaut
