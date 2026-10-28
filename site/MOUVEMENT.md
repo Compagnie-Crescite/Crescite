@@ -57,7 +57,11 @@ pas), ni quand un épinglé change de place (il est déplacé, pas recréé), et
   par image, en largeur ou en variable, jamais en transform ; pendant le geste les transitions sont coupées (pas les
   animations), les lignes d'une liste ne glissent pas (`reperer` rend une Map vide) et le pied d'une fiche ne se remesure
   pas ; la remise à la taille d'origine s'anime une fois, 220 ms, le doux ; le tiroir, lui, arrive et repart au doux
-  (`transform` seul, 220 ms). Sous « moins d'animations », la taille d'origine revient d'un coup.
+  (`transform` seul, 220 ms). Sous « moins d'animations », la taille d'origine revient d'un coup. Les mêmes règles valent pour
+  le détail du planning (`--pl-detail`), la carte de tournée (`--l-tn`) et la hauteur d'une tuile (`--h-tuile`) : en
+  « Personnaliser », le corps de la tuile se voit pendant le geste (opacité pleine) et le redessin complet de la grille est
+  différé au relâchement ; le zoom de la feuille A4 change d'échelle d'un coup, sans transition (une page qui glisse sous
+  une mesure fausserait la pagination, qui mesure par `offsetTop`).
 - **Une mesure ne se fait pas sous un transform** : ce qu'un pli ouvre paraît en fondu, sans translation, pour que les
   lignes qui glissent se mesurent juste.
 - **Ce qui s'anime reste lisible aux lecteurs d'écran** : « en ce moment » est aussi un `aria-current="time"`, un bouton
@@ -92,7 +96,8 @@ filtres communs, le fondu, le focus, la ligne visée, la vue retenue et les touc
 thème et la densité : le jour, « appareil » qui suit le système, la compacte, le menu replié), `distribution.mjs` (la
 distribution à l'écran : la cellule d'une date, qui sera prévenu, la boîte d'impact, la fiche d'une date),
 `fenetres.mjs` (les fenêtres ajustables : la poignée
-du tiroir, le séparateur de la liste, le coin des boîtes et les réglages du menu) et `acces.mjs` (les accès
+du tiroir, le séparateur de la liste, le coin des boîtes et les réglages du menu), `fenetres-2.mjs` (les autres : le
+détail du planning, la carte, la hauteur d'une tuile, le zoom de la feuille A4) et `acces.mjs` (les accès
 rapides du menu et la barre de commande : l'arrivée d'un épinglé en `ad-pop`, d'un récent en `ad-arrive`, le menu
 « Créer » en `gm-paraitre`). Ils ne touchent presque
 pas à ce vocabulaire : `cadre.mjs` mesure seulement que le repli anime la colonne une fois, et rien sous « moins
@@ -105,7 +110,8 @@ remplaçant, grises et barrées pour qui ne part pas) n'animent rien (ni animati
 mise en page : le tableur les dessinera par tranches) ; `fenetres.mjs`, que la remise à la taille
 d'origine s'anime une fois (et d'un coup sous « moins d'animations »), que rien ne glisse ni ne se remesure pendant le
 geste, et qu'aucune tâche ne dépasse 200 ms à `CPU=4` pendant un glisser (le coin d'une boîte suit le pointeur de la même façon, et sa remise à la taille d'origine est la
-même) ; `acces.mjs`, les trois arrivées ci-dessus, et le
+même) ; `fenetres-2.mjs`, qu'aucune tâche ne dépasse 200 ms à `CPU=4` pendant un glisser du détail du planning, de
+la carte ou d'une tuile, et que le zoom A4 ne bouge ni la pagination ni rien d'autre ; `acces.mjs`, les trois arrivées ci-dessus, et le
 silence sous « moins d'animations » ; pour le reste, ils veillent à ce qu'une refonte ne casse rien. (La case de la matrice qui saute, `ad-pop`,
 vient avec le mode Distribution du tableur.)
 

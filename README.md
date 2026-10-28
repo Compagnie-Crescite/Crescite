@@ -43,6 +43,7 @@ node site/theme.mjs                # le thème (nuit, jour, appareil) et la dens
 node site/distribution.mjs         # la distribution à l'écran : la cellule d'une date, qui sera prévenu, la fiche, l'impact, dans Chromium (après le build)
 node site/fenetres.mjs             # les fenêtres ajustables : la poignée du tiroir, le séparateur de la liste, le coin des boîtes, les réglages du menu (après le build)
 node site/acces.mjs                # les accès rapides du menu et la recherche comme barre de commande, dans Chromium (après le build)
+node site/fenetres-2.mjs           # les fenêtres qui restent : le détail du planning, la carte, la hauteur d'une tuile, le zoom de la feuille A4 (après le build)
 bash site/bancs-admin.sh           # le build, puis tous les bancs de l'administration l'un après l'autre ; --tout y joint
                                    # ceux de l'espace de l'équipe (sinon, seulement si gestes.js, planning.js ou feuille.js changent)
 node site/reactivite.mjs /tmp/x index --strict  # les budgets de réactivité du site, au bureau et au téléphone ralenti ×4
@@ -310,7 +311,8 @@ compte du projet inscrit dans `crescite_admins`.
   propositions de dates ; les séances d'atelier à venir ; les dernières modifications (chacune vers sa fiche) ; les
   spectacles et un mémo (masqués d'office). Une tuile dont la base n'a pas les tables ne se montre pas.
   - **Entièrement personnalisable**, « Personnaliser » : l'ordre (glisser une tuile par son titre, ou ← →), sa largeur
-    (une colonne, deux, ou toute la largeur), masquer ou remettre une tuile, la réduire (le chevron) ; les réglages de
+    (une colonne, deux, ou toute la largeur), sa hauteur (une poignée basse, à l'ordinateur : la tuile garde au plus cette
+    hauteur et son corps défile ; elle se retient avec la disposition et les vues nommées, et ne s'applique pas au téléphone ni au doigt), masquer ou remettre une tuile, la réduire (le chevron) ; les réglages de
     chaque tuile (le rouage : la période, le nombre de lignes, ce qu'elle suit, les actions montrées) ; les colonnes de
     la grille (auto, 2, 3 ou 4) ; la page d'ouverture de l'administration (le tableau de bord, ou Représentations) ;
     « Réinitialiser ». Tout est gardé avec le compte (`crescite_preferences`, clé `accueil.tableau`, le script 6) : on
@@ -400,6 +402,14 @@ compte du projet inscrit dans `crescite_admins`.
   commencée. Deux réglages au bas du menu latéral : « Pleine largeur » (le contenu et le pied de page ne plafonnent plus à
   1 500 px ; clé `fenetres.pleine`) et « Disposition d'origine » (efface toutes les tailles gardées, d'un coup, avec une
   annonce qui porte « Annuler »). À l'impression, ni poignée ni coin, et le briefing imprimé ignore la taille tirée.
+  Le même outil règle trois surfaces de plus (`node site/fenetres-2.mjs`, 113 vérifications) : **le planning**, où la
+  colonne du détail d'un jour se tire par son bord gauche (de 240 à 560 px, `fenetres.pl-detail`) et, au-dessus de
+  1 200 px, le détail se met aussi à côté de la grille en vue Équipe une fois un jour choisi ; **la carte de tournée**,
+  dont une poignée entre la carte et les étapes règle la largeur de la carte (de 360 px à la largeur de la grille moins
+  338 px : les étapes gardent leurs 320 px, `fenetres.tn`) ; **le tableau de bord en « Personnaliser »**, où chaque tuile a
+  une poignée basse qui règle sa hauteur (de 160 à 1 200 px : le corps défile ; gardée avec la disposition, pas dans
+  `fenetres.*`). Aucune de ces poignées n'existe sous 900 px, au téléphone, au doigt, à l'impression, ni dans l'espace de
+  l'équipe (`planning.js` ne sait rien d'elles : la page d'administration lui donne `options.detail.poignee`).
 - **Le niveau supérieur** (dix modules chargés après les menus, chacun dans son fichier) :
   - **Les fiches en tiroir** (`admin/tiroir.js`) : une date, un lieu, une personne, une demande de devis ou une piste de
     diffusion s'ouvrent dans un panneau qui glisse à droite, depuis n'importe où (le tableau de bord, le Kanban, le
@@ -484,7 +494,7 @@ compte du projet inscrit dans `crescite_admins`.
     saison, le spectacle et les autres filtres sont ceux des trois vues de Représentations, communs, voir plus bas) sur la
     carte de France, une pastille par lieu avec ses dates, le trajet dans l'ordre, et la tournée étape par étape avec la
     distance à vol d'oiseau et le délai entre deux dates ; les enchaînements serrés se signalent ; « Autour des dates »
-    resserre le cadre ; une pastille ouvre le lieu en tiroir ; les lieux sans position sont listés. Les répétitions n'y
+    resserre le cadre ; à l'ordinateur, la largeur de la carte se tire entre elle et la colonne des étapes ; une pastille ouvre le lieu en tiroir ; les lieux sans position sont listés. Les répétitions n'y
     sont pas (sauf si on choisit la nature « Répétitions »), les dates annulées ou reportées non plus (sauf si on choisit
     ce statut). Sans date à venir, la carte le dit et propose « Toutes les périodes ».
   - **Les documents générés** (`admin/modeles.js`) : un devis, un contrat de cession, une facture, une fiche technique
@@ -930,7 +940,10 @@ Bérénice dans le stockage privé. L'import n'écrase jamais le travail de l'ad
   feuilles de la compagnie (le logo rond noir, la police FdR Sans, dérivée de Carlito et métriquement identique à
   Calibri, les jours en gras, les personnes surlignées en jaune, les alertes en rouge). La barre d'outils est courte :
   Rubrique, Jour, Ligne, Puce, Gras, Rouge, Surligner, Surligner les noms, Saut de page, Annuler. Un collage depuis
-  Word ou Writer est ramené à ces formes.
+  Word ou Writer est ramené à ces formes. **Le zoom de la page** : « − », « 100 % », « + » (de 50 à 200 %, par 10 %),
+  « Ajuster » (la page tient dans la largeur, comme avant) et Ctrl + molette sur la zone grise ; agrandie, la page défile
+  dans cette zone ; le zoom se retient avec le compte (`fenetres.a4-zoom`), la pagination, l'impression et le PDF ne
+  changent pas. Au téléphone et au doigt, la page reste ajustée : ni le groupe de zoom ni Ctrl + molette.
   - « Composer » écrit la page à partir de la base : l'en-tête, le planning jour par jour (le déroulé type placé autour
     des représentations : le montage passe la veille plutôt que la nuit, un repas ne tombe qu'aux heures de repas, le
     départ est calculé d'après la route, et rien n'est posé avant 6h), les répétitions, les adresses et les contacts.
@@ -1116,7 +1129,8 @@ indisponibilités de chacun (à la main, ou lues dans son agenda relié par son 
 jamais), le planning commun (toute l'équipe voit les heures de tous, le motif reste à la personne et à
 l'administration ; d'un agenda relié, aucun titre n'est gardé), et les propositions de dates de l'administration, avec
 une réponse par jour. Dans l'administration, la rubrique Planning montre le planning de toute l'équipe (vue Équipe et
-vue Mois, motifs et conflits compris), propose des dates en montrant qui n'est pas libre pendant le choix, et suit
+vue Mois, motifs et conflits compris ; à l'ordinateur, le détail d'un jour se tire de 240 à 560 px à côté de la grille, et en
+vue Équipe, au-dessus de 1 200 px, il se met à côté une fois un jour choisi), propose des dates en montrant qui n'est pas libre pendant le choix, et suit
 chaque proposition (réponses par jour, état des courriels, renvoyer, relancer, clore). Chaque jour proposé donne
 « Créer la date » : le formulaire d'une nouvelle date s'ouvre pré-rempli (le spectacle, le jour et ses heures, le lieu
 quand la proposition le nomme ou qu'elle est liée à une date, la nature d'après le titre — des répétitions ne vont
@@ -1160,11 +1174,14 @@ ne l'a pas choisi ; elle ne se garde que sur un grand écran, voir « Le cadre e
 Représentations), `menu.epingles` (les accès épinglés du menu latéral : la liste des clés d'action, au plus douze, écrite
 aussitôt ; absente tant qu'on n'a rien changé, le menu montre alors le tableur, les feuilles de route, le planning, les
 devis, les frais, le journal et le site, voir « Le cadre et le menu latéral »), `theme` (`nuit`, `jour` ou `appareil` ;
-la nuit tant qu'on n'a pas choisi) et `densite` (`confortable` ou `compacte` ; voir « L'apparence »), puis `fenetres.tiroir` (la largeur du tiroir, en pixels) et `fenetres.liste` (la
-largeur de la colonne de la liste à côté d'une fiche, en pixels), absentes tant qu'on ne les a pas tirées, ramenées dans ce
-que l'écran permet à chaque lecture (voir « Les fenêtres ajustables »), puis `fenetres.pleine` (le contenu sur toute la
+la nuit tant qu'on n'a pas choisi) et `densite` (`confortable` ou `compacte` ; voir « L'apparence »), puis `fenetres.tiroir` (la largeur du tiroir, en
+pixels), `fenetres.liste` (la largeur de la colonne de la liste à côté d'une fiche, en pixels), `fenetres.pl-detail` (la
+colonne du détail d'un jour du planning), `fenetres.tn` (la colonne de la carte de tournée) et `fenetres.a4-zoom` (le zoom
+de la page A4 : un pourcentage de 50 à 200, ou `auto` pour « Ajuster »), absentes tant qu'on ne les a pas réglées, ramenées
+dans ce que l'écran permet à chaque lecture (voir « Les fenêtres ajustables »), puis `fenetres.pleine` (le contenu sur toute la
 largeur : vrai, ou absente) et une clé par famille de boîtes de dialogue (`fenetres.recherche`, `.tab-dialogue`,
-`.tab-dialogue-large`, `.crm`, `.tb-brief`, `.gq-aide`, `.gf` : la taille `{ l, h }` qu'on leur a donnée). Une clé nouvelle se nomme `rubrique.reglage`, en minuscules, et sa valeur garde la même forme d'une
+`.tab-dialogue-large`, `.crm`, `.tb-brief`, `.gq-aide`, `.gf` : la taille `{ l, h }` qu'on leur a donnée). La hauteur d'une tuile du tableau de bord se garde dans
+`accueil.tableau` (`tuiles[i].hauteur`). Une clé nouvelle se nomme `rubrique.reglage`, en minuscules, et sa valeur garde la même forme d'une
 version à l'autre. Tous les modules passent par un seul outil, `admin/prefs.js` (`PREFS`), qui lit le compte en une
 requête à l'ouverture, répond ensuite sans attendre, et écrit sans faire attendre : le réglage est gardé sur l'appareil
 tout de suite (sous `crescite-prefs:<compte>` : une copie par compte, rien ne se mélange sur un ordinateur partagé),

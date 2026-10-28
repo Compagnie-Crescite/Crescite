@@ -17,9 +17,12 @@
      hauteur en ligne, jamais un transform : aucune mesure ne se fait sous un transform.
    - Une seule écriture par geste : au relâchement, la valeur va dans la préférence `fenetres.<clé>` (PREFS.ecrire, aussitôt),
      jamais pendant le glisser, et jamais à l'ouverture d'une page. Les clés : fenetres.tiroir (la largeur du tiroir),
-     fenetres.liste (la colonne de la liste), fenetres.pleine (le contenu sur toute la largeur : vrai, ou absente), et une par
-     famille de boîtes (fenetres.recherche, .tab-dialogue, .tab-dialogue-large, .crm, .tb-brief, .gq-aide, .gf), dont la valeur est
-     la taille { l, h }. Rien dans l'adresse.
+     fenetres.liste (la colonne de la liste), fenetres.pleine (le contenu sur toute la largeur : vrai, ou absente),
+     fenetres.pl-detail (la colonne du détail d'un jour, à côté de la grille du planning), fenetres.tn (la colonne de la carte
+     de tournée, à côté des étapes), fenetres.a4-zoom (l'échelle de la page A4 d'une feuille de route : un pourcentage de 50 à
+     200, ou 'auto' pour « Ajuster »), et une par famille de boîtes (fenetres.recherche, .tab-dialogue, .tab-dialogue-large, .crm,
+     .tb-brief, .gq-aide, .gf), dont la valeur est la taille { l, h }. La hauteur d'une tuile du tableau de bord se garde avec la
+     disposition (accueil.tableau, tuiles[i].hauteur), non ici. Rien dans l'adresse.
    - Les bornes : chaque surface déclare la sienne (FENETRES.borner), une fonction de l'écran du moment (le tiroir : de
      480 px à la largeur de l'écran moins 80 px, pour que le voile reste cliquable ; la liste : de 340 px à 55 % de la largeur
      du contenu). Une valeur gardée est ramenée dans ces bornes à chaque lecture, et la surface suit quand la fenêtre change
@@ -45,20 +48,29 @@
      classe dlg-taille dit à la boîte intérieure de la suivre (sans quoi les plafonds propres à chaque boîte annuleraient la
      hauteur tirée). Dans la feuille de modification, le coin n'existe que sous html.admin (l'espace de l'équipe ne le pose
      jamais) et le piège de Tab de la feuille le compte (gestes.js). À l'impression, ni poignée ni coin (habillage.js).
+   - Une règle de signe pour tous : le bord nommé (`bord`) est celui de la surface réglée, et tirer ce bord vers l'extérieur
+     de la surface l'agrandit. Un détail collé à droite (le planning) a donc `bord: 'gauche'` : tirer vers la gauche l'agrandit ;
+     la colonne de la liste ou de la carte, à gauche d'une grille, a `bord: 'droite'`.
+   - Entre deux colonnes d'une grille (`entre`) : la poignée est un enfant absolu du conteneur (position: relative), que
+     FENETRES replace au milieu de la gouttière à chaque changement de taille des deux colonnes (le planning, la carte de
+     tournée) ; la feuille de style de la page la masque quand la grille passe sur une seule colonne.
    - La remise : un double-clic ou Entrée sur la poignée (ou « Taille d'origine » du menu du tiroir) oublie la clé et ramène
      la surface à sa taille d'origine, en 220 ms (le « doux » de site/MOUVEMENT.md), une fois ; rien ne bouge sous
      prefers-reduced-motion ni ?anim=0 (la taille d'origine s'applique d'un coup). « Disposition d'origine »
      (FENETRES.toutOublier) oublie toutes les clés fenetres.* et rend ce qu'elles valaient, pour le « Annuler »
-     (FENETRES.rendre).
+     (FENETRES.rendre) ; l'un et l'autre remettent aussitôt ce qu'on voit (les poignées vivantes, les boîtes, la mise en page)
+     et disent « fenetres:remises » sur document à ce qui n'est pas une poignée (le zoom de la page A4).
    - Les réglages du menu (FENETRES.reglages, appelé par cadre.js sous « Replier ») : « Pleine largeur » (un interrupteur :
      html.pleine-largeur lève le plafond de 1 500 px du contenu et du pied de page) et « Disposition d'origine » (efface
      toutes les clés fenetres.* d'un coup, avec une annonce qui porte « Annuler »). Ils sont sous « Replier », au-dessus de l'apparence
      (cadre.js), l'un sous l'autre ; sur un écran bas (moins de 820 px), ils tiennent sur une rangée d'icônes. « Annuler » rend la valeur gardée telle quelle (PREFS.lire avec { brut }), non bornée à l'écran du moment. Comme les
      poignées, ils ne comptent qu'à l'ordinateur : la pleine largeur gardée dort au téléphone et au doigt.
    - Où l'outil dort : la poignée n'est créée qu'à partir de 641 px de large avec un pointeur précis
-     ((min-width: 641px) and (pointer: fine)) ; au téléphone et au doigt, les surfaces gardent leur taille d'origine.
+     ((min-width: 641px) and (pointer: fine)) ; au téléphone et au doigt, les surfaces gardent leur taille d'origine. Ce qui se règle
+     sans poignée suit la même règle : une hauteur de tuile gardée (tableau.js) et le zoom de la page A4 (equipe.js, FENETRES.actif)
+     ne s'y appliquent pas, la tuile garde sa hauteur et la page reste ajustée.
    FENETRES.poignee(el, { cle, axe: 'x' | 'y' | 'xy', bord: 'gauche' | 'droite' | 'bas' | 'coin', min, max, minY, maxY, lire,
-     ecrire, defaut, defautVivant, libelle, garder, centre: 'x' | 'xy', classe, dans, apres }) → l'élément de la poignée (ou null)
+     ecrire, defaut, defautVivant, libelle, garder, centre: 'x' | 'xy', classe, dans, apres, entre }) → l'élément de la poignée (ou null)
        cle     la clé fenetres.<cle> écrite au relâchement ; garder(v) la remplace quand la valeur vit ailleurs (v est null pour
                « taille d'origine ») ; lire() (par défaut la largeur ou la hauteur mesurée de el) et ecrire(v) (par défaut une
                largeur / hauteur en ligne) disent où se lit et s'écrit la taille ; pour 'xy', v vaut { l, h }
@@ -67,17 +79,19 @@
        centre  pour une surface centrée par une marge ou un transform : un côté qui grandit de Δ n'y déplace son bord que de
                Δ/2, la poignée écrit donc la largeur += 2·Δx (et la hauteur += 2·Δy avec 'xy')
        dans, apres   où la poignée se place dans le DOM (par défaut à la fin de el), pour l'ordre du focus
-   FENETRES.de(el) → { lire, defaut, regler(v, { anime }), origine({ anime }) } : la commande d'une surface équipée
+       entre   [() => colonne de gauche, () => colonne de droite] : la poignée se tient au milieu de la gouttière (voir plus haut)
+   FENETRES.de(el) → { lire, defaut, regler(v, { anime, ranger }), origine({ anime }) } : la commande d'une surface équipée (ranger: false montre la taille sans la garder)
    FENETRES.taille(cle) → la valeur gardée, bornée, ou null     FENETRES.garder(cle, v)     FENETRES.oublier(cle)
    FENETRES.toutOublier() → ce qui était gardé    FENETRES.rendre(avant)    FENETRES.borner(cle, () => ({ min, max, minY, maxY }))
-   FENETRES.normaliser(cle, v)    FENETRES.equiperDeux()    FENETRES.equiperDialog(dlg, cle?) → le coin de la boîte (ou null)
+   FENETRES.normaliser(cle, v)    FENETRES.zoomA4(v) → 'auto' | 50 … 200 | null    FENETRES.equiperDeux()
+   FENETRES.equiperDialog(dlg, cle?) → le coin de la boîte (ou null)
    FENETRES.reglages(zone) → dessine les deux réglages dans le conteneur donné    FENETRES.appliquerListe()
    FENETRES.appliquerMiseEnPage() (la colonne de la liste et la pleine largeur, avant le premier dessin)    FENETRES.actif() */
 const FENETRES = (() => {
   const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const html = document.documentElement;
   const PREFIXE = 'fenetres.';
-  const CLES = ['tiroir', 'liste', 'pleine', 'recherche', 'tab-dialogue', 'tab-dialogue-large', 'crm', 'tb-brief', 'gq-aide', 'gf'];
+  const CLES = ['tiroir', 'liste', 'pleine', 'pl-detail', 'tn', 'a4-zoom', 'recherche', 'tab-dialogue', 'tab-dialogue-large', 'crm', 'tb-brief', 'gq-aide', 'gf'];
   const MEDIA = '(min-width: 641px) and (pointer: fine)', DEUX_COLONNES = '(min-width: 1101px)';
   const DOUX = [.2, .8, .2, 1], DUREE = 220;
   const mq = q => typeof matchMedia === 'function' && matchMedia(q).matches;
@@ -94,8 +108,11 @@ const FENETRES = (() => {
   const bornesDe = cle => ({ ...repli(), ...((BORNES[cle] && BORNES[cle]()) || {}) });
   function borner(cle, f) { BORNES[cle] = f; }
   // une valeur lue (un nombre, ou { l, h } pour une boîte) ramenée dans les bornes de sa surface ; null si elle est illisible
+  // le zoom de la page A4 : 'auto' (« Ajuster »), ou un pourcentage de 50 à 200 ; le reste est illisible (null)
+  const zoomA4 = v => (v === 'auto' ? 'auto' : nombre(v) === null ? null : Math.max(50, Math.min(200, nombre(v))));
   function normaliser(cle, v) {
     if (v === null || v === undefined) return null;
+    if (cle === 'a4-zoom') return zoomA4(v);
     const b = bornesDe(cle);
     if (typeof v === 'object' && !Array.isArray(v)) {
       const l = nombre(v.l), h = nombre(v.h);
@@ -123,6 +140,10 @@ const FENETRES = (() => {
   // (la recherche garde sa marge du haut, 9 % de l'écran : elle ne descend que jusqu'à 12 px du bas, pour que son coin reste atteignable)
   const margeRecherche = () => Math.max(12, Math.round(innerHeight * .09));
   borner('recherche', () => ({ min: 320, max: Math.max(320, innerWidth - 24), minY: 200, maxY: Math.max(200, innerHeight - margeRecherche() - 12) }));
+  // le détail du planning : de 240 à 560 px, sans écraser la grille (360 px au moins) ; la carte : de 360 px à la largeur de la
+  // grille moins la colonne des étapes (320 px) et la gouttière (18 px)
+  borner('pl-detail', () => { const m = $('.pl-mise'); return { min: 240, max: m ? Math.max(240, Math.min(560, m.clientWidth - 14 - 360)) : 560 }; });
+  borner('tn', () => { const d = $('.tn-deux'); return { min: 360, max: d ? Math.max(360, d.clientWidth - 320 - 18) : Math.max(360, innerWidth - 420) }; });
 
   // ===================================================================================================== la mémoire
   const lireBrut = cle => (typeof PREFS === 'undefined' ? null : PREFS.lire(PREFIXE + cle, null));
@@ -150,6 +171,8 @@ const FENETRES = (() => {
     $$('[data-fenetres]').forEach(d => appliquerDialog(d, d.dataset.fenetres));     // (les boîtes ouvertes ou gardées dans la page reprennent leur taille)
     vivantes.forEach(c => { if (c.p.isConnected) c.reappliquer(); else vivantes.delete(c); });
     majReglages();
+    // (ce qui n'est pas une poignée — le zoom de la page A4, equipe.js — écoute ceci pour reprendre sa valeur gardée, ou son origine)
+    document.dispatchEvent(new CustomEvent('fenetres:remises'));
   }
 
   // ===================================================================================================== la poignée
@@ -172,6 +195,23 @@ const FENETRES = (() => {
     let bas = 0, haut = 1, s = t;
     for (let i = 0; i < 24; i++) { s = (bas + haut) / 2; if (b(x1, x2, s) < t) bas = s; else haut = s; }
     return b(y1, y2, s);
+  }
+
+  // une poignée absolue entre deux colonnes d'une grille : au milieu de la gouttière, replacée dès que le conteneur ou l'une des
+  // colonnes change de taille (le conteneur est positionné par la feuille de style de la page : position: relative)
+  function gouttiere(conteneur, p, gauche, droite) {
+    const placer = () => {
+      const a = gauche(), b = droite();
+      if (!a || !b || !conteneur.isConnected) return;
+      const c = conteneur.getBoundingClientRect(), ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+      p.style.right = 'auto';
+      p.style.left = `${Math.round((ra.right + rb.left) / 2 - c.left - 3)}px`;
+    };
+    placer();
+    if (typeof ResizeObserver === 'function') {
+      const ro = new ResizeObserver(() => { if (!p.isConnected) { ro.disconnect(); return; } placer(); });
+      ro.observe(conteneur); [gauche(), droite()].forEach(x => { if (x) ro.observe(x); });
+    }
   }
 
   function poignee(el, o = {}) {
@@ -210,6 +250,7 @@ const FENETRES = (() => {
     p.addEventListener('dragstart', e => e.preventDefault());
     const parent = o.dans || el;
     if (o.apres && o.apres.parentNode) o.apres.after(p); else parent.append(p);
+    if (Array.isArray(o.entre)) gouttiere(parent, p, o.entre[0], o.entre[1]);
 
     let dernier = lire();
     const majAria = () => {
@@ -541,6 +582,8 @@ const FENETRES = (() => {
 .sep-v::after { position: sticky; display: block; top: calc(var(--haut-barre, 60px) + 10px); bottom: auto; left: auto; width: 2px; height: calc(100vh - var(--haut-barre, 60px) - 30px); margin: 0 auto; }
 .sep-v.actif::after { position: absolute; top: 0; bottom: 0; height: auto; left: 2px; margin: 0; }
 @media (max-width: 1100px) { .sep-v { display: none; } }
+/* entre deux colonnes (le planning, la carte) : la poignée est absolue, FENETRES la place dans la gouttière ; sa ligne court sur toute la hauteur */
+.poignee[data-poignee="pl-detail"], .poignee[data-poignee="tn"] { z-index: 3; }
 @media not all and (min-width: 641px) and (pointer: fine) { .poignee { display: none; } }
 /* le geste : le glisser suit le pointeur, rien ne glisse en même temps (les transitions sont coupées, pas les animations). Des
    sélecteurs de classes, jamais « * » : un sélecteur universel sous html.redim refait le style de toute la page (50 ms de plus
@@ -579,5 +622,5 @@ html.still .poignee::after { transition: none; }
 @media (prefers-reduced-motion: reduce) { .poignee::after { transition: none; } }`;
   document.head.append(style);
 
-  return { poignee, de, taille, garder, oublier, toutOublier, rendre, borner, normaliser, equiperDeux, equiperDialog, appliquerListe, appliquerMiseEnPage, reglages, actif, CLES: CLES.slice() };
+  return { poignee, de, taille, garder, oublier, toutOublier, rendre, borner, normaliser, zoomA4, equiperDeux, equiperDialog, appliquerListe, appliquerMiseEnPage, reglages, actif, CLES: CLES.slice() };
 })();

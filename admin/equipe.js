@@ -1516,6 +1516,7 @@ function dessinerFeuille(etat) {
       <span class="a4-groupe" role="group" aria-label="Mise en valeur">${bouton('gras', '<b>Gras</b>', 'Gras (Ctrl+B)', ' aria-pressed="false"')}${bouton('rouge', '<span class="a4-rouge">Rouge</span>', 'Rouge : ce qu’il ne faut pas oublier', ' aria-pressed="false"')}${bouton('surligne', '<span class="a4-jaune">Surligner</span>', 'Surligner : pour qui c’est', ' aria-pressed="false"')}${bouton('noms', 'Surligner les noms', 'Surligne d’un coup, dans le planning, les prénoms de l’équipe et « tout le monde »')}</span>
       <span class="a4-groupe" role="group" aria-label="Page">${bouton('saut', 'Saut de page', 'Commencer une nouvelle page ici (Ctrl+Entrée)')}</span>
       <span class="a4-groupe" role="group" aria-label="Historique">${bouton('annuler', '↶ Annuler', 'Annuler (Ctrl+Z)')}${bouton('retablir', '↷ Rétablir', 'Rétablir (Ctrl+Y)')}</span>
+      <span class="a4-groupe a4-zoom" role="group" aria-label="Zoom de la page">${bouton('zoom-moins', '−', 'Réduire la page de 10 % (Ctrl + molette vers le bas)', ' aria-label="Réduire le zoom"')}${bouton('zoom-cent', '100 %', 'Revenir à 100 %', ' aria-pressed="false"')}${bouton('zoom-plus', '+', 'Agrandir la page de 10 % (Ctrl + molette vers le haut)', ' aria-label="Agrandir le zoom"')}${bouton('zoom-auto', 'Ajuster', 'Ajuster la page à la largeur disponible', ' aria-pressed="true"')}<span class="a4-zoom-val" id="a4-zoom-val" role="status" aria-live="polite"></span></span>
       <span class="seg a4-vues" role="group" aria-label="Affichage"><button type="button" data-fr-vue="page" aria-pressed="${etat.vue === 'page'}">Page A4</button><button type="button" data-fr-vue="tel" aria-pressed="${etat.vue === 'tel'}">Vue de l’équipe</button></span>
     </div>
     <p class="aide a4-aide" id="a4-aide">Écrivez directement sur la page. Les mots en gris manquent encore : cliquez dessus pour les écrire (ils ne sont jamais imprimés). Un trait bleu dans la marge : la ligne vient de la base, « Mettre à jour depuis la base » la tient à jour tant que vous ne la retouchez pas.</p>
@@ -1536,6 +1537,14 @@ function dessinerFeuille(etat) {
     ['gras', 'rouge', 'surligne'].forEach(k => $(`[data-a4="${k}"]`, outils).setAttribute('aria-pressed', String(!!e?.[k])));
     $('[data-a4="annuler"]', outils).disabled = !e?.annuler;
     $('[data-a4="retablir"]', outils).disabled = !e?.retablir;
+  };
+  // le zoom de la page : l'état des boutons, et « Zoom 125 % » dit aux lecteurs d'écran (pas à l'ouverture de la page)
+  const majZoom = (z, { dire = true } = {}) => {
+    $('[data-a4="zoom-cent"]', outils).setAttribute('aria-pressed', String(!z.auto && z.pourcent === 100));
+    $('[data-a4="zoom-auto"]', outils).setAttribute('aria-pressed', String(z.auto));
+    $('[data-a4="zoom-moins"]', outils).disabled = etat.vue !== 'page' || z.pourcent <= 50;
+    $('[data-a4="zoom-plus"]', outils).disabled = etat.vue !== 'page' || z.pourcent >= 200;
+    const v = $('#a4-zoom-val', outils); if (v) v.textContent = dire ? `Zoom ${z.pourcent} %${z.auto ? ' (ajusté)' : ''}` : '';
   };
   // ---- à compléter : ce que la feuille demande encore (les amorces en gris qui posent une question), en une liste qu'on
   // remplit sans viser la page (petite, au téléphone). Ce qu'on y écrit prend la place de l'amorce, comme un clic sur elle
@@ -1643,7 +1652,7 @@ function dessinerFeuille(etat) {
     }
     etat.editeur = editeurA4(z, { blocs: F.contenu.blocs, noms: nomsDeLaDate(d), ref: repsDe(d.id)[0]?.jour || d.debut,
       quandChange: () => { F.contenu.blocs = etat.editeur.blocs(); F.contenu.pages = etat.editeur.pages(); majEtat(); manquesBientot(); },
-      quandEtat: majOutils,
+      quandEtat: majOutils, quandZoom: majZoom,
       extra: { lire: () => ({ composees: F.contenu.composees || [], instantane: F.contenu.instantane || [], compose_le: F.contenu.compose_le || null }), ecrire: v => Object.assign(F.contenu, v) } });
     F.contenu.pages = etat.editeur.pages();
   };
@@ -1666,6 +1675,10 @@ function dessinerFeuille(etat) {
     else if (c === 'annuler') ed.annuler();
     else if (c === 'retablir') ed.retablir();
     else if (c === 'saut') ed.saut();
+    else if (c === 'zoom-moins') ed.zoomPas(-10);
+    else if (c === 'zoom-plus') ed.zoomPas(10);
+    else if (c === 'zoom-cent') ed.zoom(100);
+    else if (c === 'zoom-auto') ed.ajuster();
     else ed.basculer(c);
   });
   const mettreAJour = () => {
@@ -1999,9 +2012,12 @@ ${FEUILLE.cssPage('.a4-doc')}
 .a4-b:disabled { opacity: .45; cursor: default; }
 .a4-b .a4-rouge { color: ${M.rouge}; }
 .a4-b .a4-jaune { background: ${M.surligne}; color: #000; padding: 0 3px; border-radius: 2px; }
+.a4-zoom { align-items: center; }
+@media not all and (min-width: 641px) and (pointer: fine) { .a4-zoom { display: none; } }
+.a4-zoom-val { min-width: 8.5em; margin-left: 4px; font-size: 13px; color: var(--gris); }
 .a4-vues { margin-left: auto; }
 .a4-aide { margin: 8px 2px 0; }
-.a4-bureau { margin: 10px 0 0; padding: 22px 16px 26px; background: #8e8a8f; border-radius: 12px; overflow: hidden; }
+.a4-bureau { margin: 10px 0 0; padding: 22px 16px 26px; background: #8e8a8f; border-radius: 12px; overflow: auto; }
 .a4-bureau:focus-within { box-shadow: 0 0 0 3px var(--accent-doux), 0 0 0 4px var(--accent); }
 .a4-echelle { margin: 0 auto; }
 .a4-pile { position: relative; width: ${M.largeur}mm; transform-origin: 0 0; }
@@ -2030,7 +2046,7 @@ ${FEUILLE.cssPage('.a4-doc')}
 }
 // extra : {lire, ecrire}, ce qui va avec les blocs dans l'historique (les clés composées d'une feuille : annuler une mise à
 // jour depuis la base les rend aussi)
-function editeurA4(hote, { blocs = [], noms = [], ref = '', quandChange = () => {}, quandEtat = () => {}, extra = null } = {}) {
+function editeurA4(hote, { blocs = [], noms = [], ref = '', quandChange = () => {}, quandEtat = () => {}, quandZoom = () => {}, extra = null } = {}) {
   stylesA4();
   const M = FEUILLE.MISE;
   const PAGE = M.hauteur * PX_MM, ECART = 10 * PX_MM, PAS = PAGE + ECART, LARGE = M.largeur * PX_MM;
@@ -2039,6 +2055,12 @@ function editeurA4(hote, { blocs = [], noms = [], ref = '', quandChange = () => 
     <div class="a4-doc" id="a4-doc" contenteditable="true" spellcheck="true" lang="fr" role="textbox" aria-multiline="true" aria-label="La feuille de route, sur sa page A4" aria-describedby="a4-aide"></div></div></div></div>`;
   const bureau = $('.a4-bureau', hote), echelle = $('.a4-echelle', hote), pile = $('.a4-pile', hote), feuilles = $('.a4-feuilles', hote), doc = $('.a4-doc', hote);
   let B = (blocs.length ? blocs : [{ type: 'ligne', segments: [] }]).map(b => FEUILLE.bloc(b));
+  // le zoom de la page : 'auto' (« Ajuster » : la largeur disponible, sans jamais dépasser 100 %) ou un pourcentage de 50 à 200, gardé avec
+  // le compte (fenetres.a4-zoom, une seule clé pour toutes les feuilles). Sous un zoom fixe, l'échelle est celle-là, telle quelle : le
+  // bureau gris défile quand la page le dépasse. La pagination mesure par offsetTop / offsetHeight, que l'échelle ne change pas.
+  // Le téléphone et le doigt n'ont pas ce zoom (FENETRES.actif) : la page y reste ajustée, sans groupe de zoom dans la barre ni Ctrl + molette.
+  const zoomLibre = () => typeof FENETRES !== 'undefined' && FENETRES.actif();
+  let zoom = (zoomLibre() && FENETRES.taille('a4-zoom')) || 'auto', echelleVue = null, rangement = 0, molette = 0, cumulMolette = 0;
   let debuts = [], logo = null, enAttente = null, attenteOu = '', compose = false, derniere = null, vivant = true, nPages = 0, prevu = 0;
   const H = { avant: [], apres: [], t: 0, dernier: '' };
 
@@ -2762,11 +2784,44 @@ function editeurA4(hote, { blocs = [], noms = [], ref = '', quandChange = () => 
   }
   function ajusterEchelle() {
     const dispo = bureau.clientWidth - 2 * (bureau.clientWidth < 500 ? 6 : 16);
-    const s = Math.min(1, Math.max(0.2, dispo / LARGE));
-    pile.style.transform = s < 1 ? `scale(${s})` : '';
+    const fixe = zoom !== 'auto' && zoomLibre();
+    const s = fixe ? zoom / 100 : Math.min(1, Math.max(0.2, dispo / LARGE));
+    pile.style.transform = s !== 1 ? `scale(${s})` : '';
     echelle.style.width = `${LARGE * s}px`;
     echelle.style.height = `${pile.offsetHeight * s}px`;
+    if (s !== echelleVue) { echelleVue = s; quandZoom({ pourcent: Math.round(s * 100), auto: !fixe }, { dire: false }); }
   }
+  // le zoom voulu (un pourcentage, ou 'auto') : montré tout de suite, annoncé, gardé une fois qu'on s'arrête (la molette en donne vite plusieurs)
+  function regler(v) {
+    if (!zoomLibre()) return;
+    const z = v === 'auto' ? 'auto' : Math.max(50, Math.min(200, Math.round(+v)));
+    if (z === zoom) return;
+    zoom = z; ajusterEchelle();
+    quandZoom({ pourcent: Math.round(echelleVue * 100), auto: zoom === 'auto' });
+    clearTimeout(rangement);
+    rangement = setTimeout(() => { rangement = 0; if (typeof FENETRES !== 'undefined') FENETRES.garder('a4-zoom', zoom); }, 400);
+  }
+  // « Disposition d'origine » (ou son « Annuler », fenetres.js) : la page reprend le zoom gardé, ou « Ajuster », sans rien réécrire
+  const surRemise = () => {
+    if (!vivant || !zoomLibre()) return;
+    clearTimeout(rangement); rangement = 0;
+    const z = FENETRES.taille('a4-zoom') || 'auto';
+    if (z !== zoom) { zoom = z; ajusterEchelle(); quandZoom({ pourcent: Math.round(echelleVue * 100), auto: zoom === 'auto' }, { dire: false }); }
+  };
+  document.addEventListener('fenetres:remises', surRemise);
+  const zoomPas = d => {
+    const base = Math.round((echelleVue || 1) * 10) * 10;
+    if (zoom === 'auto' && base + d < 50) return;      // (une page ajustée très petite : « − » n'a rien à faire)
+    regler(base + d);
+  };
+  // Ctrl + molette sur le bureau gris (pas ailleurs : le zoom du navigateur reste à lui) ; le pincement d'un pavé tactile en donne
+  // beaucoup, de petites valeurs : un pas tous les 40 de défilement cumulé
+  bureau.addEventListener('wheel', e => {
+    if (!e.ctrlKey || !zoomLibre()) return;
+    e.preventDefault();
+    cumulMolette += e.deltaY; clearTimeout(molette); molette = setTimeout(() => { cumulMolette = 0; }, 300);
+    if (Math.abs(cumulMolette) >= 40) { zoomPas(cumulMolette < 0 ? 10 : -10); cumulMolette = 0; }
+  }, { passive: false });
   // un bloc qui dépasse le bas de sa page passe en haut de la suivante (un titre part avec ce qui le suit) ; après un
   // saut de page, le bloc suivant commence une page ; sur la première page, le corps commence sous le logo
   function paginer() {
@@ -2830,13 +2885,16 @@ function editeurA4(hote, { blocs = [], noms = [], ref = '', quandChange = () => 
     blocs: () => clone(B), pages: () => [...debuts],
     remplacer(xs) { noter(true); B = (xs.length ? xs : [{ type: 'ligne' }]).map(b => FEUILLE.bloc(b)); toutRendre(); change(); },
     type: changerType, basculer, saut, annuler, retablir, surlignerNoms, paginer,
+    zoom: regler, zoomPas, ajuster: () => regler('auto'), echelle: () => echelleVue,
     focus() { placer(derniere || { a: { i: 0, o: 0 } }); },
     detruire() {
       vivant = false;
       document.removeEventListener('selectionchange', surSelection);
+      document.removeEventListener('fenetres:remises', surRemise);
       document.fonts?.removeEventListener?.('loadingdone', paginerBientot);
       if (observateur) observateur.disconnect();
       if (prevu) cancelAnimationFrame(prevu);
+      if (rangement) { clearTimeout(rangement); rangement = 0; if (typeof FENETRES !== 'undefined') FENETRES.garder('a4-zoom', zoom); }
     },
   };
 }

@@ -308,7 +308,7 @@ html.bascule *, html.bascule *::before, html.bascule *::after { transition: none
   #vue a { text-decoration: none !important; }
   /* ce qui sert à l'écran seulement : les gestes, les filtres (dits en tête), l'en-tête de la vue (son titre aussi, en tête) */
   #vue :is(.tete, .btn, .filtres, .journal-filtres, #avant, .fil-ariane, .gps, .sel-bouton, .pied-ed, .doc-boutons, .nt-form, .eq-ajouter,
-    .ad-squelette, .liste-vide .btn, .crm-carte button, .pl-nav button, .pl-vues, .pl-filtres, .pl-masquer, .pl-btn, .pl-detail, [data-tiroir-fermer], .a4-outils) { display: none !important; }
+    .ad-squelette, .liste-vide .btn, .crm-carte button, .pl-nav button, .pl-vues, .pl-filtres, .pl-masquer, .pl-btn, .pl-detail, [data-tiroir-fermer], .a4-outils, .poignee) { display: none !important; }
   #vue .titre-ed { margin-bottom: 8pt; }
   #vue .titre-ed h2 { font-size: 13pt; }
   /* la liste, ou la fiche */
@@ -346,6 +346,7 @@ html.bascule *, html.bascule *::before, html.bascule *::after { transition: none
   #vue .pl-o-b.option { border-style: dashed; }
   #vue .pl-legende .l-date { background: #fff !important; border: .75pt solid #000; }
   #vue .pl-defile { overflow: visible !important; max-height: none !important; }
+  #vue .pl-mise { display: block !important; }      /* (le détail est masqué : sa colonne ne reste pas réservée) */
   #vue .pl-grille-e { grid-template-columns: var(--pl-nom) repeat(var(--n), minmax(0, 1fr)) !important; width: 100% !important; min-width: 0 !important; }
   #vue .pl-e-nom, #vue .pl-e-mois span { position: static !important; }
   #vue .pl-grille-e > * { break-inside: avoid; }

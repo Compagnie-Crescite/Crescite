@@ -14,9 +14,11 @@
      'jour' ou 'appareil') et densite ('confortable' ou 'compacte') : l'apparence, réglée dans le menu (cadre.js), dont le
      miroir de l'appareil est aussi lu par index.html,
      fenetres.tiroir (la largeur du tiroir, en pixels) et fenetres.liste
-     (la colonne de la liste à côté d'une fiche, en pixels) : fenetres.js, une écriture par geste, au relâchement ; puis
-     fenetres.pleine (le contenu sur toute la largeur : vrai, ou absente) et, une par famille de boîtes de dialogue,
-     fenetres.recherche, .tab-dialogue, .tab-dialogue-large, .crm, .tb-brief, .gq-aide et .gf (la taille { l, h } qu'on leur a donnée).
+     (la colonne de la liste à côté d'une fiche, en pixels), fenetres.pl-detail (la colonne du détail du planning),
+     fenetres.tn (la colonne de la carte de tournée) et fenetres.a4-zoom (le zoom de la page A4 : un pourcentage, ou 'auto') :
+     fenetres.js, une écriture par geste, au relâchement ; puis fenetres.pleine (le contenu sur toute la largeur : vrai, ou
+     absente) et, une par famille de boîtes de dialogue, fenetres.recherche, .tab-dialogue, .tab-dialogue-large, .crm, .tb-brief,
+     .gq-aide et .gf (la taille { l, h } qu'on leur a donnée). La hauteur d'une tuile du tableau de bord est dans accueil.tableau.
    - La lecture est synchrone : PREFS.charger() lit tout le compte en une requête (select cle, valeur, modifie_le), après
      quoi PREFS.lire(cle, defaut) répond depuis la mémoire, puis depuis le miroir de l'appareil, puis le défaut. Les
      modules attendent charger() (chargerTout) ; actualiser le rejoue avec { relire: true } sans écraser un réglage encore

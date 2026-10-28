@@ -184,6 +184,16 @@ const DISPONIBILITES = (() => {
       messageErreur: e => (absent(e) ? 'Le planning n’est pas encore installé dans la base.' : `Le planning n’a pas pu être lu : ${e?.message || 'réessayez dans un instant'}.`),
       photo: photoUrl, spectacles: spectaclesPlanning(), distributions: distributionsPlanning(),
       actions: actionsJour, titre: 'Planning de toute l’équipe',
+      // le détail du jour se règle (fenetres.pl-detail) et, au-dessus de 1 200 px, se met à côté de la grille en vue Équipe ; le calendrier
+      // d'une proposition (plus bas) n'a pas cette option : sa colonne est étroite et garde ses 300 px
+      detail: { ou: 'cote', largeur: typeof FENETRES !== 'undefined' ? FENETRES.taille('pl-detail') ?? undefined : undefined,
+        poignee: (el, o) => {
+          const p = typeof FENETRES !== 'undefined' ? FENETRES.poignee(el, { cle: 'pl-detail', axe: 'x', bord: 'gauche', libelle: 'Largeur du détail du jour', defaut: 300, defautVivant: true, ...o }) : null;
+          // la largeur gardée est ramenée à la borne dès l'ouverture (la grille garde ses 360 px) : la borne se mesure sur .pl-mise, qui n'existait pas quand la valeur a été lue
+          const gardee = p ? FENETRES.taille('pl-detail') : null;
+          if (gardee !== null) FENETRES.de(el)?.regler(gardee, { anime: false, ranger: false });
+          return p;
+        } },
       surChangement: etat => { session.planning = { vue: etat.vue, jour: etat.jour, semaines: etat.semaines, filtre: etat.filtre }; garderFiltres(); },
     });
     if (garde) DP.planning.actualiser();

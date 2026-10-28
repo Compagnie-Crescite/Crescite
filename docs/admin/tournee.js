@@ -8,7 +8,9 @@
    filtres » nature, département, contrat, du … au ; le prédicat dateRetenue) : changer de vue les garde. D'office, toutes
    les saisons, à venir. La carte garde ce qui lui est propre : les répétitions n'y sont pas (sauf au choix de la nature
    « Répétitions »), les dates annulées ou reportées non plus (sauf au choix du statut « Annulées » ou « Reportées »), et
-   « Autour des dates » resserre le cadre (session.vues.carte.serre, hors de l'adresse). Une pastille ouvre le lieu en
+   « Autour des dates » resserre le cadre (session.vues.carte.serre, hors de l'adresse). Entre la carte et les étapes, une poignée
+   (fenetres.js) règle la largeur de la carte (--l-tn, de 360 px à la largeur de la grille moins 338 px) ; elle se retient avec le
+   compte (fenetres.tn) et n'existe pas sous 900 px, où les deux colonnes s'empilent. Une pastille ouvre le lieu en
    tiroir, une étape ouvre la date (tiroir.js). Les lieux sans position (latitude, longitude) sont listés : « Trouver la
    commune » dans leur fiche les place. Chargé après fond-carte.js et tiroir.js.
    TOURNEE.vue(f)   TOURNEE.projeter(lieu)   TOURNEE.etapes(dates)   TOURNEE.km(a, b)
@@ -50,6 +52,15 @@ const TOURNEE = (() => {
       ${filtresDates(f, { vue: 'carte', aDroite: `<label class="case" style="font-size:13.5px"><input type="checkbox" id="tn-serre"${v.serre ? ' checked' : ''}> Autour des dates</label>` })}
       <div class="tn-deux"><div class="bloc tn-carte" id="tn-carte"></div><div class="tn-cote"><div class="bloc" id="tn-resume"></div><div class="bloc" data-liste id="tn-etapes"></div></div></div>`);
     const zone = $('#tn-etapes');
+    // la largeur de la carte se règle (fenetres.tn) : une poignée posée une fois, entre la carte et la colonne des étapes (dessiner()
+    // ne touche que l'intérieur de #tn-carte, #tn-resume et #tn-etapes : elle survit)
+    if (typeof FENETRES !== 'undefined') {
+      const deux = $('.tn-deux'), carte = $('#tn-carte'), t = FENETRES.taille('tn');
+      if (typeof t === 'number') deux.style.setProperty('--l-tn', `${t}px`);
+      FENETRES.poignee(carte, { cle: 'tn', axe: 'x', bord: 'droite', libelle: 'Largeur de la carte', dans: deux, apres: carte, entre: [() => carte, () => $('.tn-cote', deux)],
+        defaut: () => { const l = deux.clientWidth; return Math.min(Math.round((l - 18) * 1.3 / 2.3), l - 18 - 320); }, defautVivant: true,   // (le partage 1,3 / 1 de la feuille : « Disposition d'origine » y revient sans recharger)
+        ecrire: v => { deux.style.setProperty('--l-tn', `${v}px`); } });
+    }
     const dessiner = () => {
       const q = norm(f.q).trim();
       const ds = E.dates.filter(d => dateRetenue(d, f) && dansPeriode(d, f.periode) && (!q || dateCherchee(d, q))
@@ -96,7 +107,7 @@ const TOURNEE = (() => {
   }
   const style = document.createElement('style');
   style.textContent = `
-.tn-deux { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(320px, 1fr); gap: 18px; align-items: start; }
+.tn-deux { position: relative; display: grid; grid-template-columns: minmax(0, var(--l-tn, 1.3fr)) minmax(320px, 1fr); gap: 18px; align-items: start; }
 .tn-carte { padding: 10px; }
 .tn-svg { width: 100%; height: auto; display: block; }
 .tn-pays { fill: color-mix(in srgb, var(--accent) 6%, var(--carte)); stroke: color-mix(in srgb, var(--accent) 45%, var(--trait)); stroke-width: 1.2; }
@@ -118,7 +129,7 @@ const TOURNEE = (() => {
 .tn-trajet-l { display: flex; align-items: center; gap: 8px; padding: 4px 12px 4px 20px; color: var(--gris); font-size: 13px; }
 .tn-trajet-l.serre { color: var(--alerte); font-weight: 600; }
 .tn-trajet-l .tn-fleche { color: var(--trait); font-weight: 800; }
-@media (max-width: 900px) { .tn-deux { grid-template-columns: 1fr; } }`;
+@media (max-width: 900px) { .tn-deux { grid-template-columns: 1fr; } .tn-deux > .poignee { display: none; } }`;
   document.head.append(style);
   return { vue, projeter, etapes, km };
 })();

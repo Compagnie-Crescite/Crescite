@@ -56,6 +56,15 @@
      options.feuille  'auto' (par défaut) : au téléphone, dans la vue Équipe, le détail du jour monte en feuille du bas
                       (au-dessus de --pl-bas, la hauteur de la barre d'onglets de la page) ; true : toujours ; false : jamais
      options.titre    le titre lu par les lecteurs d'écran (par défaut « Planning de l'équipe »)
+     options.detail   { ou: 'cote' | 'dessous', largeur: px, poignee(el, { dans, apres, entre, lire, ecrire }) } : la colonne du
+                      détail d'un jour est réglable (l'administration seulement ; sans cette option, rien ne change). largeur : sa
+                      largeur de départ (la variable --pl-detail, 300 px par défaut) ; ou : en vue Équipe, 'cote' met le détail à
+                      côté de la grille au-dessus de 1 200 px, une fois un jour choisi (la grille et le détail sont enveloppés dans .pl-mise), 'dessous'
+                      le laisse sous elle ; la vue Mois le met toujours à côté (au-dessus de 900 px). poignee : appelée sur .pl-mise
+                      après chaque dessin (le dessin refait tout l'intérieur) pour y poser une poignée ; planning.js ne la fabrique
+                      pas (il ne connaît ni l'outil des fenêtres, ni les préférences) : la page la fait, à partir des options qu'il lui
+                      donne (lire : la largeur du détail ; ecrire(v) : la pose en pixels ; apres : l'élément après lequel la placer ;
+                      entre : les deux colonnes qu'elle sépare). Sans options.detail.poignee, aucune poignée.
 
    planning.donnees(d)          remplace les données de la période (sans recharger) et redessine
    planning.actualiser()        relit la période montrée (options.charger) → Promise ; si la lecture échoue alors que des
@@ -534,8 +543,14 @@ details.pl-alerte p { margin: 8px 0 0; }
 .pl-m-compte { position: relative; z-index: 1; margin-top: auto; font-size: .68rem; font-weight: 700; color: var(--pl-sourd); display: inline-flex; align-items: center; gap: 2px; }
 .pl-m-compte svg { width: 11px; height: 11px; }
 .pl-apreciser { margin: 0 0 10px; font-size: .85rem; color: var(--pl-sourd); }
-.pl-mise { display: grid; gap: 14px; }
-@media (min-width: 900px) { .pl[data-vue="mois"]:not(.compact) .pl-mise { grid-template-columns: minmax(0, 1fr) 300px; align-items: start; } }
+.pl-mise { position: relative; display: grid; gap: 14px; }
+.pl[data-vue="equipe"] .pl-mise { gap: 0; }
+@media (min-width: 900px) { .pl[data-vue="mois"]:not(.compact) .pl-mise { grid-template-columns: minmax(0, 1fr) var(--pl-detail, 300px); align-items: start; } }
+@media (min-width: 1200px) { .pl[data-vue="equipe"][data-detail="cote"]:not(.compact) .pl-mise:has(> .pl-detail) { grid-template-columns: minmax(0, 1fr) var(--pl-detail, 300px); gap: 14px; align-items: start; }
+  .pl[data-vue="equipe"][data-detail="cote"]:not(.compact) .pl-detail { margin-top: 0; } }
+.pl-defile { min-width: 0; }
+@media (max-width: 899px) { .pl .poignee { display: none; } }
+@media (max-width: 1199px) { .pl[data-vue="equipe"] .poignee { display: none; } }
 .pl.compact .pl-m-c { min-height: 54px; padding: 3px 3px 4px; align-items: center; }
 .pl.compact .pl-m-num { width: 24px; height: 24px; font-size: .8rem; }
 .pl.compact .pl-m-tete span { padding: 6px 0; text-align: center; font-size: .68rem; }
@@ -619,6 +634,9 @@ details.pl-alerte p { margin: 8px 0 0; }
         groupe: O.filtre && groupeDe(O.filtre.groupe) ? String(O.filtre.groupe) : null },
       masques: new Set((Array.isArray(O.masques) ? O.masques : []).map(String)), masqueesOuvertes: false,
       D: O.donnees || null, plage: null, erreur: null, charge: 0, selection: null, sens: 0, detruit: false,
+      // la colonne du détail réglable (l'administration) : sans cette option, le planning reste ce qu'il était
+      detail: O.detail && typeof O.detail === 'object' ? { ou: O.detail.ou === 'dessous' ? 'dessous' : 'cote', largeur: typeof O.detail.largeur === 'number' && O.detail.largeur > 0 ? Math.round(O.detail.largeur) : null,
+        poignee: typeof O.detail.poignee === 'function' ? O.detail.poignee : null } : null,
     };
     const auj = () => (estJour(O.aujourdhui) ? O.aujourdhui : aujourdhuiParis());
     // masquer des personnes : l'administration seulement (les données le disent)
@@ -628,6 +646,7 @@ details.pl-alerte p { margin: 8px 0 0; }
     const el = document.createElement('div');
     el.className = 'pl';
     el.dataset.vue = S.vue;
+    if (S.detail) { el.dataset.detail = S.detail.ou; if (S.detail.largeur) el.style.setProperty('--pl-detail', `${S.detail.largeur}px`); }
     racine.appendChild(el);
     // ce qui change sans se voir à l'endroit du focus (une personne masquée, affichée de nouveau) : dit aux lecteurs d'écran
     const annonce = document.createElement('p');
@@ -998,6 +1017,7 @@ details.pl-alerte p { margin: 8px 0 0; }
       if (S.vue === 'equipe') {
         const v = vueEquipe(I);
         vue = `<div class="pl-defile" data-pl-defile><div class="pl-grille-e" role="grid" aria-labelledby="${S.id}-titre" aria-rowcount="${I.personnes.length + 1}" aria-colcount="${v.n + 1}" style="--n:${v.n}">${v.html}</div></div>${detail(I)}`;
+        if (S.detail && S.detail.ou === 'cote') vue = `<div class="pl-mise">${vue}</div>`;      // (sans enveloppe, aucune grille n'est possible)
       } else {
         const ap = I.aPreciser.filter(d => d.debut && d.debut.slice(0, 7) === S.jour.slice(0, 7));
         vue = `${ap.length ? `<p class="pl-apreciser">Aussi ce mois-ci, jours à préciser : ${esc(ap.map(d => txt(d.spectacle && d.spectacle.titre)).join(', '))}.</p>` : ''}
@@ -1008,6 +1028,7 @@ details.pl-alerte p { margin: 8px 0 0; }
       parts.push(`<div class="pl-corps"${S.charge ? ' aria-busy="true"' : ''}><div class="pl-vue">${vue}</div></div>`);
       if (S.compact) parts.push(legende());
       el.innerHTML = parts.join('');
+      poserPoignee();
       // le premier jour atteignable au clavier : le choisi, sinon aujourd'hui, sinon le premier
       const cases = [...el.querySelectorAll('[role="gridcell"]')];
       const cible = el.querySelector('[role="gridcell"][aria-selected="true"]') || cases.find(c => c.dataset.plJour === auj() && (!c.dataset.plP || memeId(c.dataset.plP, S.D.moi))) || cases.find(c => c.dataset.plJour === auj()) || cases[0];
@@ -1029,6 +1050,17 @@ details.pl-alerte p { margin: 8px 0 0; }
         const v = el.querySelector('.pl-vue');
         if (v && v.animate) v.animate([{ transform: `translateX(${glisser * 18}px)`, opacity: 0.25 }, { transform: 'none', opacity: 1 }], { duration: 260, easing: 'cubic-bezier(.2,.7,.2,1)' });
       }
+    }
+    // la poignée de la colonne du détail : refaite après chaque dessin (el.innerHTML emporte l'ancienne) ; c'est la page qui la fabrique
+    function poserPoignee() {
+      const mise = el.querySelector('.pl-mise');
+      if (!S.detail || !S.detail.poignee || !mise || !mise.querySelector('.pl-detail')) return;      // (en vue Équipe, le détail n'existe qu'une fois un jour choisi)
+      const gauche = () => mise.querySelector('.pl-mois-grille, .pl-defile'), droite = () => mise.querySelector('.pl-detail');
+      S.detail.poignee(mise, {
+        dans: mise, apres: gauche(), entre: [gauche, droite],
+        lire: () => { const d = droite(); return d ? Math.round(d.getBoundingClientRect().width) : S.detail.largeur || 300; },
+        ecrire: v => { el.style.setProperty('--pl-detail', `${v}px`); },
+      });
     }
     function animerDetail() {
       if (reduit()) return;

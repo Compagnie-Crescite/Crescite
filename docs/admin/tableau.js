@@ -13,8 +13,11 @@
      menu latéral (cadre.js) : les « ＋ » font son menu « Créer », MENU_EPINGLES_DEFAUT dit ce qu'il épingle d'office (la tuile a sa
      liste à elle, ACTIONS_DEFAUT : chacune son défaut, le menu contextuel des actions fait le pont, « Mettre dans le menu »).
    - Entièrement personnalisable, « Personnaliser » : l'ordre (glisser une tuile par son titre, ou ← →), la taille (une,
-     deux colonnes ou toute la largeur), masquer ou remettre une tuile, la réduire ; les réglages de chaque tuile (⚙ : la
-     période, le nombre de lignes, ce qu'elle suit) ; les colonnes de la grille ; la page d'ouverture de l'administration.
+     deux colonnes ou toute la largeur), la hauteur (une poignée basse, à l'ordinateur : la tuile garde alors cette hauteur au
+     plus et son corps défile ; elle se retient avec la disposition, tuiles[i].hauteur, et voyage avec les vues nommées ; au
+     téléphone et au doigt, la hauteur gardée ne s'applique pas : la tuile y garde la sienne),
+     masquer ou remettre une tuile, la réduire ; les réglages de chaque tuile (⚙ : la période, le nombre de lignes, ce
+     qu'elle suit) ; les colonnes de la grille ; la page d'ouverture de l'administration.
    - Tout est gardé avec le compte (crescite_preferences, script SQL 6, clé accueil.tableau, par PREFS : prefs.js) : on
      retrouve son tableau sur tous ses appareils. Sans le script, sur cet appareil ; la disposition de l'appareil passe
      dans la base à la première ouverture qui suit.
@@ -364,7 +367,7 @@ const TABLEAU = (() => {
   const dispo = k => !!TUILES[k] && (!TUILES[k].dispo || TUILES[k].dispo());
 
   // ===================================================================================================== la disposition
-  const defauts = () => ({ v: VERSION, modifie: 0, colonnes: 'auto', depart: 'accueil', tuiles: Object.entries(TUILES).map(([k, t]) => ({ k, visible: t.visible !== false, taille: t.taille || 'p', replie: false, reglages: {} })), urgent: { epingles: [], reports: {} }, vues: [], vue: null, manuelLe: 0 });
+  const defauts = () => ({ v: VERSION, modifie: 0, colonnes: 'auto', depart: 'accueil', tuiles: Object.entries(TUILES).map(([k, t]) => ({ k, visible: t.visible !== false, taille: t.taille || 'p', replie: false, hauteur: null, reglages: {} })), urgent: { epingles: [], reports: {} }, vues: [], vue: null, manuelLe: 0 });
   // une disposition lue (de la base, de l'appareil, d'une autre version) remise d'équerre : les tuiles connues dans l'ordre
   // donné, les nouvelles ajoutées à la fin avec leurs défauts
   function normaliser(c) {
@@ -379,7 +382,7 @@ const TABLEAU = (() => {
     for (const x of Array.isArray(c?.tuiles) ? c.tuiles : []) {
       if (!x || !TUILES[x.k] || vues.has(x.k)) continue;
       vues.add(x.k);
-      out.tuiles.push({ k: x.k, visible: x.visible !== false, taille: TAILLES.some(t => t[0] === x.taille) ? x.taille : (TUILES[x.k].taille || 'p'), replie: !!x.replie, reglages: x.reglages && typeof x.reglages === 'object' && !Array.isArray(x.reglages) ? x.reglages : {} });
+      out.tuiles.push({ k: x.k, visible: x.visible !== false, taille: TAILLES.some(t => t[0] === x.taille) ? x.taille : (TUILES[x.k].taille || 'p'), replie: !!x.replie, hauteur: x.hauteur != null && x.hauteur !== '' && Number.isFinite(+x.hauteur) ? Math.min(Math.max(Math.round(+x.hauteur), 160), 1200) : null, reglages: x.reglages && typeof x.reglages === 'object' && !Array.isArray(x.reglages) ? x.reglages : {} });
     }
     d.tuiles.forEach(x => { if (!vues.has(x.k)) out.tuiles.push(x); });
     return out;
@@ -460,7 +463,7 @@ const TABLEAU = (() => {
   function badgeDe(c) { return c.n ? `<span class="badge ${c.ok ? 'ok' : 'option'}">${c.n}</span>` : c.ok ? '<span class="badge ok">Rien</span>' : ''; }
   function htmlTuile(t, i, n) {
     const def = TUILES[t.k], c = corpsDe(t.k), lien = def.lien ? def.lien() : null, regl = reglagesDe(t.k), ouvert = T.ouverts.has(t.k);
-    return `<section class="tb-tuile taille-${t.taille}${t.replie ? ' replie' : ''}" data-k="${t.k}" aria-labelledby="tb-t-${t.k}"${T.edition ? ' draggable="true"' : ''}>
+    return `<section class="tb-tuile taille-${t.taille}${t.replie ? ' replie' : ''}" data-k="${t.k}" aria-labelledby="tb-t-${t.k}"${T.edition ? ' draggable="true"' : ''}${t.hauteur ? ` style="--h-tuile:${t.hauteur}px"` : ''}>
       <header class="tb-tete"><h2 id="tb-t-${t.k}">${T.edition ? `<span class="tb-poignee" title="Glisser pour déplacer">${SVG.poignee}</span>` : ''}<span class="tb-ico-t" aria-hidden="true">${ICONES_TUILE[t.k] || ''}</span><span class="tb-titre">${esc(def.titre)}</span><span class="tb-badge">${badgeDe(c)}</span></h2>
         ${lien ? `<a class="tb-lien" href="${esc(lien[0])}" title="Ouvrir : ${esc(lien[1])}" aria-label="Ouvrir : ${esc(lien[1])}"><span class="mot">${esc(lien[1])}</span> →</a>` : ''}
         ${regl.length ? `<button type="button" class="tb-ico" data-tb-reglages aria-expanded="${ouvert}" aria-controls="tb-r-${t.k}" title="Réglages de la tuile" aria-label="Réglages : ${esc(def.titre)}">${SVG.reglages}</button>` : ''}
@@ -494,6 +497,39 @@ const TABLEAU = (() => {
     appliquerFiltre();
     $('#tb-personnaliser')?.setAttribute('aria-pressed', String(T.edition));
     const b = $('#tb-personnaliser'); if (b) b.textContent = T.edition ? 'Terminer' : 'Personnaliser';
+    if (T.edition) equiperHauteurs();
+  }
+  // la hauteur de chaque tuile en « Personnaliser » : une poignée basse, enfant de la tuile (hors de son corps, que le mode rend
+  // inerte), qui écrit --h-tuile pendant le geste et, au relâchement, tuiles[i].hauteur avec la disposition (une écriture). Le corps
+  // défile quand la tuile est plus basse que lui ; plus haute que lui, elle ne grandit pas (c'est une hauteur au plus : le maximum de
+  // la poignée est la hauteur que la tuile aurait sans limite). Pas de poignée à l'écran tactile (FENETRES.poignee répond null).
+  const naturelDe = sec => {
+    let h = sec.offsetHeight - sec.clientHeight;
+    for (const c of sec.children) if (!c.classList.contains('poignee')) h += c.classList.contains('tb-corps') ? c.scrollHeight + c.offsetHeight - c.clientHeight : c.offsetHeight;
+    return Math.ceil(h);
+  };
+  function equiperHauteurs() {
+    if (typeof FENETRES === 'undefined') return;
+    for (const sec of $$('#tb-grille .tb-tuile')) {
+      const k = sec.dataset.k;
+      if (!TUILES[k] || !tuile(k)) continue;
+      FENETRES.poignee(sec, { axe: 'y', bord: 'bas', min: 160, max: () => Math.max(160, naturelDe(sec)), libelle: `Hauteur de la tuile : ${TUILES[k].titre}`,
+        defaut: () => naturelDe(sec),
+        ecrire: v => { sec.style.setProperty('--h-tuile', `${v}px`); },
+        garder: v => {
+          const tu = tuile(k); if (!tu) return;
+          tu.hauteur = v === null ? null : Math.min(Math.max(Math.round(v), 160), 1200); garder();
+          if (v === null) setTimeout(() => { if (!tuile(k)?.hauteur) sec.style.removeProperty('--h-tuile'); }, 300);      // (la remise anime d'abord jusqu'à la hauteur d'origine)
+        } });
+    }
+  }
+  // un geste de poignée en cours (html.redim) : le redessin complet détruirait la poignée tenue ; il se fait une seule fois, au relâchement
+  function apresGeste(f) {
+    const h = document.documentElement;
+    if (!h.classList.contains('redim')) { f(); return; }
+    if (T.apresGeste) return;
+    T.apresGeste = new MutationObserver(() => { if (h.classList.contains('redim')) return; T.apresGeste.disconnect(); T.apresGeste = null; if (location.hash === '#/accueil') f(); });
+    T.apresGeste.observe(h, { attributes: true, attributeFilter: ['class'] });
   }
   // le corps d'une tuile (et son badge) : au temps réel, après un réglage ; le mémo en cours d'écriture n'est pas touché
   function dessinerCorps(k = null) {
@@ -512,7 +548,7 @@ const TABLEAU = (() => {
   function preparer(force = false) {
     for (const t of visibles()) {
       const p = TUILES[t.k].lire ? TUILES[t.k].lire(force) : null;
-      if (p && typeof p.then === 'function') p.then(() => { if (location.hash !== '#/accueil') return; if (!dispo(t.k) || T.edition) dessiner(); else dessinerCorps(); }, () => { if (location.hash === '#/accueil') dessinerCorps(t.k); });
+      if (p && typeof p.then === 'function') p.then(() => { if (location.hash !== '#/accueil') return; if (!dispo(t.k) || T.edition) apresGeste(dessiner); else dessinerCorps(); }, () => { if (location.hash === '#/accueil') dessinerCorps(t.k); });
     }
   }
 
@@ -668,6 +704,7 @@ const TABLEAU = (() => {
     });
     // glisser-déposer des tuiles (en personnalisation) : une tuile glissée se pose avant ou après celle qu'on survole
     vueEl.addEventListener('dragstart', e => {
+      if (e.target.closest?.('.poignee')) { e.preventDefault(); return; }      // (la poignée de hauteur d'une tuile : le glisser natif de la tuile ne l'avale pas)
       const sec = e.target.closest?.('.tb-tuile[draggable="true"]');
       if (!sec || !T.edition) return;
       T.glisse = sec.dataset.k; sec.classList.add('glisse');
@@ -1270,8 +1307,9 @@ const TABLEAU = (() => {
 .tb-grille[data-colonnes="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .tb-grille[data-colonnes="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .tb-grille[data-colonnes="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.tb-tuile { display: flex; flex-direction: column; min-width: 0; background: var(--carte); border: 1px solid var(--trait); border-radius: var(--rayon); box-shadow: var(--ombre); container-type: inline-size; }
+.tb-tuile { position: relative; display: flex; flex-direction: column; min-width: 0; background: var(--carte); border: 1px solid var(--trait); border-radius: var(--rayon); box-shadow: var(--ombre); container-type: inline-size; }
 .tb-tuile.taille-m { grid-column: span 2; }
+@media (min-width: 641px) and (pointer: fine) { .tb-tuile { max-height: var(--h-tuile, none); } }      /* (la hauteur réglée à l'ordinateur ne touche pas le téléphone ni le doigt) */
 .tb-tuile.taille-g { grid-column: 1 / -1; }
 @media (max-width: 760px) { .tb-grille, .tb-grille[data-colonnes] { grid-template-columns: minmax(0, 1fr); } .tb-tuile.taille-m, .tb-tuile.taille-g { grid-column: auto; } }
 @media (min-width: 761px) and (max-width: 1100px) { .tb-grille[data-colonnes="3"], .tb-grille[data-colonnes="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -1290,7 +1328,7 @@ const TABLEAU = (() => {
 .tb-replier svg { transition: transform .15s; }
 .tb-tuile.replie .tb-replier svg { transform: rotate(-90deg); }
 .tb-tuile.replie .tb-corps, .tb-tuile.replie .tb-reglages { display: none; }
-.tb-corps { display: grid; gap: 6px; padding: 10px 12px 12px; }
+.tb-corps { display: grid; gap: 6px; padding: 10px 12px 12px; overflow: auto; min-height: 0; }
 .tb-reglages { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; padding: 10px 14px; background: var(--doux); border-bottom: 1px solid var(--trait); font-size: 13.5px; }
 .tb-reglages[hidden] { display: none; }
 .tb-reglages label { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--gris); }
@@ -1368,6 +1406,9 @@ const TABLEAU = (() => {
 .tb-grille.edition .tb-tete { cursor: grab; }
 .tb-grille.edition .tb-tete:active { cursor: grabbing; }
 .tb-grille.edition .tb-corps { pointer-events: none; opacity: .75; }
+html.redim .tb-grille.edition .tb-corps { opacity: 1; }
+.tb-tuile > .poignee-bas { bottom: 0; }      /* (collée au bas de la tuile, et non à cheval sur son bord) */
+.tb-tuile.replie > .poignee { display: none; }
 .tb-tuile.glisse { opacity: .4; }
 .tb-tuile.cible-avant { box-shadow: -5px 0 0 var(--accent); }
 .tb-tuile.cible-apres { box-shadow: 5px 0 0 var(--accent); }
