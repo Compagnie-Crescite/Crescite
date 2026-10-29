@@ -2883,6 +2883,10 @@ const dansPeriode = (d, periode) => periode === 'toutes' || (periode === 'passee
 // la recherche de la liste et de la carte (q : déjà passé par norm()) ; le tableur cherche plus large (notes, équipe…)
 function dateCherchee(d, q) { const s = spectacle(d.spectacle_id), l = lieu(d.lieu_id), su = E.suivis.find(x => x.date_id === d.id) || {}; return norm(`${s?.titre} ${l?.nom} ${l?.commune} ${d.intitule || ''} ${su.organisateur || ''} ${su.contact || ''}`).includes(q); }
 const filtresActifs = f => Object.entries(DEFAUTS_DATES).some(([k, d]) => String(f[k] ?? d) !== String(d));
+// Au téléphone (moins de 641 px) la recherche reste seule visible ; tout le reste de la barre tient derrière « Filtres », qui dit
+// combien de filtres sont posés (la recherche n'y compte pas : elle est sous les yeux) et s'ouvre d'office quand il y en a.
+const nbFiltresPoses = f => Object.entries(DEFAUTS_DATES).filter(([k, d]) => k !== 'q' && String(f[k] ?? d) !== String(d)).length;
+const resumeTel = f => { const n = nbFiltresPoses(f); return `Filtres${n ? ` <span class="badge">${n}</span>` : ''}`; };
 const resumePlus = f => { const n = FILTRES_PLUS.filter(k => f[k]).length; return `Plus de filtres${n ? ` <span class="badge">${n}</span>` : ''}`; };
 // la barre de filtres des trois vues : la recherche, la période, la saison, le statut, le public, les puces des spectacles
 // (elles servent de légende), « Plus de filtres » (nature, département, contrat, du … au), le compte (#f-compte : chaque vue y
@@ -2893,9 +2897,10 @@ function filtresDates(f, { vue = 'liste', aDroite = '' } = {}) {
   const saisons = [...new Set([...E.dates.map(d => d.saison), f.saison].filter(Boolean))].sort().reverse();
   const deps = [...new Set(E.dates.map(d => lieu(d.lieu_id)?.departement).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), 'fr', { numeric: true }));
   const opt = (xs, v) => xs.map(([k, l]) => `<option value="${esc(k)}"${v === k ? ' selected' : ''}>${esc(l)}</option>`).join('');
+  const tel = typeof MOBILE !== 'undefined' && MOBILE.actif();
   return `<div class="filtres filtres-dates" role="search" aria-label="Filtrer les représentations">
     <input type="search" id="f-q" placeholder="${vue === 'tableur' ? 'Chercher un lieu, une personne, une note' : 'Chercher un lieu, une commune, un spectacle'}" value="${esc(f.q)}" aria-label="Chercher">
-    <span class="seg" role="group" aria-label="Période">${[['avenir', 'À venir'], ['passees', 'Passées'], ['toutes', 'Toutes']].map(([k, l]) => `<button type="button" data-f-periode="${k}" aria-pressed="${f.periode === k}">${l}</button>`).join('')}</span>
+    ${tel ? `<details class="f-tel"${nbFiltresPoses(f) ? ' open' : ''}><summary>${resumeTel(f)}</summary><div class="f-tel-corps">` : ''}<span class="seg" role="group" aria-label="Période">${[['avenir', 'À venir'], ['passees', 'Passées'], ['toutes', 'Toutes']].map(([k, l]) => `<button type="button" data-f-periode="${k}" aria-pressed="${f.periode === k}">${l}</button>`).join('')}</span>
     <select id="f-saison" aria-label="Saison"><option value="">Toutes les saisons</option>${opt(saisons.map(s => [s, `Saison ${s}`]), f.saison)}</select>
     <select id="f-statut" aria-label="Statut"><option value="">Tous statuts</option>${opt([['option', 'Options'], ['confirmee', 'Confirmées'], ['annulee', 'Annulées'], ['reportee', 'Reportées'], ['masquee', 'Masquées']], f.statut)}</select>
     <select id="f-public" aria-label="Public"><option value="">Tous publics</option>${opt([['tout_public', 'Tout public'], ['scolaire', 'Scolaire']], f.public)}</select>
@@ -2905,8 +2910,9 @@ function filtresDates(f, { vue = 'liste', aDroite = '' } = {}) {
       <select id="f-dep" aria-label="Département"><option value="">Tous départements</option>${opt(deps.map(k => [k, k]), f.dep)}</select>
       <select id="f-contrat" aria-label="Contrat"><option value="">Tous contrats</option>${opt([['aucun', 'Sans contrat'], ['à envoyer', 'À envoyer'], ['envoyé', 'Envoyé'], ['signé', 'Signé']], f.contrat)}</select>
       <span class="f-periode"><label>du <input type="date" id="f-du" value="${esc(f.du)}"></label><label>au <input type="date" id="f-au" value="${esc(f.au)}"></label></span></div></details>
-    <span class="compte" id="f-compte"${vue === 'tableur' ? ' hidden' : ''}></span>
-    ${aDroite ? `<span class="f-propre">${aDroite}</span>` : ''}</div>`;
+    ${tel ? `${aDroite ? `<span class="f-propre">${aDroite}</span>` : ''}</div></details>
+    <span class="compte" id="f-compte"${vue === 'tableur' ? ' hidden' : ''}></span></div>` : `<span class="compte" id="f-compte"${vue === 'tableur' ? ' hidden' : ''}></span>
+    ${aDroite ? `<span class="f-propre">${aDroite}</span>` : ''}</div>`}`;
 }
 // les contrôles reprennent ce que dit f (« Effacer les filtres », un filtre relâché pour montrer une ligne, un ajout du tableur)
 filtresDates.refleter = f => {
@@ -2915,14 +2921,17 @@ filtresDates.refleter = f => {
   $$('[data-f-periode]', barre).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.fPeriode === f.periode)));
   $$('[data-sp]', barre).forEach(b => b.setAttribute('aria-pressed', String(String(f.spectacle) === b.dataset.sp)));
   const r = $('.f-plus summary', barre); if (r) r.innerHTML = resumePlus(f);
+  filtresDates.compter(f);
 };
+// le compte sur « Filtres » (au téléphone seulement : ailleurs, la barre n'a pas ce bouton)
+filtresDates.compter = f => { const t = $('.f-tel > summary'); if (t) t.innerHTML = resumeTel(f); };
 // relie les contrôles de la barre, une fois par vue dessinée : maj redessine la vue (et garde les filtres : garderFiltres)
 let BARRE_DATES = null;
 function brancherFiltresDates(f, maj) {
   const barre = $('.filtres-dates'); if (!barre) return;
   BARRE_DATES = { f, maj };
   $('#f-q', barre).addEventListener('input', e => { f.q = e.target.value; maj(); });
-  ['saison', 'statut', 'public', 'nature', 'dep', 'contrat', 'du', 'au'].forEach(k => $(`#f-${k}`, barre).addEventListener('change', e => { f[k] = e.target.value; if (FILTRES_PLUS.includes(k)) filtresDates.refleter(f); maj(); }));
+  ['saison', 'statut', 'public', 'nature', 'dep', 'contrat', 'du', 'au'].forEach(k => $(`#f-${k}`, barre).addEventListener('change', e => { f[k] = e.target.value; if (FILTRES_PLUS.includes(k)) filtresDates.refleter(f); else filtresDates.compter(f); maj(); }));
   $$('[data-f-periode]', barre).forEach(b => b.addEventListener('click', () => { f.periode = b.dataset.fPeriode; filtresDates.refleter(f); maj(); }));
   $$('[data-sp]', barre).forEach(b => b.addEventListener('click', () => { f.spectacle = String(f.spectacle) === b.dataset.sp ? '' : b.dataset.sp; filtresDates.refleter(f); maj(); }));
 }
@@ -3014,14 +3023,20 @@ function vueDates(param) {
    vide à mesure. Les options, les dates annulées ou reportées n'y sont pas. */
 const JOURS_AVANT = [30, 60, 90];
 // (gardés par PREFS, clé representations.avant : avec le compte, ou sur l'appareil tant que le script 6 manque ; sans prefs.js dans la page, l'appareil seul)
+// Au téléphone (moins de 641 px), le bloc est fermé d'office et n'écrit rien dans le compte : son ouverture et sa fenêtre de jours
+// vivent le temps de la session (E.avantTel, E.avantJoursTel) ; la préférence de l'ordinateur n'est pas écrite (sa fenêtre de jours sert de départ).
+const avantTelephone = () => typeof MOBILE !== 'undefined' && MOBILE.actif();
 const reglagesAvant = () => {
   let r = {};
   if (typeof PREFS !== 'undefined') r = PREFS.lire('representations.avant', {});
   else { try { r = JSON.parse(localStorage.getItem('crescite-admin-avant') || '{}'); } catch { r = {}; } }
   if (!r || typeof r !== 'object' || Array.isArray(r)) r = {};
-  return { ouvert: r.ouvert !== false, jours: JOURS_AVANT.includes(r.jours) ? r.jours : 60 };
+  const jours = JOURS_AVANT.includes(r.jours) ? r.jours : 60;
+  if (avantTelephone()) return { ouvert: E.avantTel === true, jours: JOURS_AVANT.includes(E.avantJoursTel) ? E.avantJoursTel : jours };
+  return { ouvert: r.ouvert !== false, jours };
 };
 const garderAvant = r => {
+  if (avantTelephone()) { E.avantTel = r.ouvert === true; E.avantJoursTel = r.jours; return; }      // (le téléphone n'écrit aucune préférence du compte)
   if (typeof PREFS !== 'undefined') PREFS.ecrire('representations.avant', r, { aussitot: true });
   else { try { localStorage.setItem('crescite-admin-avant', JSON.stringify(r)); } catch { /* navigation privée */ } }
 };
@@ -3092,6 +3107,10 @@ function relierAvant(el) {
   el.addEventListener('toggle', e => { if (e.target.matches('details.avant') && e.target.open !== reglagesAvant().ouvert) garderAvant({ ...reglagesAvant(), ouvert: e.target.open }); }, true);   // (le navigateur dit « toggle » aussi au premier dessin d'un panneau ouvert : rien à garder)
   el.addEventListener('change', e => { if (e.target.id !== 'avant-jours') return; garderAvant({ ...reglagesAvant(), jours: +e.target.value }); dessinerAvant(el); $('#avant-jours', el)?.focus(); });
 }
+// le téléphone qui tourne (la fenêtre passe le seuil des 640 px) : la barre de filtres et « À compléter avant la tournée » n'ont pas la
+// même forme au téléphone et à l'ordinateur ; la page des dates se redessine sur place (même adresse : ni fondu ni glissement),
+// sauf si une saisie est en cours (elle se refera à la navigation suivante)
+if (typeof matchMedia === 'function') matchMedia('(max-width: 640px)').addEventListener('change', () => { if (E.pret && $('#vue .filtres-dates') && !saisieEnCours()) router(); });
 // les badges d'une date (statut, site, public, nature) et les points de son parcours : les mêmes dans la liste, sur la carte de
 // tournée (tournee.js) et partout où une date se résume en une ligne
 function badgesDate(d) {

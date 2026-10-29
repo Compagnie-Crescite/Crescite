@@ -18,10 +18,17 @@
 //   16 px de texte ; la croix et « Annuler » d'une annonce, et « Installer », aussi ; (b) le lieu d'une date passe sur deux lignes au lieu d'être coupé par « … » ; (c) à 1 440 × 900 et à
 //   800 × 1 000 au doigt, rien n'a bougé (segments à 36 px, champs à 38, planning à 40) ; (d) l'aide du clavier du tableur n'est plus
 //   affichée, mais reste la cible d'aria-describedby.
+// 3 · l'essentiel d'abord (admin/tableau.js, index.html : filtresDates, dessinerAvant ; admin/mobile.js ; admin/disponibilites.js) : (a) le tableau
+//   de bord sans « Actions rapides », sans « Personnaliser » ni choix de la vue, « À traiter » avant 700 px et « Qui part bientôt » avant
+//   2 000, l'ordre du DOM (« À traiter », « Qui part bientôt », « Prochaines dates » d'abord), la rotation qui redessine, rien d'écrit (le chevron et le rouage de « À traiter » compris) ;
+//   (b) la première date avant 500 px, « À compléter » replié avec son compte, ouvert le temps de la session, rien d'écrit ; (c) la
+//   recherche seule visible, le reste derrière « Filtres » (44 px, son compte, ouvert d'office quand un filtre est posé, la rotation qui le redessine), dans la liste, le
+//   tableur et la carte ; (d) les « ＋ Nouveau… » du « + » ne s'affichent plus (ils restent dans la page), les autres restent ; (e) le
+//   planning s'ouvre sur le mois ; (f) les trois chiffres de la diffusion sur une ligne ; (g) à 1 440 × 900, rien n'a bougé.
 // Les captures vont dans site/dist/shots-telephone/ (jamais commitées). Sort en erreur si une vérification manque.
 import fs from 'node:fs';
 import path from 'node:path';
-import { chromium, ICI, DB, plus, ok, ouvrir, bilan } from './admin-fictif.mjs';
+import { chromium, ICI, DB, ECRITURES, plus, ok, ouvrir, bilan } from './admin-fictif.mjs';
 
 const CAPT = path.join(ICI, 'dist', 'shots-telephone');
 const navigateur = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined });
@@ -44,7 +51,9 @@ const CROISENT = () => {
   const p = document.querySelector('.ob-plus');
   if (!p || p.hidden || !p.getClientRects().length) return null;
   const r = p.getBoundingClientRect();
-  const visible = e => { const s = getComputedStyle(e), b = e.getBoundingClientRect(); return b.width > 0 && b.height > 0 && s.visibility !== 'hidden' && s.display !== 'none' && b.bottom > 0 && b.top < innerHeight; };
+  // (ce qui est dans un <details> fermé n'est pas à l'écran, même si le navigateur lui garde un rectangle : « Filtres » replie la barre)
+  const replie = e => { const d = e.parentElement?.closest('details:not([open])'); return !!d && !(e.tagName === 'SUMMARY' && e.parentElement === d); };
+  const visible = e => { const s = getComputedStyle(e), b = e.getBoundingClientRect(); return b.width > 0 && b.height > 0 && s.visibility !== 'hidden' && s.display !== 'none' && b.bottom > 0 && b.top < innerHeight && !replie(e); };
   return [...document.querySelectorAll('a[href], button, input, select, textarea, summary, [role="button"]')]
     .filter(e => e !== p && !e.closest('.ob-barre') && visible(e))
     .filter(e => { const b = e.getBoundingClientRect(); return b.left < r.right && b.right > r.left && b.top < r.bottom && b.bottom > r.top; })
@@ -135,7 +144,8 @@ const plusCache = page => page.evaluate(() => { const p = document.querySelector
   await page.waitForTimeout(150);
   await page.screenshot({ path: `${CAPT}/1-bas-lieux.png` });
   await aller(page, '#/representations', '#vue .deux .liste');
-  await page.evaluate(() => { window.scrollTo(0, 0); annoncer('Date enregistrée.', { action: () => {}, delai: 60000 }); });
+  // (au bout de la page, comme plus haut : depuis le lot 3 la liste commence à l'écran, et elle défile sous le « + » comme sous tout bouton flottant)
+  await page.evaluate(() => { window.scrollTo(0, document.documentElement.scrollHeight); annoncer('Date enregistrée.', { action: () => {}, delai: 60000 }); });
   await page.waitForTimeout(350);
   const annonce = await page.evaluate(() => {
     const p = document.querySelector('.ob-plus').getBoundingClientRect(), a = document.querySelector('#annonces .annonce')?.getBoundingClientRect();
@@ -525,6 +535,210 @@ for (const [largeur, hauteur, etiquette] of [[1440, 900, '1 440 × 900'], [800, 
   await ctx.close();
 }
 DB.crescite_equipes = DB.crescite_equipes.filter(x => !EQUIPES_2.some(y => y.date_id === x.date_id && y.personne_id === x.personne_id));
+
+// ================================================================================ 3 · l'essentiel d'abord : tableau de bord, Dates, planning, diffusion
+{
+  DB.crescite_preferences = [];
+  const depuis = ECRITURES.length;
+  const ecrites = () => ECRITURES.slice(depuis).map(r => r.cle);
+  const haut = sel => `(() => { const e = document.querySelector(${JSON.stringify(sel)}); return e ? Math.round(e.getBoundingClientRect().top + scrollY) : null; })()`;
+  // le visible vrai : ce que le navigateur dessine (un <details> fermé garde un rectangle à ce qu'il cache)
+  const affiche = sel => page => page.evaluate(s => { const e = document.querySelector(s); return !!e && e.checkVisibility() && getComputedStyle(e).display !== 'none'; }, sel);
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { ...TEL, hash: '#/accueil' });
+  await garnirPlanning(ctx);
+  await page.waitForSelector('.ob-barre', { timeout: 15000 });
+  await attendre(page, () => document.querySelector('.tb-tuile[data-k="urgent"] a.tb-l'), null, 15000);
+  await page.waitForTimeout(400);
+
+  // ---- (a) le tableau de bord : « À traiter » tout de suite, puis « Qui part bientôt », « Prochaines dates »
+  const ordreTel = await page.evaluate(() => [...document.querySelectorAll('#tb-grille > .tb-tuile')].map(t => t.dataset.k));
+  const a = await page.evaluate(`({ actions: !!document.querySelector('.tb-tuile[data-k="actions"]'), personnaliser: !!document.querySelector('#tb-personnaliser'), vue: !!document.querySelector('#tb-vue'), briefing: document.querySelector('#tb-briefing')?.getBoundingClientRect().height ?? 0,
+    traiter: ${haut('.tb-tuile[data-k="urgent"] a.tb-l')}, equipe: ${haut('.tb-tuile[data-k="equipe"]')}, prochaines: ${haut('.tb-tuile[data-k="prochaines"]')} })`);
+  ok('3 · a · #/accueil : ni « Actions rapides », ni « Personnaliser », ni le choix de la vue ; « Briefing » reste, d’au moins 44 px', !a.actions && !a.personnaliser && !a.vue && a.briefing >= 44, JSON.stringify(a));
+  ok(`3 · a · #/accueil : la première ligne d’« À traiter » commence avant 700 px (${a.traiter}), la tuile « Qui part bientôt » avant 2 000 px (${a.equipe})`, a.traiter !== null && a.traiter < 700 && a.equipe !== null && a.equipe < 2000, JSON.stringify(a));
+  ok('3 · a · #/accueil : l’ordre du DOM commence par « À traiter », « Qui part bientôt », « Prochaines dates »', ordreTel.slice(0, 3).join() === 'urgent,equipe,prochaines' && !ordreTel.includes('actions'), ordreTel.join());
+  ok('3 · a · #/accueil : rien n’est écrit dans les préférences du compte (ni accueil.tableau, ni autre)', ecrites().length === 0, ecrites().join());
+  await page.screenshot({ path: `${CAPT}/3-accueil.png` });
+  // les commandes de la tuile « À traiter » (le chevron « Réduire », le rouage « Réglages ») changent la disposition sans rien écrire dans le compte
+  const replier = await toucher(page, '.tb-tuile[data-k="urgent"] [data-tb-replier]') && await attendre(page, () => document.querySelector('.tb-tuile[data-k="urgent"] [data-tb-replier]')?.getAttribute('aria-expanded') === 'false', null, 3000);
+  const rouage = await toucher(page, '.tb-tuile[data-k="urgent"] [data-tb-reglages]') && await attendre(page, () => document.querySelector('.tb-tuile[data-k="urgent"] [data-tb-reglages]')?.getAttribute('aria-expanded') === 'true', null, 3000);
+  await page.waitForTimeout(1000);      // (PREFS écrit 700 ms après le dernier geste : on attend plus que cela)
+  ok('3 · a · le chevron « Réduire » et le rouage « Réglages » de « À traiter » marchent au téléphone, et rien n’est écrit dans le compte (accueil.tableau)', replier && rouage && ecrites().length === 0, JSON.stringify({ replier, rouage, ecrites: ecrites() }));
+  await toucher(page, '.tb-tuile[data-k="urgent"] [data-tb-reglages]');
+  await toucher(page, '.tb-tuile[data-k="urgent"] [data-tb-replier]');
+  await attendre(page, () => document.querySelector('.tb-tuile[data-k="urgent"] [data-tb-replier]')?.getAttribute('aria-expanded') === 'true', null, 3000);
+  // la rotation : en paysage (plus de 640 px) les actions et « Personnaliser » reviennent aussitôt, sans navigation ; en portrait ils repartent
+  await page.setViewportSize({ width: 844, height: 390 });
+  const paysage = await attendre(page, () => document.querySelector('.tb-tuile[data-k="actions"]') && document.querySelector('#tb-personnaliser') && document.querySelector('#tb-vue'), null, 4000);
+  const ordrePaysage = await page.evaluate(() => [...document.querySelectorAll('#tb-grille > .tb-tuile')].map(t => t.dataset.k));
+  ok('3 · a · la rotation en paysage (844 px) redessine le tableau de bord sur place : les actions, « Personnaliser » et le choix de la vue reviennent, dans l’ordre du compte', paysage && ordrePaysage[0] === 'actions', ordrePaysage.join());
+  await page.setViewportSize({ width: 390, height: 844 });
+  const portrait = await attendre(page, () => !document.querySelector('.tb-tuile[data-k="actions"]') && !document.querySelector('#tb-personnaliser') && document.querySelector('.tb-tuile[data-k="urgent"] a.tb-l'), null, 4000);
+  ok('3 · a · et le retour en portrait les ôte aussitôt', portrait && ecrites().length === 0, ecrites().join());
+
+  // ---- (b) l'onglet Dates : une date dès le premier écran, « À compléter » replié avec son compte
+  await aller(page, '#/representations', '#l-dates a.ligne');
+  await page.waitForTimeout(300);
+  const b = await page.evaluate(`({ ligne: ${haut('#l-dates a.ligne')}, ferme: document.querySelector('details.avant')?.open === false, badge: document.querySelector('details.avant > summary .badge')?.textContent.trim() || '', corps: !!document.querySelector('details.avant .avant-corps') })`);
+  ok(`3 · b · #/representations : la première date commence avant 500 px (${b.ligne})`, b.ligne !== null && b.ligne < 500, JSON.stringify(b));
+  ok(`3 · b · « À compléter avant la tournée » est replié d’office, son compte (${b.badge}) reste dans le titre`, b.ferme && /^\d+$/.test(b.badge) && +b.badge > 0, JSON.stringify(b));
+  await page.screenshot({ path: `${CAPT}/3-dates.png` });
+  ok('3 · b · un toucher sur « À compléter » l’ouvre, sans rien écrire dans le compte', await toucher(page, 'details.avant > summary') && await attendre(page, () => document.querySelector('details.avant')?.open === true, null, 3000) && !ecrites().includes('representations.avant'), ecrites().join());
+  // une écriture dans la base (une adresse et un contact qui arrivent) redessine le bloc : il reste ouvert, et son compte baisse
+  const avant = await page.evaluate(() => +document.querySelector('details.avant > summary .badge').textContent);
+  await page.evaluate(() => { const id = +document.querySelector('details.avant a[href^="#/lieux/"]').getAttribute('href').split('/')[2]; E.lieux.find(l => l.id === id).adresse = '135 boulevard du Maréchal-Leclerc'; E.lieuxSuivi.push({ lieu_id: id, contact: 'Régie générale, 02 31 00 00 00' }); dessinerAvant(document.querySelector('#avant')); });
+  await page.waitForTimeout(150);
+  const apres = await page.evaluate(() => ({ ouvert: document.querySelector('details.avant')?.open, n: +(document.querySelector('details.avant > summary .badge')?.textContent || 0) }));
+  ok(`3 · b · après une écriture dans la base, « À compléter » reste ouvert (le compte passe de ${avant} à ${apres.n}), et rien n’est écrit dans le compte`, apres.ouvert === true && apres.n < avant && !ecrites().includes('representations.avant'), JSON.stringify({ avant, apres, ecrites: ecrites() }));
+  await page.selectOption('#avant-jours', '30');
+  await page.waitForTimeout(150);
+  ok('3 · b · le choix des 30 jours vit la session : il tient après le redessin, et rien n’est écrit', (await page.$eval('#avant-jours', e => e.value)) === '30' && (await page.$eval('details.avant', e => e.open)) && !ecrites().includes('representations.avant'), ecrites().join());
+  await aller(page, '#/lieux', '#vue .tete h1');
+  await aller(page, '#/representations', '#l-dates a.ligne');
+  ok('3 · b · de retour sur Dates (dans la même session), le bloc est encore ouvert, à 30 jours', (await page.$eval('details.avant', e => e.open)) && (await page.$eval('#avant-jours', e => e.value)) === '30' && !ecrites().includes('representations.avant'), ecrites().join());
+  await page.evaluate(() => { document.querySelector('details.avant').open = false; });
+  await page.waitForTimeout(100);
+  ok('3 · b · le refermer ne s’écrit pas non plus, et la préférence de l’ordinateur n’a pas bougé (aucune ligne representations.avant ni representations.vue)', !ecrites().some(c => /^representations\./.test(c)), ecrites().join());
+
+  // ---- (c) les filtres : la recherche seule, le reste derrière « Filtres » qui dit combien sont posés
+  const c0 = await page.evaluate(() => { const s = document.querySelector('.f-tel > summary'), q = document.querySelector('#f-q'); return { tel: !!s, ouvert: document.querySelector('.f-tel')?.open, texte: s?.textContent.trim(), h: Math.round(s?.getBoundingClientRect().height || 0), q: q?.checkVisibility(), seg: document.querySelector('.filtres-dates > .seg') !== null }; });
+  const cache = [];
+  for (const sel of ['[data-f-periode="avenir"]', '#f-saison', '#f-statut', '#f-public', '.puces .puce', '.f-plus > summary', '#f-saut']) if (await affiche(sel)(page)) cache.push(sel);
+  ok('3 · c · #/representations sans filtre : la recherche est seule visible, « Filtres » est fermé et ne dit aucun nombre', c0.tel && c0.ouvert === false && c0.q === true && c0.texte === 'Filtres' && !c0.seg && cache.length === 0, JSON.stringify({ c0, visibles: cache }));
+  ok('3 · c · « Filtres » fait 44 px de haut au moins', c0.h >= 44, JSON.stringify(c0));
+  await toucher(page, '.f-tel > summary');
+  await attendre(page, () => document.querySelector('.f-tel')?.open === true, null, 3000);
+  const dehors = [];
+  for (const sel of ['[data-f-periode="avenir"]', '#f-saison', '#f-statut', '#f-public', '.puces .puce', '.f-plus > summary', '#f-saut']) if (!(await affiche(sel)(page))) dehors.push(sel);
+  ok('3 · c · un toucher sur « Filtres » montre la période, les listes, les puces, « Plus de filtres » et « Aller à une saison »', dehors.length === 0, dehors.join(' '));
+  await page.selectOption('#f-statut', 'option');
+  await page.waitForTimeout(250);
+  const c1 = await page.evaluate(() => ({ texte: document.querySelector('.f-tel > summary').textContent.trim(), ouvert: document.querySelector('.f-tel').open }));
+  ok('3 · c · poser un filtre met son compte sur « Filtres » sans le refermer', /^Filtres\s*1$/.test(c1.texte) && c1.ouvert, JSON.stringify(c1));
+  await page.selectOption('#f-statut', '');
+  await page.waitForTimeout(150);
+  ok('3 · c · le relâcher le retire', (await page.$eval('.f-tel > summary', e => e.textContent.trim())) === 'Filtres');
+  fin('3 · tableau de bord et Dates', erreurs);
+  await ctx.close();
+
+  const f1 = await ouvrir(navigateur, { ...TEL, hash: '?statut=option#/representations' });
+  await f1.page.waitForSelector('.f-tel', { timeout: 15000 });
+  await f1.page.waitForTimeout(300);
+  const c2 = await f1.page.evaluate(() => ({ ouvert: document.querySelector('.f-tel')?.open, texte: document.querySelector('.f-tel > summary')?.textContent.trim(), h: Math.round(document.querySelector('.f-tel > summary').getBoundingClientRect().height), statut: document.querySelector('#f-statut')?.value, visible: document.querySelector('#f-statut')?.checkVisibility() }));
+  ok('3 · c · ?statut=option : « Filtres » est ouvert d’office et dit 1 (un filtre posé n’est jamais caché derrière un bouton)', c2.ouvert === true && /^Filtres\s*1$/.test(c2.texte) && c2.statut === 'option' && c2.visible === true && c2.h >= 44, JSON.stringify(c2));
+  await f1.page.screenshot({ path: `${CAPT}/3-filtres.png` });
+  // la rotation redessine aussi la page des dates : en paysage (plus de 640 px) la barre est dépliée, sans « Filtres », le filtre posé reste ; en portrait « Filtres 1 » revient, ouvert
+  await f1.page.setViewportSize({ width: 844, height: 390 });
+  const dPaysage = await attendre(f1.page, () => !document.querySelector('.f-tel') && document.querySelector('#f-statut')?.checkVisibility(), null, 4000);
+  const sPaysage = await f1.page.$eval('#f-statut', e => e.value).catch(() => null);
+  ok('3 · c · la rotation en paysage (844 px) redessine la page des dates : la barre est dépliée, sans « Filtres », et le filtre posé (option) reste', dPaysage && sPaysage === 'option', JSON.stringify({ dPaysage, sPaysage }));
+  await f1.page.setViewportSize({ width: 390, height: 844 });
+  const dPortrait = await attendre(f1.page, () => document.querySelector('.f-tel')?.open === true && /^Filtres\s*1$/.test(document.querySelector('.f-tel > summary')?.textContent.trim()), null, 4000);
+  ok('3 · c · et le retour en portrait remet « Filtres 1 », ouvert, avec le filtre posé', dPortrait && (await f1.page.$eval('#f-statut', e => e.value)) === 'option');
+  // le tableur et la carte ont la même barre
+  for (const [hash, attente] of [['#/representations/tableur', '#tab-corps tr[data-l]'], ['#/representations/carte', '.filtres-dates']]) {
+    const vu = await aller(f1.page, hash, attente, 15000);
+    const m = await f1.page.evaluate(() => ({ q: document.querySelector('#f-q')?.checkVisibility(), tel: !!document.querySelector('.f-tel'), ouvert: document.querySelector('.f-tel')?.open, texte: document.querySelector('.f-tel > summary')?.textContent.trim() }));
+    ok(`3 · c · ${hash} : la même barre (recherche visible, « Filtres 1 » ouvert)`, vu && m.q && m.tel && m.ouvert && /^Filtres\s*1$/.test(m.texte), JSON.stringify(m));
+  }
+  fin('3 · filtres', f1.erreurs);
+  await f1.ctx.close();
+
+  // ---- les « ＋ Nouveau… » que le « + » propose déjà disparaissent (ils restent dans la page), les autres restent
+  const g = await ouvrir(navigateur, { ...TEL, hash: '#/representations' });
+  await garnirPlanning(g.ctx);
+  await g.page.waitForSelector('.ob-barre', { timeout: 15000 });
+  const CREER = [['#/representations', 'a[href="#/representations/nouvelle"]', '＋ Nouvelle date'], ['#/equipe', 'a[href="#/equipe/nouvelle"]', '＋ Nouvelle fiche'], ['#/lieux', 'a[href="#/lieux/nouveau"]', '＋ Nouveau lieu'],
+    ['#/ateliers/seances', 'a[href$="/seances/nouvelle"]', '＋ Nouvelle séance'], ['#/planning', 'a[href="#/planning/proposer"]', 'Proposer des dates'], ['#/diffusion', '#b-nouveau-prospect', '＋ Nouvelle opportunité']];
+  const GARDES = [['#/spectacles', '#b-nouveau-sp', '＋ Nouveau spectacle'], ['#/pro', 'a[href="#/pro/nouvelle"]', '＋ Nouvelle invitation']];
+  const etat = async sel => g.page.evaluate(s => { const e = document.querySelector(`#vue .tete ${s}`) || document.querySelector(s); return e ? { dom: true, affiche: getComputedStyle(e).display !== 'none' && e.getClientRects().length > 0 } : { dom: false, affiche: false }; }, sel);
+  const caches = [], perdus = [];
+  for (const [hash, sel, nom] of CREER) {
+    await aller(g.page, hash, '#vue .tete h1, #vue h1', 15000);
+    await g.page.waitForTimeout(200);
+    const e = await etat(sel);
+    if (!e.dom) perdus.push(nom); else if (e.affiche) caches.push(nom);
+  }
+  const sel0 = await aller(g.page, '#/representations', '#l-dates a.ligne');
+  const sb = await g.page.evaluate(() => { const e = document.querySelector('.sel-bouton'); return e ? { dom: true, affiche: getComputedStyle(e).display !== 'none' } : { dom: false }; });
+  ok(`3 · d · au téléphone : « ＋ Nouvelle date / fiche / lieu / séance », « Proposer des dates » et « ＋ Nouvelle opportunité » restent dans la page mais ne s’affichent pas${caches.length ? ' (encore là : ' + caches.join(', ') + ')' : ''}${perdus.length ? ' (absents du DOM : ' + perdus.join(', ') + ')' : ''}`, caches.length === 0 && perdus.length === 0, JSON.stringify({ caches, perdus }));
+  ok('3 · d · « Sélectionner » est dans la page de la liste, et ne s’affiche pas', sel0 && sb.dom && !sb.affiche, JSON.stringify(sb));
+  const restent = [];
+  for (const [hash, sel, nom] of GARDES) {
+    await aller(g.page, hash, '#vue .tete h1, #vue h1', 15000);
+    await g.page.waitForTimeout(200);
+    const e = await etat(sel);
+    if (!e.affiche) restent.push(nom);
+  }
+  ok(`3 · d · « ＋ Nouveau spectacle » et « ＋ Nouvelle invitation » restent affichés${restent.length ? ' (manquent : ' + restent.join(', ') + ')' : ''}`, restent.length === 0, restent.join());
+  // le « + » crée tout : « Une opportunité de diffusion » mène encore à la fenêtre (le bouton caché est cliqué par allerEtCliquer)
+  await aller(g.page, '#/representations', '#l-dates a.ligne');
+  await toucher(g.page, '.ob-plus');
+  await g.page.waitForSelector('.ob-voile.la', { timeout: 4000 });
+  await g.page.tap('.ob-item:has-text("opportunité")');
+  const fenetre = await attendre(g.page, () => document.querySelector('#f-prospect-crm'), null, 8000);
+  ok('3 · d · « Une opportunité de diffusion » du « + » ouvre toujours la fenêtre (le bouton de la page est caché, pas retiré)', fenetre);
+  await g.page.screenshot({ path: `${CAPT}/3-opportunite.png` });
+  await g.page.keyboard.press('Escape');
+
+  // ---- (e) le planning s'ouvre sur le mois ; un choix fait dans la session est gardé
+  await aller(g.page, '#/planning', '[data-pl-jour]', 15000);
+  await attendre(g.page, () => document.querySelector('.pl-mois-grille'), null, 6000);
+  const pm = await g.page.evaluate(() => ({ mois: document.querySelector('[data-pl-vue="mois"]')?.getAttribute('aria-pressed'), equipe: document.querySelector('[data-pl-vue="equipe"]')?.getAttribute('aria-pressed'), grille: !!document.querySelector('.pl-mois-grille') }));
+  ok('3 · e · #/planning s’ouvre en Mois (la grille du mois est là, « Mois » est pressé)', pm.mois === 'true' && pm.equipe === 'false' && pm.grille, JSON.stringify(pm));
+  await g.page.screenshot({ path: `${CAPT}/3-planning.png` });
+  await toucher(g.page, '[data-pl-vue="equipe"]');
+  await g.page.waitForTimeout(400);
+  await aller(g.page, '#/lieux', '#vue .tete h1');
+  await aller(g.page, '#/planning', '[data-pl-jour]', 15000);
+  await g.page.waitForTimeout(300);
+  ok('3 · e · un choix fait au téléphone (Équipe) est gardé le temps de la session', (await g.page.getAttribute('[data-pl-vue="equipe"]', 'aria-pressed')) === 'true');
+
+  // ---- (f) la diffusion : les trois chiffres sur une ligne, de même haut, sans rien qui déborde
+  await aller(g.page, '#/diffusion', '.crm-kpi-boite', 15000);
+  await g.page.waitForTimeout(200);
+  const k = await g.page.evaluate(() => ({ boites: [...document.querySelectorAll('.crm-kpi-boite')].map(b => { const r = b.getBoundingClientRect(), v = b.querySelector('b'); return { haut: Math.round(r.top + scrollY), bas: Math.round(r.bottom + scrollY), gauche: Math.round(r.left), droite: Math.round(r.right), deborde: v.scrollWidth > b.clientWidth }; }), debordePage: document.documentElement.scrollWidth > innerWidth }));
+  const memeHaut = k.boites.length === 3 && k.boites.every(b => b.haut === k.boites[0].haut && b.bas === k.boites[0].bas), enLigne = k.boites.length === 3 && k.boites.every((b, i) => i === 0 || b.gauche >= k.boites[i - 1].droite);
+  ok('3 · f · #/diffusion : les trois chiffres tiennent sur une ligne (même haut, l’un à côté de l’autre), sans rien qui déborde de sa boîte ni de la page', memeHaut && enLigne && !k.boites.some(b => b.deborde) && !k.debordePage, JSON.stringify(k));
+  await g.page.screenshot({ path: `${CAPT}/3-diffusion.png` });
+  ok('3 · rien de ce qui précède n’a écrit dans les préférences du compte (aucune écriture : ni accueil.tableau, ni representations.avant, ni representations.vue)', !ecrites().some(c => ['accueil.tableau', 'representations.avant', 'representations.vue'].includes(c)), ecrites().join());
+  fin('3 · nouveautés, planning, diffusion', g.erreurs);
+  await g.ctx.close();
+
+  // ---- à 1 440 × 900, rien n'a bougé : les dix actions, l'ordre du compte, « À compléter » ouvert, les filtres dépliés, le planning en Équipe, « ＋ Nouvelle date »
+  {
+    const o = await ouvrir(navigateur, { largeur: 1440, hauteur: 900, hash: '#/accueil' });
+    await garnirPlanning(o.ctx);
+    await attendre(o.page, () => document.querySelector('.tb-tuile[data-k="urgent"]'), null, 15000);
+    await o.page.waitForTimeout(300);
+    const m = await o.page.evaluate(() => ({ actions: document.querySelectorAll('.tb-tuile[data-k="actions"] .tb-actions > *').length, personnaliser: !!document.querySelector('#tb-personnaliser'), vue: !!document.querySelector('#tb-vue'), ordre: [...document.querySelectorAll('#tb-grille > .tb-tuile')].map(t => t.dataset.k) }));
+    const attendu = ['urgent', 'equipe', 'prochaines', ...m.ordre.filter(k => !['actions', 'urgent', 'equipe', 'prochaines'].includes(k))].join();
+    ok('3 · g · 1 440 × 900, #/accueil : les dix actions rapides, « Personnaliser », le choix de la vue, les tuiles dans l’ordre du compte (« Actions rapides » en tête, « Prochaines dates » avant « Qui part bientôt »)', m.actions === 10 && m.personnaliser && m.vue && m.ordre[0] === 'actions' && m.ordre.indexOf('prochaines') < m.ordre.indexOf('equipe') && m.ordre.join() !== attendu, JSON.stringify(m));
+    // l'ordre d'un téléphone : le même, à l'ordre des trois premières tuiles près
+    ok('3 · g · l’ordre du téléphone est celui du compte, sans les actions, avec les trois premières en tête', ordreTel.join() === attendu, `${ordreTel.join()} / ${attendu}`);
+    await o.page.screenshot({ path: `${CAPT}/3-accueil-bureau.png` });
+    await aller(o.page, '#/representations', '#l-dates a.ligne');
+    const d = await o.page.evaluate(() => ({ avantOuvert: document.querySelector('details.avant')?.open, tel: !!document.querySelector('.f-tel'), seg: document.querySelector('.filtres-dates .seg')?.checkVisibility(), saison: document.querySelector('#f-saison')?.checkVisibility(), statut: document.querySelector('#f-statut')?.checkVisibility(), puces: document.querySelector('.filtres-dates .puces .puce')?.checkVisibility(), plus: document.querySelector('.f-plus > summary')?.checkVisibility(),
+      nouvelle: (() => { const e = document.querySelector('#vue .tete a[href="#/representations/nouvelle"]'); return !!e && getComputedStyle(e).display !== 'none' && e.getClientRects().length > 0; })(), filtresDirects: document.querySelectorAll('.filtres-dates > .seg, .filtres-dates > #f-saison, .filtres-dates > #f-statut, .filtres-dates > .puces, .filtres-dates > .f-plus').length }));
+    ok('3 · g · 1 440 × 900, #/representations : « À compléter » ouvert, les filtres dépliés (la barre n’a pas de « Filtres »), « ＋ Nouvelle date » affichée', d.avantOuvert === true && !d.tel && d.seg && d.saison && d.statut && d.puces && d.plus && d.nouvelle && d.filtresDirects === 5, JSON.stringify(d));
+    const montrees = [];
+    for (const [hash, sel, nom] of [...CREER.slice(1), ...GARDES]) {
+      await aller(o.page, hash, '#vue .tete h1, #vue h1', 15000);
+      const e = await o.page.evaluate(s => { const x = document.querySelector(`#vue .tete ${s}`) || document.querySelector(s); return !!x && getComputedStyle(x).display !== 'none' && x.getClientRects().length > 0; }, sel);
+      if (!e) montrees.push(nom);
+    }
+    ok(`3 · g · 1 440 × 900 : « ＋ Nouvelle fiche / lieu / séance », « Proposer des dates », « ＋ Nouvelle opportunité », « ＋ Nouveau spectacle » et « ＋ Nouvelle invitation » restent affichés${montrees.length ? ' (manquent : ' + montrees.join(', ') + ')' : ''}`, montrees.length === 0, montrees.join());
+    await aller(o.page, '#/planning', '[data-pl-jour]', 15000);
+    await o.page.waitForTimeout(300);
+    const pl = await o.page.evaluate(() => ({ equipe: document.querySelector('[data-pl-vue="equipe"]')?.getAttribute('aria-pressed'), mois: document.querySelector('[data-pl-vue="mois"]')?.getAttribute('aria-pressed') }));
+    ok('3 · g · 1 440 × 900, #/planning s’ouvre en Équipe', pl.equipe === 'true' && pl.mois === 'false', JSON.stringify(pl));
+    await aller(o.page, '#/diffusion', '.crm-kpi-boite', 15000);
+    const k2 = await o.page.evaluate(() => { const g = getComputedStyle(document.querySelector('.crm-kpi')); return { colonnes: g.gridTemplateColumns.split(' ').length, boites: document.querySelectorAll('.crm-kpi-boite').length, b: getComputedStyle(document.querySelector('.crm-kpi-boite b')).fontSize, pad: getComputedStyle(document.querySelector('.crm-kpi-boite')).paddingTop }; });
+    ok('3 · g · 1 440 × 900, #/diffusion : les trois chiffres gardent leur grille, leur corps de 22 px et leur marge de 14 px', k2.boites === 3 && k2.b === '22px' && k2.pad === '14px', JSON.stringify(k2));
+    fin('3 · 1 440 × 900', o.erreurs);
+    await o.ctx.close();
+  }
+}
 
 await navigateur.close();
 bilan(CAPT);

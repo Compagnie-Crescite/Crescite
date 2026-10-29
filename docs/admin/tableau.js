@@ -422,6 +422,7 @@ const TABLEAU = (() => {
   function garder(aussitot = false) {
     const c = conf();
     c.modifie = Date.now();
+    if (telephone()) { if (typeof CADRE !== 'undefined') CADRE.perimer(); return; }      // (le téléphone n'écrit aucune préférence du compte : la disposition touchée vit en mémoire, le temps de la session)
     if (PR()) PR().ecrire(CLE_PREF, c, { aussitot, muet: true });      // (muet : le panneau « Personnaliser » dit déjà où c'est gardé)
     else garderLocal(c);
     if (typeof CADRE !== 'undefined') CADRE.perimer();      // (un report, un épinglage, un réglage de la tuile : le badge du menu suit)
@@ -448,6 +449,17 @@ const TABLEAU = (() => {
 
   // ===================================================================================================== dessiner
   const visibles = () => conf().tuiles.filter(t => t.visible && dispo(t.k));
+  // au téléphone (moins de 641 px) : un ordre fixe, qui ne s'écrit nulle part (garder() n'est pas appelé) : « À traiter », « Qui
+  // part bientôt » et « Prochaines dates » d'abord, puis les autres tuiles dans l'ordre du compte ; sans « Actions rapides »
+  // (la barre du bas et le « + » créent déjà tout)
+  const telephone = () => typeof MOBILE !== 'undefined' && MOBILE.actif();
+  const EN_TETE_TEL = ['urgent', 'equipe', 'prochaines'];
+  function visiblesDessinees() {
+    const xs = visibles();
+    if (!telephone()) return xs;
+    const reste = xs.filter(t => t.k !== 'actions');
+    return [...EN_TETE_TEL.map(k => reste.find(t => t.k === k)).filter(Boolean), ...reste.filter(t => !EN_TETE_TEL.includes(t.k))];
+  }
   const cachees = () => conf().tuiles.filter(t => !t.visible && dispo(t.k));
   function annoncerSr(texte) { const el = $('#tb-annonce'); if (el) { el.textContent = ''; setTimeout(() => { el.textContent = texte; }, 30); } }
   function formReglages(k) {
@@ -488,10 +500,10 @@ const TABLEAU = (() => {
   function dessiner() {
     const grille = $('#tb-grille');
     if (!grille) return;
-    const xs = visibles();
+    const xs = visiblesDessinees();
     grille.dataset.colonnes = conf().colonnes;
     grille.classList.toggle('edition', T.edition);
-    grille.innerHTML = xs.length ? xs.map((t, i) => htmlTuile(t, i, xs.length)).join('') : `<div class="bloc tb-vide">Toutes les tuiles sont masquées. ${T.edition ? 'Remettez-en depuis « Tuiles masquées », ci-dessus.' : '« Personnaliser » les remet.'}</div>`;
+    grille.innerHTML = xs.length ? xs.map((t, i) => htmlTuile(t, i, xs.length)).join('') : `<div class="bloc tb-vide">Toutes les tuiles sont masquées. ${T.edition ? 'Remettez-en depuis « Tuiles masquées », ci-dessus.' : telephone() ? '« Personnaliser », à l’ordinateur, les remet.' : '« Personnaliser » les remet.'}</div>`;
     const pan = $('#tb-panneau');
     if (pan) { pan.hidden = !T.edition; pan.innerHTML = T.edition ? panneau() + panneauVues() : ''; }
     const sel = $('#tb-vue'); if (sel) sel.outerHTML = htmlVues().replace(/^<label[^>]*>.*?<\/span>/, '').replace(/<\/label>$/, '');
@@ -579,16 +591,20 @@ const TABLEAU = (() => {
   // ===================================================================================================== la vue
   function vue() {
     const jour = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    // (au téléphone, la rangée ne garde que « Briefing » : le choix de la vue et « Personnaliser » restent à l'ordinateur ; une
+    // personnalisation commencée à l'ordinateur ne suit pas)
+    const tel = telephone();
+    if (tel) T.edition = false;
     cadre('accueil', `${bandeau(jour[0].toUpperCase() + jour.slice(1))}<div class="tete tb-tete-page">
-      ${htmlVues()}<button type="button" class="btn" id="tb-briefing" aria-haspopup="dialog" title="Le résumé de la semaine, à copier ou à imprimer">Briefing</button>
-      <button type="button" class="btn" id="tb-personnaliser" aria-pressed="${T.edition}" aria-controls="tb-panneau">${T.edition ? 'Terminer' : 'Personnaliser'}</button></div>
+      ${tel ? '' : htmlVues()}<button type="button" class="btn" id="tb-briefing" aria-haspopup="dialog" title="Le résumé de la semaine, à copier ou à imprimer">Briefing</button>
+      ${tel ? '' : `<button type="button" class="btn" id="tb-personnaliser" aria-pressed="${T.edition}" aria-controls="tb-panneau">${T.edition ? 'Terminer' : 'Personnaliser'}</button>`}</div>
       <p class="tb-filtre" id="tb-filtre" hidden></p>
       <div id="tb-panneau" class="bloc tb-panneau" hidden></div>
       <div class="tb-grille" id="tb-grille" data-liste aria-label="Tuiles du tableau de bord"></div>
       <p class="sr" id="tb-annonce" aria-live="polite"></p>`);
     const grille = $('#tb-grille');
     grille.rafraichir = () => { dessinerCorps(); preparer(); };
-    vueAutomatique();
+    if (!tel) vueAutomatique();      // (une vue qui s'applique d'elle-même écrit la disposition du compte : le téléphone n'écrit rien)
     dessiner();
     brancher();
     preparer();
@@ -610,7 +626,7 @@ const TABLEAU = (() => {
   }
   function brancher() {
     const vueEl = $('#vue');
-    $('#tb-personnaliser').addEventListener('click', () => { T.edition = !T.edition; dessiner(); annoncerSr(T.edition ? 'Personnalisation : déplacez, redimensionnez, masquez les tuiles.' : 'Disposition enregistrée.'); });
+    $('#tb-personnaliser')?.addEventListener('click', () => { T.edition = !T.edition; dessiner(); annoncerSr(T.edition ? 'Personnalisation : déplacez, redimensionnez, masquez les tuiles.' : 'Disposition enregistrée.'); });
     $('#tb-briefing')?.addEventListener('click', ouvrirBriefing);
     vueEl.addEventListener('change', e => {
       if (e.target.id !== 'tb-vue') return;
@@ -736,6 +752,13 @@ const TABLEAU = (() => {
   }
   // en quittant la page : la personnalisation se referme, et ce qui n'est pas encore écrit part
   window.addEventListener('hashchange', () => { if (location.hash !== '#/accueil') T.edition = false; });
+  // le téléphone qui tourne (la fenêtre passe le seuil des 640 px, dans un sens ou dans l'autre) : le tableau de bord se redessine
+  // aussitôt, sans quoi les actions rapides ne reviendraient (ou ne partiraient) qu'à la navigation suivante
+  if (typeof matchMedia === 'function') matchMedia('(max-width: 640px)').addEventListener('change', () => {
+    if (location.hash !== '#/accueil' || !$('#tb-grille')) return;
+    vue();
+    $('#vue')?.classList.remove('entree');      // (une page qui se refait sur place ne rejoue pas son entrée)
+  });
 
   // ===================================================================================================== à traiter : l'ordre, les épingles, les reports
   /* Chaque ligne « à traiter » a une clé (catégorie:identifiant), un poids (ce que coûte le retard : un contrat non signé

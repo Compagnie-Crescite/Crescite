@@ -183,6 +183,19 @@ const MOBILE = (() => {
      (elle reste dans la page : #tab-aide est la cible d'aria-describedby) */
   html.ob-actif .ligne .ou { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
   html.ob-actif #tab-aide { display: none; }
+  /* l'essentiel d'abord : les « ＋ Nouveau… » que le « + » propose déjà disparaissent du téléphone (ils restent dans la page :
+     allerEtCliquer clique #b-nouveau-prospect), avec « Sélectionner » ; « Nouveau spectacle » et « Nouvelle invitation » restent */
+  html.ob-actif #vue .tete :is(a[href="#/representations/nouvelle"], a[href="#/equipe/nouvelle"], a[href="#/lieux/nouveau"], a[href$="/seances/nouvelle"], a[href="#/planning/proposer"], #b-nouveau-prospect),
+  html.ob-actif .sel-bouton { display: none; }
+  /* la barre de filtres des dates : la recherche seule, le reste derrière « Filtres » (index.html, filtresDates) */
+  html.ob-actif .filtres-dates > .f-tel { flex: 1 1 100%; min-width: 0; }
+  html.ob-actif .f-tel > summary { box-sizing: border-box; min-height: 44px; padding-block: 12px; cursor: pointer; font-size: 13.5px; font-weight: 600; color: var(--gris); }
+  html.ob-actif .f-tel > summary .badge { margin-left: 4px; }
+  html.ob-actif .f-tel-corps { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 4px 0 2px; }
+  /* les trois chiffres de la diffusion (et des notes de frais, des invitations) sur une ligne */
+  html.ob-actif .crm-kpi { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  html.ob-actif .crm-kpi-boite { padding: 10px; }
+  html.ob-actif .crm-kpi-boite b { font-size: 18px; overflow-wrap: anywhere; }
   .ob-barre { position: fixed; left: 0; right: 0; bottom: 0; z-index: 48; display: grid; grid-template-columns: repeat(5, 1fr); padding: 4px 4px calc(4px + env(safe-area-inset-bottom, 0px)); background: color-mix(in srgb, var(--carte) 94%, transparent); backdrop-filter: blur(10px); border-top: 1px solid var(--trait); }
   .ob-barre a, .ob-barre button { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px 4px; border: 0; border-radius: 12px; background: none; color: var(--gris); text-decoration: none; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; }
   .ob-barre [aria-current="page"] { color: var(--accent); background: var(--accent-doux); }

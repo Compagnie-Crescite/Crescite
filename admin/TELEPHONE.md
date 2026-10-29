@@ -179,6 +179,9 @@ tout. Le planning s'ouvre sur le mois. Dans la diffusion, les trois chiffres tie
 **Étapes.**
 - Au début du lot : chercher les bancs qui cliquent un « ＋ Nouveau… » à 390 px (adresses-admin.mjs:145, fenetres.mjs:762
   et 891 cliquent `#b-nouveau-prospect`) ; s'il y en a un, il passe par le « + ».
+- site/adresses-admin.mjs, amendé (le second banc existant que ce plan change, trouvé en écrivant le lot) : à 390 px, ses
+  listes vides choisissent un statut dans `#f-statut`, qui est maintenant derrière « Filtres » ; il touche « Filtres »
+  s'il est fermé avant de le choisir. Ce que le banc prouve ne change pas.
 - admin/tableau.js : dans `vue()` (580-584), au téléphone, la rangée `.tb-tete-page` ne garde que `#tb-briefing`. Dans
   `dessiner()` (488), au téléphone, une liste tirée de `visibles()` (450) : sans `'actions'` (229), puis `'urgent'`,
   `'equipe'` et `'prochaines'` en tête s'ils sont visibles, puis les autres dans l'ordre du compte. Cela change l'ordre du
@@ -230,8 +233,9 @@ sur toute la France.
 - admin/tournee.js:97 : avant `etatVue('carte')`, si `MOBILE.actif()` et que `session.vues?.carte?.serre === undefined`,
   poser `serre: true`. Il faut tester avant `etatVue`, qui remplit `serre: false` par défaut (index.html:2823, 2829).
   « Toute la France » (tournee.js:199) l'éteint comme aujourd'hui.
-- site/fenetres-2.mjs, amendé (le seul banc existant que ce plan change) : à 390 px, toucher `[data-fr-vue="page"]` avant
-  d'attendre `.a4-doc` (lignes 482-485) ; ce que la section prouve ne change pas.
+- site/fenetres-2.mjs, amendé (avec adresses-admin.mjs au lot 3, l'un des deux bancs existants que ce plan change) : à
+  390 px, toucher `[data-fr-vue="page"]` avant d'attendre `.a4-doc` (lignes 482-485) ; ce que la section prouve ne change
+  pas.
 
 **Banc, section 4.** (a) `#/feuilles/101` : `[data-fr-vue="tel"]` a `aria-pressed="true"`, les `.a4-groupe` sont
 invisibles, aucun élément collant de plus de 80 px, la place entre l'en-tête et le pied fait au moins 520 px (aujourd'hui
@@ -324,8 +328,8 @@ c'est le comportement de l'appui long, on le garde.
   `#/representations/101` et `#/feuilles/101` ; la feuille du bas dure 200 ms sur le « doux », 0 s sous « moins
   d'animations ».
 - Périmètre : à 1 440 × 900, le DOM de `#vue` est identique avant et après sur 8 routes ; `bash site/bancs-admin.sh --tout`
-  est vert avec un seul banc existant amendé (fenetres-2.mjs, section 5) ; le diff ne touche ni gestes.js, ni planning.js,
-  ni feuille.js, ni rien sous equipe/.
+  est vert avec deux bancs existants amendés (adresses-admin.mjs au lot 3, fenetres-2.mjs au lot 4) ; le diff ne touche
+  ni gestes.js, ni planning.js, ni feuille.js, ni rien sous equipe/.
 
 ## 7. L'ordre et les jalons
 
@@ -336,7 +340,7 @@ c'est le comportement de l'appui long, on le garde.
 3. Lot 3 : tableau de bord, « À compléter », filtres repliés, boutons de création masqués, planning en Mois, diffusion.
    Jalon : la première date avant 500 px, « À traiter » avant 700 px, aucune préférence écrite au téléphone, et à 1 440 px
    le DOM identique.
-4. Lot 4 : la feuille de route et la carte, avec le seul amendement de banc, fenetres-2.mjs, dans le même commit. Jalon :
+4. Lot 4 : la feuille de route et la carte, avec son amendement de banc, fenetres-2.mjs, dans le même commit. Jalon :
    au moins 520 px de lecture et 16 px de texte.
 5. Lot 5 en dernier : il dépend du lot 1 (la `.tete` masquée, le titre en haut). Jalon : « Prévenir l'équipe » en 3
    touchers, « Appeler » d'un lieu au premier écran.
