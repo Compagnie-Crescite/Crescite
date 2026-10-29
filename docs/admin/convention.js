@@ -1,0 +1,29 @@
+'use strict';
+// Le texte de départ de la convention des établissements (Textes du site → « Convention des établissements »),
+// que l'administration inscrit dans la base au premier passage. Écrit par site/build.py (convention_depart) depuis
+// data/convention.json : ne pas modifier à la main.
+const CONVENTION_DEPART = {
+ "titre": "Convention de partenariat d’action culturelle",
+ "parties": "ENTRE LES SOUSSIGNÉS :\n\n1. L’Établissement scolaire : {{etablissement}}, situé à {{ville}}, représenté par {{chef}}, agissant en qualité de chef d’établissement,\n\n2. La Compagnie Crescite, association loi 1901, sise à Rouen, titulaire des licences d’entrepreneur de spectacles vivants, représentée par M. Angelo Jossec, Directeur artistique,\n\nIL A ÉTÉ CONVENU CE QUI SUIT :",
+ "articles": [
+  {
+   "titre": "Article 1 — Objet de la convention",
+   "texte": "La présente convention a pour objet d'organiser l'accueil et le déroulement du projet artistique autour du spectacle \"{{spectacle}}\" au bénéfice des élèves de l’établissement.\nProjet : {{classes}}.\nActions : Représentation(s) in situ ou en salle dédiée et {{ateliers}}."
+  },
+  {
+   "titre": "Article 2 — Modalités pédagogiques et calendrier",
+   "texte": "Les séances d’ateliers et représentations sont planifiées en concertation étroite entre l’équipe artistique de la Compagnie Crescite et les enseignants référents du projet. Les ateliers sont encadrés par des comédiens professionnels de la troupe."
+  },
+  {
+   "titre": "Article 3 — Modalités financières",
+   "texte": "Les modalités financières du projet sont précisées dans une annexe signée par les deux parties."
+  },
+  {
+   "titre": "Article 4 — Engagements et sécurité",
+   "texte": "L’établissement met à disposition un espace adapté respectant les contraintes techniques du spectacle (sol plan, dégagement suffisant). Les élèves demeurent sous la responsabilité de l’équipe éducative pendant toute la durée des interventions."
+  }
+ ],
+ "fin": "Fait en deux exemplaires originaux, à Rouen et à {{ville}}.",
+ "signatureEtablissement": "Pour l’Établissement\n{{chef}}\n(Signature et cachet)",
+ "signatureCompagnie": "Pour la Compagnie Crescite\nAngelo Jossec\nDirecteur artistique"
+};

@@ -874,13 +874,6 @@ html:not(.ed-actif) .ct-tel.vide { display: none; }
 .ct-prg.compact .ct-liens, .ct-prg.compact .ct-cond { margin-top: 0 !important; }
 .ct-prg.compact .ct-cond { margin-left: auto !important; }
 .dos-bt { position: relative; overflow: hidden; }
-.dos-bt .onde { position: absolute; left: 16px; right: 16px; bottom: 2px; width: calc(100% - 32px); height: 8px; opacity: 0; overflow: visible; }
-.dos-bt .onde path { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-dasharray: 1 1; stroke-dashoffset: 1; vector-effect: non-scaling-stroke; }
-.dos-bt[aria-busy="true"] { cursor: progress; }
-.dos-bt[aria-busy="true"] .onde { opacity: 1; }
-.dos-bt[aria-busy="true"] .onde path { animation: onde-dos 1.15s ease-in-out infinite; }
-@keyframes onde-dos { 0% { stroke-dashoffset: 1; } 55% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -1; } }
-@media (prefers-reduced-motion: reduce) { .dos-bt[aria-busy="true"] .onde path { animation: none; stroke-dashoffset: 0; } }
 .u-faits-liens { display: flex; flex-wrap: wrap; gap: 8px; }
 .u-docs { list-style: none; display: grid; gap: 10px; margin: 0; padding: 0; }
 .u-docs li { display: flex; align-items: center; gap: 10px; }
@@ -4498,7 +4491,6 @@ html.still .sc-image { transition: opacity .35s ease !important; }
 
   /* ---------- « Je souhaite programmer » : ce qu'il faut à un programmateur (règle 13), relu dans D à chaque rendu ---------- */
   const PDF = '<svg class="fleche" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg>';
-  const ONDE = '<svg class="onde" viewBox="0 0 120 10" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path pathLength="1" d="M2 6C22 1 38 1 54 5S86 10 100 5C108 2 116 3 118 6"/></svg>';
   const contactPrg = () => ((D.site || {}).programmation || {}).contact || null;
   const mailPrg = objet => { const c = contactPrg(); return c && c.email ? `mailto:${c.email}?subject=${encodeURIComponent(objet)}` : ''; };
   // l'objet d'un courriel à la compagnie dit d'où l'on écrit : d'un spectacle, son entrée et son titre (« Programmation –
@@ -4524,18 +4516,18 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       <p class="ct-cond">${esc(L.conditionsFinancieres)}</p>
     </aside>`;
   }
-  // le dossier du spectacle en PDF, composé à la demande (dossier.js) : pendant ce temps le bouton est occupé (aria-busy), puis il redevient actif
-  const OCCUPES = new Set();
-  const dossierBouton = (slug, cls = 'bu') => `<button type="button" class="${cls} dos-bt" data-dossier="${esc(slug)}"${OCCUPES.has(slug) ? ' aria-busy="true" disabled' : ''}>${PDF}<span>${esc(L.dossierPdf)}</span>${ONDE}</button>`;
-  const occuper = (slug, oui) => $$(`[data-dossier="${slug}"]`).forEach(b => { b.disabled = oui; if (oui) b.setAttribute('aria-busy', 'true'); else b.removeAttribute('aria-busy'); });
-  document.addEventListener('click', e => {
-    const b = e.target.closest('[data-dossier]'); if (!b || typeof DOSSIER === 'undefined') return;
-    const slug = b.dataset.dossier; if (OCCUPES.has(slug)) return;
-    OCCUPES.add(slug); occuper(slug, true);
-    // (prêt : une ventouse se pose sur le bouton, à sa couleur)
-    DOSSIER.telecharger(slug).then(() => { const c = $(`[data-dossier="${slug}"]`), p = centreDe(c); if (p) ventouse(p.x, p.y, c); })
-      .catch(() => { /* échec : le bouton redevient actif */ }).finally(() => { OCCUPES.delete(slug); occuper(slug, false); });
-  });
+  // le dossier du spectacle : un seul par spectacle, celui que l'administration a déposé (le « Dossier <SPECTACLE> 2026 »
+  // du Drive, titré « Dossier du spectacle 2026 »), en lien vers son PDF. Le site n'en compose plus aucun : sans dossier
+  // déposé, « Dossier sur demande » écrit au contact diffusion (comme la fiche technique). L'un comme l'autre porte
+  // data-dossier="<slug>"
+  const dossierDepose = s => docsDe(s, 'pros').find(x => x.type === 'dossier') || null;
+  const dossierBouton = (slug, cls = 'bu') => { const s = bySlug[slug], d = s && dossierDepose(s);
+    if (d) return `<a class="${cls} dos-bt" data-dossier="${esc(slug)}" href="${esc(d.url)}" target="_blank" rel="noopener">${PDF}<span>${esc(d.titre)}</span>${DEHORS()}</a>`;
+    const href = mailPrg(`${L.dossierSurDemande} – ${s ? s.titre : ''}`);
+    return href ? `<a class="${cls} dos-bt" data-dossier="${esc(slug)}" href="${esc(href)}">${PDF}<span>${esc(L.dossierSurDemande)}</span></a>`
+      : `<span class="${cls} dos-bt" data-dossier="${esc(slug)}">${PDF}<span>${esc(L.dossierSurDemande)}</span></span>`; };
+  // les documents des programmateurs d'un spectacle, moins son dossier, déjà là en bouton
+  const autresDocsPros = s => { const d = dossierDepose(s); return docsDe(s, 'pros').filter(x => x !== d); };
   // un spectacle sans action culturelle (Cassandres, pour l'instant) n'a pas d'onglet établissement (règle 14)
   const entreeSp = (slug, entree) => entree === 'etablissement' && !(bySlug[slug] && bySlug[slug].actionCulturelle) ? 'voir' : entree;
   const titreDate = (d, entree) => bySlug[d.slug] ? `<a class="t" href="${lienSp(d.slug, entree)}">${esc(d.titre)}</a>` : `<span class="t">${esc(d.titre)}</span>`;
@@ -4558,7 +4550,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   // équipe) ; son actualité, son équipe de création ; sa fiche ; sa diffusion saison par saison ; ses lieux de diffusion
   // (repliés) ; ses documents pour les pros ; son dossier PDF, sa page, sa bande-annonce
   function ficheProg(s) {
-    const P = s.programmer || {}, href = lienSp(s.slug, 'programmer'), docs = docsDe(s, 'pros');
+    const P = s.programmer || {}, href = lienSp(s.slug, 'programmer'), docs = autresDocsPros(s);
     const faits = [s.statut && `<li${edS(s, 'statut')}>${esc(s.statut)}</li>`,
       s.duree && `<li${edS(s, 'duree')}>${esc(s.duree)}</li>`,
       P.format && `<li><span class="k">${esc(L.format)}</span><span${edS(s, 'programmer', 'format')}>${esc(P.format)}</span></li>`,
@@ -5939,25 +5931,21 @@ html.still .sc-image { transition: opacity .35s ease !important; }
             try {
               if (typeof DOSSIER !== 'undefined' && DOSSIER.charger) await DOSSIER.charger();
               if (typeof pdfMake === 'undefined') throw new Error('pdfmake non disponible');
+              // le texte de la convention : celui de l'administration (Textes du site, clé « convention »), ce que
+              // l'établissement a saisi à la place de ses champs {{…}}
+              const C = S.convention || {}, champs = { etablissement: etab, ville, chef, spectacle: sp ? sp.titre : 'Spectacle Crescite', classes, ateliers };
+              const remplir = x => String(x || '').replace(/\{\{\s*([a-z_]+)\s*\}\}/g, (m, k) => (k in champs ? champs[k] : m));
               const docDef = {
                 pageSize: 'A4', pageMargins: [48, 48, 48, 48],
                 content: [
-                  { text: 'CONVENTION DE PARTENARIAT D’ACTION CULTURELLE', style: 'titre', alignment: 'center' },
-                  { text: 'ENTRE LES SOUSSIGNÉS :', style: 'h2' },
-                  { text: `1. L’Établissement scolaire : ${etab}, situé à ${ville}, représenté par ${chef}, agissant en qualité de chef d’établissement,\n\n2. La Compagnie Crescite, association loi 1901, sise à Rouen, titulaire des licences d’entrepreneur de spectacles vivants, représentée par M. Angelo Jossec, Directeur artistique,\n\nIL A ÉTÉ CONVENU CE QUI SUIT :`, margin: [0, 6, 0, 14] },
-                  { text: 'Article 1 — Objet de la convention', style: 'article' },
-                  { text: `La présente convention a pour objet d'organiser l'accueil et le déroulement du projet artistique autour du spectacle "${sp ? sp.titre : 'Spectacle Crescite'}" au bénéfice des élèves de l’établissement.\nProjet : ${classes}.\nActions : Représentation(s) in situ ou en salle dédiée et ${ateliers}.` },
-                  { text: '\nArticle 2 — Modalités pédagogiques et calendrier', style: 'article' },
-                  { text: 'Les séances d’ateliers et représentations sont planifiées en concertation étroite entre l’équipe artistique de la Compagnie Crescite et les enseignants référents du projet. Les ateliers sont encadrés par des comédiens professionnels de la troupe.' },
-                  { text: '\nArticle 3 — Modalités financières', style: 'article' },
-                  { text: 'Les modalités financières du projet sont précisées dans une annexe signée par les deux parties.' },
-                  { text: '\nArticle 4 — Engagements et sécurité', style: 'article' },
-                  { text: 'L’établissement met à disposition un espace adapté respectant les contraintes techniques du spectacle (sol plan, dégagement suffisant). Les élèves demeurent sous la responsabilité de l’équipe éducative pendant toute la durée des interventions.' },
-                  { text: '\nFait en deux exemplaires originaux, à Rouen et à ' + ville + '.\n\n\n', margin: [0, 10, 0, 0] },
+                  { text: remplir(C.titre).toUpperCase(), style: 'titre', alignment: 'center' },
+                  { text: remplir(C.parties), margin: [0, 6, 0, 14] },
+                  ...(C.articles || []).flatMap((x, i) => [{ text: remplir(x.titre), style: 'article', margin: [0, i ? 12 : 0, 0, 0] }, { text: remplir(x.texte) }]),
+                  { text: remplir(C.fin) + '\n\n\n', margin: [0, 22, 0, 0] },
                   {
                     columns: [
-                      { text: `Pour l’Établissement\n${chef}\n(Signature et cachet)`, alignment: 'left' },
-                      { text: 'Pour la Compagnie Crescite\nAngelo Jossec\nDirecteur artistique', alignment: 'right' }
+                      { text: remplir(C.signatureEtablissement), alignment: 'left' },
+                      { text: remplir(C.signatureCompagnie), alignment: 'right' }
                     ]
                   }
                 ],
@@ -8243,7 +8231,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         <ul class="u-docs">${fts.length ? fts.map(x => `<li>${PDF}${lienDoc(x)}</li>`).join('') : `<li>${PDF}${href ? `<a href="${esc(href)}">${esc(L.ficheTechniqueSurDemande)}</a>` : `<span>${esc(L.ficheTechniqueSurDemande)}</span>`}</li>`}</ul></div>`);
     }
     h += chapitre(chap, 'telecharger', L.aTelecharger, `<div class="wrap">${titreChap(esc(L.aTelecharger))}
-      <ul class="u-docs"><li>${dossierBouton(s.slug, 'bu')}</li>${docsDe(s, 'pros').map(x => `<li>${PDF}${lienDoc(x)}</li>`).join('')}</ul></div>`);
+      <ul class="u-docs"><li>${dossierBouton(s.slug, 'bu')}</li>${autresDocsPros(s).map(x => `<li>${PDF}${lienDoc(x)}</li>`).join('')}</ul></div>`);
     return h + appel(s, 'programmer');
   }
   function ongletEtablissement(s, chap) {

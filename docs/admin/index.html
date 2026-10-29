@@ -2370,7 +2370,7 @@ function indexRch() {
     ['#/representations/carte', 'Carte de tournée', 'Représentations', typeof TOURNEE !== 'undefined' ? toucheRch('vue.carte') : null, 'vue'],
     E.equipeInstallee && E.sql5 !== false ? ['#/planning/propositions', 'Propositions', 'Planning'] : null,
     ['#/ateliers/seances', 'Séances', 'Ateliers'], ['#/ateliers/catalogue', 'Ateliers proposés', 'Ateliers'],
-    E.equipeInstallee ? ['#/equipe/documents', 'Documents de la compagnie', 'Équipe'] : null,
+    E.equipeInstallee ? ['#/equipe/documents', 'Documents : les dossiers des spectacles, ceux de la compagnie', 'Équipe'] : null,
     E.ideale && E.alertesInstallees ? ['#/diffusion/alertes', 'Alertes de tournée', 'Diffusion CRM'] : null]
     .filter(Boolean).forEach(([href, titre, rub, touche, plus]) => mettre({ type: 'Rubrique', titre, sous: rub, href, ordre: .5, touche }, plus || ''));
   mettre({ type: 'Compte', titre: 'Mot de passe', sous: E.session?.user?.email || '', faire: () => $('#b-mdp')?.click() }, 'changer réglages');
@@ -2387,7 +2387,7 @@ function indexRch() {
   (E.ateliers || []).forEach(a => mettre({ type: 'Atelier', titre: a.titre || 'Atelier', sous: [spectacle(a.spectacle_id)?.titre, a.public, a.publie ? '' : 'non publié'].filter(Boolean).join(' · '), href: `#/ateliers/catalogue/${a.id}`, couleur: couleurSp(spectacle(a.spectacle_id)) }));
   if (E.sql4 && typeof etatAcces === 'function') (E.acces || []).forEach(a => mettre({ type: 'Invitation', titre: a.nom || 'Invitation', sous: [a.contact, etatAcces(a).texte].filter(Boolean).join(' · '), href: `#/pro/${a.id}`, passages: passagesRch([['Courriel', a.courriel]]) }, 'espace pro salle'));
   (E.documents || []).forEach(d => { const sp = d.spectacle_id ? spectacle(d.spectacle_id) : null;
-    mettre({ type: 'Document', titre: d.titre || 'Document', sous: sp ? sp.titre : 'Documents de la compagnie', couleur: sp ? couleurSp(sp) : '', href: sp ? `#/spectacles/${sp.slug}` : '#/equipe/documents', ordre: 1,
+    mettre({ type: 'Document', titre: d.titre || 'Document', sous: sp ? (typeof estPublic === 'function' && estPublic(d) ? `${sp.titre} · ${nomSorte(d)}` : sp.titre) : 'Documents de la compagnie', couleur: sp ? couleurSp(sp) : '', href: sp ? `#/spectacles/${sp.slug}` : '#/equipe/documents', ordre: 1,
       faire: sp ? () => { try { sessionStorage.setItem('crescite-onglet-sp', 'Documents'); } catch (e) { /* navigation privée */ } location.hash = `#/spectacles/${sp.slug}`; } : null }); });
   return xs;
 }
@@ -4426,10 +4426,21 @@ const TEXTES = {
   // le contact diffusion de « Je souhaite programmer » (troisième script SQL : sans lui, ce texte n'existe pas encore)
   programmation: ['Je souhaite programmer : le contact', [{ k: 'contact.nom', t: 'texte', l: 'Nom' }, { k: 'contact.role', t: 'texte', l: 'Rôle', ph: 'Administratrice' },
     { k: 'contact.email', t: 'texte', l: 'Adresse électronique', ph: 'contact@…' }, { k: 'contact.telephone', t: 'texte', l: 'Téléphone', aide: 'Facultatif : sans numéro, la page n’en montre pas.' }]],
+  // la convention d'action culturelle que « Je représente un établissement scolaire » compose en PDF, d'après ce que
+  // l'établissement saisit ; créée au premier passage avec le texte de départ (convention.js, écrit par site/build.py)
+  convention: ['Convention des établissements', [
+    { k: 'titre', t: 'texte', l: 'Titre', aide: 'Écrit en capitales en tête du PDF.' },
+    { k: 'parties', t: 'long', l: 'Les parties', lignes: 9, aide: 'Entre doubles accolades, ce que l’établissement saisit : {{etablissement}}, {{ville}}, {{chef}}, {{spectacle}}, {{classes}}, {{ateliers}}.' },
+    { k: 'articles', t: 'objets', l: 'Articles', ajout: 'Article', champs: [{ k: 'titre', t: 'texte', l: 'Titre de l’article', ph: 'Article 5 — …' }, { k: 'texte', t: 'long', l: 'Texte', lignes: 4 }] },
+    { k: 'fin', t: 'long', l: 'Fait à…', lignes: 2 },
+    { k: 'signatureEtablissement', t: 'long', l: 'Signature de l’établissement', lignes: 3 },
+    { k: 'signatureCompagnie', t: 'long', l: 'Signature de la compagnie', lignes: 3, aide: 'Le nom et la qualité de qui signe pour la compagnie.' }]],
 };
+// les textes qui se créent au premier passage, avec leur texte de départ (la base ne les a pas encore)
+const TEXTES_DEPART = () => (typeof CONVENTION_DEPART !== 'undefined' ? { convention: CONVENTION_DEPART } : {});
 // les textes du site, dans l'ordre de leur liste (ceux de TEXTES, puis les autres), et leur nom (la recherche rapide aussi)
 const nomTexte = k => (TEXTES[k] && TEXTES[k][0]) || (k.startsWith('dossier:') ? `Dossier scolaire : ${k.slice(8)}` : k);
-const clesTextes = () => [...Object.keys(TEXTES).filter(k => E.textes.some(t => t.cle === k)),
+const clesTextes = () => [...Object.keys(TEXTES).filter(k => E.textes.some(t => t.cle === k) || k in TEXTES_DEPART()),
   ...E.textes.map(t => t.cle).filter(k => !TEXTES[k] && !k.startsWith('modele-date:') && !k.startsWith('documents:')).sort()];
 function vueTextes(cle) {
   const nom = nomTexte;
@@ -4437,7 +4448,18 @@ function vueTextes(cle) {
       ${clesTextes().map(k => `<a class="ligne" style="grid-template-columns:1fr" href="#/textes/${encodeURIComponent(k)}"${k === cle ? ' aria-current="true"' : ''}><span class="corps"><span class="t">${esc(nom(k))}</span></span></a>`).join('')}</div>
     <section class="editeur" id="ed-txt">${cle ? '' : '<div class="vide bloc">Les textes du site qui ne dépendent d’aucun spectacle.</div>'}</section></div>`);
   if (!cle) return;
-  const t0 = E.textes.find(t => t.cle === cle);
+  let t0 = E.textes.find(t => t.cle === cle);
+  // un texte que la base n'a pas encore (la convention) : il s'y inscrit avec son texte de départ, puis s'ouvre
+  if (!t0 && cle in TEXTES_DEPART()) {
+    $('#ed-txt').innerHTML = '<div class="vide bloc">Création du texte…</div>';
+    const valeur = clone(TEXTES_DEPART()[cle]);
+    sb.from('crescite_textes').upsert({ cle, valeur }, { onConflict: 'cle' }).select().single().then(({ data, error }) => {
+      if (error) { $('#ed-txt').innerHTML = '<div class="vide bloc">Ce texte n’a pas pu être créé.</div>'; return erreur(error, 'Texte non créé'); }
+      if (!E.textes.some(t => t.cle === cle)) E.textes.push(data || { cle, valeur });
+      if (location.hash === `#/textes/${encodeURIComponent(cle)}`) vueTextes(cle);
+    });
+    return;
+  }
   if (!t0) { $('#ed-txt').innerHTML = '<div class="vide bloc">Ce texte n’existe pas.</div>'; return; }
   const zone = $('#ed-txt'), def = TEXTES[cle];
   let F = clone(t0.valeur);
@@ -5253,6 +5275,7 @@ async function vueJournal() {
 <script src="notes.js"></script>
 <script src="carnet.js"></script>
 <script src="fond-carte.js"></script>
+<script src="convention.js"></script>
 <script src="tournee.js"></script>
 <!-- le cadre : le menu latéral (les rubriques, le repli), tenu par CADRE ; poserCoque, dans le script principal, le pose -->
 <script src="cadre.js"></script>
