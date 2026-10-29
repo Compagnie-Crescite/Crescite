@@ -82,7 +82,7 @@ const INTRO = (() => {
       <g class="i-pieuvre"${cache}><g class="i-tg"${f}><path d="${TG}" fill="${remplissage}" fill-rule="evenodd"/></g>
       <g class="i-tete"${trou ? '' : ' filter="url(#intro-onde-tete)"'}><path d="${TETE_G}" fill="${remplissage}" fill-rule="evenodd"/><path d="${TETE_D}" fill="${remplissage}" fill-rule="evenodd"/></g>
       <g class="i-td"${f}><path d="${TD}" fill="${remplissage}" fill-rule="evenodd"/></g></g>
-      ${o.mot === false ? '' : `<path class="i-mot" d="${L.motPath}" fill="${remplissage}"/>`}`;
+      ${o.mot === false ? '' : `<path class="i-mot" d="${L.motPath}" fill="${remplissage}" fill-rule="evenodd"/>`}`;
   }
 
   // la boîte du logo, en unités du dessin
