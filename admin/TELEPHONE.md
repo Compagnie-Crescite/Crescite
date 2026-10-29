@@ -42,9 +42,12 @@ structure bonne et un écran d'ordinateur posé tel quel :
   Mois du planning, et les actions d'appui long de menus.js (`actionsDate`, `actionsLieu`, menus.js:55-90) pour la rangée
   « sur la route ». Aucun chemin d'écriture nouveau : la fiche garde `ecrireChamps`.
 - **Rien ne change à 641 px et plus.** Le CSS va sous `html.ob-actif` (posé par mobile.js:34, seulement sous 641 px), dans
-  le bloc des styles de mobile.js ; le JS derrière `MOBILE.actif()`. Le téléphone n'écrit aucune préférence du compte (le
-  motif de `vueRetenueDates`, index.html:2946-2966) : ni `accueil.tableau`, ni `representations.avant`, ni
-  `representations.vue`.
+  le bloc des styles de mobile.js ; le JS derrière `MOBILE.actif()`. Le téléphone n'écrit aucune préférence **de
+  disposition** du compte (le motif de `vueRetenueDates`, index.html:2946-2966) : ni la disposition d'`accueil.tableau` (une
+  tuile réduite, ses réglages, l'ordre, les tuiles visibles), ni `representations.avant`, ni `representations.vue`. Ce qu'on
+  y écrit, en revanche (le texte du Mémo, une épingle, un report d'« À traiter »), part dans le compte comme à
+  l'ordinateur : ce sont des données, rangées dans `accueil.tableau` avec la disposition (amendement de la relecture
+  finale : la refonte les perdait en annonçant « Enregistré »).
 - **L'espace de l'équipe ne change pas.** `admin/gestes.js`, `admin/planning.js` et `admin/feuille.js` ne sont pas
   touchés (ses bancs, `gestes-equipe` et `mouvement-equipe`, ne se déclenchent donc pas : site/bancs-admin.sh). Ce que
   l'administration doit régler dans le planning (`--pl-bas`, que planning.js:576 lit déjà ; la taille des boutons), elle
@@ -52,7 +55,7 @@ structure bonne et un écran d'ordinateur posé tel quel :
   tournee.js, ni menus.js, ni admin/equipe.js (equipe/index.html:1196-1204).
 - **Accessibilité.** 44 px au doigt et 16 px de texte dans les champs (le corps fait 15 px, index.html:79 et 81). L'ordre de
   lecture est celui du DOM, jamais `order:` en CSS. Un `h1` masqué reste lu (classe `sr`). Le focus est rendu au bouton qui
-  a ouvert une feuille, et Tab reste dans la feuille.
+  a ouvert une feuille, et Tab ne quitte pas la feuille pour la page (le reste est inerte).
 - **Mouvement.** Aucune animation nouvelle. La feuille du téléphone passe au « doux » `cubic-bezier(.2, .8, .2, 1)` en
   200 ms (site/MOUVEMENT.md), ce qui l'accorde au retrait à 200 ms (mobile.js:72). Rien ne bouge sous « moins
   d'animations » (mobile.js:169 le fait déjà). Aucune tâche au-delà de 200 ms à CPU=4.
@@ -93,17 +96,28 @@ venait de toucher, et la feuille glisse au même rythme que le reste.
 
 **Étapes.**
 - admin/mobile.js : une seule fonction `plusCache()`, appelée par `poser()` (ligne 46) et par l'observateur (ligne 111) à
-  la place de leurs deux tests contradictoires. Le « + » est caché sur `/(nouvelle|nouveau|\d+)$/`, sur `.deux.edition`,
-  et quand `#vue` contient un `.pied-ed` ou un `.tab-ligne-etat`. L'observateur garde son champ et son délai de 50 ms.
+  la place de leurs deux tests contradictoires. Le « + » est caché sur une fiche de premier niveau ou une création
+  (`/^#\/[a-z]+\/(nouvelle|nouveau|\d+)$/`, ou une adresse finie par `/nouvelle` ou `/nouveau` : `#/diffusion/piste/N` est
+  le Kanban, qui garde son « + »), sur `.deux.edition`, et quand `#vue` contient un `.pied-ed` ou un `.tab-ligne-etat`.
+  L'observateur garde son champ et son délai de 50 ms.
 - admin/mobile.js, CSS sous `html.ob-actif` : `.tete:has(~ .deux.edition) > :not(h1) { display: none }`, et le `h1` en
   position `sr`. Vérifié pour Dates (index.html:2977, la `.tete` puis `.deux`), Équipe (equipe.js:158-172) et Lieux
   (index.html:4264-4265). Le fil d'Ariane est posé avant `.titre-ed`, dans la fiche (index.html:2031 et 2040) : il reste
   visible.
-- admin/mobile.js : `html.ob-actif .tiroir-corps .pied-ed { bottom: -24px }`, pour rendre à tiroir.js:327 ce que
-  mobile.js:137 lui prend. `html.ob-actif { --pl-bas: calc(64px + env(safe-area-inset-bottom, 0px));
-  scroll-padding-bottom: calc(150px + env(safe-area-inset-bottom, 0px)) }`. `html.ob-actif:has(.ob-plus:not([hidden]))
-  #annonces { bottom: calc(140px + env(safe-area-inset-bottom, 0px)) }`, et la même marge pour `.pied-espace`
-  (mobile.js:136).
+- admin/mobile.js : `html.ob-actif .tiroir-corps .pied-ed { bottom: -20px }` (le bas de `.tiroir-corps` au téléphone,
+  tiroir.js:333), pour rendre au tiroir ce que mobile.js:137 lui prend. `html.ob-actif { --pl-bas: calc(64px +
+  env(safe-area-inset-bottom, 0px)); scroll-padding-bottom: calc(150px + env(safe-area-inset-bottom, 0px)) }`. Le « + »
+  visible et un pied de fiche dans la page sont deux classes sur html, `ob-avec-plus` et `ob-avec-pied`, que `marquer()`
+  pose depuis `poser()` et l'observateur : `html.ob-actif.ob-avec-plus #annonces { bottom: calc(140px +
+  env(safe-area-inset-bottom, 0px)) }`, la même marge pour `.pied-espace`, et `html.ob-actif.ob-avec-pied #annonces {
+  bottom: calc(20px + var(--ob-pied, calc(130px + env(safe-area-inset-bottom, 0px)))) }`, où `--ob-pied` dit où commence
+  le pied du dessus, compté du bas de l'écran (64 px au moins, la barre), que `marquer()` mesure et pose sur `#annonces` :
+  un pied de deux rangées (celui de la feuille de route), resté déplié, ou, au bout d'une page courte, posé au-dessus du
+  pied commun et non plus collé à la barre (un écouteur de défilement, en capture, refait la mesure au plus une fois par
+  image, et seulement quand html a `ob-avec-pied`).
+  (Le lot 1 posait d'abord des `:has()` sur html : chaque changement de la page en refaisait tous les styles, et
+  l'ouverture d'une date coûtait le double ; le correctif `72e16fc` les a remplacés par ces deux classes, et le banc 1 · i
+  refuse désormais un `:has()` posé sur la racine.)
 - admin/mobile.js, `feuille()` et `fermerFeuille()` (lignes 51-72) : retenir `document.activeElement` à l'ouverture et lui
   rendre le focus à la fermeture s'il est encore dans la page. Les frères de `.ob-voile` sont `inert` pendant
   l'ouverture, sauf `#annonces`. La transition de la ligne 148 passe à `.2s cubic-bezier(.2, .8, .2, 1)`.
@@ -116,13 +130,17 @@ venait de toucher, et la feuille glisse au même rythme que le reste.
 `.tete` est invisible, son `h1` reste dans l'arbre d'accessibilité, et aucun focalisable de `.tete` n'est atteint par Tab.
 (b) `#/feuilles/101`, `#/spectacles/berenice`, `#/representations/tableur` : `.ob-plus` est caché, et il l'est encore
 150 ms après l'ajout d'un nœud dans `#vue`. (c) Sur 10 routes, aucun bouton ni lien visible ne croise le rectangle du
-« + » ; une annonce provoquée ne le croise pas non plus. (d) Une date ouverte en tiroir depuis `#/accueil` : le bas de
-`.pied-ed` est au bas du tiroir, à 2 px près (aujourd'hui 760 pour 844). (e) `#/planning`, vue Équipe, un jour choisi,
+« + » ; une annonce provoquée ne le croise pas non plus, ni le pied d'une fiche (une feuille courte comprise, dont le pied
+est posé au-dessus du pied commun). (d) Une date ouverte en tiroir depuis `#/accueil` : le bas de
+`.pied-ed` est au bas du tiroir, à 2 px près (aujourd'hui 760 pour 844). (Ajouté après la relecture finale :) ni le
+tableau de bord ni la page des dates ne sont refaits sous un tiroir quand le téléphone tourne et revient ; restée de
+l'autre côté du seuil, la page se refait à la fermeture du tiroir, et le lien qui l'avait ouvert garde le focus. (e) `#/planning`, vue Équipe, un jour choisi,
 avec un planning garni dans la base fictive : le bas de `.pl-detail.feuille` est au-dessus du haut de `.ob-barre`. (f)
 `#/lieux/5` et `#/equipe/1` : le pied tient sur une rangée, et « Supprimer » est dans « Plus ». (g) « Plus », puis Échap :
-`activeElement` est `[data-ob="plus"]`, et six Tab restent dans `.ob-feuille`. (h) À 1 440 × 900 : `.tete` visible, pied
-déplié, DOM de `#vue` identique à avant. On relance niveau.mjs (243-268), tableau.mjs (268-310) et adresses-admin.mjs, sans
-les changer.
+`activeElement` est `[data-ob="plus"]`, et un tour complet de Tab dans chaque sens ne quitte pas `.ob-feuille` pour la page.
+(h) À 1 440 × 900 : `.tete` visible, pied déplié ; la tête, les pieds et les classes de sept fiches sont ceux d'avant
+(mesurés, sans comparer tout le DOM ; seul l'id du menu du pied devient `pied-autres-N`). On relance niveau.mjs (243-268),
+tableau.mjs (268-310) et adresses-admin.mjs, sans les changer.
 
 **Risques.** La règle sur `.tete` suppose que la fiche a son propre titre (`.titre-ed`) : vérifié pour Dates, Lieux,
 Équipe, Ateliers, Textes, Devis et Espace pro (index.html:3457, 4167, 4218, 4333, 4439, 4914 ; equipe.js:232, 3007) ; le
@@ -185,14 +203,25 @@ tout. Le planning s'ouvre sur le mois. Dans la diffusion, les trois chiffres tie
 - admin/tableau.js : dans `vue()` (580-584), au téléphone, la rangée `.tb-tete-page` ne garde que `#tb-briefing`. Dans
   `dessiner()` (488), au téléphone, une liste tirée de `visibles()` (450) : sans `'actions'` (229), puis `'urgent'`,
   `'equipe'` et `'prochaines'` en tête s'ils sont visibles, puis les autres dans l'ordre du compte. Cela change l'ordre du
-  DOM et n'écrit rien (`garder()` n'est pas appelé). Un écouteur `matchMedia('(max-width: 640px)')` redessine à la rotation.
+  DOM et n'écrit rien (`garder()` n'est pas appelé). Un écouteur `matchMedia('(max-width: 640px)')` redessine à la rotation
+  (pas sous un tiroir ouvert : le lien qui l'a ouvert doit y être à sa fermeture ; tiroir.js envoie `tiroir-ferme` quand le
+  dernier tiroir se ferme, et le tableau de bord se refait alors si la fenêtre est restée de l'autre côté du seuil, le focus
+  rendu au même lien). Au téléphone, `garder()` n'écrit pas la
+  disposition qu'on touche (une tuile réduite, ses réglages) : elle vit dans `T.conf`, une copie détachée de la valeur du
+  compte. Le texte du Mémo, une épingle et un report passent par `garderContenu()`, qui écrit la valeur du compte (celle
+  que `lireConf()` relit, ou la dernière écrite) où seul ce contenu change. Quand la fenêtre repasse au-dessus de 640 px,
+  `T.conf` reprend la valeur du compte avant de redessiner : la première écriture faite à l'ordinateur n'emporte rien du
+  téléphone. « Enregistré » ne se dit que quand le Mémo est parti.
 - admin/index.html, `dessinerAvant` (3039) et `relierAvant` (3080) : au téléphone, le bloc est fermé par défaut et son état
   vit dans la session (`E.avantTel`). Le basculement n'appelle pas `garderAvant` (3014-3016), qui écrit aujourd'hui
   `representations.avant` à chaque ouverture.
 - admin/index.html, `filtresDates` (2882) : au téléphone, `#f-q` reste seul visible. La période, les listes, les puces,
   `.f-plus` et `aDroite` passent dans un `<details class="f-tel">` dont le `<summary>` « Filtres » porte le compte ; il est
   ouvert si `filtresActifs(f)` (2875). `filtresDates.refleter` (2905) trouve toujours `.f-plus summary`, et les identifiants
-  (`f-q`, `f-saison`, `f-statut`…) ne changent pas. La liste, le tableur et la carte en profitent.
+  (`f-q`, `f-saison`, `f-statut`…) ne changent pas. La liste, le tableur et la carte en profitent. À la rotation, un
+  écouteur `matchMedia` redessine la page des dates et rend le focus à la commande qui l'avait (`repereFocus()` : son id,
+  sinon le `summary` de son `details`, son lien ou son premier attribut `data-`) ; il ne redessine pas pendant une saisie
+  ni quand le focus est dans le tableur (`#tab-zone`), et attend, sous un tiroir, `tiroir-ferme`, comme le tableau de bord.
 - admin/mobile.js, CSS sous `html.ob-actif` : `#vue .tete :is(a[href="#/representations/nouvelle"],
   a[href="#/equipe/nouvelle"], a[href="#/lieux/nouveau"], a[href$="/seances/nouvelle"], a[href="#/planning/proposer"],
   #b-nouveau-prospect), .sel-bouton { display: none }`. `.crm-kpi` (index.html:589) passe en `repeat(3, 1fr)`.
@@ -202,7 +231,10 @@ tout. Le planning s'ouvre sur le mois. Dans la diffusion, les trois chiffres tie
 **Banc, section 3.** (a) `#/accueil` : aucun `.tb-tuile[data-k="actions"]`, ni `#tb-personnaliser`, ni `#tb-vue` ; la
 première ligne d'« À traiter » commence avant 700 px (aujourd'hui 1 096) et la tuile « Qui part bientôt » avant 2 000
 (aujourd'hui 4 637) ; l'ordre du DOM commence par urgent, equipe, prochaines ; `accueil.tableau` est absent
-d'`ECRITURES`. (b) `#/representations` : la première `a.ligne` est avant 500 px (aujourd'hui 1 592) ; `details.avant` est
+d'`ECRITURES` (le chevron et le rouage compris). (h, ajouté après la relecture finale) Un mémo écrit, un report et une
+épingle faits au téléphone se retrouvent à une nouvelle ouverture ; la valeur écrite garde la disposition du compte (pas la
+tuile réduite au téléphone) ; une tuile réduite au téléphone, puis un réglage touché à 1 440 px, n'écrit pas la réduction du
+téléphone. (b) `#/representations` : la première `a.ligne` est avant 500 px (aujourd'hui 1 592) ; `details.avant` est
 fermé, il reste ouvert après une écriture simulée dans la base, et `representations.avant` est absent d'`ECRITURES`. (c)
 `?statut=option` : `.f-tel` est ouvert et dit 1 ; « Filtres » fait au moins 44 px. (d) `#/planning` s'ouvre en Mois. (e)
 `#/diffusion` : les trois `.crm-kpi` ont le même haut. (f) À 1 440 × 900 : les dix actions, l'ordre du compte,
@@ -320,14 +352,16 @@ c'est le comportement de l'appui long, on le garde.
 - Place utile : la première date avant 500 px (aujourd'hui 1 592) ; le titre d'une fiche à 140 px au plus du haut
   (aujourd'hui environ 250) ; une feuille de route laisse au moins 520 px de lecture (aujourd'hui environ 330) et son texte
   fait au moins 16 px (aujourd'hui environ 6,5).
-- Recouvrements : sur 10 routes, aucune commande sous le « + », aucune annonce sur le « + », aucun pied de tiroir décollé
+- Recouvrements : sur 11 routes, aucune commande sous le « + », aucune annonce sur le « + », aucun pied de tiroir décollé
   du bas, aucun détail du planning sur la barre.
 - Au doigt : sur 12 routes, aucune commande sous 44 px et aucun champ sous 16 px de texte.
-- Focus : la fermeture de « Plus » rend le focus au bouton « Plus », et Tab reste dans la feuille.
+- Focus : la fermeture de « Plus » rend le focus au bouton « Plus », et Tab ne quitte pas la feuille pour la page (le reste
+  est inerte).
 - Durées : aucune tâche au-delà de 200 ms à CPU=4 à l'ouverture de `#/accueil`, `#/representations`,
   `#/representations/101` et `#/feuilles/101` ; la feuille du bas dure 200 ms sur le « doux », 0 s sous « moins
   d'animations ».
-- Périmètre : à 1 440 × 900, le DOM de `#vue` est identique avant et après sur 8 routes ; `bash site/bancs-admin.sh --tout`
+- Périmètre : à 1 440 × 900, la tête, les pieds et les classes de sept fiches sont ceux d'avant (mesurés, sans comparer tout
+  le DOM ; seul l'id du menu du pied devient `pied-autres-N`) ; `bash site/bancs-admin.sh --tout`
   est vert avec deux bancs existants amendés (adresses-admin.mjs au lot 3, fenetres-2.mjs au lot 4) ; le diff ne touche
   ni gestes.js, ni planning.js, ni feuille.js, ni rien sous equipe/.
 
@@ -338,8 +372,8 @@ c'est le comportement de l'appui long, on le garde.
 2. Lot 2 ensuite : indépendant, en CSS dans mobile.js ; avant le lot 3, qui mesure des positions que les champs à 44 px
    déplacent de quelques pixels. Jalon : aucune cible sous 44 px sur 12 routes, et tableur-simple.mjs vert.
 3. Lot 3 : tableau de bord, « À compléter », filtres repliés, boutons de création masqués, planning en Mois, diffusion.
-   Jalon : la première date avant 500 px, « À traiter » avant 700 px, aucune préférence écrite au téléphone, et à 1 440 px
-   le DOM identique.
+   Jalon : la première date avant 500 px, « À traiter » avant 700 px, aucune préférence de disposition écrite au
+   téléphone, et à 1 440 px les mesures de l'ordinateur inchangées.
 4. Lot 4 : la feuille de route et la carte, avec son amendement de banc, fenetres-2.mjs, dans le même commit. Jalon :
    au moins 520 px de lecture et 16 px de texte.
 5. Lot 5 en dernier : il dépend du lot 1 (la `.tete` masquée, le titre en haut). Jalon : « Prévenir l'équipe » en 3

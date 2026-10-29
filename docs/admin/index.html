@@ -3108,10 +3108,49 @@ function relierAvant(el) {
   el.addEventListener('toggle', e => { if (e.target.matches('details.avant') && e.target.open !== reglagesAvant().ouvert) garderAvant({ ...reglagesAvant(), ouvert: e.target.open }); }, true);   // (le navigateur dit « toggle » aussi au premier dessin d'un panneau ouvert : rien à garder)
   el.addEventListener('change', e => { if (e.target.id !== 'avant-jours') return; garderAvant({ ...reglagesAvant(), jours: +e.target.value }); dessinerAvant(el); $('#avant-jours', el)?.focus(); });
 }
+// de quoi retrouver, une fois #vue redessinée, la commande qui avait le focus : son id, sinon le résumé de son details (« Filtres »,
+// « À compléter avant la tournée », d'après les classes du details), sinon son lien ou son premier attribut data- (un segment de
+// période), dans la même tuile du tableau de bord ; null : rien de sûr (le focus repartira du haut, comme avant)
+function repereFocus(a = document.activeElement) {
+  if (!a || a === document.body || !$('#vue')?.contains(a)) return null;
+  if (a.id) return `#${CSS.escape(a.id)}`;
+  const p = a.parentElement;
+  if (a.localName === 'summary' && p?.localName === 'details' && p.classList.length) return `details.${[...p.classList].map(c => CSS.escape(c)).join('.')} > summary`;
+  const x = [...a.attributes].find(t => t.name === 'href' || (t.name.startsWith('data-') && t.value));
+  if (!x) return null;
+  const tuile = a.parentElement?.closest('[data-k]');
+  return `${tuile ? `[data-k="${CSS.escape(tuile.dataset.k)}"] ` : ''}${a.localName}[${x.name}="${CSS.escape(x.value)}"]`;
+}
 // le téléphone qui tourne (la fenêtre passe le seuil des 640 px) : la barre de filtres et « À compléter avant la tournée » n'ont pas la
-// même forme au téléphone et à l'ordinateur ; la page des dates se redessine sur place (même adresse : ni fondu ni glissement),
-// sauf si une saisie est en cours (elle se refera à la navigation suivante)
-if (typeof matchMedia === 'function') matchMedia('(max-width: 640px)').addEventListener('change', () => { if (E.pret && $('#vue .filtres-dates') && !saisieEnCours()) router(); });
+// même forme au téléphone et à l'ordinateur ; la page des dates se redessine sur place (même adresse : ni fondu ni glissement), et la
+// commande qui avait le focus le retrouve (repereFocus : la recherche avec sa sélection, on continue de taper ; « Filtres », un segment
+// de période). Elle ne se redessine pas si une saisie est en cours, ni quand le focus est dans le tableur (une case : elle le garde) ;
+// elle se refera à la navigation suivante. Sous un tiroir ouvert, elle attend sa fermeture (le focus revenu au lien qui l'a ouvert),
+// et ne se redessine alors que si la fenêtre est restée de l'autre côté du seuil.
+let datesAuRetour = null;     // (le côté du seuil où la page est dessinée, quand un tiroir ouvert a retenu son redessin)
+function redessinerDates() {
+  if (saisieEnCours()) return;
+  const a = document.activeElement;
+  if (a && a.closest && a.closest('#tab-zone') && $('#vue')?.contains(a)) return;
+  let sel = null;
+  try { if (typeof a?.selectionStart === 'number') sel = [a.selectionStart, a.selectionEnd, a.selectionDirection]; } catch (e) { /* un champ sans sélection */ }
+  const rep = repereFocus(a);
+  router();
+  const b = rep && $(rep, $('#vue'));
+  if (!b) return;
+  b.focus();
+  if (sel) try { b.setSelectionRange(...sel); } catch (e) { /* idem */ }
+}
+if (typeof matchMedia === 'function') matchMedia('(max-width: 640px)').addEventListener('change', e => {
+  if (!E.pret || !$('#vue .filtres-dates')) return;
+  if (typeof TIROIR !== 'undefined' && TIROIR.ouvert()) { if (datesAuRetour === null) datesAuRetour = !e.matches; return; }
+  redessinerDates();
+});
+document.addEventListener('tiroir-ferme', () => {
+  const avant = datesAuRetour; datesAuRetour = null;
+  if (avant === null || avant === matchMedia('(max-width: 640px)').matches || !E.pret || !$('#vue .filtres-dates') || location.hash !== E.hashVue) return;
+  redessinerDates();
+});
 // les badges d'une date (statut, site, public, nature) et les points de son parcours : les mêmes dans la liste, sur la carte de
 // tournée (tournee.js) et partout où une date se résume en une ligne
 function badgesDate(d) {

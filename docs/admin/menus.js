@@ -36,14 +36,25 @@
   const ouvrirA = (href, libelle = 'Ouvrir') => ({ libelle, href, icone: ICO.ouvrir, raccourci: 'Entrée' });
   // (au téléphone, ni « Ouvrir dans un nouvel onglet » ni « Copier le lien » : on n'y a pas d'onglets, et une adresse qu'on ne tape pas ne se copie pas)
   const liens = href => (typeof MOBILE !== 'undefined' && MOBILE.actif() ? [] : [{ separateur: true }, { libelle: 'Ouvrir dans un nouvel onglet', href: absolu(href), externe: true, icone: ICO.externe }, { libelle: 'Copier le lien', faire: () => copier(absolu(href), 'Le lien'), icone: ICO.copier }]);
-  // aller à une page, puis cliquer un de ses boutons une fois qu'elle est là (Dupliquer, Prévenir l'équipe, Supprimer…)
-  function allerEtCliquer(href, sel, viserAvant = '') {
-    const essayer = n => { const b = $(sel); if (b) { b.click(); return; } if (n > 0) requestAnimationFrame(() => essayer(n - 1)); };
-    if (location.hash === href) return essayer(40);
+  // la fiche est-elle déjà là : le tiroir du dessus s'il la montre (une date ouverte en tiroir depuis le tableau de bord : on agit
+  // dans le tiroir, sans changer d'adresse), sinon la page si l'adresse est la sienne ; null : il faut y aller
+  const ficheIci = href => {
+    const t = typeof TIROIR !== 'undefined' && TIROIR.ouvert() ? TIROIR.pile().pop() : null;
+    if (t && t.el && t.f.href(t.id) === href) return t.el;
+    return location.hash === href ? document : null;
+  };
+  // aller à une page, puis cliquer un de ses boutons une fois qu'elle est là (Dupliquer, Prévenir l'équipe, Supprimer…). surPlace : un
+  // bouton qui reste dans la fiche (« Prévenir l'équipe… ») se clique aussi dans le tiroir du dessus qui la montre ; les autres
+  // (« Dupliquer » en fait une autre fiche) vont à la page de la fiche, comme avant
+  function allerEtCliquer(href, sel, { surPlace = false } = {}) {
+    const ici = surPlace ? ficheIci(href) : location.hash === href ? document : null;
+    const essayer = n => { const b = $(sel, ici || document); if (b) { b.click(); return; } if (n > 0) requestAnimationFrame(() => essayer(n - 1)); };
+    if (ici) return essayer(40);
     window.addEventListener('hashchange', () => setTimeout(() => essayer(40), 20), { once: true });
     location.hash = href;
   }
-  const allerViser = (href, cible) => { visee = cible; if (location.hash === href) viser(); else location.hash = href; };
+  // (viser() cherche dans le tiroir du dessus, puis dans la page)
+  const allerViser = (href, cible) => { visee = cible; if (ficheIci(href)) viser(); else location.hash = href; };
   // une écriture directe dans la base : apres(data) met l'état en mémoire à jour, puis les listes se redessinent
   async function ecrire(promesse, succes, echec, apres = null) {
     const r = await promesse;
@@ -64,7 +75,7 @@
     if (E.equipeInstallee) {
       const f = E.feuilles.find(x => x.date_id === d.id), n = f ? aCompleter(d.id) : 0;
       xs.push({ libelle: 'Feuille de route', detail: f ? (f.statut === 'publiee' ? `publiée v${f.version}` : `brouillon${n ? ` · ${n} à compléter` : ''}`) : 'à composer', href: `#/feuilles/${d.id}`, icone: ICO.feuille });
-      if (aVenirDate(d) && d.statut !== 'annulee') xs.push({ libelle: 'Prévenir l’équipe…', detail: 'un message à toute l’équipe de la date', faire: () => allerEtCliquer(href, '#d-prevenir'), icone: ICO.message });
+      if (aVenirDate(d) && d.statut !== 'annulee') xs.push({ libelle: 'Prévenir l’équipe…', detail: 'un message à toute l’équipe de la date', faire: () => allerEtCliquer(href, '#d-prevenir', { surPlace: true }), icone: ICO.message });
     }
     const l = lieu(d.lieu_id);
     if (l && itineraire(l)) xs.push({ libelle: 'Itinéraire', detail: l.nom ? `${l.nom}, ${l.commune}` : l.commune, href: itineraire(l), externe: true, icone: ICO.carte });

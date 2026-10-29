@@ -1287,6 +1287,9 @@ function panneauPrevenir(zone, d) {
   const ouvert = $('#d-prevenir-zone', zone);
   if (ouvert) { ouvert.remove(); $('#d-prevenir', zone)?.setAttribute('aria-expanded', 'false'); $('#d-prevenir', zone)?.removeAttribute('aria-controls'); return; }
   const s = spectacle(d.spectacle_id), n = equipeDeLaDate(d).length;
+  // le bouton qui l'a ouvert (« Prévenir l'équipe… » de la rangée « sur la route », #d-prevenir rangé dans « Plus ») : « Annuler » lui
+  // rend le focus s'il est visible, sinon à #d-prevenir
+  const retour = document.activeElement;
   const p = document.createElement('div');
   p.className = 'bloc ad-neuf'; p.id = 'd-prevenir-zone';
   p.innerHTML = `<h3>Prévenir l’équipe</h3>
@@ -1298,7 +1301,7 @@ function panneauPrevenir(zone, d) {
   $('#d-prevenir', zone)?.setAttribute('aria-expanded', 'true'); $('#d-prevenir', zone)?.setAttribute('aria-controls', 'd-prevenir-zone');
   p.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   $('#pv-texte', p).focus();
-  $('#pv-annuler', p).addEventListener('click', () => { p.remove(); $('#d-prevenir', zone)?.setAttribute('aria-expanded', 'false'); $('#d-prevenir', zone)?.removeAttribute('aria-controls'); $('#d-prevenir', zone)?.focus(); });
+  $('#pv-annuler', p).addEventListener('click', () => { p.remove(); $('#d-prevenir', zone)?.setAttribute('aria-expanded', 'false'); $('#d-prevenir', zone)?.removeAttribute('aria-controls'); (retour && retour !== document.body && retour.isConnected && retour.getClientRects().length ? retour : $('#d-prevenir', zone))?.focus(); });
   $('#pv-envoyer', p).addEventListener('click', async e => {
     const titre = $('#pv-titre', p).value.trim(), texte = $('#pv-texte', p).value.trim();
     if (!titre) return annoncer('Donnez un titre à la notification.', { erreur: true });
@@ -1647,6 +1650,8 @@ function dessinerFeuille(etat) {
     $$('[data-a4]', outils).forEach(b => { b.disabled = etat.vue !== 'page'; });
     if (etat.vue === 'tel') {
       if (etat.editeur) { feuilleCourante(etat); etat.editeur.detruire(); etat.editeur = null; }
+      // (au téléphone, la barre ne désigne #a4-doc que quand la page existe ; à l'ordinateur, elle le garde comme avant)
+      if (typeof MOBILE !== 'undefined' && MOBILE.actif()) outils.removeAttribute('aria-controls');
       z.innerHTML = `<div class="a4-tel" aria-label="La feuille telle que l’équipe la lit sur un téléphone">${FEUILLE.html(feuilleCourante(etat), { ...contexteFeuille(d), moi: null })}</div>`;
       return;
     }
@@ -1655,6 +1660,7 @@ function dessinerFeuille(etat) {
       quandEtat: majOutils, quandZoom: majZoom,
       extra: { lire: () => ({ composees: F.contenu.composees || [], instantane: F.contenu.instantane || [], compose_le: F.contenu.compose_le || null }), ecrire: v => Object.assign(F.contenu, v) } });
     F.contenu.pages = etat.editeur.pages();
+    outils.setAttribute('aria-controls', 'a4-doc');
   };
   montrer();
   majEtat();
@@ -1683,17 +1689,28 @@ function dessinerFeuille(etat) {
   });
   const mettreAJour = () => {
     if (!etat.editeur) { etat.vue = 'page'; $$('[data-fr-vue]', outils).forEach(x => x.setAttribute('aria-pressed', String(x.dataset.frVue === 'page'))); montrer(); }
+    // le contenu d'avant, gardé : « Annuler » le rétablit quel que soit l'affichage (revenu à « Vue de l'équipe », l'éditeur n'est plus là),
+    // si rien n'a été écrit dans la feuille depuis la mise à jour (sinon il le dit, et ne défait rien : la saisie resterait perdue)
+    feuilleCourante(etat); const avant = clone(F.contenu);
     const r = FEUILLE.actualiser(feuilleCourante(etat).contenu, composerPour(d));
     etat.editeur.remplacer(r.contenu.blocs);
     Object.assign(F.contenu, { composees: r.contenu.composees, instantane: r.contenu.instantane, compose_le: r.contenu.compose_le });
     delete F.contenu.ancien;
     F.contenu.blocs = etat.editeur.blocs(); F.contenu.pages = etat.editeur.pages();
+    const apres = JSON.stringify(F.contenu.blocs);     // (« Annuler » ne défait pas ce qu'on a écrit depuis : il le vérifie)
     majEtat();
     $$('.fr-alerte', zone).forEach(x => { if (x.querySelector('[data-fr-maj]')) x.remove(); });
     const n = r.ajoutes + r.modifies + r.retires + r.remplies, pl = (k, un, des) => `${k} ${k > 1 ? des : un}`;
     annoncer(n ? `Mise à jour depuis la base : ${[r.modifies && pl(r.modifies, 'ligne changée', 'lignes changées'), r.ajoutes && pl(r.ajoutes, 'ajoutée', 'ajoutées'), r.retires && pl(r.retires, 'retirée', 'retirées'),
       r.remplies && pl(r.remplies, 'information qui manquait', 'informations qui manquaient')].filter(Boolean).join(', ')}. Ce que vous avez écrit n’a pas changé.` : 'Rien n’a changé dans la base depuis la composition.',
-      n ? { libelle: 'Annuler', delai: 12000, action: () => etat.editeur && etat.editeur.annuler() } : {});
+      n ? { libelle: 'Annuler', delai: 12000, action: () => {
+        if (!zone.isConnected) return;
+        feuilleCourante(etat);
+        if (JSON.stringify(F.contenu.blocs) !== apres) { annoncer('Rien n’est annulé : la feuille a changé depuis la mise à jour.'); return; }
+        Object.keys(F.contenu).forEach(k => { delete F.contenu[k]; }); Object.assign(F.contenu, clone(avant));
+        if (etat.editeur) etat.editeur.remplacer(F.contenu.blocs); else montrer();
+        majEtat(); dessinerReprise(); dessinerManques();
+      } } : {});
   };
   zone.addEventListener('click', async e => {
     const b = e.target.closest('button'); if (!b || outils.contains(b)) return;
@@ -2009,6 +2026,8 @@ ${FEUILLE.cssPage('.a4-doc')}
 /* au téléphone : la barre ne reste pas collée en haut de l'écran, et ses outils de mise en page ne paraissent qu'en page A4 (« Page A4 » et « Vue de l'équipe » restent) */
 html.ob-actif .a4-outils { position: static; }
 html.ob-actif .a4-outils:has([data-fr-vue="tel"][aria-pressed="true"]) .a4-groupe { display: none; }
+/* (l'aide parle de la page A4 : on n'écrit pas dans la vue de l'équipe, ses mots gris n'y sont pas) */
+html.ob-actif .a4-outils:has([data-fr-vue="tel"][aria-pressed="true"]) ~ .a4-aide { display: none; }
 .a4-b { border: 1px solid var(--trait); background: var(--carte); color: var(--encre); border-radius: 8px; padding: 6px 10px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; line-height: 1.2; }
 .a4-b:hover:not(:disabled) { border-color: var(--gris); }
 .a4-b[aria-pressed="true"] { background: var(--accent-doux); border-color: var(--accent); color: var(--accent-fonce); }

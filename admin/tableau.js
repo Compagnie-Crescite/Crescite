@@ -391,7 +391,16 @@ const TABLEAU = (() => {
   // les préférences du compte passent par PREFS (prefs.js) ; si ce module manquait à la page, le repli d'avant : l'appareil seul
   const PR = () => (typeof PREFS !== 'undefined' ? PREFS : null);
   const lireConf = () => { const p = PR(); if (!p) return normaliser(local()); p.normaliser(CLE_PREF, normaliser); return p.lire(CLE_PREF, null) || normaliser(null); };
-  const conf = () => T.conf || (T.conf = lireConf());
+  // au téléphone, la disposition qu'on touche est une copie détachée de celle du compte (lireConf() partage des objets avec la
+  // valeur de PREFS, et la dernière écrite par l'ordinateur est T.conf lui-même) : une tuile réduite ici ne touche pas le compte
+  const detacher = c => normaliser(JSON.parse(JSON.stringify(c ?? null)));
+  const conf = () => {
+    if (!T.conf) T.conf = lireConf();
+    if (telephone() && T.conf !== T.confTel) T.conf = T.confTel = detacher(T.conf);
+    return T.conf;
+  };
+  // la valeur du compte, détachée : celle que lireConf() relit, ou la dernière écrite (par l'ordinateur, ou par un geste de contenu)
+  const confCompte = () => detacher(PR() ? PR().lire(CLE_PREF, null, { brut: true }) : local());
   const tuile = k => conf().tuiles.find(t => t.k === k);
   // la valeur d'un réglage d'une tuile : celle choisie si elle est permise, sinon la valeur par défaut
   function valeurs(k) {
@@ -426,6 +435,18 @@ const TABLEAU = (() => {
     if (PR()) PR().ecrire(CLE_PREF, c, { aussitot, muet: true });      // (muet : le panneau « Personnaliser » dit déjà où c'est gardé)
     else garderLocal(c);
     if (typeof CADRE !== 'undefined') CADRE.perimer();      // (un report, un épinglage, un réglage de la tuile : le badge du menu suit)
+  }
+  // un geste de contenu (le texte du Mémo, une épingle, un report d'« À traiter ») : faire(c) le pose dans la disposition ; à
+  // l'ordinateur, garder() l'écrit avec elle ; au téléphone, il part dans le compte comme à l'ordinateur, mais seul : on écrit la
+  // valeur du compte où l'on n'a changé que ce contenu (la disposition touchée au téléphone reste dans T.conf, en mémoire)
+  function garderContenu(faire, aussitot = false) {
+    faire(conf());
+    if (!telephone()) { garder(aussitot); return; }
+    const v = confCompte();
+    faire(v); v.modifie = Date.now();
+    if (PR()) PR().ecrire(CLE_PREF, v, { aussitot, muet: true });
+    else garderLocal(v);
+    if (typeof CADRE !== 'undefined') CADRE.perimer();
   }
   // (Représentations s'ouvre sur la vue retenue : la liste, le tableur ou la carte, adresseDates() du script principal)
   const depart = () => (conf().depart === 'representations' ? (typeof adresseDates === 'function' ? adresseDates() : '#/representations') : '#/accueil');
@@ -503,7 +524,7 @@ const TABLEAU = (() => {
     const xs = visiblesDessinees();
     grille.dataset.colonnes = conf().colonnes;
     grille.classList.toggle('edition', T.edition);
-    grille.innerHTML = xs.length ? xs.map((t, i) => htmlTuile(t, i, xs.length)).join('') : `<div class="bloc tb-vide">Toutes les tuiles sont masquées. ${T.edition ? 'Remettez-en depuis « Tuiles masquées », ci-dessus.' : telephone() ? '« Personnaliser », à l’ordinateur, les remet.' : '« Personnaliser » les remet.'}</div>`;
+    grille.innerHTML = xs.length ? xs.map((t, i) => htmlTuile(t, i, xs.length)).join('') : visibles().length ? '<div class="bloc tb-vide">Les actions rapides restent à l’ordinateur ; « Personnaliser », à l’ordinateur, remet d’autres tuiles.</div>' : `<div class="bloc tb-vide">Toutes les tuiles sont masquées. ${T.edition ? 'Remettez-en depuis « Tuiles masquées », ci-dessus.' : telephone() ? '« Personnaliser », à l’ordinateur, les remet.' : '« Personnaliser » les remet.'}</div>`;
     const pan = $('#tb-panneau');
     if (pan) { pan.hidden = !T.edition; pan.innerHTML = T.edition ? panneau() + panneauVues() : ''; }
     const sel = $('#tb-vue'); if (sel) sel.outerHTML = htmlVues().replace(/^<label[^>]*>.*?<\/span>/, '').replace(/<\/label>$/, '');
@@ -712,11 +733,12 @@ const TABLEAU = (() => {
     // le mémo s'enregistre en écrivant
     vueEl.addEventListener('input', e => {
       if (!e.target.matches('.tb-memo')) return;
-      const tu = tuile('memo'); if (!tu) return;
-      tu.reglages = tu.reglages || {}; tu.reglages.texte = e.target.value;
+      if (!tuile('memo')) return;
+      const texte = e.target.value;
       const etat = $('.tb-memo-etat', e.target.parentNode); if (etat) etat.textContent = 'Enregistrement…';
-      garder();
       clearTimeout(T.memoMinuteur);
+      // (au téléphone aussi, le texte part dans le compte : « Enregistré » dit vrai)
+      garderContenu(c => { const tu = c.tuiles.find(t => t.k === 'memo'); if (tu) { tu.reglages = tu.reglages || {}; tu.reglages.texte = texte; } });
       T.memoMinuteur = setTimeout(() => { (PR() ? PR().attendre() : Promise.resolve()).then(() => { const x = $('.tb-memo-etat'); if (x) x.textContent = surAppareil() ? 'Gardé sur cet appareil' : 'Enregistré'; }); }, 900);
     });
     // glisser-déposer des tuiles (en personnalisation) : une tuile glissée se pose avant ou après celle qu'on survole
@@ -754,10 +776,23 @@ const TABLEAU = (() => {
   window.addEventListener('hashchange', () => { if (location.hash !== '#/accueil') T.edition = false; });
   // le téléphone qui tourne (la fenêtre passe le seuil des 640 px, dans un sens ou dans l'autre) : le tableau de bord se redessine
   // aussitôt, sans quoi les actions rapides ne reviendraient (ou ne partiraient) qu'à la navigation suivante
-  if (typeof matchMedia === 'function') matchMedia('(max-width: 640px)').addEventListener('change', () => {
+  // Repassée au-dessus de 640 px, la fenêtre oublie la disposition touchée au téléphone : T.conf reprend celle du compte avant
+  // tout redessin, pour que la première écriture faite à l'ordinateur n'emporte rien du téléphone. Sous un tiroir ouvert, le
+  // tableau de bord ne se refait pas (le lien qui l'a ouvert doit y être à sa fermeture) : il se refait à la fermeture du tiroir
+  // (« tiroir-ferme », tiroir.js), si la fenêtre est restée de l'autre côté du seuil, et le lien qui a repris le focus le retrouve.
+  const refaire = () => { vue(); $('#vue')?.classList.remove('entree'); };   // (une page qui se refait sur place ne rejoue pas son entrée)
+  if (typeof matchMedia === 'function') matchMedia('(max-width: 640px)').addEventListener('change', e => {
+    if (!e.matches && T.conf && T.conf === T.confTel) { T.conf = lireConf(); T.confTel = null; }
     if (location.hash !== '#/accueil' || !$('#tb-grille')) return;
-    vue();
-    $('#vue')?.classList.remove('entree');      // (une page qui se refait sur place ne rejoue pas son entrée)
+    if (typeof TIROIR !== 'undefined' && TIROIR.ouvert()) { if (T.auRetour == null) T.auRetour = !e.matches; return; }
+    refaire();
+  });
+  document.addEventListener('tiroir-ferme', () => {
+    const avant = T.auRetour; T.auRetour = null;
+    if (avant == null || avant === matchMedia('(max-width: 640px)').matches || location.hash !== '#/accueil' || E.hashVue !== location.hash || !$('#tb-grille')) return;
+    const rep = typeof repereFocus === 'function' ? repereFocus() : null;
+    refaire();
+    if (rep) $(rep, $('#vue'))?.focus({ preventScroll: true });
   });
 
   // ===================================================================================================== à traiter : l'ordre, les épingles, les reports
@@ -775,7 +810,7 @@ const TABLEAU = (() => {
     if (j >= 0) return j <= 0 ? 4 : j <= 3 ? 3 : j <= 7 ? 2 : j <= 14 ? 1.5 : 1;   // une échéance qui vient
     return -j >= 14 ? 2.5 : -j >= 7 ? 2 : -j >= 3 ? 1.5 : 1;                       // quelque chose qui attend
   }
-  const urgentConf = () => { const c = conf(); if (!c.urgent || typeof c.urgent !== 'object') c.urgent = { epingles: [], reports: {} }; if (!Array.isArray(c.urgent.epingles)) c.urgent.epingles = []; if (!c.urgent.reports || typeof c.urgent.reports !== 'object') c.urgent.reports = {}; return c.urgent; };
+  const urgentConf = (c = conf()) => { if (!c.urgent || typeof c.urgent !== 'object') c.urgent = { epingles: [], reports: {} }; if (!Array.isArray(c.urgent.epingles)) c.urgent.epingles = []; if (!c.urgent.reports || typeof c.urgent.reports !== 'object') c.urgent.reports = {}; return c.urgent; };
   // les lignes à traiter, enrichies : clé, sujet, poids, épingle, report, spectacle et date (pour les tuiles qui se parlent)
   function urgences(r = valeurs('urgent')) {
     const u = urgentConf(), reports = u.reports, categories = [];
@@ -797,15 +832,13 @@ const TABLEAU = (() => {
     return { categories, lignes: toutes, total, reportees };
   }
   function epingler(cle, oui = null) {
-    const u = urgentConf(), deja = u.epingles.includes(cle);
-    if (oui === null) oui = !deja;
-    u.epingles = u.epingles.filter(k => k !== cle); if (oui) u.epingles.unshift(cle);
-    garder(); dessinerCorps('urgent'); appliquerFiltre(); annoncerSr(oui ? 'Épinglée en haut.' : 'Désépinglée.');
+    if (oui === null) oui = !urgentConf().epingles.includes(cle);
+    garderContenu(c => { const u = urgentConf(c); u.epingles = u.epingles.filter(k => k !== cle); if (oui) u.epingles.unshift(cle); });
+    dessinerCorps('urgent'); appliquerFiltre(); annoncerSr(oui ? 'Épinglée en haut.' : 'Désépinglée.');
   }
   function reporter(cle, jour) {
-    const u = urgentConf();
-    if (jour) u.reports[cle] = jour; else delete u.reports[cle];
-    garder(); dessinerCorps('urgent'); appliquerFiltre(); annoncerSr(jour ? `Reportée au ${jourSansAn(jour)}.` : 'Report annulé.');
+    garderContenu(c => { const u = urgentConf(c); if (jour) u.reports[cle] = jour; else delete u.reports[cle]; });
+    dessinerCorps('urgent'); appliquerFiltre(); annoncerSr(jour ? `Reportée au ${jourSansAn(jour)}.` : 'Report annulé.');
   }
   const lundiProchain = () => { const d = new Date(`${AUJ}T12:00:00`), n = (8 - d.getDay()) % 7 || 7; return plusJours(AUJ, n); };
   const REPORTS = () => [['demain', 'Demain', plusJours(AUJ, 1)], ['lundi', 'Lundi', lundiProchain()], ['semaine', 'Dans une semaine', plusJours(AUJ, 7)]];

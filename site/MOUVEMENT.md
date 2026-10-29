@@ -18,7 +18,7 @@ Quatre durées, trois courbes, et rien qui bouge sans raison.
 | Suivre le doigt ou le pointeur (le retour, une notification, tirer pour rafraîchir, le bord d'une fenêtre qu'on tire) | le temps du geste, puis 180 à 300 ms ; la remise d'une fenêtre à sa taille d'origine, 220 ms | linéaire sous le doigt ou le pointeur (une mise à jour par image, jamais un transform), le doux pour revenir | `brancherRetour`, `brancherGlisserNotif`, `brancherTirer`, `FENETRES.poignee` |
 | Passer d'une vue à l'autre | 220 à 300 ms | le doux, par les View Transitions | `changerVue`, `changerVueAdmin` |
 | Replier le menu latéral (la colonne passe de 240 à 64 px, ou l'inverse) | 220 ms ; les libellés en 120 ms d'opacité | le doux, par la propriété déclarée `--large-menu` (`@property`) : la grille et l'aside la lisent, le contenu suit | `--large-menu` (`html`) |
-| Monter la feuille du téléphone (« Plus », « Créer » : la feuille monte du bas, le voile s'éclaircit ; au retrait, elle redescend dans le même temps) | 200 ms | le doux (`cubic-bezier(.2, .8, .2, 1)`), la même courbe que le tiroir (qui dure 220 ms) ; le voile s'éclaircit sur la même durée et la même courbe | `.ob-feuille`, `.ob-voile` (mobile.js) |
+| Monter la feuille du téléphone (« Plus », « Créer » : la feuille monte du bas, le voile fonce ; au retrait, elle redescend et il s'éclaircit dans le même temps) | 200 ms | le doux (`cubic-bezier(.2, .8, .2, 1)`), la même courbe que le tiroir (qui dure 220 ms) ; le voile change sur la même durée et la même courbe | `.ob-feuille`, `.ob-voile` (mobile.js) |
 | Zoomer la carte de tournée (+ − ⌂, Ctrl+molette, « Voir sur la carte ») | 220 ms | le doux : une animation sans cible donne la progression déjà adoucie, un `setAttribute('viewBox')` par image la suit (le glisser au pointeur, lui, suit le pointeur sans durée) | `animerCadre` (tournee.js) |
 | Allumer une pastille de la carte (le survol d'une étape, le focus) | 450 ms | le ressort, sur ses deux cercles (`scale(1.15)`, `transform-box: fill-box`), jamais sur le `<g>` qui porte son `translate` | `.tn-pin.allume` |
 | Viser une ligne (le champ qu'un lien vise, la ligne que « Voir dans le tableur » ouvre) | 1,6 s | `ease-out` | `visee`, `visee-ligne` |
@@ -58,8 +58,9 @@ glissement, et « Toute la France » garde le glissement de 220 ms d'avant (immo
 La rangée « sur la route » (Itinéraire, Feuille de route, Prévenir l'équipe… sous le titre d'une date ; Itinéraire, Appeler le contact,
 Copier l'adresse sous celui d'un lieu) n'ajoute aucune animation : elle est posée avec la fiche, qui garde sa transition « avant » (celle de
 `mouvement-admin.mjs`), et se redit sur place quand une feuille est publiée, sans fondu ; ses boutons n'ont pas de transition, et le
-panneau « Prévenir l'équipe » garde l'entrée qu'il avait. Immobile sous « moins d'animations » et `?anim=0` (le banc compte les animations
-en cours : aucune).
+panneau « Prévenir l'équipe » garde l'entrée qu'il avait. Immobile sous « moins d'animations » et sous `?anim=0` (`html.still`) : le banc
+du téléphone (5 · d) compte les transitions et les animations à leur départ, de la liste à la fiche puis à « Prévenir l'équipe… », et n'en
+trouve aucune dans les deux cas ; sa contre-épreuve, sans l'un ni l'autre, en trouve.
 
 Les accès rapides du menu latéral n'ajoutent rien au vocabulaire : un accès épinglé qui arrive (« Mettre dans le menu ») saute
 en ressort (`ad-pop`, 450 ms, par la classe `.pop`, ôtée à la fin de l'animation) ; une fiche récente qui apparaît dans

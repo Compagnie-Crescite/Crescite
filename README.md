@@ -447,17 +447,21 @@ compte du projet inscrit dans `crescite_admins`.
     tiroir, la largeur des listes, le mode du tableur) déjà en place tout de suite puis 50 ms plus tard : l'immobilité est une
     arrivée instantanée, pas une absence d'arrivée. Une contre-épreuve, sans « moins d'animations », montre qu'avec les animations permises
     le menu et le tiroir glissent bien. Captures dans `site/dist/shots-reduit/`.
-  - *Le téléphone.* `node site/telephone.mjs` (226 vérifications, environ une minute et demie, 390 × 844 au doigt ; le
+  - *Le téléphone.* `node site/telephone.mjs` (263 vérifications, environ deux minutes, 390 × 844 au doigt ; le
     banc du plan `admin/TELEPHONE.md`, une section par lot) : le lot 1 mesure que les fiches (date, personne, lieu, et
     six autres rubriques) commencent à 140 px du haut au plus, leur tête invisible mais son titre lu des lecteurs
     d'écran et hors de portée de Tab ; que le « + » est caché dans une feuille de route, un spectacle et le tableur, et
-    le reste quand la vue change ; que dix routes nommées ont chacune leur « + », et qu'au bout de la page rien ne passe
-    sous lui ; qu'une annonce se pose au-dessus du « + », et au-dessus du pied d'une fiche (une date, un lieu) ; que le
-    pied d'une date ouverte en tiroir est au bas du tiroir, que le détail d'un jour du planning est au-dessus de la
-    barre, que le pied des six fiches tient sur une rangée avec « Supprimer » dans « Plus », et qu'une date ouverte en
-    tiroir au-dessus d'une fiche a son propre « Plus » (il ouvre ses actions, pas celles de la fiche du dessous) ; que
-    « Plus » et « Créer » rendent le focus (même quand le toucher ne le donne pas, comme sur l'iPhone), retiennent Tab
-    (vingt-quatre appuis de plus, dans les deux sens), laissent « Annuler » joignable, glissent en 200 ms au « doux » et
+    le reste quand la vue change ; que onze routes nommées (dont `#/diffusion/piste/1`, le Kanban, une fois sa piste
+    refermée) ont chacune leur « + », et qu'au bout de la page rien ne passe sous lui ; qu'une annonce se pose au-dessus
+    du « + », et au-dessus du pied d'une fiche (une date, un lieu, et la feuille de route, dont le pied a deux rangées,
+    même courte, quand son pied est posé au-dessus du pied commun) ; que le pied d'une date ouverte en tiroir est au bas
+    du tiroir, et que ni le tableau de bord ni la page des dates ne sont refaits dessous quand le téléphone tourne (le
+    focus revient au lien à la fermeture), mais à sa fermeture quand la fenêtre est restée en paysage ou à 1 440 px ; que le détail d'un jour du planning est
+    au-dessus de la barre, que le pied des six fiches tient sur une rangée avec « Supprimer » dans « Plus », et qu'une
+    date ouverte en tiroir au-dessus d'une fiche a son propre « Plus » (il ouvre ses actions, pas celles de la fiche du
+    dessous ; Échap ne referme que ce menu, le tiroir reste) ; que « Plus » et « Créer » rendent le focus (même quand le
+    toucher ne le donne pas, comme sur l'iPhone, et après « Voir le site ↗ »), ne laissent pas Tab quitter la feuille
+    pour la page (un tour complet dans chaque sens), laissent « Annuler » joignable, glissent en 200 ms au « doux » et
     ne bougent pas sous « moins d'animations » ; et, à 1 440 × 900, que la tête, les pieds et les classes de sept fiches
     sont ceux d'avant (le banc mesure, il ne compare pas le DOM entier) ; à `CPU=4`, qu'aucun traitement ne bloque la
     page plus de 200 ms, et qu'aucune règle ne pose `:has()` sur la racine de la page (elle referait tous les styles à
@@ -474,36 +478,49 @@ compte du projet inscrit dans `crescite_admins`.
     choix de la vue (« Briefing » reste), que la première ligne d'« À traiter » commence avant 700 px (1 096 avant) et
     « Qui part bientôt » avant 2 000 (4 637 avant), que l'ordre du DOM est « À traiter », « Qui part bientôt »,
     « Prochaines dates » puis le reste dans l'ordre du compte, et que la rotation en paysage rend aussitôt les actions
-    (et les reprend au retour en portrait) ; que la première date de l'onglet Dates commence avant 500 px (1 592 avant),
-    « À compléter avant la tournée » étant replié avec son compte, ouvert au toucher et resté ouvert après une écriture
-    dans la base et d'une page à l'autre ; que la barre de filtres ne montre que la recherche, le reste derrière un
-    « Filtres » de 44 px qui dit combien sont posés et s'ouvre d'office quand l'un l'est (la liste, le tableur et la
-    carte) ; que « ＋ Nouvelle date / fiche / lieu / séance », « Proposer des dates », « ＋ Nouvelle opportunité » et
-    « Sélectionner » restent dans la page sans s'afficher (le « + » les crée encore), alors que « ＋ Nouveau spectacle »
-    et « ＋ Nouvelle invitation » restent affichés ; que le planning s'ouvre en Mois, et garde le choix de la session ;
-    que les trois chiffres de la diffusion tiennent sur une ligne ; que rien n'est écrit dans les préférences du compte
-    (ni `accueil.tableau`, ni `representations.avant`, ni `representations.vue`) ; et, à 1 440 × 900, que les dix
-    actions, l'ordre du compte, « À compléter » ouvert, les filtres dépliés, le planning en Équipe et les « ＋ Nouveau… »
-    sont ceux d'avant. Le lot 4 mesure, sur une feuille de route qui a du contenu, qu'au téléphone elle s'ouvre en « Vue
-    de l'équipe » (du texte de 16 px au moins, les outils de mise en page cachés, la barre non collée, aucun élément
-    collant de plus de 80 px hors le pied de la feuille, 520 px au moins entre l'en-tête et le pied, « À compléter » et
-    « Publier pour l'équipe » là, l'aide qui dit « touchez-les », et, sur une feuille pas encore composée, la phrase
-    d'accueil qui dit « touchez-le »), qu'un toucher sur « Page A4 » monte la page et ses outils (non collés), qu'une
-    saisie faite sur la page se retrouve dans la vue de l'équipe et au retour sur la page, que la carte de la tournée
-    s'ouvre « Autour des dates » (les pastilles couvrent 59 % de la largeur de la carte, 21 % avant), que « Toute la
-    France » l'éteint le temps de la session, qu'elle s'ouvre de même depuis la liste des dates, que rien n'est écrit
-    dans le compte ; et, à 1 440 × 900, que la feuille s'ouvre en page A4 avec sa barre collée (et que l'accueil d'une
-    feuille pas encore composée dit toujours « cliquez dessus »), et la carte sur toute la France. Le lot 5 mesure
-    qu'une date ouverte a, juste sous son titre et dans le premier écran, ses boutons de route (Itinéraire, qui mène à
-    google.com/maps/dir, Feuille de route avec son état, Prévenir l'équipe…, de 44 × 44 px au moins, aux libellés
-    entiers ; Confirmer la date… en plus pour une option, qui vise le statut sans rien écrire), que depuis l'onglet
-    Dates il faut trois touchers pour prévenir l'équipe (Dates, la date, Prévenir) au lieu de cinq, sans défiler, que la
-    rangée se redit quand une feuille est publiée entre-temps, et qu'un changement qui n'y change rien ne la refait pas
-    (le bouton touché garde son focus) ; qu'un lieu a Itinéraire, Appeler le contact (un lien `tel:` à 175 px du haut,
-    1 311 avant) et Copier l'adresse (elle est dans le presse-papiers), ou « Contact à renseigner » quand le suivi n'en
-    a pas ; que l'appui long sur une date ou sur un lieu ne propose plus « Ouvrir dans un nouvel onglet » ni « Copier le
-    lien » ; que rien ne bouge sous « moins d'animations » ; et, à 1 440 × 900, que ni une date ni un lieu n'a de rangée
-    et que le clic droit garde ces deux entrées. Captures dans `site/dist/shots-telephone/`.
+    (et les reprend au retour en portrait) ; qu'un mémo écrit, un report et une épingle faits au téléphone (par l'appui
+    long) partent dans le compte et se retrouvent à une nouvelle ouverture, sans la tuile réduite au téléphone, et
+    qu'une tuile réduite au téléphone ne part pas non plus avec la première écriture faite à 1 440 px ; que la grille
+    dit que les « Actions rapides » restent à l'ordinateur quand ce sont les seules tuiles montrées ; que la première
+    date de l'onglet Dates commence avant 500 px (1 592 avant), « À compléter avant la tournée » étant replié avec son
+    compte, ouvert au toucher et resté ouvert après une écriture dans la base et d'une page à l'autre ; que la barre de
+    filtres ne montre que la recherche, le reste derrière un « Filtres » de 44 px qui dit combien sont posés et s'ouvre
+    d'office quand l'un l'est (la liste, le tableur et la carte), que la recherche garde le focus et tout son texte
+    quand le téléphone tourne et revient, et que la page se redessine aussi après un toucher sur « Filtres » ou sur
+    « Passées » (qui garde le focus) ; que « ＋ Nouvelle date / fiche / lieu / séance », « Proposer des dates », « ＋
+    Nouvelle opportunité » et « Sélectionner » restent dans la page sans s'afficher (le « + » les crée encore), alors
+    que « ＋ Nouveau spectacle » et « ＋ Nouvelle invitation » restent affichés ; que le planning s'ouvre en Mois, et
+    garde le choix de la session ; que les trois chiffres de la diffusion tiennent sur une ligne ; que rien de tout cela
+    n'écrit dans les préférences du compte (ni `accueil.tableau`, ni `representations.avant`, ni `representations.vue`)
+    ; et, à 1 440 × 900, que les dix actions, l'ordre du compte, « À compléter » ouvert, les filtres dépliés, le
+    planning en Équipe et les « ＋ Nouveau… » sont ceux d'avant. Le lot 4 mesure, sur une feuille de route qui a du
+    contenu, qu'au téléphone elle s'ouvre en « Vue de l'équipe » (du texte de 16 px au moins, les outils de mise en page
+    cachés, la barre non collée, aucun élément collant de plus de 80 px hors le pied de la feuille, 520 px au moins
+    entre l'en-tête et le pied, « À compléter » et « Publier pour l'équipe » là, l'aide qui dit « touchez-les » mais ne
+    s'affiche qu'en page A4, la barre qui ne désigne `#a4-doc` que quand la page existe, et, sur une feuille pas encore
+    composée, la phrase d'accueil qui dit « touchez-le »), qu'un toucher sur « Page A4 » monte la page et ses outils
+    (non collés), qu'une saisie faite sur la page se retrouve dans la vue de l'équipe et au retour sur la page, qu'«
+    Annuler » d'une mise à jour depuis la base, touché revenu à la vue de l'équipe, rend le contenu d'avant, et ne
+    défait pas une saisie faite depuis (l'annonce dit que rien n'est annulé), que la
+    carte de la tournée s'ouvre « Autour des dates » (les pastilles couvrent 59 % de la largeur de la carte, 21 %
+    avant), que « Toute la France » l'éteint le temps de la session, qu'elle s'ouvre de même depuis la liste des dates,
+    que rien n'est écrit dans le compte ; et, à 1 440 × 900, que la feuille s'ouvre en page A4 avec sa barre collée (et
+    que l'accueil d'une feuille pas encore composée dit toujours « cliquez dessus »), et la carte sur toute la France.
+    Le lot 5 mesure qu'une date ouverte a, juste sous son titre et dans le premier écran, ses boutons de route
+    (Itinéraire, qui mène à google.com/maps/dir, Feuille de route avec son état, Prévenir l'équipe…, de 44 × 44 px au
+    moins, aux libellés entiers ; Confirmer la date… en plus pour une option, qui vise le statut sans rien écrire), que
+    depuis l'onglet Dates il faut trois touchers pour prévenir l'équipe (Dates, la date, Prévenir) au lieu de cinq, sans
+    défiler (mesuré au moment où le doigt se pose), qu'« Annuler » du panneau rend le focus au bouton de la rangée, que
+    la rangée se redit quand une feuille est publiée entre-temps, et qu'un changement qui n'y change rien ne la refait
+    pas (le bouton touché garde son focus) ; qu'un lieu a Itinéraire, Appeler le contact (un lien `tel:` à 175 px du
+    haut, 1 311 avant) et Copier l'adresse (elle est dans le presse-papiers), ou « Contact à renseigner » quand le suivi
+    n'en a pas ; qu'une date et un lieu ouverts en tiroir depuis le tableau de bord agissent dans le tiroir (« Prévenir
+    l'équipe… » y ouvre le panneau, sans changer d'adresse ni poser la question d'une saisie en cours ; « Contact à
+    renseigner » y vise le champ ; « Dupliquer » de son menu va à la page de la copie) ; que l'appui long sur une date ou sur un lieu ne propose plus « Ouvrir dans un nouvel
+    onglet » ni « Copier le lien » ; que rien ne part (aucune transition ni animation, comptées à leur départ, de la
+    liste à la fiche puis à « Prévenir ») sous « moins d'animations » ni sous `?anim=0`, quand la contre-épreuve en voit
+    partir ; et, à 1 440 × 900, que ni une date ni un lieu n'a de rangée et que le clic droit garde ces deux entrées.
+    Captures dans `site/dist/shots-telephone/`.
   - *La planche de relecture.* `node site/planche.mjs` (environ trois minutes au calme, jusqu'à six sous charge, à la demande :
     ce n'est pas un banc qui garde le code, la chaîne ordinaire ne le lance pas ; `bash site/bancs-admin.sh --planche` le lance à la fin de la chaîne)
     photographie dix pages de l'administration (le tableau de bord, la liste des dates, le tableur en Simple, en Complet et en
@@ -687,13 +704,20 @@ compte du projet inscrit dans `crescite_admins`.
     « Nouvelle… » restent à l'écran du dessus (le titre reste lu des lecteurs d'écran). Le « + » n'apparaît plus là où
     il gênait : il est caché dans une fiche, une feuille de route, un spectacle et le tableur, c'est-à-dire dès que la
     vue a ses propres boutons en bas (« Enregistrer », « Supprimer la date… ») ; une annonce (« Date enregistrée ·
-    Annuler ») se pose au-dessus de lui, ou au-dessus du pied d'une fiche ; « Mentions légales » aussi se pose au-dessus
-    de lui ; le détail d'un jour du planning s'arrête au-dessus de la barre. Le pied d'une fiche tient sur une rangée
-    (l'état, « Plus », « Enregistrer ») et « Supprimer » est dans « Plus » ; une date ouverte en tiroir depuis le
-    tableau de bord a son pied collé au bas du tiroir ; un champ amené à l'écran ne se cache plus sous le pied. « Plus »
-    et « Créer » rendent le focus au bouton touché en se fermant, retiennent Tab dans leur feuille (le reste de la page
-    ne répond plus, sauf les annonces) et glissent en 200 ms, au « doux » (la courbe du tiroir, qui dure 220 ms). Rien
-    ne change à 641 px et plus, et le téléphone n'écrit aucune préférence du compte. Tout se touche du pouce sans
+    Annuler ») se pose au-dessus de lui, ou au-dessus du pied d'une fiche, quelle que soit sa hauteur ; « Mentions
+    légales » aussi se pose au-dessus de lui ; le détail d'un jour du planning s'arrête au-dessus de la barre. Le pied
+    d'une fiche tient sur une rangée (l'état, « Plus », « Enregistrer ») et « Supprimer » est dans « Plus » ; une date
+    ouverte en tiroir depuis le tableau de bord a son pied collé au bas du tiroir ; un champ amené à l'écran ne se cache
+    plus sous le pied. « Plus » et « Créer » rendent le focus au bouton touché en se fermant (après un lien ↗ aussi, qui
+    ouvre un autre onglet ; un lien vers une autre page laisse le focus repartir du haut de la page d'arrivée), ne
+    laissent pas Tab quitter leur feuille pour la page (le reste de la page ne répond plus, sauf les annonces) et
+    glissent en 200 ms, au « doux » (la courbe du tiroir, qui dure 220 ms). Rien ne change à 641 px et plus, sauf trois
+    défauts anciens corrigés partout (Échap dans le menu « Plus » du pied d'une fiche en tiroir ne ferme plus le tiroir ;
+    « Annuler » de « Prévenir l'équipe » rend le focus au bouton qui l'a ouvert ; « Annuler » de « Mettre à jour depuis
+    la base » rétablit le contenu d'avant, et ne défait rien si l'on a écrit dans la feuille depuis) et, dans une fiche
+    ouverte en tiroir, « Prévenir l'équipe… », « Confirmer la date… », « Contact à renseigner » et « Adresse à
+    renseigner » de son menu, qui agissent dans le tiroir ; et le téléphone n'écrit aucune préférence de disposition du
+    compte. Tout se touche du pouce sans
     viser : chaque bouton, segment (« À venir / Passées / Toutes »), résumé (« Plus de filtres »), liste déroulante et
     champ (les dates du … au, Fonction et Note dans l'équipe d'une date, les boutons du planning, la croix d'une
     annonce, « Installer », les propositions d'un champ de recherche) fait 44 px de haut, toute une ligne de case est
@@ -703,28 +727,36 @@ compte du projet inscrit dans `crescite_admins`.
     Le premier écran montre l'essentiel. Le tableau de bord ouvre sur le bonjour, puis sur « À traiter » (ses éclairs),
     « Qui part bientôt » (les numéros à toucher) et « Prochaines dates », les autres tuiles suivant dans l'ordre du
     compte ; les dix « Actions rapides », le choix de la vue et « Personnaliser » restent à l'ordinateur (« Briefing »
-    reste) ; cet ordre ne s'écrit nulle part, et ce qu'on touche à une tuile (la réduire, ses réglages, épingler ou
-    reporter une ligne) ne vit que le temps de la session. L'onglet Dates montre une date dès le premier écran : « À
-    compléter avant la tournée » est replié, avec son compte (ouvert ou fermé le temps de la session, avec sa fenêtre de
-    30, 60 ou 90 jours), et la recherche reste seule visible, le reste des filtres tenant derrière un bouton « Filtres »
-    qui dit combien sont posés (et qui s'ouvre de lui-même quand l'un l'est : la liste, le tableur et la carte ont la
-    même barre). « ＋ Nouvelle date / fiche / lieu / séance », « Proposer des dates », « ＋ Nouvelle opportunité » et
-    « Sélectionner » ne s'affichent plus : le « + » crée tout. Le planning s'ouvre sur le mois, et les trois chiffres de
-    la diffusion tiennent sur une ligne. Quand la fenêtre passe le seuil des 640 px (un téléphone qu'on tourne), le
-    tableau de bord et la page des dates se redessinent aussitôt. Une feuille de route s'ouvre comme l'équipe la lit
-    (« Vue de l'équipe » : du vrai texte, à la taille du téléphone, et non la page A4 réduite) ; « Page A4 » reste à un
-    toucher, et c'est là seulement que paraissent les outils de mise en page, qui ne restent plus collés en haut de
-    l'écran ; l'aide dit « touchez ». La carte de la tournée s'ouvre « Autour des dates » (le temps de la session :
-    « Toute la France » l'éteint). Une date et un lieu s'ouvrent sur la route : sous le titre de la fiche, de gros
-    boutons de 44 px, les mêmes que ceux de l'appui long (une date : Itinéraire, Feuille de route et son état, Prévenir
-    l'équipe…, et Confirmer la date… quand c'est une option ; un lieu : Itinéraire, Appeler le contact, Copier
-    l'adresse), tirés de `window.MENUS` (`admin/menus.js`) par `MOBILE.route` ; le reste de la fiche suit, inchangé, et
-    rien ne s'écrit de plus. L'appui long ne propose plus, au téléphone, « Ouvrir dans un nouvel onglet » ni « Copier le
-    lien ». L'administration **s'installe sur le téléphone** comme l'espace de l'équipe (`admin/manifest.webmanifest`,
-    `admin/sw.js`, ses icônes) : « Installer », en tête de « Plus », donne l'invite du navigateur, ou sur l'iPhone la
-    marche à suivre dans Safari ; installée, elle s'ouvre en plein écran (« Admin Crescite »). Son service passe
-    toujours d'abord par le réseau (elle écrit dans la base) et ne garde la page et ses scripts que pour s'ouvrir hors
-    connexion ; il ne garde jamais rien de la base.
+    reste) ; cet ordre ne s'écrit nulle part, et ce qu'on touche à la disposition d'une tuile (la réduire, ses réglages)
+    ne vit que le temps de la session ; ce qu'on y écrit (le Mémo, un report, une épingle d'« À traiter ») part dans le
+    compte comme à l'ordinateur, sans rien emporter de la disposition du téléphone. L'onglet Dates montre une date dès
+    le premier écran : « À compléter avant la tournée » est replié, avec son compte (ouvert ou fermé le temps de la
+    session, avec sa fenêtre de 30, 60 ou 90 jours), et la recherche reste seule visible, le reste des filtres tenant
+    derrière un bouton « Filtres » qui dit combien sont posés (et qui s'ouvre de lui-même quand l'un l'est : la liste,
+    le tableur et la carte ont la même barre). « ＋ Nouvelle date / fiche / lieu / séance », « Proposer des dates », « ＋
+    Nouvelle opportunité » et « Sélectionner » ne s'affichent plus : le « + » crée tout. Le planning s'ouvre sur le
+    mois, et les trois chiffres de la diffusion tiennent sur une ligne. Quand la fenêtre passe le seuil des 640 px (un
+    téléphone qu'on tourne), le tableau de bord et la page des dates se redessinent aussitôt (la recherche garde le
+    focus et ce qu'on y tape, « Filtres » ou un segment de période touchés aussi ; rien ne se refait pendant une saisie,
+    ni sous un tiroir ouvert : la page se refait à sa fermeture si la fenêtre a changé de côté), et la disposition touchée
+    au téléphone s'oublie. Une feuille de route s'ouvre comme l'équipe la lit (« Vue de l'équipe » : du vrai texte, à la
+    taille du téléphone, et non la page A4 réduite) ; « Page A4 » reste à un toucher, et c'est là seulement que
+    paraissent les outils de mise en page, qui ne restent plus collés en haut de l'écran, avec l'aide (« touchez ») ; «
+    Annuler » d'une mise à jour depuis la base défait encore la mise à jour quand on est revenu à la vue de l'équipe
+    pour la relire (sauf si l'on a écrit dans la feuille depuis : rien n'est annulé, et l'annonce le dit). La carte de la tournée s'ouvre « Autour des dates » (le temps de la session : « Toute la France »
+    l'éteint). Une date et un lieu s'ouvrent sur la route : sous le titre de la fiche, de gros boutons de 44 px, les
+    mêmes que ceux de l'appui long (une date : Itinéraire, Feuille de route et son état, Prévenir l'équipe…, et
+    Confirmer la date… quand c'est une option ; un lieu : Itinéraire, Appeler le contact, Copier l'adresse), tirés de
+    `window.MENUS` (`admin/menus.js`) par `MOBILE.route` ; le reste de la fiche suit, inchangé, et rien ne s'écrit de
+    plus. Ouverte en tiroir (depuis le tableau de bord), la fiche agit dans le tiroir : « Prévenir l'équipe… », «
+    Confirmer la date… », « Contact à renseigner » et « Adresse à renseigner » ne changent pas de page ; « Dupliquer »,
+    qui fait une autre fiche, va à la page de la copie, comme avant. L'appui long ne
+    propose plus, au téléphone, « Ouvrir dans un nouvel onglet » ni « Copier le lien ». L'administration **s'installe
+    sur le téléphone** comme l'espace de l'équipe (`admin/manifest.webmanifest`, `admin/sw.js`, ses icônes) : «
+    Installer », en tête de « Plus », donne l'invite du navigateur, ou sur l'iPhone la marche à suivre dans Safari ;
+    installée, elle s'ouvre en plein écran (« Admin Crescite »). Son service passe toujours d'abord par le réseau (elle
+    écrit dans la base) et ne garde la page et ses scripts que pour s'ouvrir hors connexion ; il ne garde jamais rien de
+    la base.
   - **Les notes internes** (`admin/notes.js`, le quinzième script `supabase/migrations/20261103_crescite_notes.sql`) :
     un fil sur chaque date, lieu, personne et piste ; `@Prénom Nom` mentionne quelqu'un de l'équipe (l'autocomplétion
     propose les fiches) et la base le prévient dans son espace ; épingler, modifier, supprimer avec « Annuler » ; une

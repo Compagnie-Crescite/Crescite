@@ -33,11 +33,23 @@ const MOBILE = (() => {
   // le « + » se cache là où la vue a ses propres boutons en bas (le pied d'une fiche, la ligne d'état du tableur : « Enregistrer »,
   // « Supprimer la date… » ne doivent jamais passer dessous), dans une fiche ouverte ou en création, et dans une feuille de route,
   // un spectacle ou le tableur (qui ont l'un ou l'autre) : une seule règle, pour la pose et pour l'observateur
-  const plusCache = () => /(nouvelle|nouveau|\d+)$/.test(location.hash) || !!$('.deux.edition') || !!$('#vue .pied-ed, #vue .tab-ligne-etat');
+  // (le motif vise une fiche de premier niveau ou une création : #/diffusion/piste/N est le Kanban, la piste s'y ouvre en tiroir)
+  const plusCache = () => /^#\/[a-z]+\/(nouvelle|nouveau|\d+)$/.test(location.hash) || /\/(nouvelle|nouveau)$/.test(location.hash) || !!$('.deux.edition') || !!$('#vue .pied-ed, #vue .tab-ligne-etat');
   // le « + » visible, un pied de fiche dans la page (ou dans un tiroir) : deux classes sur html, pour que l'annonce et la marge du bas
   // se posent au-dessus d'eux. (Pas de :has() posé sur html : il referait les styles de toute la page à chaque changement, et
   // l'ouverture d'une date en coûtait 150 ms de plus à CPU=4.)
-  const marquer = () => { const h = document.documentElement; h.classList.toggle('ob-avec-plus', !!bouton && !bouton.hidden); h.classList.toggle('ob-avec-pied', !!bouton && !!$('.pied-ed')); };
+  // Où commence le pied du dessus (celui d'un tiroir, sinon de la page), compté du bas de l'écran, va dans --ob-pied, posée sur #annonces
+  // seul (sur html, elle referait elle aussi les styles de toute la page) : l'annonce se pose au-dessus du pied quelle que soit sa
+  // hauteur (deux rangées, déplié) et où qu'il soit (collé à la barre, ou, au bout d'une page courte, posé plus haut, au-dessus du pied
+  // commun : le défilement le déplace, et la mesure le suit) ; jamais plus bas que la barre (64 px).
+  const marquer = () => {
+    const h = document.documentElement, pied = !!bouton && $$('.pied-ed').pop();
+    h.classList.toggle('ob-avec-plus', !!bouton && !bouton.hidden); h.classList.toggle('ob-avec-pied', !!pied);
+    const a = $('#annonces'), v = pied && pied.offsetHeight ? `${Math.max(64, Math.round(h.clientHeight - pied.getBoundingClientRect().top))}px` : '';
+    if (a && a.style.getPropertyValue('--ob-pied') !== v) { if (v) a.style.setProperty('--ob-pied', v); else a.style.removeProperty('--ob-pied'); }
+  };
+  let piedPrevu = 0;
+  document.addEventListener('scroll', () => { if (!piedPrevu && document.documentElement.classList.contains('ob-avec-pied')) piedPrevu = requestAnimationFrame(() => { piedPrevu = 0; marquer(); }); }, { capture: true, passive: true });
   function poser() {
     // (le squelette du chargement, au téléphone, a déjà l'en-tête du téléphone : il garde html.ob-actif)
     if (!actif() || !E.pret || !$('#vue')) { if (barre) { barre.remove(); barre = null; } if (bouton) { bouton.remove(); bouton = null; } document.documentElement.classList.toggle('ob-actif', actif() && !!$('.barre.attente')); marquer(); return; }
@@ -76,7 +88,9 @@ const MOBILE = (() => {
       if (tete && e.target.closest('[data-ob-tete]')) { fermerFeuille(); tete.faire(); return; }
       const b = e.target.closest('[data-ob-i]'); if (!b) return;
       const x = items.filter(Boolean)[+b.dataset.obI];
-      fermerFeuille(!!(x && x.faire));   // (un lien mène ailleurs : la page d'arrivée a son propre focus)
+      // (un lien interne change de page : le focus repart du haut de la page d'arrivée, comme à un chargement ; un lien ↗ ouvre un autre
+      // onglet et laisse la page où elle est : le focus revient au bouton qui avait ouvert la feuille, comme pour une action)
+      fermerFeuille(!!(x && (x.faire || x.nouvel)));
       if (x && x.faire) { e.preventDefault(); x.faire(); }
     });
     document.body.append(m);
@@ -204,8 +218,10 @@ const MOBILE = (() => {
   /* le « + » (54 px à 76 px du bas) : les annonces et le pied commun se posent au-dessus de lui, jamais dessous */
   html.ob-actif.ob-avec-plus #annonces { bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
   html.ob-actif.ob-avec-plus .pied-espace { padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
-  /* une fiche a son pied collé au-dessus de la barre (64 px + sa rangée de 66 px) : l'annonce se pose au-dessus de lui, pas dessus */
-  html.ob-actif.ob-avec-pied #annonces { bottom: calc(150px + env(safe-area-inset-bottom, 0px)); }
+  /* une fiche a son pied au-dessus de la barre (collé à elle : 64 px + sa rangée de 66 px ; --ob-pied, que marquer() mesure, dit où il
+     commence) : l'annonce se pose 20 px au-dessus de lui, pas dessus, même quand il a deux rangées (la feuille de route), qu'il est
+     resté déplié ou qu'il est posé plus haut, au bout d'une page courte */
+  html.ob-actif.ob-avec-pied #annonces { bottom: calc(20px + var(--ob-pied, calc(130px + env(safe-area-inset-bottom, 0px)))); }
   /* le pied d'un tiroir est collé en bas du tiroir, qui n'a pas de barre : la règle ci-dessus (la barre) ne le concerne pas ;
      -20 px, le bas de .tiroir-corps au téléphone (tiroir.js en rend 24 à l'ordinateur) */
   html.ob-actif .tiroir-corps .pied-ed { bottom: -20px; }

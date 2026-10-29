@@ -6,12 +6,15 @@
 // 1 · le bas de l'écran dégagé, les fiches en plein écran (admin/mobile.js, les pieds de fiche replié de index.html et equipe.js) :
 //   (a) une date, une personne, un lieu ouverts commencent en haut (le titre de la rubrique ne prend plus la place, son h1 reste lu,
 //       rien de la tête n'est atteint par Tab) ; (b) le « + » est caché dans une feuille de route, un spectacle, le tableur, et le reste
-//       quand la vue change ; (c) dix routes nommées ont leur « + », et au bout de la page aucun bouton ni lien ne passe sous lui ;
-//       une annonce se pose au-dessus du « + », et au-dessus du pied d'une fiche ; (d) le pied d'une date ouverte en tiroir est collé
-//       au bas du tiroir ; (e) le détail d'un jour du planning s'arrête au-dessus de la barre ; (f) le pied de chaque fiche tient sur
-//       une rangée et « Supprimer » est dans « Plus » ; une date en tiroir au-dessus d'une fiche a son propre « Plus » ; (g) « Plus » et
-//       « Créer » rendent le focus en se fermant (même sans focus au toucher, comme sur l'iPhone), retiennent Tab, glissent en 200 ms
-//       au « doux », sans bouger sous « moins d'animations » ; (h) à 1 440 × 900, la tête, les pieds et les classes de sept fiches sont
+//       quand la vue change ; (c) onze routes nommées (#/diffusion/piste/1, tiroir fermé, comprise) ont leur « + », et au bout de la page
+//       aucun bouton ni lien ne passe sous lui ; une annonce se pose au-dessus du « + », et au-dessus du pied d'une fiche, quelle que soit
+//       sa hauteur (la feuille de route : deux rangées) et où qu'il soit (une feuille courte : posé au-dessus du pied commun) ; (d) le pied
+//       d'une date ouverte en tiroir est collé au bas du tiroir ; ni le tableau de bord ni la page des dates ne sont refaits dessous quand
+//       le téléphone tourne, mais à la fermeture du tiroir si la fenêtre a changé de côté (le focus sur le lien) ; (e) le détail d'un jour du planning s'arrête au-dessus de la
+//       barre ; (f) le pied de chaque fiche tient sur une rangée et « Supprimer » est dans « Plus » ; une date en tiroir au-dessus d'une
+//       fiche a son propre « Plus », qu'Échap referme seul ; (g) « Plus » et « Créer » rendent le focus en se fermant (même sans focus au
+//       toucher, comme sur l'iPhone, et après un lien ↗), Tab ne quitte pas la feuille pour la page sur un tour complet dans chaque sens,
+//       elles glissent en 200 ms au « doux », sans bouger sous « moins d'animations » ; (h) à 1 440 × 900, la tête, les pieds et les classes de sept fiches sont
 //       ceux d'avant (pas de « + », rien d'inerte : des mesures, pas une comparaison du DOM) ; (i) à CPU=4, aucune tâche de plus de 200 ms, et aucune
 //       règle :has() posée sur la racine de la page (html, :root, body), hors impression.
 // 2 · tout au doigt (admin/mobile.js : du CSS sous html.ob-actif) : (a) sur quatorze routes (la liste des dates dans ses trois vues, le
@@ -23,27 +26,33 @@
 //   de bord sans « Actions rapides », sans « Personnaliser » ni choix de la vue, « À traiter » avant 700 px et « Qui part bientôt » avant
 //   2 000, l'ordre du DOM (« À traiter », « Qui part bientôt », « Prochaines dates » d'abord), la rotation qui redessine, rien d'écrit (le chevron et le rouage de « À traiter » compris) ;
 //   (b) la première date avant 500 px, « À compléter » replié avec son compte, ouvert le temps de la session, rien d'écrit ; (c) la
-//   recherche seule visible, le reste derrière « Filtres » (44 px, son compte, ouvert d'office quand un filtre est posé, la rotation qui le redessine), dans la liste, le
-//   tableur et la carte ; (d) les « ＋ Nouveau… » du « + » ne s'affichent plus (ils restent dans la page), les autres restent ; (e) le
-//   planning s'ouvre sur le mois ; (f) les trois chiffres de la diffusion sur une ligne ; (g) à 1 440 × 900, rien n'a bougé.
+//   recherche seule visible, le reste derrière « Filtres » (44 px, son compte, ouvert d'office quand un filtre est posé, la rotation qui le redessine
+//   en rendant à la recherche son focus et son texte, et après un toucher sur « Filtres » ou « Passées », qui garde le focus), dans la liste, le tableur et la carte ; (d) les « ＋ Nouveau… » du « + » ne s'affichent plus
+//   (ils restent dans la page), les autres restent ; (e) le planning s'ouvre sur le mois ; (f) les trois chiffres de la diffusion sur une ligne ;
+//   (g) à 1 440 × 900, rien n'a bougé ; (h) ce qu'on écrit au téléphone (le Mémo, un report, une épingle) part dans le compte, sans la disposition
+//   du téléphone, ni avec ce contenu ni après une rotation ; seules les « Actions rapides » montrées, la grille le dit justement.
 // 4 · la feuille de route lisible, la carte sur les dates (admin/equipe.js, admin/tournee.js) : (a) #/feuilles/101 s'ouvre en « Vue de
 //   l'équipe » (du vrai texte, 16 px), sans les outils de mise en page, sans barre collée de plus de 80 px, avec 520 px et plus entre
 //   l'en-tête et le pied, « À compléter » et « Publier pour l'équipe » là ; « Page A4 » (un toucher) fait paraître la page et ses
-//   outils, non collés ; une saisie en A4 se retrouve dans la vue de l'équipe et au retour ; l'aide dit « touchez » ; (b) la carte
+//   outils, non collés ; une saisie en A4 se retrouve dans la vue de l'équipe et au retour ; l'aide dit « touchez », en page A4 seulement, et la
+//   barre ne désigne #a4-doc que quand il existe ; « Annuler » d'une mise à jour depuis la base défait, revenu à la vue de l'équipe, et ne défait
+//   pas une saisie faite depuis (il le dit) ; (b) la carte
 //   s'ouvre « Autour des dates » (les pastilles couvrent la moitié du cadre et plus), « Toute la France » l'éteint pour la session ;
 //   (c) à 1 440 × 900, la feuille s'ouvre en page A4 avec sa barre collée, la carte sur la France ; rien n'est écrit dans le compte.
 // 5 · une date et un lieu s'ouvrent sur la route (admin/menus.js : MENUS ; admin/mobile.js : MOBILE.route ; index.html : editeurDate, editeurLieu) :
 //   (a) #/representations/101 : la rangée « sur la route » est sous le titre, dans le premier écran, avec Itinéraire (google.com/maps/dir),
 //   Feuille de route (et son état) et Prévenir l'équipe…, chacun d'au moins 44 × 44 ; toucher « Prévenir » ouvre le panneau de #d-prevenir
-//   (rangé dans « Plus » du pied replié) ; depuis l'onglet Dates, Dates, la date, Prévenir : 3 touchers, sans défilement ; une option y
+//   (rangé dans « Plus » du pied replié), et son « Annuler » rend le focus au bouton de la rangée ; depuis l'onglet Dates, Dates, la date,
+//   Prévenir : 3 touchers, sans défilement ; une date et un lieu ouverts en tiroir agissent dans le tiroir (« Dupliquer », qui fait une
+//   autre fiche, va à sa page) ; une option y
 //   ajoute « Confirmer la date… » en quatrième, qui vise le statut sans rien écrire ; une feuille publiée entre-temps se redit ; (b) #/lieux/5 :
 //   « Appeler le contact » est un lien tel: avant 844 px, « Copier l'adresse » écrit dans le presse-papiers, un lieu sans contact montre
 //   « Contact à renseigner » ; (c) l'appui long sur une date ou un lieu n'a plus « Ouvrir dans un nouvel onglet » ni « Copier le lien » ; (d) sous
-//   « moins d'animations », rien ne bouge ; (e) à 1 440 × 900, aucune rangée, et le clic droit garde ces deux entrées.
+//   « moins d'animations » et sous ?anim=0, aucune transition ni animation ne part (comptées à leur départ ; la contre-épreuve en voit) ; (e) à 1 440 × 900, aucune rangée, et le clic droit garde ces deux entrées.
 // Les captures vont dans site/dist/shots-telephone/ (jamais commitées). Sort en erreur si une vérification manque.
 import fs from 'node:fs';
 import path from 'node:path';
-import { chromium, ICI, DB, ECRITURES, plus, ok, ouvrir, bilan } from './admin-fictif.mjs';
+import { chromium, ICI, DB, ECRITURES, UID, plus, ok, ouvrir, bilan } from './admin-fictif.mjs';
 
 const CAPT = path.join(ICI, 'dist', 'shots-telephone');
 const navigateur = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined });
@@ -82,6 +91,19 @@ const garnirPlanning = ctx => ctx.route(/rpc\/crescite_planning/, r => r.fulfill
     return { id: d.id, debut: d.debut, fin: d.fin, precision: 'jour', nature: d.nature, statut: d.statut, public: d.public, spectacle: { id: sp.id, slug: sp.slug, titre: sp.titre, couleur: sp.univers.couleurs.scene }, lieu: { nom: l.nom, commune: l.commune }, equipe: d.spectacle_id === 1 ? [1, 2] : [1, 3] }; }),
   propositions: [] }) }));
 const plusCache = page => page.evaluate(() => { const p = document.querySelector('.ob-plus'); return !p || p.hidden || !p.getClientRects().length; });
+// l'appui long au doigt (un vrai toucher tenu, par CDP) : le libellé des entrées du menu qui s'ouvre
+const appuiLong = async (page, sel) => {
+  const el = await page.$(sel); await el.scrollIntoViewIfNeeded();
+  const r = await el.boundingBox(), cdp = await page.context().newCDPSession(page);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: r.x + 40, y: r.y + r.height / 2 }] });
+  await page.waitForTimeout(650);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await cdp.detach();
+  await page.waitForSelector('.gm .gm-boite', { timeout: 3000 }).catch(() => {});
+  return page.$$eval('.gm .gm-boite [role="menuitem"]', xs => xs.map(x => x.textContent.trim().replace(/\s+/g, ' ')));
+};
+// les animations et transitions qui partent, comptées à leur départ (et non 500 ms après, quand toutes sont finies) : à poser avant le geste
+const ECOUTER_MOUVEMENTS = () => { window.__mouvements = []; for (const t of ['transitionrun', 'animationstart']) document.addEventListener(t, e => { window.__mouvements.push(`${t}:${e.target?.id || e.target?.className || e.target?.tagName}:${e.propertyName || e.animationName}`); }, true); };
 
 // ================================================================================ 1 · le bas de l'écran dégagé, les fiches en plein écran
 {
@@ -139,11 +161,19 @@ const plusCache = page => page.evaluate(() => { const p = document.querySelector
   // ---- (c) au bout de la page, aucun bouton ni lien ne passe sous le « + » ; une annonce se pose au-dessus
   // (en route, une liste défile sous lui comme sous tout bouton flottant : seul le bout de page compte, là où le pied commun et
   // la dernière ligne s'arrêtent)
-  const ROUTES = ['#/representations', '#/lieux', '#/ateliers/seances', '#/diffusion', '#/pro', '#/textes', '#/spectacles', '#/journal', '#/corbeille', '#/feuilles'];
+  // (#/diffusion/piste/1, l'adresse que donnent la recherche et « Voir » d'une piste créée : le Kanban, la piste ouverte en tiroir ; le
+  // tiroir fermé, l'adresse reste, et le Kanban n'est pas une fiche : son « + » revient)
+  const ROUTES = ['#/representations', '#/lieux', '#/ateliers/seances', '#/diffusion', '#/pro', '#/textes', '#/spectacles', '#/journal', '#/corbeille', '#/feuilles', '#/diffusion/piste/1'];
   const sousPlus = [];
   const avec = [];
   for (const hash of ROUTES) {
     await aller(page, hash, '#vue .tete h1, #vue h1');
+    if (/\/piste\//.test(hash)) {
+      await attendre(page, () => document.querySelector('.tiroir.la [data-tiroir-fermer]'), null, 6000);
+      await page.evaluate(() => document.querySelector('.tiroir [data-tiroir-fermer]').click());
+      await attendre(page, h => !document.querySelector('.tiroir') && location.hash === h, hash, 4000);
+      await page.waitForTimeout(150);
+    }
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
     await page.waitForTimeout(120);
@@ -151,9 +181,9 @@ const plusCache = page => page.evaluate(() => { const p = document.querySelector
     if (x) avec.push(hash);
     if (x && x.length) sousPlus.push(`${hash} : ${x.join(' ; ')}`);
   }
-  // (les dix routes ont leur « + » : une qui le perdrait ferait rougir la vérification, au lieu de passer pour une route sans rien dessous)
+  // (les onze routes ont leur « + » : une qui le perdrait ferait rougir la vérification, au lieu de passer pour une route sans rien dessous)
   const sansPlus = ROUTES.filter(h => !avec.includes(h));
-  ok('1 · c · dix routes, au bout de la page : chacune a son « + », et aucun bouton ni lien visible ne croise son rectangle (« Mentions légales » compris)', sousPlus.length === 0 && sansPlus.length === 0, `sans « + » : ${sansPlus.join(' ') || 'aucune'} ; ${sousPlus.join(' | ')}`);
+  ok('1 · c · onze routes (#/diffusion/piste/1, tiroir fermé, comprise), au bout de la page : chacune a son « + », et aucun bouton ni lien visible ne croise son rectangle (« Mentions légales » compris)', sousPlus.length === 0 && sansPlus.length === 0, `sans « + » : ${sansPlus.join(' ') || 'aucune'} ; ${sousPlus.join(' | ')}`);
   await aller(page, '#/lieux', '#vue .tete h1');
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await page.waitForTimeout(150);
@@ -171,17 +201,42 @@ const plusCache = page => page.evaluate(() => { const p = document.querySelector
   await page.screenshot({ path: `${CAPT}/1-annonce.png` });
   await page.evaluate(() => document.querySelectorAll('#annonces .annonce').forEach(a => a.remove()));
   // une fiche n'a pas de « + » mais son pied : l'annonce se pose au-dessus du pied, pas dessus (« Plus » et « Enregistrer » restent à portée)
-  for (const [hash, fiche] of [['#/representations/101', '#ed-date'], ['#/lieux/5', '#ed-lieu']]) {
-    await aller(page, hash, `${fiche} .pied-ed`);
+  // (la feuille de route a un pied de deux rangées, « Publier pour l'équipe » et « Enregistrer le brouillon » : l'annonce se pose au-dessus quand même)
+  for (const [hash, fiche] of [['#/representations/101', '#ed-date'], ['#/lieux/5', '#ed-lieu'], ['#/feuilles/101', '#vue']]) {
+    await aller(page, hash, `${fiche} .pied-ed [data-enregistrer]`);
     await page.evaluate(() => { window.scrollTo(0, 0); annoncer('Date enregistrée.', { action: () => {}, delai: 60000 }); });
     await page.waitForTimeout(350);
     const m = await page.evaluate(() => {
-      const a = document.querySelector('#annonces .annonce')?.getBoundingClientRect(), p = document.querySelector('.editeur .pied-ed').getBoundingClientRect();
-      return a ? { annonceBas: Math.round(a.bottom), piedHaut: Math.round(p.top) } : null;
+      const a = document.querySelector('#annonces .annonce')?.getBoundingClientRect(), p = document.querySelector('#vue .pied-ed').getBoundingClientRect();
+      return a ? { annonceBas: Math.round(a.bottom), piedHaut: Math.round(p.top), piedHauteur: Math.round(p.height) } : null;
     });
-    ok(`1 · c · ${hash} : une annonce se pose au-dessus du pied de la fiche (son bas est au plus au haut de .pied-ed), sans couvrir « Plus » ni « Enregistrer »`, !!m && m.annonceBas <= m.piedHaut, JSON.stringify(m));
+    ok(`1 · c · ${hash} : une annonce se pose au-dessus du pied de la fiche (son bas est au plus au haut de .pied-ed, de ${m?.piedHauteur} px), sans couvrir « Plus » ni « Enregistrer »`, !!m && m.annonceBas <= m.piedHaut, JSON.stringify(m));
     if (hash === '#/representations/101') await page.screenshot({ path: `${CAPT}/1-annonce-fiche.png` });
     await page.evaluate(() => document.querySelectorAll('#annonces .annonce').forEach(a => a.remove()));
+  }
+  // une feuille courte (deux blocs) : au bout de la page, son pied n'est plus collé à la barre, il est posé plus haut, au-dessus du pied
+  // commun ; « Enregistrer le brouillon » touché, l'annonce se pose au-dessus de ce pied-là, sans couvrir ses commandes
+  {
+    const avantContenu = DB.crescite_feuilles[0].contenu;
+    DB.crescite_feuilles[0].contenu = { format: 2, composees: [], pages: [], instantane: [], blocs: [
+      { id: 'b1', type: 'entete', segments: [{ texte: 'Bérénice', gras: true }] }, { id: 'b3', type: 'ligne', segments: [{ texte: '14h : arrivée à Caen' }] }] };
+    const fc = await ouvrir(navigateur, { ...TEL, hash: '#/feuilles/101' });
+    await fc.page.waitForSelector('#vue .pied-ed [data-enregistrer]', { timeout: 15000 });
+    await fc.page.waitForTimeout(800);
+    const enr = await toucher(fc.page, '#vue .pied-ed [data-enregistrer]') && await attendre(fc.page, () => document.querySelector('#annonces .annonce'), null, 4000);
+    await fc.page.waitForTimeout(500);
+    const m = await fc.page.evaluate(() => {
+      const an = [...document.querySelectorAll('#annonces .annonce')].filter(a => a.getClientRects().length), pied = document.querySelector('#vue .pied-ed');
+      const cmds = [...pied.querySelectorAll('button, a')].filter(b => b.checkVisibility()), sur = [];
+      for (const a of an) { const r = a.getBoundingClientRect(); for (const b of cmds) { const q = b.getBoundingClientRect(); if (r.left < q.right && r.right > q.left && r.top < q.bottom && r.bottom > q.top) sur.push(`« ${a.textContent.trim().slice(0, 30)} » sur « ${b.textContent.trim().slice(0, 30)} »`); } }
+      const p = pied.getBoundingClientRect(), a = an[0]?.getBoundingClientRect();
+      return { annonceBas: a ? Math.round(a.bottom) : null, piedHaut: Math.round(p.top), piedBas: Math.round(p.bottom), barreHaut: innerHeight - 64, sur };
+    });
+    ok('1 · c · une feuille courte, au bout de la page : son pied est posé au-dessus du pied commun, plus haut que la barre, et l’annonce de « Enregistrer le brouillon » se pose au-dessus de lui, sans couvrir ses commandes', enr && m.annonceBas !== null && m.piedBas < m.barreHaut - 10 && m.annonceBas <= m.piedHaut && m.sur.length === 0, JSON.stringify(m));
+    await fc.page.screenshot({ path: `${CAPT}/1-annonce-feuille-courte.png` });
+    fin('1 · c · feuille courte', fc.erreurs);
+    await fc.ctx.close();
+    DB.crescite_feuilles[0].contenu = avantContenu;
   }
 
   // ---- (f) le pied tient sur une rangée, « Supprimer » est dans « Plus » ; les six fiches ont ce pied
@@ -219,10 +274,16 @@ const plusCache = page => page.evaluate(() => { const p = document.querySelector
   await page.waitForTimeout(150);
   const annulable = await page.evaluate(() => { const b = document.querySelector('#annonces [data-tt="retour"]'); return !!b && !b.closest('[inert]') && !!b.getClientRects().length; });
   ok('1 · g · « Annuler » d\'une annonce reste joignable feuille ouverte (#annonces n\'est pas inerte)', annulable);
+  // un tour complet de Tab dans chaque sens (les commandes de la feuille, plus deux appuis) : le focus est dans la feuille, ou sur le document
+  // entre deux tours (comme avec un <dialog> modal du navigateur), jamais dans la page derrière (inerte) ; l'annonce, joignable exprès, est
+  // retirée avant
+  await page.evaluate(() => document.querySelectorAll('#annonces .annonce').forEach(a => a.remove()));
+  const nTab = await page.evaluate(() => [...document.querySelectorAll('.ob-feuille a[href], .ob-feuille button')].filter(e => e.getClientRects().length).length);
+  const OU = () => { const a = document.activeElement; return a?.closest('.ob-feuille') ? (a.matches('[data-ob-fermer]') ? 'D' : 'F') : a === document.body ? 'B' : 'X'; };
   const tabs = [];
-  for (let i = 0; i < 6; i++) { await page.keyboard.press('Tab'); tabs.push(await page.evaluate(() => !!document.activeElement?.closest('.ob-feuille'))); }
-  for (let i = 0; i < 24; i++) { await page.keyboard.press(i % 2 ? 'Shift+Tab' : 'Tab'); tabs.push(await page.evaluate(() => !!document.activeElement?.closest('.ob-feuille'))); }
-  ok('1 · g · six Tab (et vingt-quatre de plus, dans les deux sens) restent dans la feuille', tabs.every(Boolean), tabs.map(Number).join(''));
+  for (const touche of ['Tab', 'Shift+Tab']) for (let i = 0; i < nTab + 2; i++) { await page.keyboard.press(touche); tabs.push(await page.evaluate(OU)); }
+  ok(`1 · g · un tour complet de Tab dans chaque sens (${nTab} commandes, ${nTab + 2} appuis par sens) ne quitte jamais la feuille pour la page : le focus est dans la feuille ou sur le document, jamais ailleurs, et le tour passe par « Fermer », la dernière`,
+    nTab >= 10 && !tabs.includes('X') && tabs.slice(0, nTab + 2).includes('D') && tabs.filter(x => x === 'F' || x === 'D').length >= 2 * nTab, tabs.join(''));
   await page.screenshot({ path: `${CAPT}/1-feuille-plus.png` });
   await page.keyboard.press('Escape');
   await page.waitForTimeout(350);
@@ -254,6 +315,20 @@ const plusCache = page => page.evaluate(() => { const p = document.querySelector
   await page.waitForTimeout(450);
   const mene = await page.evaluate(() => ({ feuille: !!document.querySelector('.ob-voile'), inertes: document.querySelectorAll('[inert]').length, surPlus: !!document.activeElement?.matches('.ob-plus, [data-ob="plus"]') }));
   ok('1 · g · un lien de « Créer » mène à la fiche : la feuille est fermée, rien n\'est inerte, le focus n\'est pas revenu au bouton', !mene.feuille && mene.inertes === 0 && !mene.surPlus, JSON.stringify(mene));
+  // un lien ↗ (« Voir le site ») ouvre un autre onglet et laisse la page où elle est : le focus revient au bouton qui avait ouvert la feuille
+  await aller(page, '#/representations', '#vue .deux .liste');
+  await page.focus('[data-ob="plus"]');
+  await page.keyboard.press('Enter');
+  await attendre(page, () => document.querySelector('.ob-voile.la .ob-feuille a[target="_blank"]'));
+  await page.waitForTimeout(250);
+  const onglet = ctx.waitForEvent('page', { timeout: 4000 }).catch(() => null);
+  await page.evaluate(() => document.querySelector('.ob-feuille a[target="_blank"]').focus());
+  await page.keyboard.press('Enter');
+  const autre = await onglet;
+  await page.waitForTimeout(400);
+  const ext = await page.evaluate(() => ({ hash: location.hash, feuille: !!document.querySelector('.ob-voile'), focus: document.activeElement?.matches('[data-ob="plus"]') }));
+  ok('1 · g · « Voir le site ↗ » depuis « Plus » : un autre onglet s\'ouvre, la page reste, la feuille est fermée et le focus est revenu à [data-ob="plus"]', !!autre && ext.hash === '#/representations' && !ext.feuille && ext.focus, JSON.stringify({ onglet: !!autre, ...ext }));
+  if (autre) await autre.close();
   fin('1', erreurs);
   await ctx.close();
 }
@@ -285,7 +360,65 @@ const plusCache = page => page.evaluate(() => { const p = document.querySelector
   const m = await page.evaluate(() => { const t = document.querySelector('.tiroir').getBoundingClientRect(), p = document.querySelector('.tiroir .pied-ed').getBoundingClientRect(); return { tiroirBas: Math.round(t.bottom), piedBas: Math.round(p.bottom), piedHaut: Math.round(p.top), hauteurFenetre: innerHeight }; });
   ok('1 · d · une date ouverte en tiroir depuis #/accueil : le bas de .pied-ed est au bas du tiroir, à 2 px près', arrive && Math.abs(m.piedBas - m.tiroirBas) <= 2, JSON.stringify(m));
   await page.screenshot({ path: `${CAPT}/1-tiroir-pied.png` });
+  // le téléphone tourne (844 px), puis revient, tiroir ouvert : le tableau de bord n'est pas refait dessous, et Échap rend le focus au lien
+  await page.setViewportSize({ width: 844, height: 390 });
+  await page.waitForTimeout(400);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(400);
+  await page.keyboard.press('Escape');
+  await attendre(page, () => !document.querySelector('.tiroir'), null, 4000);
+  await page.waitForTimeout(300);
+  const retour = await page.evaluate(l => ({ focus: !!document.activeElement?.matches(l) && document.activeElement.isConnected, sur: `${document.activeElement?.tagName} ${document.activeElement?.getAttribute('href') || ''}` }), ligne);
+  ok('1 · d · tiroir ouvert, le téléphone tourne et revient : à la fermeture (Échap), le focus revient au lien de « Prochaines dates » qui l’avait ouvert (le tableau de bord n’a pas été refait dessous)', retour.focus, JSON.stringify(retour));
+  // « À traiter » réduite au téléphone, une date ouverte en tiroir, la fenêtre passe à 1 440 px, Échap : le tableau de bord se refait à la
+  // fermeture, avec la forme de l'ordinateur et la disposition du compte (« À traiter » dépliée, les actions rapides, « Personnaliser »)
+  await toucher(page, '.tb-tuile[data-k="urgent"] [data-tb-replier]');
+  await page.waitForTimeout(300);
+  const reduite = await page.evaluate(() => document.querySelector('.tb-tuile[data-k="urgent"] [data-tb-replier]')?.getAttribute('aria-expanded'));
+  await toucher(page, ligne);
+  await attendre(page, () => document.querySelector('.tiroir.la #ed-date'), null, 12000);
+  await page.waitForTimeout(400);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.waitForTimeout(500);
+  await page.keyboard.press('Escape');
+  await attendre(page, () => !document.querySelector('.tiroir'), null, 4000);
+  await page.waitForTimeout(400);
+  const large = await page.evaluate(l => ({ urgent: document.querySelector('.tb-tuile[data-k="urgent"] [data-tb-replier]')?.getAttribute('aria-expanded'), actions: !!document.querySelector('.tb-tuile[data-k="actions"]'), perso: !!document.querySelector('#tb-personnaliser'),
+    focus: !!document.activeElement?.matches(l), sur: `${document.activeElement?.tagName} ${document.activeElement?.getAttribute('href') || ''}` }), ligne);
+  ok('1 · d · « À traiter » réduite au téléphone, une date en tiroir, la fenêtre à 1 440 px, Échap : le tableau de bord est refait à la fermeture (« Personnaliser » et les actions rapides là, « À traiter » dépliée comme au compte), et le focus est sur le lien de « Prochaines dates »', reduite === 'false' && large.urgent === 'true' && large.actions && large.perso && large.focus, JSON.stringify({ reduite, ...large }));
   fin('1 · tiroir', erreurs);
+  await ctx.close();
+}
+// ---- (d, suite) la page des dates, un lieu ouvert en tiroir par-dessus, le téléphone qui tourne : rien n'est refait sous le tiroir (le focus
+// revient au lien à la fermeture) ; restée en paysage, la page se refait à la fermeture, et le lien garde le focus
+{
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { ...TEL, hash: '#/representations' });
+  const lien = '#l-dates a.ligne[href="#/representations/101"]';
+  await page.waitForSelector(lien, { timeout: 15000 });
+  await page.waitForTimeout(500);
+  const ouvrirLieu = async () => { await page.evaluate(l => { const a = document.querySelector(l); a.focus(); TIROIR.ouvrir('#/lieux/5', { depuis: a }); }, lien); const t = await attendre(page, () => document.querySelector('.tiroir.la #ed-lieu'), null, 8000); await page.waitForTimeout(400); return t; };
+  const t1 = await ouvrirLieu();
+  await page.evaluate(() => { document.querySelector('#vue').dataset.sonde = '1'; });
+  await page.setViewportSize({ width: 844, height: 390 });
+  await page.waitForTimeout(500);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(500);
+  const dessous = await page.evaluate(() => document.querySelector('#vue')?.dataset.sonde === '1');
+  await page.keyboard.press('Escape');
+  await attendre(page, () => !document.querySelector('.tiroir'), null, 4000);
+  await page.waitForTimeout(300);
+  const r1 = await page.evaluate(l => ({ focus: !!document.activeElement?.matches(l) && document.activeElement.isConnected, sur: `${document.activeElement?.tagName} ${document.activeElement?.getAttribute('href') || ''}` }), lien);
+  ok('1 · d · #/representations, un lieu en tiroir, le téléphone tourne et revient : la page n’est pas refaite sous le tiroir, et à la fermeture le focus revient au lien de la date', t1 && dessous && r1.focus, JSON.stringify({ t1, dessous, ...r1 }));
+  const t2 = await ouvrirLieu();
+  await page.setViewportSize({ width: 844, height: 390 });
+  await page.waitForTimeout(500);
+  const telSous = await page.evaluate(() => !!document.querySelector('#vue .f-tel'));
+  await page.keyboard.press('Escape');
+  await attendre(page, () => !document.querySelector('.tiroir'), null, 4000);
+  await page.waitForTimeout(300);
+  const r2 = await page.evaluate(l => ({ fTel: !!document.querySelector('#vue .f-tel'), focus: !!document.activeElement?.matches(l) && document.activeElement.isConnected, sur: `${document.activeElement?.tagName} ${document.activeElement?.getAttribute('href') || ''}` }), lien);
+  ok('1 · d · le même tiroir, la fenêtre restée en paysage (844 px) : à la fermeture, la page des dates se refait (sa barre de l’ordinateur, sans « Filtres »), et le focus est sur le lien de la date', t2 && telSous && !r2.fTel && r2.focus, JSON.stringify({ t2, telSous, ...r2 }));
+  fin('1 · d · dates sous un tiroir', erreurs);
   await ctx.close();
 }
 
@@ -313,8 +446,8 @@ const plusCache = page => page.evaluate(() => { const p = document.querySelector
   await page.screenshot({ path: `${CAPT}/1-pied-plus-tiroir.png` });
   await page.keyboard.press('Escape');
   await page.waitForTimeout(200);
-  const ferme = await page.evaluate(() => ({ ouverts: document.querySelectorAll('.pied-autres.ouvert').length, tiroir: !!document.querySelector('.tiroir.la') }));
-  ok('1 · f · Échap referme le menu du tiroir (aucun menu ouvert)', ferme.ouverts === 0, JSON.stringify(ferme));
+  const ferme = await page.evaluate(() => ({ ouverts: document.querySelectorAll('.pied-autres.ouvert').length, tiroir: !!document.querySelector('.tiroir.la'), focus: !!document.activeElement?.matches('.tiroir .pied-plus') }));
+  ok('1 · f · Échap referme le menu du tiroir (aucun menu ouvert), et lui seul : le tiroir reste ouvert, le focus revient à son « Plus »', ferme.ouverts === 0 && ferme.tiroir && ferme.focus, JSON.stringify(ferme));
   fin('1 · tiroir sur une fiche', erreurs);
   await ctx.close();
 }
@@ -614,16 +747,21 @@ DB.crescite_equipes = DB.crescite_equipes.filter(x => !EQUIPES_2.some(y => y.dat
   ok(`3 · b · #/representations : la première date commence avant 500 px (${b.ligne})`, b.ligne !== null && b.ligne < 500, JSON.stringify(b));
   ok(`3 · b · « À compléter avant la tournée » est replié d’office, son compte (${b.badge}) reste dans le titre`, b.ferme && /^\d+$/.test(b.badge) && +b.badge > 0, JSON.stringify(b));
   await page.screenshot({ path: `${CAPT}/3-dates.png` });
-  ok('3 · b · un toucher sur « À compléter » l’ouvre, sans rien écrire dans le compte', await toucher(page, 'details.avant > summary') && await attendre(page, () => document.querySelector('details.avant')?.open === true, null, 3000) && !ecrites().includes('representations.avant'), ecrites().join());
+  // (on attend l'état de la session, que l'événement « toggle » pose à la tâche suivante, puis ce que PREFS aurait écrit : un redessin plus tôt
+  // refermerait le bloc, et une écriture partie de ce toucher n'aurait pas encore atteint la base)
+  const ouvre = await toucher(page, 'details.avant > summary') && await attendre(page, () => document.querySelector('details.avant')?.open === true && E.avantTel === true, null, 3000);
+  await page.waitForTimeout(800);
+  ok('3 · b · un toucher sur « À compléter » l’ouvre, sans rien écrire dans le compte', ouvre && !ecrites().includes('representations.avant'), ecrites().join());
   // une écriture dans la base (une adresse et un contact qui arrivent) redessine le bloc : il reste ouvert, et son compte baisse
   const avant = await page.evaluate(() => +document.querySelector('details.avant > summary .badge').textContent);
   await page.evaluate(() => { const id = +document.querySelector('details.avant a[href^="#/lieux/"]').getAttribute('href').split('/')[2]; E.lieux.find(l => l.id === id).adresse = '135 boulevard du Maréchal-Leclerc'; E.lieuxSuivi.push({ lieu_id: id, contact: 'Régie générale, 02 31 00 00 00' }); dessinerAvant(document.querySelector('#avant')); });
   await page.waitForTimeout(150);
   const apres = await page.evaluate(() => ({ ouvert: document.querySelector('details.avant')?.open, n: +(document.querySelector('details.avant > summary .badge')?.textContent || 0) }));
   ok(`3 · b · après une écriture dans la base, « À compléter » reste ouvert (le compte passe de ${avant} à ${apres.n}), et rien n’est écrit dans le compte`, apres.ouvert === true && apres.n < avant && !ecrites().includes('representations.avant'), JSON.stringify({ avant, apres, ecrites: ecrites() }));
-  await page.selectOption('#avant-jours', '30');
+  // (un choix impossible rougit la vérification au lieu de faire tomber le banc)
+  const choisi = await page.selectOption('#avant-jours', '30', { timeout: 4000 }).then(() => true, () => false);
   await page.waitForTimeout(150);
-  ok('3 · b · le choix des 30 jours vit la session : il tient après le redessin, et rien n’est écrit', (await page.$eval('#avant-jours', e => e.value)) === '30' && (await page.$eval('details.avant', e => e.open)) && !ecrites().includes('representations.avant'), ecrites().join());
+  ok('3 · b · le choix des 30 jours vit la session : il tient après le redessin, et rien n’est écrit', choisi && (await page.$eval('#avant-jours', e => e.value).catch(() => null)) === '30' && (await page.$eval('details.avant', e => e.open)) && !ecrites().includes('representations.avant'), ecrites().join());
   await aller(page, '#/lieux', '#vue .tete h1');
   await aller(page, '#/representations', '#l-dates a.ligne');
   ok('3 · b · de retour sur Dates (dans la même session), le bloc est encore ouvert, à 30 jours', (await page.$eval('details.avant', e => e.open)) && (await page.$eval('#avant-jours', e => e.value)) === '30' && !ecrites().includes('representations.avant'), ecrites().join());
@@ -666,6 +804,38 @@ DB.crescite_equipes = DB.crescite_equipes.filter(x => !EQUIPES_2.some(y => y.dat
   await f1.page.setViewportSize({ width: 390, height: 844 });
   const dPortrait = await attendre(f1.page, () => document.querySelector('.f-tel')?.open === true && /^Filtres\s*1$/.test(document.querySelector('.f-tel > summary')?.textContent.trim()), null, 4000);
   ok('3 · c · et le retour en portrait remet « Filtres 1 », ouvert, avec le filtre posé', dPortrait && (await f1.page.$eval('#f-statut', e => e.value)) === 'option');
+  // on tape dans « Chercher », le téléphone tourne (844 px), on continue de taper, il revient (390 px) : le focus et le texte restent
+  await f1.page.tap('#f-q');
+  await f1.page.keyboard.type('Ca');
+  await f1.page.setViewportSize({ width: 844, height: 390 });
+  const qPaysage = await attendre(f1.page, () => !document.querySelector('.f-tel'), null, 4000);
+  await f1.page.keyboard.type('en');
+  await f1.page.setViewportSize({ width: 390, height: 844 });
+  const qPortrait = await attendre(f1.page, () => document.querySelector('.f-tel'), null, 4000);
+  await f1.page.waitForTimeout(150);
+  const q = await f1.page.evaluate(() => ({ focus: document.activeElement?.id || document.activeElement?.tagName, valeur: document.querySelector('#f-q')?.value, curseur: document.querySelector('#f-q')?.selectionStart }));
+  ok('3 · c · taper dans « Chercher », tourner en paysage, taper encore, revenir en portrait : la page s’est redessinée deux fois, la recherche a gardé le focus et tout le texte (« Caen »), le curseur au bout', qPaysage && qPortrait && q.focus === 'f-q' && q.valeur === 'Caen' && q.curseur === 4, JSON.stringify(q));
+  await f1.page.fill('#f-q', '');
+  await f1.page.waitForTimeout(150);
+  // un toucher sur « Filtres » (une commande sans id), puis la rotation : la page se redessine quand même ; « Passées » touché garde le focus
+  const tFiltres = await toucher(f1.page, '.f-tel > summary');
+  await f1.page.setViewportSize({ width: 844, height: 390 });
+  const fPaysage = await attendre(f1.page, () => !document.querySelector('.f-tel') && document.querySelector('#f-statut')?.checkVisibility(), null, 4000);
+  ok('3 · c · un toucher sur « Filtres », puis la rotation en paysage : la page des dates se redessine quand même (la barre de l’ordinateur, sans « Filtres »)', tFiltres && fPaysage, JSON.stringify({ tFiltres, fPaysage }));
+  await f1.page.setViewportSize({ width: 390, height: 844 });
+  await attendre(f1.page, () => document.querySelector('.f-tel')?.open === true, null, 4000);
+  await f1.page.waitForTimeout(150);
+  const tPassees = await toucher(f1.page, '[data-f-periode="passees"]');
+  await f1.page.waitForTimeout(150);
+  await f1.page.setViewportSize({ width: 844, height: 390 });
+  const pPaysage = await attendre(f1.page, () => !document.querySelector('.f-tel'), null, 4000);
+  await f1.page.waitForTimeout(150);
+  const pf = await f1.page.evaluate(() => ({ focus: document.activeElement?.dataset?.fPeriode || document.activeElement?.tagName, presse: document.querySelector('[data-f-periode="passees"]')?.getAttribute('aria-pressed') }));
+  ok('3 · c · « Passées » touché, puis la rotation en paysage : la page se redessine, et « Passées » (pressé) garde le focus', tPassees && pPaysage && pf.focus === 'passees' && pf.presse === 'true', JSON.stringify({ tPassees, pPaysage, ...pf }));
+  await toucher(f1.page, '[data-f-periode="avenir"]');
+  await f1.page.setViewportSize({ width: 390, height: 844 });
+  await attendre(f1.page, () => document.querySelector('.f-tel'), null, 4000);
+  await f1.page.waitForTimeout(150);
   // le tableur et la carte ont la même barre
   for (const [hash, attente] of [['#/representations/tableur', '#tab-corps tr[data-l]'], ['#/representations/carte', '.filtres-dates']]) {
     const vu = await aller(f1.page, hash, attente, 15000);
@@ -771,6 +941,76 @@ DB.crescite_equipes = DB.crescite_equipes.filter(x => !EQUIPES_2.some(y => y.dat
   }
 }
 
+// ---- (h) ce qu'on écrit au téléphone (le Mémo, un report, une épingle d'« À traiter ») part dans le compte, comme à l'ordinateur ; la
+// disposition qu'on y touche (une tuile réduite) jamais : ni avec ce contenu, ni à la première écriture faite à l'ordinateur après une rotation
+{
+  const COMPTE = { v: 1, modifie: 1, tuiles: [{ k: 'urgent', visible: true }, { k: 'equipe', visible: true }, { k: 'prochaines', visible: true }, { k: 'memo', visible: true, reglages: { texte: 'écrit à l’ordinateur' } }] };
+  DB.crescite_preferences = [{ user_id: UID, cle: 'accueil.tableau', valeur: COMPTE }];
+  const depuis = ECRITURES.length;
+  const dernier = () => ECRITURES.slice(depuis).filter(r => r.cle === 'accueil.tableau').map(r => r.valeur).pop() || null;
+  const tuileDe = (v, k) => v?.tuiles?.find(t => t.k === k) || null;
+  const replie = (page, k) => page.evaluate(x => document.querySelector(`.tb-tuile[data-k="${x}"] [data-tb-replier]`)?.getAttribute('aria-expanded') === 'false', k);
+  const t1 = await ouvrir(navigateur, { ...TEL, hash: '#/accueil' });
+  await attendre(t1.page, () => document.querySelector('.tb-memo') && document.querySelector('#tb-grille a.tb-l[data-cle]'), null, 15000);
+  await t1.page.waitForTimeout(400);
+  const reduite = await toucher(t1.page, '.tb-tuile[data-k="prochaines"] [data-tb-replier]') && await attendre(t1.page, () => document.querySelector('.tb-tuile[data-k="prochaines"] [data-tb-replier]')?.getAttribute('aria-expanded') === 'false', null, 3000);
+  await t1.page.tap('.tb-memo');
+  await t1.page.keyboard.press('End');
+  await t1.page.keyboard.insertText(' — et au téléphone : rappeler Caen');
+  const dit = await attendre(t1.page, () => /Enregistré/.test(document.querySelector('.tb-memo-etat')?.textContent || ''), null, 6000);
+  await t1.page.waitForTimeout(300);
+  const v1 = dernier();
+  ok('3 · h · au téléphone, le Mémo écrit part dans le compte (accueil.tableau) : « Enregistré » le dit, et c’est vrai', reduite && dit && /au téléphone : rappeler Caen/.test(tuileDe(v1, 'memo')?.reglages?.texte || ''), JSON.stringify({ reduite, dit, memo: tuileDe(v1, 'memo')?.reglages?.texte ?? null }));
+  ok('3 · h · ce qui part garde la disposition du compte : « Prochaines dates », réduite au téléphone, ne l’est pas dans la valeur écrite', !!v1 && tuileDe(v1, 'prochaines')?.replie === false, JSON.stringify(tuileDe(v1, 'prochaines')));
+  // l'appui long sur deux lignes d'« À traiter » : « Me le rappeler demain » sur la première, « Épingler en haut » sur la deuxième
+  const cles = await t1.page.$$eval('.tb-tuile[data-k="urgent"] a.tb-l[data-cle]', xs => xs.map(x => x.dataset.cle));
+  const [cleR, cleE] = cles;
+  const menuR = await appuiLong(t1.page, `.tb-tuile[data-k="urgent"] a.tb-l[data-cle="${cleR}"]`);
+  const reporte = menuR.some(x => /^Me le rappeler demain/.test(x)) && await toucher(t1.page, '.gm .gm-boite [role="menuitem"]:has-text("Me le rappeler demain")')
+    && await attendre(t1.page, c => !document.querySelector(`.tb-tuile[data-k="urgent"] a.tb-l[data-cle="${c}"]`)?.checkVisibility(), cleR, 3000);
+  await t1.page.waitForTimeout(300);
+  const menuE = await appuiLong(t1.page, `.tb-tuile[data-k="urgent"] a.tb-l[data-cle="${cleE}"]`);
+  const epingle = menuE.some(x => /^Épingler en haut/.test(x)) && await toucher(t1.page, '.gm .gm-boite [role="menuitem"]:has-text("Épingler en haut")')
+    && await attendre(t1.page, c => document.querySelector('.tb-tuile[data-k="urgent"] a.tb-l[data-cle]')?.dataset.cle === c, cleE, 3000);
+  await t1.page.waitForTimeout(1200);      // (PREFS écrit 700 ms après le dernier geste)
+  const v2 = dernier();
+  ok(`3 · h · au téléphone, un report (« Me le rappeler demain », ${cleR}) et une épingle (« Épingler en haut », ${cleE}) faits par l’appui long partent dans le compte, avec le Mémo, sans la tuile réduite`,
+    reporte && epingle && !!v2?.urgent?.reports?.[cleR] && v2.urgent.epingles?.[0] === cleE && /rappeler Caen/.test(tuileDe(v2, 'memo')?.reglages?.texte || '') && tuileDe(v2, 'prochaines')?.replie === false,
+    JSON.stringify({ reporte, epingle, menuR, urgent: v2?.urgent ?? null, prochaines: tuileDe(v2, 'prochaines')?.replie }));
+  fin('3 · h · contenu au téléphone', t1.erreurs);
+  await t1.ctx.close();
+  // une nouvelle ouverture (la base seule : un autre appareil) : le mémo, le report et l'épingle y sont ; la tuile n'est pas réduite
+  const t2 = await ouvrir(navigateur, { ...TEL, hash: '#/accueil' });
+  await attendre(t2.page, () => document.querySelector('.tb-memo') && document.querySelector('#tb-grille a.tb-l[data-cle]'), null, 15000);
+  await t2.page.waitForTimeout(400);
+  const r2 = await t2.page.evaluate(([a, b]) => ({ memo: document.querySelector('.tb-memo')?.value, reportee: !document.querySelector(`.tb-tuile[data-k="urgent"] a.tb-l[data-cle="${a}"]`)?.checkVisibility(),
+    premiere: document.querySelector('.tb-tuile[data-k="urgent"] a.tb-l[data-cle]')?.dataset.cle === b }), [cleR, cleE]);
+  ok('3 · h · rouvert ailleurs : le Mémo écrit au téléphone est là, la ligne reportée est cachée, l’épinglée est en tête, et « Prochaines dates » n’est pas réduite', /rappeler Caen/.test(r2.memo || '') && r2.reportee && r2.premiere && !(await replie(t2.page, 'prochaines')), JSON.stringify(r2));
+  // une tuile réduite au téléphone, puis la fenêtre qui passe à 1 440 px et un réglage touché à l'ordinateur : la réduction du téléphone ne part pas
+  const avant = ECRITURES.length;
+  const reduite2 = await toucher(t2.page, '.tb-tuile[data-k="urgent"] [data-tb-replier]') && await attendre(t2.page, () => document.querySelector('.tb-tuile[data-k="urgent"] [data-tb-replier]')?.getAttribute('aria-expanded') === 'false', null, 3000);
+  await t2.page.setViewportSize({ width: 1440, height: 900 });
+  const bureau = await attendre(t2.page, () => document.querySelector('#tb-personnaliser') && document.querySelector('.tb-tuile[data-k="prochaines"] [data-tb-replier]'), null, 4000);
+  const urgentBureau = await replie(t2.page, 'urgent');
+  await t2.page.click('.tb-tuile[data-k="prochaines"] [data-tb-replier]');
+  await t2.page.waitForTimeout(1200);
+  const v3 = ECRITURES.slice(avant).filter(r => r.cle === 'accueil.tableau').map(r => r.valeur).pop() || null;
+  ok('3 · h · « À traiter » réduite au téléphone, puis la fenêtre à 1 440 px : la tuile y revient dépliée, et la première écriture faite à l’ordinateur (« Prochaines dates » réduite) n’emporte pas la réduction du téléphone',
+    reduite2 && bureau && !urgentBureau && !!v3 && tuileDe(v3, 'prochaines')?.replie === true && tuileDe(v3, 'urgent')?.replie === false, JSON.stringify({ reduite2, bureau, urgentBureau, urgent: tuileDe(v3, 'urgent')?.replie ?? null, prochaines: tuileDe(v3, 'prochaines')?.replie ?? null }));
+  const toutes = await t2.page.evaluate(() => Object.keys(TABLEAU.TUILES));
+  fin('3 · h · rouvert, puis à l’ordinateur', t2.erreurs);
+  await t2.ctx.close();
+  // un compte qui ne montre que les « Actions rapides » (que le téléphone retire) : la grille le dit justement
+  DB.crescite_preferences = [{ user_id: UID, cle: 'accueil.tableau', valeur: { v: 1, modifie: 1, tuiles: toutes.map(k => ({ k, visible: k === 'actions' })) } }];
+  const t3 = await ouvrir(navigateur, { ...TEL, hash: '#/accueil' });
+  await attendre(t3.page, () => document.querySelector('#tb-grille .tb-vide'), null, 15000);
+  const vide = await t3.page.evaluate(() => document.querySelector('#tb-grille .tb-vide')?.textContent.trim() || '');
+  ok('3 · h · seules les « Actions rapides » montrées au compte : le téléphone ne dit pas « Toutes les tuiles sont masquées », il dit qu’elles restent à l’ordinateur', /^Les actions rapides restent à l’ordinateur/.test(vide) && !/Toutes les tuiles/.test(vide), vide);
+  fin('3 · h · actions seules', t3.erreurs);
+  await t3.ctx.close();
+  DB.crescite_preferences = [];
+}
+
 // ================================================================================ 4 · la feuille de route lisible, la carte sur les dates
 {
   DB.crescite_preferences = [];
@@ -794,7 +1034,7 @@ DB.crescite_equipes = DB.crescite_equipes.filter(x => !EQUIPES_2.some(y => y.dat
     return { tel: document.querySelector('[data-fr-vue="tel"]')?.getAttribute('aria-pressed'), page: document.querySelector('[data-fr-vue="page"]')?.getAttribute('aria-pressed'),
       doc: !!document.querySelector('.a4-doc'), outils: o ? getComputedStyle(o).position : null, groupes: groupes.map(g => g.checkVisibility()), collants,
       place: pied && tete ? Math.round(pied.getBoundingClientRect().top - tete.getBoundingClientRect().bottom) : null, corps: ligne ? parseFloat(getComputedStyle(ligne).fontSize) : null,
-      aide: document.querySelector('#a4-aide')?.textContent || '', manques: document.querySelector('#fr-manques') ? !document.querySelector('#fr-manques').hidden : false,
+      aide: document.querySelector('#a4-aide')?.textContent || '', aideVue: !!document.querySelector('#a4-aide')?.checkVisibility(), controle: o?.getAttribute('aria-controls') ?? null, cible: !!document.getElementById('a4-doc'), manques: document.querySelector('#fr-manques') ? !document.querySelector('#fr-manques').hidden : false,
       publier: !!document.querySelector('#fr-publier')?.checkVisibility(), vues: [...document.querySelectorAll('.a4-vues button')].map(b => Math.round(b.getBoundingClientRect().height)) };
   };
   const tel = await ouvrir(navigateur, { ...TEL, hash: '#/feuilles/101' });
@@ -811,6 +1051,8 @@ DB.crescite_equipes = DB.crescite_equipes.filter(x => !EQUIPES_2.some(y => y.dat
   ok('4 · a · le texte de la vue de l’équipe fait au moins 16 px', f.corps >= 16, String(f.corps));
   ok('4 · a · « Publier pour l’équipe » est là, « Page A4 » et « Vue de l’équipe » font 44 px', f.publier && f.vues.length === 2 && f.vues.every(h => h >= 44), JSON.stringify({ publier: f.publier, vues: f.vues }));
   ok('4 · a · l’aide dit « touchez-les », plus « cliquez »', /touchez-les/.test(f.aide) && !/cliquez/.test(f.aide), f.aide.slice(0, 120));
+  ok('4 · a · en « Vue de l’équipe », l’aide (« Écrivez directement sur la page… ») n’est pas affichée : on n’y écrit pas', !f.aideVue, JSON.stringify({ aideVue: f.aideVue }));
+  ok('4 · a · en « Vue de l’équipe », la barre ne désigne pas #a4-doc (aria-controls), qui n’existe pas', f.controle === null && !f.cible, JSON.stringify({ controle: f.controle, cible: f.cible }));
   await tel.page.screenshot({ path: `${CAPT}/4-feuille-equipe.png` });
 
   // ---- « Page A4 » : un toucher, la page et ses outils, la barre qui ne colle pas ; une saisie reste
@@ -818,6 +1060,7 @@ DB.crescite_equipes = DB.crescite_equipes.filter(x => !EQUIPES_2.some(y => y.dat
   await tel.page.waitForTimeout(600);
   const p = await tel.page.evaluate(FEUILLE);
   ok('4 · a · en page A4 : « Page A4 » est pressée, les quatre groupes de mise en page paraissent (le zoom reste masqué au téléphone), la barre ne colle toujours pas', p.page === 'true' && p.tel === 'false' && p.groupes.length === 4 && p.groupes.every(v => v === true) && p.outils === 'static' && p.collants.length === 0, JSON.stringify({ page: p.page, groupes: p.groupes, outils: p.outils, collants: p.collants }));
+  ok('4 · a · en page A4, l’aide paraît, et la barre désigne #a4-doc, qui existe', p.aideVue && p.controle === 'a4-doc' && p.cible, JSON.stringify({ aideVue: p.aideVue, controle: p.controle, cible: p.cible }));
   await tel.page.screenshot({ path: `${CAPT}/4-feuille-a4.png` });
   await tel.page.tap('#a4-doc [data-id="b3"]');
   await tel.page.keyboard.press('End');
@@ -827,6 +1070,33 @@ DB.crescite_equipes = DB.crescite_equipes.filter(x => !EQUIPES_2.some(y => y.dat
   ok('4 · a · « Vue de l’équipe » : la saisie y est, la page A4 est démontée, les groupes disparaissent de nouveau', await toucher(tel.page, '[data-fr-vue="tel"]') && await attendre(tel.page, () => /porte B/.test(document.querySelector('.a4-tel')?.textContent || '') && !document.querySelector('.a4-doc'), null, 6000)
     && (await tel.page.evaluate(FEUILLE)).groupes.every(v => v === false));
   ok('4 · a · de retour sur « Page A4 », la saisie est toujours là (détruire l’éditeur ne perd rien)', await toucher(tel.page, '[data-fr-vue="page"]') && await attendre(tel.page, () => /porte B/.test(document.querySelector('#a4-doc [data-id="b3"]')?.textContent || ''), null, 8000));
+  // « Mettre à jour depuis la base » passe en page A4 ; revenu à « Vue de l’équipe » pour relire, « Annuler » rétablit quand même le contenu d'avant
+  await toucher(tel.page, '[data-fr-vue="tel"]');
+  await attendre(tel.page, () => !document.querySelector('.a4-doc') && document.querySelector('.a4-tel'), null, 6000);
+  const lu0 = await tel.page.evaluate(() => document.querySelector('.a4-tel').textContent);
+  const maj = await toucher(tel.page, '#fr-maj') && await attendre(tel.page, () => document.querySelector('.a4-doc') && document.querySelector('#annonces [data-tt="retour"]'), null, 6000);
+  await tel.page.waitForTimeout(300);
+  await toucher(tel.page, '[data-fr-vue="tel"]');
+  await attendre(tel.page, () => !document.querySelector('.a4-doc') && document.querySelector('.a4-tel'), null, 6000);
+  const lu1 = await tel.page.evaluate(() => document.querySelector('.a4-tel').textContent);
+  const annule = await toucher(tel.page, '#annonces [data-tt="retour"]');
+  await tel.page.waitForTimeout(400);
+  const lu2 = await tel.page.evaluate(() => ({ texte: document.querySelector('.a4-tel')?.textContent ?? null, page: !!document.querySelector('.a4-doc') }));
+  ok('4 · a · « Mettre à jour depuis la base », puis « Vue de l’équipe » pour relire, puis « Annuler » de l’annonce : la vue de l’équipe revient au contenu d’avant la mise à jour', maj && lu1 !== lu0 && annule && lu2.texte === lu0 && !lu2.page,
+    JSON.stringify({ maj, change: lu1 !== lu0, annule, longueurs: [lu0.length, lu1.length, lu2.texte?.length ?? null] }));
+  // une saisie faite en page A4 après la mise à jour, puis « Vue de l’équipe » et « Annuler » : la saisie n'est pas perdue (rien n'est annulé, l'annonce le dit)
+  await tel.page.evaluate(() => document.querySelectorAll('#annonces .annonce').forEach(a => a.remove()));
+  const maj2 = await toucher(tel.page, '#fr-maj') && await attendre(tel.page, () => document.querySelector('#a4-doc [data-id="b3"]') && document.querySelector('#annonces [data-tt="retour"]'), null, 6000);
+  await tel.page.waitForTimeout(300);
+  await tel.page.tap('#a4-doc [data-id="b3"]');
+  await tel.page.keyboard.press('End');
+  await tel.page.keyboard.insertText(' (porte C)');
+  await tel.page.waitForTimeout(300);
+  const relue = await toucher(tel.page, '[data-fr-vue="tel"]') && await attendre(tel.page, () => !document.querySelector('.a4-doc') && /porte C/.test(document.querySelector('.a4-tel')?.textContent || ''), null, 6000);
+  const annule2 = await toucher(tel.page, '#annonces [data-tt="retour"]');
+  await tel.page.waitForTimeout(400);
+  const lu3 = await tel.page.evaluate(() => ({ saisie: /porte C/.test(document.querySelector('.a4-tel')?.textContent || ''), dit: [...document.querySelectorAll('#annonces .annonce')].some(a => /Rien n.est annulé/.test(a.textContent)) }));
+  ok('4 · a · « Mettre à jour depuis la base », une saisie en page A4, « Vue de l’équipe », puis « Annuler » : la saisie reste dans la vue de l’équipe, rien n’est annulé, et l’annonce le dit', maj2 && relue && annule2 && lu3.saisie && lu3.dit, JSON.stringify({ maj2, relue, annule2, ...lu3 }));
   ok('4 · a · rien n’est écrit dans le compte (aucune écriture de préférence : ni representations.vue, ni accueil.tableau, ni le zoom de la page)', ecrites().length === 0, ecrites().join());
   fin('4 · a · feuille', tel.erreurs);
   await tel.ctx.close();
@@ -868,6 +1138,7 @@ DB.crescite_equipes = DB.crescite_equipes.filter(x => !EQUIPES_2.some(y => y.dat
   await aller(liste.page, '#/representations/carte', '#tn-serre', 15000).catch(() => false);
   await attendre(liste.page, () => document.querySelectorAll('.tn-pin').length > 0, null, 8000);
   ok('4 · b · la carte atteinte depuis la liste des dates s’ouvre aussi resserrée', (await liste.page.evaluate(CARTE)).serre === true);
+  fin('4 · b · carte depuis la liste', liste.erreurs);
   await liste.ctx.close();
 
   // ---- (c) à 1 440 × 900, rien n'a bougé : la feuille en page A4 avec sa barre collée, la carte sur la France
@@ -875,8 +1146,8 @@ DB.crescite_equipes = DB.crescite_equipes.filter(x => !EQUIPES_2.some(y => y.dat
   await bureau.page.waitForSelector('.a4-doc', { timeout: 15000 });
   await bureau.page.waitForTimeout(500);
   const b = await bureau.page.evaluate(() => { const o = document.querySelector('.a4-outils'), g = [...document.querySelectorAll('.a4-groupe')];
-    return { page: document.querySelector('[data-fr-vue="page"]').getAttribute('aria-pressed'), tel: document.querySelector('[data-fr-vue="tel"]').getAttribute('aria-pressed'), outils: getComputedStyle(o).position, groupes: g.map(x => x.checkVisibility()), aide: document.querySelector('#a4-aide').textContent }; });
-  ok('4 · c · 1 440 × 900, #/feuilles/101 : la feuille s’ouvre en page A4, sa barre est collée, ses cinq groupes sont affichés, l’aide dit « cliquez dessus »', b.page === 'true' && b.tel === 'false' && b.outils === 'sticky' && b.groupes.length === 5 && b.groupes.every(v => v) && /cliquez dessus/.test(b.aide) && !/touchez-les/.test(b.aide), JSON.stringify({ ...b, aide: b.aide.slice(0, 80) }));
+    return { page: document.querySelector('[data-fr-vue="page"]').getAttribute('aria-pressed'), tel: document.querySelector('[data-fr-vue="tel"]').getAttribute('aria-pressed'), outils: getComputedStyle(o).position, groupes: g.map(x => x.checkVisibility()), aide: document.querySelector('#a4-aide').textContent, aideVue: document.querySelector('#a4-aide').checkVisibility(), controle: o.getAttribute('aria-controls') }; });
+  ok('4 · c · 1 440 × 900, #/feuilles/101 : la feuille s’ouvre en page A4, sa barre est collée (aria-controls="a4-doc"), ses cinq groupes sont affichés, l’aide est affichée et dit « cliquez dessus »', b.page === 'true' && b.tel === 'false' && b.outils === 'sticky' && b.groupes.length === 5 && b.groupes.every(v => v) && b.aideVue && b.controle === 'a4-doc' && /cliquez dessus/.test(b.aide) && !/touchez-les/.test(b.aide), JSON.stringify({ ...b, aide: b.aide.slice(0, 80) }));
   await bureau.page.screenshot({ path: `${CAPT}/4-feuille-bureau.png` });
   await aller(bureau.page, '#/feuilles/102', '#fr-composer', 15000);
   const accueilB = await bureau.page.evaluate(() => document.querySelector('.fr-accueil p')?.textContent || '');
@@ -909,23 +1180,12 @@ DB.crescite_equipes = DB.crescite_equipes.filter(x => !EQUIPES_2.some(y => y.dat
       boutons: [...r.children].map(b => { const k = b.getBoundingClientRect(); return { texte: (b.querySelector('span')?.firstChild?.textContent || b.textContent).trim(), detail: b.querySelector('small')?.textContent || '', lien: b.tagName === 'A', href: b.getAttribute('href') || '',
         l: Math.round(k.width), h: Math.round(k.height), bas: Math.round(k.bottom), coupe: b.scrollWidth > b.clientWidth + 1 || b.scrollHeight > b.clientHeight + 1 }; }) };
   };
-  const appuiLong = async (page, sel) => {
-    const el = await page.$(sel); await el.scrollIntoViewIfNeeded();
-    const r = await el.boundingBox(), cdp = await page.context().newCDPSession(page);
-    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: r.x + 40, y: r.y + r.height / 2 }] });
-    await page.waitForTimeout(650);
-    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-    await cdp.detach();
-    await page.waitForSelector('.gm .gm-boite', { timeout: 3000 }).catch(() => {});
-    return page.$$eval('.gm .gm-boite [role="menuitem"]', xs => xs.map(x => x.textContent.trim().replace(/\s+/g, ' ')));
-  };
   const tel = await ouvrir(navigateur, { ...TEL, hash: '#/accueil' });
   await tel.page.waitForSelector('.ob-barre', { timeout: 15000 });
   await tel.page.waitForTimeout(400);
 
   // ---- (a) la date : trois touchers depuis l'onglet Dates
-  let touchers = 0;
-  const toucherCompte = async sel => { touchers++; return toucher(tel.page, sel); };
+  const toucherCompte = sel => toucher(tel.page, sel);   // (les trois touchers sont numérotés dans le nom des vérifications)
   ok('5 · a · toucher n° 1 : l’onglet Dates', await toucherCompte('.ob-barre [data-ob="representations"]') && await attendre(tel.page, () => location.hash === '#/representations' && document.querySelector('#l-dates a.ligne[href="#/representations/101"]'), null, 8000));
   await tel.page.waitForTimeout(300);
   ok('5 · a · toucher n° 2 : la date (Bérénice, Caen) est dans le premier écran de la liste, sans défilement', await tel.page.evaluate(() => { const r = document.querySelector('#l-dates a.ligne[href="#/representations/101"]').getBoundingClientRect(); return r.bottom <= innerHeight - 64 && scrollY === 0; })
@@ -944,13 +1204,27 @@ DB.crescite_equipes = DB.crescite_equipes.filter(x => !EQUIPES_2.some(y => y.dat
   await tel.page.screenshot({ path: `${CAPT}/5-date-route.png` });
   // toucher n° 3 : Prévenir l'équipe… (le bouton de la fiche est rangé dans « Plus » du pied, masqué : le panneau s'ouvre quand même)
   const cache = await tel.page.evaluate(() => { const b = document.querySelector('#d-prevenir'); return !b || !b.checkVisibility(); });
-  const y0 = await tel.page.evaluate(() => scrollY);
-  ok('5 · a · toucher n° 3 : « Prévenir l’équipe… » ouvre le panneau de #d-prevenir (le bouton du pied, lui, est masqué dans « Plus »)', await toucherCompte('.ob-route button:has-text("Prévenir")') && await attendre(tel.page, () => document.querySelector('#d-prevenir-zone'), null, 6000) && cache, `masque=${cache}`);
-  // (récapitulatif des trois vérifications numérotées ci-dessus : le décompte est celui du banc, seule la page non défilée se mesure)
-  ok('5 · a · récapitulatif : Dates, la date, Prévenir, soit trois touchers au lieu de cinq, et la page n’a pas été défilée avant le dernier', touchers === 3 && y0 === 0, `${touchers} toucher(s), défilement ${y0}`);
+  // (avant le toucher : « Prévenir » est dans l'écran, au-dessus de la barre ; page.tap ferait défiler jusqu'à lui s'il n'y était pas)
+  // (le défilement se lit au moment où le doigt se pose : après, le panneau qui s'ouvre vient lui-même à l'écran)
+  const avant3 = await tel.page.evaluate(() => { window.__yToucher = null; document.addEventListener('touchstart', () => { window.__yToucher = scrollY; }, { capture: true, once: true });
+    const b = [...document.querySelectorAll('.ob-route button')].find(x => /Prévenir/.test(x.textContent)), r = b?.getBoundingClientRect(); return { y: scrollY, bas: r ? Math.round(r.bottom) : null, ecran: innerHeight - 64 }; });
+  const prevenu = await toucherCompte('.ob-route button:has-text("Prévenir")');
+  const y3 = await tel.page.evaluate(() => window.__yToucher);
+  ok('5 · a · toucher n° 3 : « Prévenir l’équipe… » ouvre le panneau de #d-prevenir (le bouton du pied, lui, est masqué dans « Plus »)', prevenu && await attendre(tel.page, () => document.querySelector('#d-prevenir-zone'), null, 6000) && cache, `masque=${cache}`);
+  // (ce qui se mesure : « Prévenir » était dans le premier écran avant d'être touché, et la page n'a défilé ni avant ni pendant ce toucher)
+  ok('5 · a · Dates, la date, Prévenir : « Prévenir » était dans le premier écran (au-dessus de la barre) avant d’être touché, et la page n’a défilé ni avant ni au toucher', avant3.y === 0 && avant3.bas !== null && avant3.bas <= avant3.ecran && y3 === 0, JSON.stringify({ ...avant3, apres: y3 }));
   ok('5 · a · le panneau « Prévenir l’équipe » est affiché (titre, message, Envoyer) et rien n’est écrit', await tel.page.evaluate(() => !!document.querySelector('#d-prevenir-zone #pv-texte') && document.querySelector('#d-prevenir-zone').checkVisibility()) && ecrites().length === 0, ecrites().join());
   await tel.page.screenshot({ path: `${CAPT}/5-date-prevenir.png` });
   await tel.page.tap('#pv-annuler').catch(() => {});
+  // au clavier : « Prévenir l’équipe… » de la rangée, puis « Annuler » du panneau : le focus revient au bouton de la rangée (#d-prevenir est caché)
+  await tel.page.focus('.ob-route button:has-text("Prévenir")');
+  await tel.page.keyboard.press('Enter');
+  const pv = await attendre(tel.page, () => document.activeElement?.id === 'pv-texte', null, 4000);
+  await tel.page.focus('#pv-annuler');
+  await tel.page.keyboard.press('Enter');
+  await tel.page.waitForTimeout(200);
+  const rendu = await tel.page.evaluate(() => ({ panneau: !!document.querySelector('#d-prevenir-zone'), focus: !!document.activeElement?.closest('.ob-route') && /Prévenir/.test(document.activeElement.textContent), sur: `${document.activeElement?.tagName}#${document.activeElement?.id}` }));
+  ok('5 · a · « Annuler » du panneau rend le focus au bouton « Prévenir l’équipe… » de la rangée, qui l’avait ouvert', pv && !rendu.panneau && rendu.focus, JSON.stringify(rendu));
   // la rangée se redit quand la fiche se redessine : une feuille publiée entre-temps (le temps réel ne vient jamais dans la base fictive : on l'appelle)
   await tel.page.evaluate(() => changement('crescite_feuilles', { eventType: 'UPDATE', new: { id: 1, date_id: 101, titre: 'Caen', contenu: {}, statut: 'publiee', version: 2, publiee_le: new Date().toISOString() } }));
   ok('5 · a · une feuille publiée entre-temps : la rangée de la fiche ouverte dit « publiée v2 »', await attendre(tel.page, () => /publiée v2/.test(document.querySelector('.ob-route')?.textContent || ''), null, 3000), (await tel.page.evaluate(ROUTE))?.boutons[1]?.detail);
@@ -977,6 +1251,43 @@ DB.crescite_equipes = DB.crescite_equipes.filter(x => !EQUIPES_2.some(y => y.dat
     && await opt.page.$eval('[data-statut="confirmee"]', b => { const r = b.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight && b.getAttribute('aria-pressed') === 'false'; }) && avantStatut === 'false' && ecrites().length === 0, `avant=${avantStatut} ecritures=${ecrites().join()}`);
   fin('5 · a bis · option', opt.erreurs);
   await opt.ctx.close();
+
+  // ---- (a ter) une date ouverte en tiroir depuis le tableau de bord : « Prévenir l’équipe… » ouvre le panneau dans le tiroir, sans changer
+  // d’adresse ni poser la question des modifications (une saisie est en cours dans le tiroir) ; un lieu sans contact en tiroir : « Contact à
+  // renseigner » vise le champ du tiroir
+  const ti = await ouvrir(navigateur, { ...TEL, hash: '#/accueil' });
+  const lienTi = '.tb-tuile[data-k="prochaines"] a.tb-l[href="#/representations/101"]';
+  await ti.page.waitForSelector(lienTi, { timeout: 15000 });
+  await ti.page.waitForTimeout(400);
+  await toucher(ti.page, lienTi);
+  const tiOuvert = await attendre(ti.page, () => document.querySelector('.tiroir.la #ed-date .ob-route button'), null, 12000);
+  await ti.page.waitForTimeout(400);
+  const champ = await ti.page.evaluate(() => { const c = document.querySelector('.tiroir #ed-date textarea:not([hidden])'); if (!c) return null; c.focus(); return c.id || c.getAttribute('data-chemin') || c.name || 'textarea'; });
+  if (champ) await ti.page.keyboard.insertText(' (essai)');
+  const adresse0 = await ti.page.evaluate(() => location.hash + location.search);
+  const tiPrevenir = await toucher(ti.page, '.tiroir .ob-route button:has-text("Prévenir")') && await attendre(ti.page, () => document.querySelector('.tiroir #d-prevenir-zone #pv-texte'), null, 4000);
+  await ti.page.waitForTimeout(300);
+  const tiApres = await ti.page.evaluate(() => ({ adresse: location.hash + location.search, tiroir: !!document.querySelector('.tiroir.la'), question: !!document.querySelector('dialog.gq[open]'), dansTiroir: !!document.querySelector('.tiroir #d-prevenir-zone') }));
+  ok('5 · a · une date en tiroir depuis #/accueil, une saisie en cours : « Prévenir l’équipe… » ouvre le panneau dans le tiroir, l’adresse n’a pas changé, aucune question « Quitter sans enregistrer ? »', tiOuvert && !!champ && tiPrevenir && tiApres.adresse === adresse0 && /^#\/accueil/.test(adresse0) && tiApres.tiroir && tiApres.dansTiroir && !tiApres.question, JSON.stringify({ tiOuvert, champ, adresse0, ...tiApres }));
+  await ti.page.evaluate(() => { E.sale = false; if (typeof GESTES !== 'undefined') GESTES.oublier(document); TIROIR.fermerTout(); });
+  await attendre(ti.page, () => !document.querySelector('.tiroir'), null, 4000);
+  await ti.page.evaluate(() => TIROIR.ouvrir('#/lieux/8'));
+  const tiLieu = await attendre(ti.page, () => document.querySelector('.tiroir.la #ed-lieu .ob-route button'), null, 8000);
+  await ti.page.waitForTimeout(300);
+  const tiContact = await toucher(ti.page, '.tiroir .ob-route button:has-text("Contact à renseigner")') && await attendre(ti.page, () => document.activeElement?.matches('.tiroir [data-chemin="contact"]'), null, 4000);
+  const tiFin = await ti.page.evaluate(() => ({ hash: location.hash, tiroir: !!document.querySelector('.tiroir.la') }));
+  ok('5 · b · un lieu sans contact ouvert en tiroir depuis #/accueil : « Contact à renseigner » vise le champ du contact du tiroir, sans quitter le tableau de bord', tiLieu && tiContact && tiFin.hash === '#/accueil' && tiFin.tiroir, JSON.stringify({ tiLieu, tiContact, ...tiFin }));
+  // « Dupliquer » du menu d'une date ouverte en tiroir fait une autre fiche : il va à la page de la copie (#/representations/nouvelle), comme avant
+  await ti.page.evaluate(() => { E.sale = false; if (typeof GESTES !== 'undefined') GESTES.oublier(document); TIROIR.fermerTout(); });
+  await attendre(ti.page, () => !document.querySelector('.tiroir'), null, 4000);
+  await ti.page.evaluate(() => TIROIR.ouvrir('#/representations/101'));
+  const tiDate = await attendre(ti.page, () => document.querySelector('.tiroir.la #ed-date #d-dupliquer'), null, 8000);
+  await ti.page.waitForTimeout(300);
+  await ti.page.evaluate(() => MENUS.date(E.dates.find(x => x.id === 101)).find(x => x?.libelle === 'Dupliquer').faire());
+  const tiDup = await attendre(ti.page, () => location.hash === '#/representations/nouvelle' && !document.querySelector('.tiroir') && document.querySelector('#vue #ed-date'), null, 8000);
+  ok('5 · a · « Dupliquer » du menu d’une date ouverte en tiroir : il va à la page de la copie (#/representations/nouvelle), le tiroir fermé', tiDate && tiDup, JSON.stringify({ tiDate, tiDup, adresse: await ti.page.evaluate(() => location.hash + location.search) }));
+  fin('5 · a et b · en tiroir', ti.erreurs);
+  await ti.ctx.close();
 
   // ---- (b) le lieu
   const li = await ouvrir(navigateur, { ...TEL, hash: '#/lieux/5' });
@@ -1016,16 +1327,30 @@ DB.crescite_equipes = DB.crescite_equipes.filter(x => !EQUIPES_2.some(y => y.dat
   fin('5 · a et c · date, appui long', tel.erreurs);
   await tel.ctx.close();
 
-  // ---- (d) « moins d'animations » : rien ne bouge
-  const red = await ouvrir(navigateur, { ...TEL, hash: '#/representations/101', reduit: true });
-  await attendre(red.page, () => document.querySelector('.ob-route a, .ob-route button'), null, 8000);
-  await red.page.waitForTimeout(600);
-  const anims = () => red.page.evaluate(() => document.getAnimations().filter(a => a.playState === 'running').map(a => `${a.effect?.target?.className || a.effect?.target?.tagName}:${a.animationName || a.transitionProperty || ''}`));
-  ok('5 · d · « moins d’animations » : la fiche s’ouvre sur la route sans aucune animation en cours', (await anims()).length === 0 && await red.page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches), JSON.stringify(await anims()));
-  await toucher(red.page, '.ob-route button:has-text("Prévenir")');
-  await red.page.waitForTimeout(500);
-  ok('5 · d · et toucher « Prévenir l’équipe… » n’en lance pas non plus', await red.page.evaluate(() => !!document.querySelector('#d-prevenir-zone')) && (await anims()).length === 0, JSON.stringify(await anims()));
-  await red.ctx.close();
+  // ---- (d) « moins d'animations », et ?anim=0 : rien ne bouge. Les transitions et animations sont comptées à leur départ (transitionrun,
+  // animationstart), depuis la liste : toucher la date, puis « Prévenir l'équipe… ». La contre-épreuve, sans l'un ni l'autre, en compte.
+  const mouvements = async (o, sansAnim) => {
+    const red = await ouvrir(navigateur, { ...TEL, hash: `${sansAnim ? '?anim=0' : ''}#/representations`, reduit: o.reduit });
+    await red.page.waitForSelector('#l-dates a.ligne[href="#/representations/101"]', { timeout: 15000 });
+    await red.page.waitForTimeout(600);
+    await red.page.evaluate(ECOUTER_MOUVEMENTS);
+    const date = await toucher(red.page, '#l-dates a.ligne[href="#/representations/101"]') && await attendre(red.page, () => document.querySelector('.ob-route a, .ob-route button'), null, 8000);
+    await red.page.waitForTimeout(400);
+    const ouvrirFiche = await red.page.evaluate(() => window.__mouvements.length);
+    const prevenir = await toucher(red.page, '.ob-route button:has-text("Prévenir")') && await attendre(red.page, () => document.querySelector('#d-prevenir-zone'), null, 4000);
+    await red.page.waitForTimeout(500);
+    const r = { date, prevenir, ouvrirFiche, tous: await red.page.evaluate(() => window.__mouvements.slice()), reduit: await red.page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches), still: await red.page.evaluate(() => document.documentElement.classList.contains('still')) };
+    fin(`5 · d · ${o.nom}`, red.erreurs);
+    await red.ctx.close();
+    return r;
+  };
+  const mr = await mouvements({ nom: '« moins d’animations »', reduit: true }, false);
+  ok('5 · d · « moins d’animations » : depuis la liste, la fiche s’ouvre sur la route sans qu’aucune transition ni animation ne parte', mr.reduit && mr.date && mr.ouvrirFiche === 0, JSON.stringify({ ...mr, tous: mr.tous.slice(0, 6) }));
+  ok('5 · d · et toucher « Prévenir l’équipe… » n’en lance pas non plus', mr.prevenir && mr.tous.length === 0, JSON.stringify(mr.tous.slice(0, 6)));
+  const ma = await mouvements({ nom: '?anim=0', reduit: false }, true);
+  ok('5 · d · ?anim=0 (html.still) : ni l’ouverture de la fiche ni « Prévenir l’équipe… » ne lancent de transition ou d’animation', ma.still && !ma.reduit && ma.date && ma.prevenir && ma.tous.length === 0, JSON.stringify({ ...ma, tous: ma.tous.slice(0, 6) }));
+  const mc = await mouvements({ nom: 'contre-épreuve', reduit: false }, false);
+  ok('5 · d · la contre-épreuve, sans « moins d’animations » ni ?anim=0 : les mêmes gestes lancent des transitions ou des animations (la mesure les voit)', !mc.reduit && !mc.still && mc.date && mc.prevenir && mc.ouvrirFiche > 0 && mc.tous.length > mc.ouvrirFiche, JSON.stringify({ ouvrirFiche: mc.ouvrirFiche, tous: mc.tous.length, exemples: mc.tous.slice(0, 4) }));
 
   // ---- (e) à 1 440 × 900 : aucune rangée, et le clic droit garde ses entrées
   const bureau = await ouvrir(navigateur, { largeur: 1440, hauteur: 900, hash: '#/representations/101' });
