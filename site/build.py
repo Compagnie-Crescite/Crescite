@@ -799,7 +799,7 @@ def build_data():
             extra = {"statut": None, "sousTitre": sous_titres.get(slug), "avec": sp["avec"], "mentions": sp["mentions"],
                      "duree": sp["duree"], "production": sp["production"], "credit": sp["credit"], "medias": sp["medias"],
                      "tournee": {"titre": sp["tournee"]["titre"] or "Actuellement en tournée", "texte": None}, "source": sp["url"]}
-        if slug == "berenice":                              # la durée du dossier 2026 (1h25), plus récente que le site (1h20)
+        if slug == "berenice":                              # la durée du dossier 2026 (1h15), la même que celle du site
             extra["duree"] = uv["programmer"]["duree"].replace("Durée", "durée")
         u = uv["univers"]
         c = u["couleurs"]
