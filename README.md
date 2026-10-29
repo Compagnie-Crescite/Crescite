@@ -1181,7 +1181,7 @@ Bérénice dans le stockage privé. L'import n'écrase jamais le travail de l'ad
 **L'administration** gagne trois choses :
 - **Équipe** : les fiches (publiques, coordonnées, accès, notes), et les documents de toute la compagnie ; la liste
   trouve aussi les fiches « Sans téléphone », à compléter.
-- **Dans chaque spectacle** : la distribution, le déroulé type d'une journée de représentation et les documents. **Dans
+- **Dans chaque spectacle** : la distribution, le déroulé type d'une journée de représentation (avec des étapes la veille ou le lendemain : trajet, installation technique, démontage, à l'heure écrite) et les documents. **Dans
   la distribution**, « Ajouter quelqu'un de la troupe » (ou « Ajouter au jeu », « à la technique »… sous chaque catégorie)
   ouvre toute la troupe, à chercher par nom, métier ou spectacle, ceux dont le métier va avec la catégorie en tête : un
   geste ajoute, la fenêtre reste ouverte pour en ajouter d'autres, une personne sans fiche se crée au vol. C'est la même

@@ -816,57 +816,83 @@ function ongletDistribution(z, s) {
   dessiner();
 }
 
-// le déroulé type : des étapes « X h Y avant le lever de rideau » ou « après la fin », posées autour des représentations
+// le déroulé type : des étapes « X h Y avant le lever de rideau » ou « après la fin », posées autour des représentations,
+// et des étapes de la veille ou du lendemain (le trajet, l'installation technique, le démontage), à l'heure écrite
 function ongletDeroule(z, F) {
   if (!Array.isArray(F.feuille_modele)) F.feuille_modele = [];
   const exemples = { un: [{ heure: '20:00' }], matin: [{ heure: '10:00', public: 'scolaire' }], deux: [{ heure: '10:20', public: 'scolaire' }, { heure: '14:10', public: 'scolaire' }], trois: [0, 1, 2].map(i => ({ jour: i, heure: '20:00' })) };
   let exemple = 'un';
-  const rang = e => FEUILLE.estApres(e) ? 1e5 + Math.abs(+e.avant_min || 0) : -(+e.avant_min || 0);
+  const dec = e => FEUILLE.decalage(e);
+  const hm = h => { const m = /^(\d{1,2}):(\d{2})/.exec(h || ''); return m ? +m[1] * 60 + +m[2] : 0; };
+  const rang = e => dec(e) ? dec(e) * 1e6 + hm(e.heure) : FEUILLE.estApres(e) ? 1e5 + Math.abs(+e.avant_min || 0) : -(+e.avant_min || 0);
+  // le jour d'une étape, tel que le menu le dit : « d:-1 » la veille, « d:1 » le lendemain, sinon premier, tous, dernier
+  const jourDe = e => dec(e) ? `d:${dec(e)}` : FEUILLE.joursEtape(e);
+  const nomDecalage = d => d === -1 ? 'La veille' : d === 1 ? 'Le lendemain' : `${Math.abs(d)} jours ${d < 0 ? 'avant' : 'après'}`;
+  const optionsJour = e => {
+    const v = jourDe(e), d = dec(e), autre = Math.abs(d) > 1 ? [[v, nomDecalage(d)]] : [];
+    const xs = [...(d < -1 ? autre : []), ['d:-1', 'La veille'], ['premier', 'Le premier jour'], ['tous', 'Chaque jour'], ['dernier', 'Le dernier jour'], ['d:1', 'Le lendemain'], ...(d > 1 ? autre : [])];
+    return xs.map(([k, l]) => `<option value="${k}"${v === k ? ' selected' : ''}>${l}</option>`).join('');
+  };
   const trierModele = () => F.feuille_modele.sort((a, b) => rang(a) - rang(b));
   const ligne = (e, i) => {
-    const m = Math.abs(Math.round(+e.avant_min || 0)), apres = FEUILLE.estApres(e);
-    return `<div class="fm-l" data-fm="${i}"><span class="fm-temps"><input type="number" min="0" max="48" data-fk="h" value="${Math.floor(m / 60)}" aria-label="Heures"><span>h</span><input type="number" min="0" max="59" step="5" data-fk="m" value="${String(m % 60).padStart(2, '0')}" aria-label="Minutes">
-      <select data-fk="sens" aria-label="Avant ou après"><option value="avant"${apres ? '' : ' selected'}>avant le lever de rideau</option><option value="apres"${apres ? ' selected' : ''}>après la fin</option></select></span>
-      <input type="text" data-fk="quoi" value="${esc(e.quoi || '')}" placeholder="Quoi : raccords, repas…" aria-label="Quoi">
+    const m = Math.abs(Math.round(+e.avant_min || 0)), apres = FEUILLE.estApres(e), d = dec(e);
+    const quand = d
+      ? `<span class="fm-temps"><span>à</span><input type="time" data-fk="heure" value="${esc(e.heure || '')}" aria-label="Heure de début"><span>jusqu’à</span><input type="time" data-fk="heure_fin" value="${esc(e.heure_fin || '')}" aria-label="Heure de fin (facultatif)"></span>`
+      : `<span class="fm-temps"><input type="number" min="0" max="48" data-fk="h" value="${Math.floor(m / 60)}" aria-label="Heures"><span>h</span><input type="number" min="0" max="59" step="5" data-fk="m" value="${String(m % 60).padStart(2, '0')}" aria-label="Minutes">
+      <select data-fk="sens" aria-label="Avant ou après"><option value="avant"${apres ? '' : ' selected'}>avant le lever de rideau</option><option value="apres"${apres ? ' selected' : ''}>après la fin</option></select></span>`;
+    return `<div class="fm-l" data-fm="${i}">${quand}
+      <input type="text" data-fk="quoi" value="${esc(e.quoi || '')}" placeholder="${d ? 'Quoi : trajet, montage, démontage…' : 'Quoi : raccords, repas…'}" aria-label="Quoi">
       <input type="text" data-fk="qui" value="${esc(e.qui || '')}" placeholder="Qui" aria-label="Qui">
-      <select data-fk="jours" aria-label="Sur plusieurs jours de suite">${[['premier', 'le premier jour'], ['tous', 'chaque jour'], ['dernier', 'le dernier jour']].map(([k, l]) => `<option value="${k}"${FEUILLE.joursEtape(e) === k ? ' selected' : ''}>${l}</option>`).join('')}</select>
+      <select data-fk="jours" aria-label="Quel jour">${optionsJour(e)}</select>
       <button type="button" class="btn petit danger" data-fm-retirer title="Retirer cette étape" aria-label="Retirer cette étape">✕</button></div>`;
   };
   const dessinerExemple = () => {
     const reps = exemples[exemple].map(r => ({ jour: AGENDA.iso(new Date(Date.now() + 864e5 * (7 + (r.jour || 0)))), heure: r.heure, public: r.public || 'tout_public' }));
     const pl = FEUILLE.etapes({ spectacle: { duree: F.duree, feuille_modele: F.feuille_modele }, representations: reps });
-    const jours = [...new Set(pl.map(r => r.jour))], veilles = new Set(pl.filter(r => r.veille).map(r => r.jour));
+    const jours = [...new Set(pl.map(r => r.jour))], veilles = new Set(pl.filter(r => r.veille).map(r => r.jour)), lendemains = new Set(pl.filter(r => r.lendemain).map(r => r.jour));
+    // un jour qui n'a que des étapes de la veille ou du lendemain n'est pas un jour de représentation
+    const joursRep = new Set(pl.filter(r => r.rep).map(r => r.jour));
     let n = 0;
-    const libelle = j => veilles.has(j) ? 'La veille' : `${['Premier', 'Deuxième', 'Troisième'][n++] || ''} jour`;
+    const libelle = j => !joursRep.has(j) && veilles.has(j) ? 'La veille' : !joursRep.has(j) && lendemains.has(j) ? 'Le lendemain' : `${['Premier', 'Deuxième', 'Troisième'][n++] || ''} jour`;
     $('#fm-exemple', z).innerHTML = pl.length ? jours.map(j => `${jours.length > 1 ? `<p class="fm-jour">${libelle(j)}</p>` : ''}<ul class="liste-simple fm-ex">${pl.filter(r => r.jour === j).map(r => `<li${r.rep ? ' class="fm-rep-ex"' : ''}><b>${esc(FEUILLE.heure(r.heure) || '–')}</b><span>${esc(r.quoi)}${r.fin ? ` <span class="compte">jusqu’à ${esc(FEUILLE.heure(r.fin))}</span>` : ''}${r.estime ? ' <span class="compte">(à vérifier)</span>' : ''}</span>${r.qui ? `<span class="compte">${esc(r.qui)}</span>` : ''}</li>`).join('')}</ul>`).join('') : '<p class="aide">Rien à montrer.</p>';
   };
   const dessiner = () => {
     const xs = F.feuille_modele, duree = FEUILLE.dureeMinutes(F.duree);
     const rangs = xs.map((e, i) => [e, i]).sort((a, b) => rang(a[0]) - rang(b[0]));
-    const avant = rangs.filter(([e]) => !FEUILLE.estApres(e)), apres = rangs.filter(([e]) => FEUILLE.estApres(e));
+    const veille = rangs.filter(([e]) => dec(e) < 0), lendemain = rangs.filter(([e]) => dec(e) > 0), memeJour = rangs.filter(([e]) => !dec(e));
+    const avant = memeJour.filter(([e]) => !FEUILLE.estApres(e)), apres = memeJour.filter(([e]) => FEUILLE.estApres(e));
+    const titre = t => `<p class="fm-jour">${t}</p>`;
     z.innerHTML = `<div class="bloc"><h3>Déroulé type d’une journée de représentation</h3>
       <p class="aide">Chaque feuille de route le pose autour des représentations de sa date : les étapes « avant » avant la première représentation du jour, les étapes « après » après la dernière. Plusieurs jours de suite au même lieu : chaque étape a lieu le premier jour, chaque jour ou le dernier (le montage le premier, le démontage le dernier).</p>
-      <p class="aide">Rien ne se fait la nuit : le montage qui tomberait avant 8h passe la veille (à partir de 9h, ou de 14h s’il tient dans l’après-midi), et le jour même commence par l’arrivée de l’équipe, vers 8h au plus tôt et au moins une heure avant la représentation ; les raccords suivent l’arrivée. Un repas ne s’écrit qu’aux heures des repas (11h30-14h, 18h30-21h) ; une représentation le matin et une l’après-midi : le déjeuner entre les deux.</p>
-      ${xs.length ? `<div class="fm-lignes"><div class="fm-l fm-entete" aria-hidden="true"><span>Quand</span><span>Quoi</span><span>Qui</span><span>Sur plusieurs jours</span><span></span></div>${avant.map(([e, i]) => ligne(e, i)).join('')}
+      <p class="aide">L’installation technique, le trajet ou le démontage ont souvent lieu un autre jour : choisissez « La veille » ou « Le lendemain » dans la colonne Jour et donnez l’heure. La veille se compte depuis le premier jour de la série, le lendemain depuis le dernier.</p>
+      <p class="aide">Rien ne se fait la nuit le jour même : le montage qui tomberait avant 8h passe la veille (à partir de 9h, ou de 14h s’il tient dans l’après-midi), et le jour même commence par l’arrivée de l’équipe, vers 8h au plus tôt et au moins une heure avant la représentation ; les raccords suivent l’arrivée. Un repas ne s’écrit qu’aux heures des repas (11h30-14h, 18h30-21h) ; une représentation le matin et une l’après-midi : le déjeuner entre les deux.</p>
+      ${xs.length ? `<div class="fm-lignes"><div class="fm-l fm-entete" aria-hidden="true"><span>Quand</span><span>Quoi</span><span>Qui</span><span>Jour</span><span></span></div>
+        ${veille.length ? titre('La veille') + veille.map(([e, i]) => ligne(e, i)).join('') : ''}
+        ${veille.length || lendemain.length ? titre('Le jour de la représentation') : ''}${avant.map(([e, i]) => ligne(e, i)).join('')}
         <div class="fm-rep"><b>Lever de rideau</b> : la représentation${duree ? `, ${esc(FEUILLE.dureeTexte(duree))} d’après la durée du spectacle` : ' (durée inconnue : indiquez-la dans l’onglet Général)'}</div>
-        ${apres.map(([e, i]) => ligne(e, i)).join('')}</div>` : '<p>Aucun déroulé type : la feuille de route de chaque date ne contiendra que les représentations.</p>'}
-      <div class="fm-boutons"><button type="button" class="btn petit" data-fm-ajout="avant">＋ Étape avant</button><button type="button" class="btn petit" data-fm-ajout="apres">＋ Étape après la fin</button>${xs.length ? '' : '<button type="button" class="btn petit principal" data-fm-proposer>Proposer un déroulé type</button>'}</div></div>
+        ${apres.map(([e, i]) => ligne(e, i)).join('')}
+        ${lendemain.length ? titre('Le lendemain') + lendemain.map(([e, i]) => ligne(e, i)).join('') : ''}</div>` : '<p>Aucun déroulé type : la feuille de route de chaque date ne contiendra que les représentations.</p>'}
+      <div class="fm-boutons"><button type="button" class="btn petit" data-fm-ajout="veille">＋ Étape la veille</button><button type="button" class="btn petit" data-fm-ajout="avant">＋ Étape avant</button><button type="button" class="btn petit" data-fm-ajout="apres">＋ Étape après la fin</button><button type="button" class="btn petit" data-fm-ajout="lendemain">＋ Étape le lendemain</button>${xs.length ? '' : '<button type="button" class="btn petit principal" data-fm-proposer>Proposer un déroulé type</button>'}</div></div>
       <div class="bloc"><h3>Ce que donne le planning</h3><div class="seg" role="group" aria-label="Exemple">${[['un', 'Une représentation à 20h'], ['matin', 'À 10h'], ['deux', 'À 10h20 et 14h10'], ['trois', 'Trois soirs de suite']].map(([k, l]) => `<button type="button" data-fm-ex="${k}" aria-pressed="${k === exemple}">${l}</button>`).join('')}</div><div id="fm-exemple" style="margin-top:12px"></div></div>`;
     dessinerExemple();
   };
   const lireLigne = l => {
-    const i = +l.dataset.fm, val = k => $(`[data-fk="${k}"]`, l).value;
+    const i = +l.dataset.fm, champ = k => $(`[data-fk="${k}"]`, l), val = k => champ(k)?.value ?? '', j = val('jours'), d = /^d:-?\d+$/.test(j) ? +j.slice(2) : 0;
+    const base = { quoi: val('quoi'), qui: val('qui') };
+    // l'étape change de jour : l'heure écrite (la veille, le lendemain) ou le temps avant/après les représentations manque encore
+    if (d) { const fin = val('heure_fin'); F.feuille_modele[i] = { ...base, decalage: d, heure: champ('heure') ? val('heure') : d < 0 ? '14:00' : '10:00', ...(fin ? { heure_fin: fin } : {}) }; return; }
+    if (!champ('h')) { F.feuille_modele[i] = j === 'dernier' ? { avant_min: -30, ...base, jours: j, fin: true } : { avant_min: 90, ...base, jours: j }; return; }
     const minutes = (Math.max(0, +val('h') || 0)) * 60 + Math.max(0, +val('m') || 0), apres = val('sens') === 'apres';
-    F.feuille_modele[i] = { avant_min: apres ? -minutes : minutes, quoi: val('quoi'), qui: val('qui'), jours: val('jours'), ...(apres ? { fin: true } : {}) };
+    F.feuille_modele[i] = { avant_min: apres ? -minutes : minutes, ...base, jours: j, ...(apres ? { fin: true } : {}) };
   };
   z.addEventListener('input', e => { const l = e.target.closest('[data-fm]'); if (!l) return; lireLigne(l); marquerSale(); dessinerExemple(); });
   z.addEventListener('change', e => {
     const l = e.target.closest('[data-fm]'); if (!l) return;
     lireLigne(l); marquerSale();
-    if (['h', 'm', 'sens'].includes(e.target.dataset.fk)) {
+    if (['h', 'm', 'sens', 'jours', 'heure'].includes(e.target.dataset.fk)) {
       const garde = F.feuille_modele[+l.dataset.fm];
       trierModele(); dessiner();
-      $(`[data-fm="${F.feuille_modele.indexOf(garde)}"] [data-fk="quoi"]`, z)?.focus();
+      $(`[data-fm="${F.feuille_modele.indexOf(garde)}"] [data-fk="${e.target.dataset.fk === 'jours' ? 'jours' : 'quoi'}"]`, z)?.focus();
     }
   });
   z.addEventListener('click', e => {
@@ -874,7 +900,10 @@ function ongletDeroule(z, F) {
     if (b.dataset.fmEx) { exemple = b.dataset.fmEx; $$('[data-fm-ex]', z).forEach(x => x.setAttribute('aria-pressed', x === b)); dessinerExemple(); return; }
     if (b.dataset.fmProposer !== undefined) { F.feuille_modele = clone(FEUILLE.DEROULE); marquerSale(); dessiner(); annoncer('Déroulé type proposé : ajustez-le, puis enregistrez.'); return; }
     if (b.dataset.fmAjout) {
-      const neuf = b.dataset.fmAjout === 'apres' ? { avant_min: -30, quoi: '', qui: '', jours: 'dernier', fin: true } : { avant_min: 90, quoi: '', qui: '', jours: 'premier' };
+      const neuf = b.dataset.fmAjout === 'apres' ? { avant_min: -30, quoi: '', qui: '', jours: 'dernier', fin: true }
+        : b.dataset.fmAjout === 'veille' ? { decalage: -1, heure: '14:00', quoi: '', qui: '' }
+          : b.dataset.fmAjout === 'lendemain' ? { decalage: 1, heure: '10:00', quoi: '', qui: '' }
+            : { avant_min: 90, quoi: '', qui: '', jours: 'premier' };
       F.feuille_modele.push(neuf); trierModele(); marquerSale(); dessiner();
       const l = $(`[data-fm="${F.feuille_modele.indexOf(neuf)}"]`, z); if (l) { tt('ajouter', l); $('[data-fk="quoi"]', l)?.focus(); }
       return;

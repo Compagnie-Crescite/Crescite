@@ -53,8 +53,12 @@
    logo (logo-feuille.svg, à côté de ce fichier) est écrit par site/build.py dans le site construit (sa source
    reste privée) : sans lui, un badge « crescite » à sa place.
 
-   Le planning pose le déroulé type du spectacle (spectacle.feuille_modele : [{avant_min, quoi, qui, fin?, jours?}])
-   autour des représentations. Un jour à plusieurs représentations : les étapes « avant » (minutes avant le lever de
+   Le planning pose le déroulé type du spectacle (spectacle.feuille_modele : [{avant_min, quoi, qui, fin?, jours?,
+   decalage?, heure?, heure_fin?}]) autour des représentations. Une étape peut aussi avoir lieu un autre jour que les
+   représentations (decalage : -1 la veille, 1 le lendemain, en jours ; heure, et heure_fin si elle dure : l'heure
+   écrite, 'HH:MM', puisque « X minutes avant le rideau » n'a plus de sens) : l'installation technique, le trajet
+   d'aller, le démontage, le retour. La veille se compte depuis le premier jour de la série, le lendemain depuis le
+   dernier ; ces étapes sont posées telles quelles, sans les règles de la nuit, et n'ont pas besoin de « jours ». Un jour à plusieurs représentations : les étapes « avant » (minutes avant le lever de
    rideau) avant la première, les étapes « après » (avant_min négatif, ou fin: true) après la dernière ; entre les deux,
    seulement les représentations, et un repas si l'écart dépasse trois heures. Plusieurs jours de suite au même lieu :
    une étape a lieu le premier jour, chaque jour ou le dernier (jours : 'premier' | 'tous' | 'dernier'). Sans indication,
@@ -288,6 +292,8 @@ ${s} .s{background:${MISE.surligne}}`;
     { avant_min: -15, fin: true, quoi: 'Démontage et chargement', qui: 'Technique', jours: 'dernier' },
   ];
   const estApres = e => e.fin === true || (+e.avant_min || 0) < 0;
+  // l'écart en jours d'une étape avec les représentations : -1 la veille, 1 le lendemain, 0 le jour même
+  const decalage = e => Math.max(-7, Math.min(7, Math.trunc(+e?.decalage) || 0));
   const CHAQUE_JOUR = /arrivee\s+(de\s+)?(l['’]\s*|la\s+|les\s+)?(equipe\s+artistique|artistes?|comedien|interpretes?)|preparation|habillage|maquillage|echauffement|mise\s+en\s+condition/;
   // le jour d'une étape sur plusieurs jours de suite : 'premier', 'tous' ou 'dernier'
   const joursEtape = e => ['premier', 'tous', 'dernier'].includes(e?.jours) ? e.jours : estApres(e || {}) ? 'dernier' : CHAQUE_JOUR.test(norm(e?.quoi)) ? 'tous' : 'premier';
@@ -324,7 +330,9 @@ ${s} .s{background:${MISE.surligne}}`;
       vivantes.forEach((r, k) => out.push({ jour: r.jour, m: minutes(r.heure), fin: minutes(r.fin), quoi: txt(r.note) || NATURES[nature] || 'séance', qui: '', seance: true, cle: `pl:${r.jour}:seance:${r.id ?? k}` }));
       return ordonner(out);
     }
-    const etapes = (Array.isArray(modele) ? modele : []).filter(e => e && txt(e.quoi));
+    const toutes = (Array.isArray(modele) ? modele : []).filter(e => e && txt(e.quoi));
+    // celles d'un autre jour (la veille, le lendemain) sont posées à l'heure écrite ; les autres, autour des représentations
+    const hors = toutes.filter(e => decalage(e) !== 0), etapes = toutes.filter(e => decalage(e) === 0);
     // une étape à zéro minute, avant : la représentation elle-même (son nom, ses gens)
     const gabarit = etapes.find(e => !estApres(e) && (+e.avant_min || 0) === 0);
     const avant = etapes.filter(e => e !== gabarit && !estApres(e)).sort((a, b) => (+b.avant_min || 0) - (+a.avant_min || 0));
@@ -344,6 +352,12 @@ ${s} .s{background:${MISE.surligne}}`;
       const dernier = i === jours.length - 1 || jourPlus(j, 1) !== jours[i + 1];
       const garde = e => { const q = joursEtape(e); return q === 'tous' || (q === 'premier' && premier) || (q === 'dernier' && dernier); };
       const rs = vivantes.filter(r => r.jour === j).sort((a, b) => (minutes(a.heure) ?? 1e9) - (minutes(b.heure) ?? 1e9));
+      // les étapes d'un autre jour : la veille du premier jour de la série, le lendemain de son dernier jour
+      hors.forEach(e => {
+        const d = decalage(e);
+        if (d < 0 ? !premier : !dernier) return;
+        etape(jourPlus(j, d), minutes(h5(e.heure)), e, { fin: minutes(h5(e.heure_fin)), veille: d < 0, lendemain: d > 0 });
+      });
       const t0 = minutes(rs[0].heure);
       if (t0 === null) avant.filter(garde).forEach(e => etape(j, null, e));
       else {
@@ -425,7 +439,7 @@ ${s} .s{background:${MISE.surligne}}`;
     const seances = representations.filter(r => estJour(r?.jour)).map(r => ({ id: r.id ?? null, jour: r.jour, heure: h5(r.heure), fin: h5(r.fin), public: r.public || 'tout_public', note: txt(r.note), annulee: !!r.annulee }));
     return etapesPlanning(seances, date.nature, spectacle.feuille_modele, dureeMinutes(spectacle.duree)).map(e => ({
       jour: e.jour, heure: e.m == null ? '' : hhmm(e.m), fin: e.fin == null ? '' : hhmm(e.fin),
-      quoi: e.rep && PUBLIC_TEXTE[e.public] ? `${e.quoi} ${PUBLIC_TEXTE[e.public]}` : e.quoi, qui: e.qui, rep: !!e.rep, veille: !!e.veille, estime: !!e.estime }));
+      quoi: e.rep && PUBLIC_TEXTE[e.public] ? `${e.quoi} ${PUBLIC_TEXTE[e.public]}` : e.quoi, qui: e.qui, rep: !!e.rep, veille: !!e.veille, lendemain: !!e.lendemain, estime: !!e.estime }));
   }
 
   // un contact écrit à la main (« Marie Dupont, 06 12 34 56 78, marie@lieu.fr ») : nom, téléphone, adresse électronique ;
@@ -1264,7 +1278,7 @@ ${cssPage('.fdr-imp')}
   const api = {
     composer, contenu, actualiser, planning, html, pdf, telecharger, impression, definition, nomFichier, vendor: vendorDefaut,
     MISE, cssPage, cssPolices, logo, logoUrl, polices, htmlBloc, bloc, segments, visibles, texteBloc, lireHeure, dateDuTexte, nouvelId, jetons,
-    DEROULE, etapes, trier, joursEtape, estApres, dureeMinutes, dureeTexte, heure, heureCourte, jourLong, quandTexte, telTexte, telLien, itineraire, lireContact,
+    DEROULE, etapes, trier, joursEtape, decalage, estApres, dureeMinutes, dureeTexte, heure, heureCourte, jourLong, quandTexte, telTexte, telLien, itineraire, lireContact,
     manques, remplirAmorce, cleMot, aLieu, RE_TEL, RE_MEL, hebergements, reprendreHebergement, origineHebergement,
   };
   return api;
