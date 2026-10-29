@@ -34,9 +34,13 @@ const MOBILE = (() => {
   // « Supprimer la date… » ne doivent jamais passer dessous), dans une fiche ouverte ou en création, et dans une feuille de route,
   // un spectacle ou le tableur (qui ont l'un ou l'autre) : une seule règle, pour la pose et pour l'observateur
   const plusCache = () => /(nouvelle|nouveau|\d+)$/.test(location.hash) || !!$('.deux.edition') || !!$('#vue .pied-ed, #vue .tab-ligne-etat');
+  // le « + » visible, un pied de fiche dans la page (ou dans un tiroir) : deux classes sur html, pour que l'annonce et la marge du bas
+  // se posent au-dessus d'eux. (Pas de :has() posé sur html : il referait les styles de toute la page à chaque changement, et
+  // l'ouverture d'une date en coûtait 150 ms de plus à CPU=4.)
+  const marquer = () => { const h = document.documentElement; h.classList.toggle('ob-avec-plus', !!bouton && !bouton.hidden); h.classList.toggle('ob-avec-pied', !!bouton && !!$('.pied-ed')); };
   function poser() {
     // (le squelette du chargement, au téléphone, a déjà l'en-tête du téléphone : il garde html.ob-actif)
-    if (!actif() || !E.pret || !$('#vue')) { if (barre) { barre.remove(); barre = null; } if (bouton) { bouton.remove(); bouton = null; } document.documentElement.classList.toggle('ob-actif', actif() && !!$('.barre.attente')); return; }
+    if (!actif() || !E.pret || !$('#vue')) { if (barre) { barre.remove(); barre = null; } if (bouton) { bouton.remove(); bouton = null; } document.documentElement.classList.toggle('ob-actif', actif() && !!$('.barre.attente')); marquer(); return; }
     document.documentElement.classList.add('ob-actif');
     if (!barre) {
       barre = document.createElement('nav'); barre.className = 'ob-barre'; barre.setAttribute('aria-label', 'Rubriques');
@@ -50,6 +54,7 @@ const MOBILE = (() => {
     const r = rubrique(), tabs = new Set(ONGLETS.map(o => o[0]));
     $$('[data-ob]', barre).forEach(a => { const ici = a.dataset.ob === r || (a.dataset.ob === 'plus' && !tabs.has(r)); if (ici) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     bouton.hidden = plusCache();
+    marquer();
   }
   // une feuille qui monte du bas : des liens et des actions ; un élément { groupe } est un intertitre, { html } un texte, demi le range sur
   // deux colonnes avec ses voisins, courant le marque comme la rubrique où l'on est, nouvel l'ouvre dans un autre onglet ;
@@ -166,7 +171,7 @@ const MOBILE = (() => {
   if (typeof matchMedia === 'function') matchMedia(MQ).addEventListener('change', poser);
   // la page se dessine (cadre) : la barre se pose dès que l'administration est là, et le « + » se cache dans une fiche
   let poserPlusTard = null;
-  new MutationObserver(() => { clearTimeout(poserPlusTard); poserPlusTard = setTimeout(() => { if (!barre) { if (actif() && E.pret && $('#vue')) poser(); } else bouton.hidden = plusCache(); }, 50); }).observe(document.body, { childList: true, subtree: true });
+  new MutationObserver(() => { clearTimeout(poserPlusTard); poserPlusTard = setTimeout(() => { if (!barre) { if (actif() && E.pret && $('#vue')) poser(); } else { bouton.hidden = plusCache(); marquer(); } }, 50); }).observe(document.body, { childList: true, subtree: true });
   const style = document.createElement('style');
   style.textContent = `
 @media (max-width: 640px) {
@@ -197,10 +202,10 @@ const MOBILE = (() => {
   /* ce que le pied et le détail du planning laissent à la barre ; un champ amené à l'écran ne se cache pas sous le pied */
   html.ob-actif { --pl-bas: calc(64px + env(safe-area-inset-bottom, 0px)); scroll-padding-bottom: calc(150px + env(safe-area-inset-bottom, 0px)); }
   /* le « + » (54 px à 76 px du bas) : les annonces et le pied commun se posent au-dessus de lui, jamais dessous */
-  html.ob-actif:has(.ob-plus:not([hidden])) #annonces { bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
-  html.ob-actif:has(.ob-plus:not([hidden])) .pied-espace { padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
+  html.ob-actif.ob-avec-plus #annonces { bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
+  html.ob-actif.ob-avec-plus .pied-espace { padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
   /* une fiche a son pied collé au-dessus de la barre (64 px + sa rangée de 66 px) : l'annonce se pose au-dessus de lui, pas dessus */
-  html.ob-actif:has(.pied-ed) #annonces { bottom: calc(150px + env(safe-area-inset-bottom, 0px)); }
+  html.ob-actif.ob-avec-pied #annonces { bottom: calc(150px + env(safe-area-inset-bottom, 0px)); }
   /* le pied d'un tiroir est collé en bas du tiroir, qui n'a pas de barre : la règle ci-dessus (la barre) ne le concerne pas ;
      -20 px, le bas de .tiroir-corps au téléphone (tiroir.js en rend 24 à l'ordinateur) */
   html.ob-actif .tiroir-corps .pied-ed { bottom: -20px; }

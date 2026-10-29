@@ -141,7 +141,7 @@ python3 site/build.py        # d'abord : site/dist/equipe et site/dist/admin
 node site/mouvement-equipe.mjs        # l'espace de l'équipe, hors ligne, sur une saison fictive (51 vérifications)
 node site/mouvement-admin.mjs         # l'administration, sur une base fictive (34 vérifications)
 node site/reduit.mjs                  # l'immobilité de l'administration sous « moins d'animations » : quatre gestes au clavier (24 vérifications)
-node site/telephone.mjs               # l'administration au téléphone : dont la feuille de « Plus » (200 ms, le doux ; immobile sous « moins d'animations ») (225 vérifications)
+node site/telephone.mjs               # l'administration au téléphone : dont la feuille de « Plus » (200 ms, le doux ; immobile sous « moins d'animations ») (226 vérifications)
 CPU=4 node site/mouvement-equipe.mjs  # la même chose sur un téléphone quatre fois plus lent (le budget du contrat)
 bash site/bancs-admin.sh              # le build, puis tous les bancs de l'administration, dont mouvement-admin.mjs
 ```

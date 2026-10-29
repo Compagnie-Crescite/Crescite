@@ -12,7 +12,8 @@
 //       une rangée et « Supprimer » est dans « Plus » ; une date en tiroir au-dessus d'une fiche a son propre « Plus » ; (g) « Plus » et
 //       « Créer » rendent le focus en se fermant (même sans focus au toucher, comme sur l'iPhone), retiennent Tab, glissent en 200 ms
 //       au « doux », sans bouger sous « moins d'animations » ; (h) à 1 440 × 900, la tête, les pieds et les classes de sept fiches sont
-//       ceux d'avant (pas de « + », rien d'inerte : des mesures, pas une comparaison du DOM) ; (i) à CPU=4, aucune tâche de plus de 200 ms.
+//       ceux d'avant (pas de « + », rien d'inerte : des mesures, pas une comparaison du DOM) ; (i) à CPU=4, aucune tâche de plus de 200 ms, et aucune
+//       règle :has() posée sur la racine de la page (html, :root, body), hors impression.
 // 2 · tout au doigt (admin/mobile.js : du CSS sous html.ob-actif) : (a) sur quatorze routes (la liste des dates dans ses trois vues, le
 //   tableur, la carte, la fenêtre de la distribution d'une date y comprises), aucune commande sous 44 px de haut, aucun champ sous
 //   16 px de texte ; la croix et « Annuler » d'une annonce, et « Installer », aussi ; (b) le lieu d'une date passe sur deux lignes au lieu d'être coupé par « … » ; (c) à 1 440 × 900 et à
@@ -371,6 +372,22 @@ const plusCache = page => page.evaluate(() => { const p = document.querySelector
   await toucher(page, '[data-ob="plus"]'); await page.waitForTimeout(500); await page.keyboard.press('Escape'); await page.waitForTimeout(500);
   const longues = await page.evaluate(() => window.__longues);
   ok('1 · i · à CPU=4, six vues et la feuille de « Plus » : aucune tâche de plus de 200 ms', longues.every(d => d <= 200), `tâches longues : ${longues.join(', ') || 'aucune'}`);
+  // un :has() posé sur la racine (html, :root, body) se réévalue à chaque changement de la page et en refait tous les styles :
+  // les trois du lot 1 doublaient le coût des styles à l'ouverture d'une date (250 ms au lieu de 100, à CPU=4). L'impression,
+  // qui ne se dessine qu'une fois, n'y est pas comptée.
+  const racines = await page.evaluate(() => {
+    const xs = [];
+    const tete = sel => { let n = 0; for (let i = 0; i < sel.length; i++) { const c = sel[i]; if (c === '(') n++; else if (c === ')') n--; else if (n === 0 && /[\s>+~]/.test(c)) return sel.slice(0, i); } return sel; };
+    const lire = (regles, imprime) => { for (const r of regles) {
+      if (r.media) { lire(r.cssRules, imprime || /print/.test(r.media.mediaText)); continue; }
+      if (r.cssRules && !r.selectorText) { lire(r.cssRules, imprime); continue; }
+      if (!r.selectorText || imprime) continue;
+      for (const sel of r.selectorText.split(',')) { const t = tete(sel.trim()); if (/^(html|:root|body)\b/.test(t) && t.includes(':has(')) xs.push(sel.trim()); }
+    } };
+    for (const f of document.styleSheets) { try { lire(f.cssRules, false); } catch { /* une feuille d'une autre origine */ } }
+    return xs;
+  });
+  ok('1 · i · aucune règle (hors impression) ne pose :has() sur la racine de la page : elle referait tous les styles à chaque changement', racines.length === 0, racines.join(' / '));
   fin('1 · CPU=4', erreurs);
   await ctx.close();
 }
