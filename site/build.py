@@ -645,6 +645,19 @@ def fond_carte():
     return fond
 
 
+def convention_depart():
+    """Le texte de départ de la convention des établissements (data/convention.json). Le site le prend tant que la base
+    n'a pas le sien ; l'administration le reçoit par admin/convention.js, écrit ici, pour créer le texte au premier
+    passage dans Textes du site."""
+    conv = json.loads((ROOT / "data" / "convention.json").read_text(encoding="utf-8"))["convention"]
+    texte = ("'use strict';\n// Le texte de départ de la convention des établissements (Textes du site → « Convention des établissements »),\n"
+             "// que l'administration inscrit dans la base au premier passage. Écrit par site/build.py (convention_depart) depuis\n"
+             "// data/convention.json : ne pas modifier à la main.\n"
+             f"const CONVENTION_DEPART = {json.dumps(conv, ensure_ascii=False, indent=1)};\n")
+    (ROOT / "admin" / "convention.js").write_text(texte, encoding="utf-8")
+    return conv
+
+
 def photos_de_la_base():
     """Les photos publiées des personnes, telles que la base les donne au site : {slug: (chemin, crédit)}. Une photo déposée
     par l'administration y a son propre nom de fichier ; None si la base ne répond pas (on garde alors le registre privé)."""
@@ -873,6 +886,9 @@ def build_data():
             "actions": {"titre": site["actions"]["blocs"][0]["titre"], "blocs": [h for b in site["actions"]["blocs"][1:] for h in b.get("html", [])],
                         "credit": site["actions"]["credit"]},
             "ecole": U["ecole"],
+            # la convention que « Je représente un établissement scolaire » compose en PDF : son texte de départ, tant que la
+            # base n'a pas celui de l'administration (Textes du site, clé « convention »)
+            "convention": convention_depart(),
             "contact": site["contact"],
             # le contact des programmateurs : l'administratrice (nom et rôle publics : mentions légales, dossier artistique),
             # l'adresse publique de la compagnie ; le téléphone seulement si l'administration le saisit dans la base
@@ -1139,7 +1155,7 @@ def admin(dest):
     # (communs avec equipe/), l'équipe, la rubrique Planning (propositions de dates), le tableau de bord, le tableur
     for f in ("prefs.js", "icones.js", "feuille.js", "equipe.js", "distribution.js", "planning.js", "disponibilites.js", "tableau.js", "tableur.js", "gestes.js", "menus.js",
               "corbeille.js", "fenetres.js", "tiroir.js", "selection.js", "parcours.js", "gardefous.js", "series.js", "modeles.js", "notes.js", "carnet.js", "fond-carte.js", "tournee.js", "cadre.js", "mobile.js", "habillage.js",
-              "manifest.webmanifest", "sw.js"):
+              "convention.js", "manifest.webmanifest", "sw.js"):
         shutil.copyfile(ROOT / "admin" / f, dest / "admin" / f)
     for f in (ROOT / "admin" / "vendor").iterdir():
         shutil.copyfile(f, dest / "admin" / "vendor" / f.name)

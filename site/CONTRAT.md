@@ -306,6 +306,12 @@ Un directeur de salle vient chercher trois choses : à qui parler, un dossier à
   celui de Cléophène, le titre de sa fiche technique ; sur celui de Macbeth (sans fiche), `L.ficheTechniqueSurDemande`.
   `D.documents` a maintenant 15 vrais documents (dossiers de diffusion, fiches techniques, dossiers scolaires).
 
+- **La convention des établissements** (« Je représente un établissement scolaire ») : son texte est celui de
+  l'administration (demande du client, 29 octobre 2026), `D.site.convention` = `{titre, parties, articles: [{titre,
+  texte}], fin, signatureEtablissement, signatureCompagnie}` (base : `crescite_textes`, clé `convention` ; sinon le texte
+  de départ, `data/convention.json`). Le PDF n'écrit rien d'autre ; `{{etablissement}}`, `{{ville}}`, `{{chef}}`,
+  `{{spectacle}}`, `{{classes}}`, `{{ateliers}}` y prennent ce que l'établissement a saisi.
+
 ## Règle 14 : un spectacle sans action culturelle (demande du client)
 « Supprime pour l'instant l'action culturelle autour de Cassandre. POUR L'INSTANT ELLE n'est pas construite. »
 `show.actionCulturelle` vaut maintenant `null` quand un spectacle n'en a pas (Cassandres, pour l'instant : en base elle

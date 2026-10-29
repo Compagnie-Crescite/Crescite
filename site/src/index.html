@@ -6077,25 +6077,21 @@ html.still .sc-image { transition: opacity .35s ease !important; }
             try {
               if (typeof DOSSIER !== 'undefined' && DOSSIER.charger) await DOSSIER.charger();
               if (typeof pdfMake === 'undefined') throw new Error('pdfmake non disponible');
+              // le texte de la convention : celui de l'administration (Textes du site, clé « convention »), ce que
+              // l'établissement a saisi à la place de ses champs {{…}}
+              const C = S.convention || {}, champs = { etablissement: etab, ville, chef, spectacle: sp ? sp.titre : 'Spectacle Crescite', classes, ateliers };
+              const remplir = x => String(x || '').replace(/\{\{\s*([a-z_]+)\s*\}\}/g, (m, k) => (k in champs ? champs[k] : m));
               const docDef = {
                 pageSize: 'A4', pageMargins: [48, 48, 48, 48],
                 content: [
-                  { text: 'CONVENTION DE PARTENARIAT D’ACTION CULTURELLE', style: 'titre', alignment: 'center' },
-                  { text: 'ENTRE LES SOUSSIGNÉS :', style: 'h2' },
-                  { text: `1. L’Établissement scolaire : ${etab}, situé à ${ville}, représenté par ${chef}, agissant en qualité de chef d’établissement,\n\n2. La Compagnie Crescite, association loi 1901, sise à Rouen, titulaire des licences d’entrepreneur de spectacles vivants, représentée par M. Angelo Jossec, Directeur artistique,\n\nIL A ÉTÉ CONVENU CE QUI SUIT :`, margin: [0, 6, 0, 14] },
-                  { text: 'Article 1 — Objet de la convention', style: 'article' },
-                  { text: `La présente convention a pour objet d'organiser l'accueil et le déroulement du projet artistique autour du spectacle "${sp ? sp.titre : 'Spectacle Crescite'}" au bénéfice des élèves de l’établissement.\nProjet : ${classes}.\nActions : Représentation(s) in situ ou en salle dédiée et ${ateliers}.` },
-                  { text: '\nArticle 2 — Modalités pédagogiques et calendrier', style: 'article' },
-                  { text: 'Les séances d’ateliers et représentations sont planifiées en concertation étroite entre l’équipe artistique de la Compagnie Crescite et les enseignants référents du projet. Les ateliers sont encadrés par des comédiens professionnels de la troupe.' },
-                  { text: '\nArticle 3 — Modalités financières', style: 'article' },
-                  { text: 'Les modalités financières du projet sont précisées dans une annexe signée par les deux parties.' },
-                  { text: '\nArticle 4 — Engagements et sécurité', style: 'article' },
-                  { text: 'L’établissement met à disposition un espace adapté respectant les contraintes techniques du spectacle (sol plan, dégagement suffisant). Les élèves demeurent sous la responsabilité de l’équipe éducative pendant toute la durée des interventions.' },
-                  { text: '\nFait en deux exemplaires originaux, à Rouen et à ' + ville + '.\n\n\n', margin: [0, 10, 0, 0] },
+                  { text: remplir(C.titre).toUpperCase(), style: 'titre', alignment: 'center' },
+                  { text: remplir(C.parties), margin: [0, 6, 0, 14] },
+                  ...(C.articles || []).flatMap((x, i) => [{ text: remplir(x.titre), style: 'article', margin: [0, i ? 12 : 0, 0, 0] }, { text: remplir(x.texte) }]),
+                  { text: remplir(C.fin) + '\n\n\n', margin: [0, 22, 0, 0] },
                   {
                     columns: [
-                      { text: `Pour l’Établissement\n${chef}\n(Signature et cachet)`, alignment: 'left' },
-                      { text: 'Pour la Compagnie Crescite\nAngelo Jossec\nDirecteur artistique', alignment: 'right' }
+                      { text: remplir(C.signatureEtablissement), alignment: 'left' },
+                      { text: remplir(C.signatureCompagnie), alignment: 'right' }
                     ]
                   }
                 ],

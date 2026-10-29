@@ -258,7 +258,7 @@ const DONNEES = (() => {
     // le site : la navigation du dépôt, les textes de la base
     const site = { ...S.site };
     ['nom', 'diaporama', 'donateurs', 'compagnie', 'actions', 'ecole', 'contact', 'coordonnees', 'ecrire', 'facebook',
-     'partenaires', 'liensLegaux', 'legal', 'programmation', 'espacePro', 'troupe'].forEach(k => { site[k] = k in texte ? texte[k] : D.site[k]; });
+     'partenaires', 'liensLegaux', 'legal', 'programmation', 'espacePro', 'troupe', 'convention'].forEach(k => { site[k] = k in texte ? texte[k] : D.site[k]; });
     site.saisons = cles.map(k => ({ saison: k, titre: `Saison ${k}`, menu: k === saison ? `Saison ${k.slice(2, 4)}-${k.slice(7, 9)}` : `Saison ${k}`,
                                     href: k === saison ? '#/saisons' : `#/saisons/${k}` }));
     // les documents publics : un fichier du stockage public (documents/…), ou un lien

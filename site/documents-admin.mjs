@@ -89,6 +89,21 @@ ok('un nom du récapitulatif mène à l’onglet Documents du spectacle', await 
 await page.waitForTimeout(900);
 await page.screenshot({ path: path.join(CAPT, 'recapitulatif.png'), fullPage: true });
 
+// ---------------------------------------------------------------- la convention des établissements, dans Textes du site
+// (la base fictive ne l'a pas : elle se crée au premier passage, avec le texte de départ de data/convention.json)
+await page.evaluate(() => { location.hash = '#/textes'; });
+await page.waitForSelector('a[href="#/textes/convention"]', { timeout: 10000 }).catch(() => {});
+ok('« Convention des établissements » est dans Textes du site, même quand la base ne l’a pas encore', (await texte(page, 'a[href="#/textes/convention"]')) === 'Convention des établissements');
+MODIFS.length = 0;
+await page.click('a[href="#/textes/convention"]');
+await page.waitForSelector('#t-f [data-chemin="articles.0.titre"]', { timeout: 10000 }).catch(() => {});
+const cree = MODIFS.find(x => x.table === 'crescite_textes' && x.post);
+ok('l’ouvrir l’inscrit dans la base avec le texte de départ (ses quatre articles)', !!cree && cree.post[0].cle === 'convention' && cree.post[0].valeur.articles.length === 4, JSON.stringify(MODIFS).slice(0, 300));
+ok('… puis il se modifie champ par champ : titre, parties, articles, signatures', (await compte(page, '#t-f [data-chemin^="articles."][data-chemin$=".texte"]')) === 4
+  && /Angelo Jossec/.test(await page.$eval('#t-f [data-chemin="signatureCompagnie"]', e => e.value).catch(() => '')) && (await compte(page, '#t-f [data-action="ajouter"][data-cible="articles"]')) === 1);
+await page.waitForTimeout(600);
+await page.screenshot({ path: path.join(CAPT, 'convention.png'), fullPage: true });
+
 ok('aucune erreur dans la page', !erreurs.length, erreurs.join(' | '));
 await navigateur.close();
 bilan(CAPT);
