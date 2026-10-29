@@ -1453,7 +1453,8 @@ function editeurFeuille(dateId) {
   $('.fr-tete h1').innerHTML = `Feuille de route · ${esc(s?.titre || '?')}<small>${esc(jourCourt(d.debut))}${d.fin && d.fin !== d.debut ? ` → ${esc(jourCourt(d.fin))}` : ''} · ${esc(lieuTexte(l) || 'lieu à préciser')}</small>`;
   $('.fr-tete').insertAdjacentHTML('beforeend', `<a class="btn" href="#/representations/${d.id}">Ouvrir la date</a>`);
   const f0 = E.feuilles.find(x => x.date_id === dateId) || null;
-  const etat = { d, f0, F: f0 ? feuilleVersForm(f0, d) : null, vue: 'page', editeur: null };
+  // (au téléphone, la feuille s'ouvre comme l'équipe la lit : du vrai texte à la taille de l'écran ; « Page A4 » reste à un toucher)
+  const etat = { d, f0, F: f0 ? feuilleVersForm(f0, d) : null, vue: typeof MOBILE !== 'undefined' && MOBILE.actif() ? 'tel' : 'page', editeur: null };
   etat.initial = signatureFeuille(etat.F);
   etat.lu = lignesLues(etat.F?.contenu.blocs);
   dessinerFeuille(etat);
@@ -1492,7 +1493,7 @@ function dessinerFeuille(etat) {
   const { d } = etat;
   if (!etat.F) {
     zone.innerHTML = `<div class="bloc fr-accueil"><h3>Pas encore de feuille de route pour cette date</h3>
-      <p>« Composer » écrit la feuille sur sa page A4, dans la forme habituelle : l’en-tête (le spectacle, l’équipe, les dates, le lieu), le planning jour par jour, les repas, transports et hébergement repris de la feuille précédente, les adresses et les contacts. Il ne reste qu’à relire et compléter : ce qui manque est écrit en gris, cliquez dessus pour l’écrire.</p>
+      <p>« Composer » écrit la feuille sur sa page A4, dans la forme habituelle : l’en-tête (le spectacle, l’équipe, les dates, le lieu), le planning jour par jour, les repas, transports et hébergement repris de la feuille précédente, les adresses et les contacts. Il ne reste qu’à relire et compléter : ce qui manque est écrit en gris, ${typeof MOBILE !== 'undefined' && MOBILE.actif() ? 'touchez-le' : 'cliquez dessus'} pour l’écrire.</p>
       ${alertesFeuille(d, null)}<p class="fm-boutons"><button type="button" class="btn principal" id="fr-composer">Composer la feuille</button><button type="button" class="btn" id="fr-vide">Partir d’une page blanche</button></p></div>`;
     const commencer = contenu => { etat.F = { titre: '', contenu, statut: 'brouillon', version: 1, publiee_le: null }; etat.lu = lignesLues(contenu.blocs); dessinerFeuille(etat); };
     $('#fr-composer', zone).addEventListener('click', () => { commencer(composerPour(d)); annoncer('Feuille composée : relisez, complétez ce qui est en gris, puis enregistrez.'); });
@@ -1500,6 +1501,7 @@ function dessinerFeuille(etat) {
     return;
   }
   const F = etat.F, pub = F.statut === 'publiee';
+  stylesA4();   // (la barre d'outils est dessinée dès la « Vue de l'équipe », avant que l'éditeur de la page A4 n'existe : ses styles sont là d'avance)
   const sale = () => signatureFeuille(etat.F) !== etat.initial;
   const quand = x => { const t = new Date(x); return isNaN(t) ? '' : `le ${t.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} à ${t.getHours()}h${String(t.getMinutes()).padStart(2, '0')}`; };
   const badge = pub ? `<span class="badge ok">Publiée v${F.version}</span><span class="compte">${esc(quand(F.publiee_le))} : l’équipe de la date la voit dans son espace</span>`
@@ -1517,7 +1519,7 @@ function dessinerFeuille(etat) {
       <span class="a4-groupe a4-zoom" role="group" aria-label="Zoom de la page">${bouton('zoom-moins', '−', 'Réduire la page de 10 % (Ctrl + molette vers le bas)', ' aria-label="Réduire le zoom"')}${bouton('zoom-cent', '100 %', 'Revenir à 100 %', ' aria-pressed="false"')}${bouton('zoom-plus', '+', 'Agrandir la page de 10 % (Ctrl + molette vers le haut)', ' aria-label="Agrandir le zoom"')}${bouton('zoom-auto', 'Ajuster', 'Ajuster la page à la largeur disponible', ' aria-pressed="true"')}<span class="a4-zoom-val" id="a4-zoom-val" role="status" aria-live="polite"></span></span>
       <span class="seg a4-vues" role="group" aria-label="Affichage"><button type="button" data-fr-vue="page" aria-pressed="${etat.vue === 'page'}">Page A4</button><button type="button" data-fr-vue="tel" aria-pressed="${etat.vue === 'tel'}">Vue de l’équipe</button></span>
     </div>
-    <p class="aide a4-aide" id="a4-aide">Écrivez directement sur la page. Les mots en gris manquent encore : cliquez dessus pour les écrire (ils ne sont jamais imprimés). Un trait bleu dans la marge : la ligne vient de la base, « Mettre à jour depuis la base » la tient à jour tant que vous ne la retouchez pas.</p>
+    <p class="aide a4-aide" id="a4-aide">Écrivez directement sur la page. Les mots en gris manquent encore : ${typeof MOBILE !== 'undefined' && MOBILE.actif() ? 'touchez-les' : 'cliquez dessus'} pour les écrire (ils ne sont jamais imprimés). Un trait bleu dans la marge : la ligne vient de la base, « Mettre à jour depuis la base » la tient à jour tant que vous ne la retouchez pas.</p>
     <div id="fr-vue"></div>
     <div class="pied-ed"><span class="etat-ed"></span>
       ${pub ? '<button type="button" class="btn" id="fr-brouillon">Repasser en brouillon</button>' : '<button type="button" class="btn" id="fr-publier">Publier pour l’équipe</button>'}
@@ -2004,6 +2006,9 @@ function stylesA4() {
 ${FEUILLE.cssPage('.a4-doc')}
 .a4-outils { position: sticky; top: var(--haut-barre, 0px); z-index: 6; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 12px 0 0; padding: 8px 10px; background: var(--carte); border: 1px solid var(--trait); border-radius: 12px; box-shadow: 0 4px 14px rgba(0,0,0,.06); }
 .a4-groupe { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+/* au téléphone : la barre ne reste pas collée en haut de l'écran, et ses outils de mise en page ne paraissent qu'en page A4 (« Page A4 » et « Vue de l'équipe » restent) */
+html.ob-actif .a4-outils { position: static; }
+html.ob-actif .a4-outils:has([data-fr-vue="tel"][aria-pressed="true"]) .a4-groupe { display: none; }
 .a4-b { border: 1px solid var(--trait); background: var(--carte); color: var(--encre); border-radius: 8px; padding: 6px 10px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; line-height: 1.2; }
 .a4-b:hover:not(:disabled) { border-color: var(--gris); }
 .a4-b[aria-pressed="true"] { background: var(--accent-doux); border-color: var(--accent); color: var(--accent-fonce); }

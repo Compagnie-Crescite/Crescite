@@ -25,6 +25,12 @@
 //   recherche seule visible, le reste derrière « Filtres » (44 px, son compte, ouvert d'office quand un filtre est posé, la rotation qui le redessine), dans la liste, le
 //   tableur et la carte ; (d) les « ＋ Nouveau… » du « + » ne s'affichent plus (ils restent dans la page), les autres restent ; (e) le
 //   planning s'ouvre sur le mois ; (f) les trois chiffres de la diffusion sur une ligne ; (g) à 1 440 × 900, rien n'a bougé.
+// 4 · la feuille de route lisible, la carte sur les dates (admin/equipe.js, admin/tournee.js) : (a) #/feuilles/101 s'ouvre en « Vue de
+//   l'équipe » (du vrai texte, 16 px), sans les outils de mise en page, sans barre collée de plus de 80 px, avec 520 px et plus entre
+//   l'en-tête et le pied, « À compléter » et « Publier pour l'équipe » là ; « Page A4 » (un toucher) fait paraître la page et ses
+//   outils, non collés ; une saisie en A4 se retrouve dans la vue de l'équipe et au retour ; l'aide dit « touchez » ; (b) la carte
+//   s'ouvre « Autour des dates » (les pastilles couvrent la moitié du cadre et plus), « Toute la France » l'éteint pour la session ;
+//   (c) à 1 440 × 900, la feuille s'ouvre en page A4 avec sa barre collée, la carte sur la France ; rien n'est écrit dans le compte.
 // Les captures vont dans site/dist/shots-telephone/ (jamais commitées). Sort en erreur si une vérification manque.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -738,6 +744,130 @@ DB.crescite_equipes = DB.crescite_equipes.filter(x => !EQUIPES_2.some(y => y.dat
     fin('3 · 1 440 × 900', o.erreurs);
     await o.ctx.close();
   }
+}
+
+// ================================================================================ 4 · la feuille de route lisible, la carte sur les dates
+{
+  DB.crescite_preferences = [];
+  const depuis = ECRITURES.length;
+  const ecrites = () => ECRITURES.slice(depuis).map(r => r.cle);
+  // la feuille de Caen a du contenu dès l'ouverture (la base fictive la livre vide) : un en-tête, une rubrique, deux lignes dont une qui manque
+  const avantContenu = DB.crescite_feuilles[0].contenu;
+  DB.crescite_feuilles[0].contenu = { format: 2, composees: [], pages: [], instantane: [], blocs: [
+    { id: 'b1', type: 'entete', segments: [{ texte: 'Bérénice', gras: true }] },
+    { id: 'b2', type: 'rubrique', segments: [{ texte: 'Planning' }] },
+    { id: 'b3', type: 'ligne', segments: [{ texte: '14h : arrivée à Caen' }] },
+    { id: 'b4', type: 'ligne', segments: [{ texte: 'téléphone ?', amorce: true }] }] };
+  // l'état de la feuille : la vue choisie, les groupes d'outils, la barre, ce qui colle, la place entre l'en-tête et le pied, le corps du texte
+  const FEUILLE = () => {
+    const o = document.querySelector('.a4-outils'), pied = document.querySelector('.pied-ed'), tete = document.querySelector('.barre');
+    // (le pied de la feuille colle par nature : on cherche ce qui s'y ajoute)
+    const collants = [...document.querySelectorAll('#vue *')].filter(e => ['sticky', 'fixed'].includes(getComputedStyle(e).position) && e.checkVisibility() && !e.matches('.pied-ed') && e.getBoundingClientRect().height > 80)
+      .map(e => `${e.className || e.tagName}:${Math.round(e.getBoundingClientRect().height)}`);
+    const ligne = [...document.querySelectorAll('.a4-tel *')].find(e => e.children.length === 0 && /arrivée à Caen/.test(e.textContent));
+    const groupes = [...document.querySelectorAll('.a4-groupe')].filter(g => !g.classList.contains('a4-zoom'));
+    return { tel: document.querySelector('[data-fr-vue="tel"]')?.getAttribute('aria-pressed'), page: document.querySelector('[data-fr-vue="page"]')?.getAttribute('aria-pressed'),
+      doc: !!document.querySelector('.a4-doc'), outils: o ? getComputedStyle(o).position : null, groupes: groupes.map(g => g.checkVisibility()), collants,
+      place: pied && tete ? Math.round(pied.getBoundingClientRect().top - tete.getBoundingClientRect().bottom) : null, corps: ligne ? parseFloat(getComputedStyle(ligne).fontSize) : null,
+      aide: document.querySelector('#a4-aide')?.textContent || '', manques: document.querySelector('#fr-manques') ? !document.querySelector('#fr-manques').hidden : false,
+      publier: !!document.querySelector('#fr-publier')?.checkVisibility(), vues: [...document.querySelectorAll('.a4-vues button')].map(b => Math.round(b.getBoundingClientRect().height)) };
+  };
+  const tel = await ouvrir(navigateur, { ...TEL, hash: '#/feuilles/101' });
+  await tel.page.waitForSelector('.a4-outils', { timeout: 15000 });
+  await attendre(tel.page, () => /arrivée à Caen/.test(document.querySelector('.a4-tel')?.textContent || ''), null, 6000);
+  await tel.page.waitForTimeout(500);
+
+  // ---- (a) la feuille s'ouvre comme l'équipe la lit
+  const f = await tel.page.evaluate(FEUILLE);
+  ok('4 · a · #/feuilles/101 : « Vue de l’équipe » est pressée d’office, « Page A4 » non, et la page A4 n’est pas montée', f.tel === 'true' && f.page === 'false' && !f.doc, JSON.stringify({ tel: f.tel, page: f.page, doc: f.doc }));
+  ok('4 · a · la feuille de test n’est pas vide : la vue de l’équipe porte sa ligne, « À compléter » est là', f.corps !== null && f.manques, JSON.stringify({ corps: f.corps, manques: f.manques }));
+  ok('4 · a · les outils de mise en page (les quatre groupes) ne sont pas affichés, la barre n’est pas collée', f.groupes.length === 4 && f.groupes.every(v => v === false) && f.outils === 'static', JSON.stringify({ groupes: f.groupes, outils: f.outils }));
+  ok('4 · a · aucun élément collant de plus de 80 px (hors le pied de la feuille, qui est à lui) ; au moins 520 px entre l’en-tête et le pied', f.collants.length === 0 && f.place >= 520, JSON.stringify({ collants: f.collants, place: f.place }));
+  ok('4 · a · le texte de la vue de l’équipe fait au moins 16 px', f.corps >= 16, String(f.corps));
+  ok('4 · a · « Publier pour l’équipe » est là, « Page A4 » et « Vue de l’équipe » font 44 px', f.publier && f.vues.length === 2 && f.vues.every(h => h >= 44), JSON.stringify({ publier: f.publier, vues: f.vues }));
+  ok('4 · a · l’aide dit « touchez-les », plus « cliquez »', /touchez-les/.test(f.aide) && !/cliquez/.test(f.aide), f.aide.slice(0, 120));
+  await tel.page.screenshot({ path: `${CAPT}/4-feuille-equipe.png` });
+
+  // ---- « Page A4 » : un toucher, la page et ses outils, la barre qui ne colle pas ; une saisie reste
+  ok('4 · a · un toucher sur « Page A4 » monte la page', await toucher(tel.page, '[data-fr-vue="page"]') && await attendre(tel.page, () => document.querySelector('.a4-doc'), null, 8000));
+  await tel.page.waitForTimeout(600);
+  const p = await tel.page.evaluate(FEUILLE);
+  ok('4 · a · en page A4 : « Page A4 » est pressée, les quatre groupes de mise en page paraissent (le zoom reste masqué au téléphone), la barre ne colle toujours pas', p.page === 'true' && p.tel === 'false' && p.groupes.length === 4 && p.groupes.every(v => v === true) && p.outils === 'static' && p.collants.length === 0, JSON.stringify({ page: p.page, groupes: p.groupes, outils: p.outils, collants: p.collants }));
+  await tel.page.screenshot({ path: `${CAPT}/4-feuille-a4.png` });
+  await tel.page.tap('#a4-doc [data-id="b3"]');
+  await tel.page.keyboard.press('End');
+  await tel.page.keyboard.insertText(' (porte B)');
+  await tel.page.waitForTimeout(300);
+  ok('4 · a · la saisie faite en page A4 est dans la page', await tel.page.evaluate(() => /porte B/.test(document.querySelector('#a4-doc [data-id="b3"]')?.textContent || '')));
+  ok('4 · a · « Vue de l’équipe » : la saisie y est, la page A4 est démontée, les groupes disparaissent de nouveau', await toucher(tel.page, '[data-fr-vue="tel"]') && await attendre(tel.page, () => /porte B/.test(document.querySelector('.a4-tel')?.textContent || '') && !document.querySelector('.a4-doc'), null, 6000)
+    && (await tel.page.evaluate(FEUILLE)).groupes.every(v => v === false));
+  ok('4 · a · de retour sur « Page A4 », la saisie est toujours là (détruire l’éditeur ne perd rien)', await toucher(tel.page, '[data-fr-vue="page"]') && await attendre(tel.page, () => /porte B/.test(document.querySelector('#a4-doc [data-id="b3"]')?.textContent || ''), null, 8000));
+  ok('4 · a · rien n’est écrit dans le compte (aucune écriture de préférence : ni representations.vue, ni accueil.tableau, ni le zoom de la page)', ecrites().length === 0, ecrites().join());
+  fin('4 · a · feuille', tel.erreurs);
+  await tel.ctx.close();
+
+  // ---- une feuille pas encore composée (la date 102) : le premier texte qu'on lit dit « touchez », pas « cliquez »
+  const vierge = await ouvrir(navigateur, { ...TEL, hash: '#/feuilles/102' });
+  await vierge.page.waitForSelector('#fr-composer', { timeout: 15000 });
+  const accueil = await vierge.page.evaluate(() => document.querySelector('.fr-accueil p')?.textContent || '');
+  ok('4 · a · une feuille pas encore composée (#/feuilles/102) : le paragraphe d’accueil dit « touchez-le », plus « cliquez »', /touchez-le/.test(accueil) && !/cliquez/.test(accueil), accueil.slice(-90));
+  fin('4 · a · feuille pas encore composée', vierge.erreurs);
+  await vierge.ctx.close();
+
+  // ---- (b) la carte s'ouvre resserrée autour des dates
+  const carte = await ouvrir(navigateur, { ...TEL, hash: '#/representations/carte' });
+  await carte.page.waitForSelector('#tn-serre', { state: 'attached', timeout: 15000 });
+  await attendre(carte.page, () => document.querySelectorAll('.tn-pin').length > 0, null, 8000);
+  await carte.page.waitForTimeout(500);
+  // la boîte des pastilles (le plus petit rectangle qui les contient), en part de la largeur de la carte
+  const CARTE = () => { const svg = document.querySelector('#tn-carte svg'), sb = svg.getBoundingClientRect(), pins = [...document.querySelectorAll('.tn-pin')].map(x => x.getBoundingClientRect());
+    const x0 = Math.min(...pins.map(r => r.left)), x1 = Math.max(...pins.map(r => r.right));
+    return { serre: document.querySelector('#tn-serre').checked, vb: svg.getAttribute('viewBox'), pastilles: pins.length, part: pins.length ? Math.round((x1 - x0) / sb.width * 100) / 100 : 0 }; };
+  const c = await carte.page.evaluate(CARTE);
+  ok(`4 · b · #/representations/carte : « Autour des dates » est coché, les pastilles couvrent ${Math.round(c.part * 100)} % de la largeur de la carte (au moins 50 %)`, c.serre && c.pastilles > 0 && c.part >= 0.5, JSON.stringify(c));
+  await carte.page.screenshot({ path: `${CAPT}/4-carte.png` });
+  await carte.page.evaluate(() => document.querySelector('[data-tn-zoom="0"]').click());
+  await carte.page.waitForTimeout(700);
+  const toute = await carte.page.evaluate(CARTE);
+  ok('4 · b · « Toute la France » l’éteint : la case se décoche, le cadre s’élargit, les pastilles couvrent moins de la carte', !toute.serre && toute.vb !== c.vb && toute.part < c.part, JSON.stringify({ avant: c, apres: toute }));
+  await aller(carte.page, '#/representations', '#l-dates a.ligne', 15000);
+  await aller(carte.page, '#/representations/carte', '#tn-serre', 15000).catch(() => false);
+  await attendre(carte.page, () => document.querySelectorAll('.tn-pin').length > 0, null, 8000);
+  ok('4 · b · le choix tient le temps de la session : de retour sur la carte, la case est restée décochée', (await carte.page.evaluate(CARTE)).serre === false);
+  ok('4 · b · rien n’est écrit dans le compte (ni representations.vue, ni representations.avant)', !ecrites().some(k => /^representations\./.test(k)), ecrites().join());
+  fin('4 · b · carte', carte.erreurs);
+  await carte.ctx.close();
+  // la carte atteinte depuis la liste (et non par son adresse) s'ouvre resserrée de même
+  const liste = await ouvrir(navigateur, { ...TEL, hash: '#/representations' });
+  await liste.page.waitForSelector('#l-dates a.ligne', { timeout: 15000 });
+  await aller(liste.page, '#/representations/carte', '#tn-serre', 15000).catch(() => false);
+  await attendre(liste.page, () => document.querySelectorAll('.tn-pin').length > 0, null, 8000);
+  ok('4 · b · la carte atteinte depuis la liste des dates s’ouvre aussi resserrée', (await liste.page.evaluate(CARTE)).serre === true);
+  await liste.ctx.close();
+
+  // ---- (c) à 1 440 × 900, rien n'a bougé : la feuille en page A4 avec sa barre collée, la carte sur la France
+  const bureau = await ouvrir(navigateur, { largeur: 1440, hauteur: 900, hash: '#/feuilles/101' });
+  await bureau.page.waitForSelector('.a4-doc', { timeout: 15000 });
+  await bureau.page.waitForTimeout(500);
+  const b = await bureau.page.evaluate(() => { const o = document.querySelector('.a4-outils'), g = [...document.querySelectorAll('.a4-groupe')];
+    return { page: document.querySelector('[data-fr-vue="page"]').getAttribute('aria-pressed'), tel: document.querySelector('[data-fr-vue="tel"]').getAttribute('aria-pressed'), outils: getComputedStyle(o).position, groupes: g.map(x => x.checkVisibility()), aide: document.querySelector('#a4-aide').textContent }; });
+  ok('4 · c · 1 440 × 900, #/feuilles/101 : la feuille s’ouvre en page A4, sa barre est collée, ses cinq groupes sont affichés, l’aide dit « cliquez dessus »', b.page === 'true' && b.tel === 'false' && b.outils === 'sticky' && b.groupes.length === 5 && b.groupes.every(v => v) && /cliquez dessus/.test(b.aide) && !/touchez-les/.test(b.aide), JSON.stringify({ ...b, aide: b.aide.slice(0, 80) }));
+  await bureau.page.screenshot({ path: `${CAPT}/4-feuille-bureau.png` });
+  await aller(bureau.page, '#/feuilles/102', '#fr-composer', 15000);
+  const accueilB = await bureau.page.evaluate(() => document.querySelector('.fr-accueil p')?.textContent || '');
+  ok('4 · c · 1 440 × 900, une feuille pas encore composée : le paragraphe d’accueil dit toujours « cliquez dessus »', /cliquez dessus/.test(accueilB) && !/touchez/.test(accueilB), accueilB.slice(-90));
+  await aller(bureau.page, '#/representations/carte', '#tn-serre', 15000);
+  await attendre(bureau.page, () => document.querySelectorAll('.tn-pin').length > 0, null, 8000);
+  await bureau.page.waitForTimeout(500);
+  const cb = await bureau.page.evaluate(CARTE);
+  await bureau.page.evaluate(() => document.querySelector('[data-tn-zoom="0"]').click());
+  await bureau.page.waitForTimeout(700);
+  const franceB = await bureau.page.evaluate(CARTE);
+  ok('4 · c · 1 440 × 900, #/representations/carte : « Autour des dates » n’est pas coché, la carte est sur toute la France (le même cadre que « Toute la France »)', cb.serre === false && cb.vb === franceB.vb, JSON.stringify({ ouverte: cb, france: franceB }));
+  await bureau.page.screenshot({ path: `${CAPT}/4-carte-bureau.png` });
+  fin('4 · 1 440 × 900', bureau.erreurs);
+  await bureau.ctx.close();
+  DB.crescite_feuilles[0].contenu = avantContenu;
 }
 
 await navigateur.close();

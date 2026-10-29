@@ -56,7 +56,7 @@ node site/fenetres-2.mjs           # les fenêtres qui restent : le détail du p
 node site/carte-travail.mjs        # la carte de tournée comme vue de travail : le menu des pastilles, le survol, Maj+clic, le zoom, « Voir sur la carte » (après le build)
 node site/habillage.mjs            # l'habillage final : le jeu d'états des commandes, l'étiquette, les vides, « mouvement réduit », les pages d'essai, le jour relu (après le build)
 node site/reduit.mjs               # la passe « moins d'animations » : quatre gestes au clavier, aucune animation, les valeurs finales déjà en place (après le build)
-node site/telephone.mjs            # l'administration au téléphone (390 × 844) : le bas de l'écran dégagé, les fiches en plein écran, le « + », les pieds, la feuille de « Plus », tout au doigt, l'essentiel d'abord (après le build)
+node site/telephone.mjs            # l'administration au téléphone (390 × 844) : le bas de l'écran dégagé, les fiches en plein écran, le « + », les pieds, la feuille de « Plus », tout au doigt, l'essentiel d'abord, la feuille de route lisible et la carte sur les dates (après le build)
 node site/planche.mjs              # la planche de relecture, à la demande (trois minutes au calme, six sous charge) : les captures en vraies polices et planche.html, dans site/dist/shots-planche/ (après le build)
 bash site/bancs-admin.sh           # le build, puis tous les bancs de l'administration l'un après l'autre ; --tout y joint
                                    # ceux de l'espace de l'équipe (sinon, seulement si gestes.js, planning.js ou feuille.js changent) ;
@@ -447,7 +447,7 @@ compte du projet inscrit dans `crescite_admins`.
     tiroir, la largeur des listes, le mode du tableur) déjà en place tout de suite puis 50 ms plus tard : l'immobilité est une
     arrivée instantanée, pas une absence d'arrivée. Une contre-épreuve, sans « moins d'animations », montre qu'avec les animations permises
     le menu et le tiroir glissent bien. Captures dans `site/dist/shots-reduit/`.
-  - *Le téléphone.* `node site/telephone.mjs` (163 vérifications, environ une minute et demie, 390 × 844 au doigt ; le
+  - *Le téléphone.* `node site/telephone.mjs` (189 vérifications, environ une minute et demie, 390 × 844 au doigt ; le
     banc du plan `admin/TELEPHONE.md`, une section par lot) : le lot 1 mesure que les fiches (date, personne, lieu, et
     six autres rubriques) commencent à 140 px du haut au plus, leur tête invisible mais son titre lu des lecteurs
     d'écran et hors de portée de Tab ; que le « + » est caché dans une feuille de route, un spectacle et le tableur, et
@@ -482,8 +482,18 @@ compte du projet inscrit dans `crescite_admins`.
     restent affichés ; que le planning s'ouvre en Mois, et garde le choix de la session ; que les trois chiffres de la
     diffusion tiennent sur une ligne ; que rien n'est écrit dans les préférences du compte (ni `accueil.tableau`, ni
     `representations.avant`, ni `representations.vue`) ; et, à 1 440 × 900, que les dix actions, l'ordre du compte, « À
-    compléter » ouvert, les filtres dépliés, le planning en Équipe et les « ＋ Nouveau… » sont ceux d'avant. Captures
-    dans `site/dist/shots-telephone/`.
+    compléter » ouvert, les filtres dépliés, le planning en Équipe et les « ＋ Nouveau… » sont ceux d'avant. Le lot 4
+    mesure, sur une feuille de route qui a du contenu, qu'au téléphone elle s'ouvre en « Vue de l'équipe » (du texte de
+    16 px au moins, les outils de mise en page cachés, la barre non collée, aucun élément collant de plus de 80 px hors
+    le pied de la feuille, 520 px au moins entre l'en-tête et le pied, « À compléter » et « Publier pour l'équipe » là,
+    l'aide qui dit « touchez-les », et, sur une feuille pas encore composée, la phrase d'accueil qui dit
+    « touchez-le »), qu'un toucher sur « Page A4 » monte la page et ses outils (non collés), qu'une saisie faite sur la
+    page se retrouve dans la vue de l'équipe et au retour sur la page, que la carte de la tournée s'ouvre « Autour des
+    dates » (les pastilles couvrent 59 % de la largeur de la carte, 21 % avant), que « Toute la France » l'éteint le
+    temps de la session, qu'elle s'ouvre de même depuis la liste des dates, que rien n'est écrit dans le compte ; et, à
+    1 440 × 900, que la feuille s'ouvre en page A4 avec sa barre collée (et que l'accueil d'une feuille pas encore
+    composée dit toujours « cliquez dessus »), et la carte sur toute la France. Captures dans
+    `site/dist/shots-telephone/`.
   - *La planche de relecture.* `node site/planche.mjs` (environ trois minutes au calme, jusqu'à six sous charge, à la demande :
     ce n'est pas un banc qui garde le code, la chaîne ordinaire ne le lance pas ; `bash site/bancs-admin.sh --planche` le lance à la fin de la chaîne)
     photographie dix pages de l'administration (le tableau de bord, la liste des dates, le tableur en Simple, en Complet et en
@@ -691,11 +701,15 @@ compte du projet inscrit dans `crescite_admins`.
     même barre). « ＋ Nouvelle date / fiche / lieu / séance », « Proposer des dates », « ＋ Nouvelle opportunité » et
     « Sélectionner » ne s'affichent plus : le « + » crée tout. Le planning s'ouvre sur le mois, et les trois chiffres de
     la diffusion tiennent sur une ligne. Quand la fenêtre passe le seuil des 640 px (un téléphone qu'on tourne), le
-    tableau de bord et la page des dates se redessinent aussitôt. L'administration **s'installe sur le téléphone** comme
-    l'espace de l'équipe (`admin/manifest.webmanifest`, `admin/sw.js`, ses icônes) : « Installer », en tête de « Plus »,
-    donne l'invite du navigateur, ou sur l'iPhone la marche à suivre dans Safari ; installée, elle s'ouvre en plein
-    écran (« Admin Crescite »). Son service passe toujours d'abord par le réseau (elle écrit dans la base) et ne garde
-    la page et ses scripts que pour s'ouvrir hors connexion ; il ne garde jamais rien de la base.
+    tableau de bord et la page des dates se redessinent aussitôt. Une feuille de route s'ouvre comme l'équipe la lit
+    (« Vue de l'équipe » : du vrai texte, à la taille du téléphone, et non la page A4 réduite) ; « Page A4 » reste à un
+    toucher, et c'est là seulement que paraissent les outils de mise en page, qui ne restent plus collés en haut de
+    l'écran ; l'aide dit « touchez ». La carte de la tournée s'ouvre « Autour des dates » (le temps de la session :
+    « Toute la France » l'éteint). L'administration **s'installe sur le téléphone** comme l'espace de l'équipe
+    (`admin/manifest.webmanifest`, `admin/sw.js`, ses icônes) : « Installer », en tête de « Plus », donne l'invite du
+    navigateur, ou sur l'iPhone la marche à suivre dans Safari ; installée, elle s'ouvre en plein écran (« Admin
+    Crescite »). Son service passe toujours d'abord par le réseau (elle écrit dans la base) et ne garde la page et ses
+    scripts que pour s'ouvrir hors connexion ; il ne garde jamais rien de la base.
   - **Les notes internes** (`admin/notes.js`, le quinzième script `supabase/migrations/20261103_crescite_notes.sql`) :
     un fil sur chaque date, lieu, personne et piste ; `@Prénom Nom` mentionne quelqu'un de l'équipe (l'autocomplétion
     propose les fiches) et la base le prévient dans son espace ; épingler, modifier, supprimer avec « Annuler » ; une
