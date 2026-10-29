@@ -2306,13 +2306,13 @@ const TABLEUR = (() => {
       ${ok ? '' : `<textarea id="tab-gs-texte" rows="5" readonly spellcheck="false" aria-label="Le tableau, à copier"></textarea>`}
       <ol class="aide"><li>Ouvrez une feuille Google vierge.</li><li>Cliquez dans la case <b>A1</b>, puis collez : <kbd>Ctrl V</kbd> (<kbd>⌘ V</kbd> sur Mac).</li></ol>
       <p class="aide">La feuille s’ouvre vide : Google Sheets n’a aucun moyen de recevoir le tableau sans ce collage. Pour garder les vraies dates et les colonnes figées, téléchargez l’Excel et importez-le dans Google Sheets (Fichier › Importer › Téléverser).</p>
-      <div class="fm-boutons"><button type="button" class="btn principal" id="tab-gs-ouvrir">Ouvrir une feuille Google vierge</button><button type="button" class="btn" id="tab-gs-recopier">Copier de nouveau</button><button type="button" class="btn" id="tab-gs-xlsx">Télécharger l’Excel</button><button type="button" class="btn" id="tab-gs-fermer">Fermer</button></div></div>`;
+      <div class="fm-boutons"><button type="button" class="btn principal" id="tab-gs-ouvrir">Ouvrir une feuille Google vierge</button><button type="button" class="btn" id="tab-gs-recopier">Copier le tableau</button><button type="button" class="btn" id="tab-gs-xlsx">Télécharger l’Excel</button><button type="button" class="btn" id="tab-gs-fermer">Fermer</button></div></div>`;
     document.body.append(dlg);
     const z = $('#tab-gs-texte', dlg); if (z) z.value = tsv;
     $('#tab-gs-ouvrir', dlg).addEventListener('click', () => { window.open('https://sheets.new', '_blank', 'noopener'); });
     $('#tab-gs-recopier', dlg).addEventListener('click', async () => {
       const bon = await copierTexte(tsv);
-      $('#tab-gs-copie', dlg).innerHTML = bon ? '<b>Copié de nouveau.</b> Collez-le dans la case A1 de la feuille.' : '<b>La copie a été refusée.</b> Copiez le texte à la main.';
+      $('#tab-gs-copie', dlg).innerHTML = bon ? '<b>Tableau copié.</b> Collez-le dans la case A1 de la feuille.' : '<b>La copie a été refusée.</b> Copiez le texte à la main.';
     });
     $('#tab-gs-xlsx', dlg).addEventListener('click', () => { telecharger(xlsx(t), nomFichier('xlsx')); });
     $('#tab-gs-fermer', dlg).addEventListener('click', () => dlg.close());
