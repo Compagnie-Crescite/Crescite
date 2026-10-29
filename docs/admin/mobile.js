@@ -168,6 +168,21 @@ const MOBILE = (() => {
   html.ob-actif .tete:has(~ .deux.edition) { margin: 0; }
   html.ob-actif .tete:has(~ .deux.edition) > :not(h1) { display: none; }
   html.ob-actif .tete:has(~ .deux.edition) > h1 { position: absolute; width: 1px; height: 1px; margin: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  /* tout au doigt : 44 px de haut à chaque commande, 16 px de texte dans les champs (au-dessous, l'iPhone zoome sur le champ touché) ;
+     le tableur (.tab-cadre) garde ses cellules. Le planning est réglé d'ici : planning.js est partagé avec l'espace de l'équipe,
+     qui garde ses 34 et 40 px */
+  html.ob-actif body { --h-champ: 44px; }   /* (sur le corps, pas sur html : theme.mjs lit la hauteur de champ de html pour dire que la compacte est ignorée au téléphone ; tous les champs sont dans le corps) */
+  html.ob-actif :is(input, select, textarea, .riche):not(.tab-cadre *) { font-size: 16px; }
+  html.ob-actif :is(.filtres-dates .seg button, .f-plus > summary, .tb-det > summary, .pl-alerte > summary, .tb-vues select, .pl-filtres select, .f-periode input, .pc-e, .dfn-ligne .eq-fonction, .dfn-ligne .eq-note, .dfn-ligne [data-eqd-fonction], input.eq-fonction, input.eq-note, .case, .suggestions button, .ob-tete-btn, .pl-vues button, .pl-btn, .pl-btn-masquees, [data-pl-afficher], [role="columnheader"] > button[data-pl-jour]) { min-height: 44px; }
+  html.ob-actif :is(.f-plus > summary, .tb-det > summary, .pl-alerte > summary) { box-sizing: border-box; padding-block: 12px; }   /* (le triangle reste : on ne passe pas la ligne en flex) */
+  html.ob-actif .pl-btn.rond { width: 44px; }
+  html.ob-actif .pl-e-nom .pl-masquer { width: 44px; height: 44px; margin-top: -22px; right: 2px; }
+  html.ob-actif .annonce .annonce-fermer { width: 44px; height: 44px; margin: -12px -12px -12px 0; }
+  html.ob-actif .annonce [data-tt="retour"] { min-height: 44px; }   /* « Annuler » : c'est lui qu'on vise du pouce juste après une écriture */
+  /* le lieu d'une date sur deux lignes au lieu d'être coupé par « … » ; l'aide du clavier sous le tableur n'a pas de sens au doigt
+     (elle reste dans la page : #tab-aide est la cible d'aria-describedby) */
+  html.ob-actif .ligne .ou { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  html.ob-actif #tab-aide { display: none; }
   .ob-barre { position: fixed; left: 0; right: 0; bottom: 0; z-index: 48; display: grid; grid-template-columns: repeat(5, 1fr); padding: 4px 4px calc(4px + env(safe-area-inset-bottom, 0px)); background: color-mix(in srgb, var(--carte) 94%, transparent); backdrop-filter: blur(10px); border-top: 1px solid var(--trait); }
   .ob-barre a, .ob-barre button { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px 4px; border: 0; border-radius: 12px; background: none; color: var(--gris); text-decoration: none; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; }
   .ob-barre [aria-current="page"] { color: var(--accent); background: var(--accent-doux); }

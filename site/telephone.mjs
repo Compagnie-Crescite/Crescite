@@ -13,6 +13,11 @@
 //       « Créer » rendent le focus en se fermant (même sans focus au toucher, comme sur l'iPhone), retiennent Tab, glissent en 200 ms
 //       au « doux », sans bouger sous « moins d'animations » ; (h) à 1 440 × 900, la tête, les pieds et les classes de sept fiches sont
 //       ceux d'avant (pas de « + », rien d'inerte : des mesures, pas une comparaison du DOM) ; (i) à CPU=4, aucune tâche de plus de 200 ms.
+// 2 · tout au doigt (admin/mobile.js : du CSS sous html.ob-actif) : (a) sur quatorze routes (la liste des dates dans ses trois vues, le
+//   tableur, la carte, la fenêtre de la distribution d'une date y comprises), aucune commande sous 44 px de haut, aucun champ sous
+//   16 px de texte ; la croix et « Annuler » d'une annonce, et « Installer », aussi ; (b) le lieu d'une date passe sur deux lignes au lieu d'être coupé par « … » ; (c) à 1 440 × 900 et à
+//   800 × 1 000 au doigt, rien n'a bougé (segments à 36 px, champs à 38, planning à 40) ; (d) l'aide du clavier du tableur n'est plus
+//   affichée, mais reste la cible d'aria-describedby.
 // Les captures vont dans site/dist/shots-telephone/ (jamais commitées). Sort en erreur si une vérification manque.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -345,6 +350,181 @@ const plusCache = page => page.evaluate(() => { const p = document.querySelector
   fin('1 · CPU=4', erreurs);
   await ctx.close();
 }
+
+// ================================================================================ 2 · tout au doigt (admin/mobile.js : du CSS sous html.ob-actif)
+// Le critère des 44 px : tout bouton, résumé, liste déroulante, champ (hors les cases, dont la ligne entière est la cible), lien seul
+// sur sa ligne, et toute ligne de case, fait 44 px de haut au moins ; une commande sans mot (une icône) en fait 44 de large aussi, sauf
+// dans une rangée de six frères ou plus (les mois du tableau de bord, les jours du planning : la largeur y est celle de l'écran
+// partagé). Un lien pris dans une phrase (inline, avec du texte autour) est exclu, comme la carte (les pastilles de tournee.js ne
+// grossissent pas), le tableur (.tab-cadre : ses cellules) et ce qui est hors de l'écran (le lien d'évitement). Le texte des champs
+// fait 16 px au moins (au-dessous, l'iPhone zoome sur le champ touché), hors .tab-cadre.
+const MESURE_DOIGT = () => {
+  const vis = e => { const s = getComputedStyle(e), r = e.getBoundingClientRect(); return r.width > 1 && r.height > 1 && r.bottom > 0 && r.right > 0 && s.visibility !== 'hidden' && s.display !== 'none' && !e.closest('[hidden], [inert]'); };
+  const dansPhrase = a => { if (getComputedStyle(a).display !== 'inline') return false;
+    return [...a.parentElement.childNodes].some(n => n !== a && ((n.nodeType === 3 && n.textContent.trim()) || (n.nodeType === 1 && getComputedStyle(n).display === 'inline' && n.textContent.trim() && !n.matches('a, button')))); };
+  const nom = e => `${e.tagName.toLowerCase()}${e.id ? '#' + e.id : ''}${typeof e.className === 'string' && e.className ? '.' + e.className.trim().split(/\s+/).join('.') : ''} « ${(e.getAttribute('aria-label') || e.textContent || e.value || '').trim().replace(/\s+/g, ' ').slice(0, 24)} »`;
+  const trop = [];
+  for (const e of document.querySelectorAll('button, summary, select, input, textarea, a[href], .case')) {
+    if (e.closest('.tab-cadre, svg, .leaflet-container')) continue;
+    const t = e.matches('input') ? e.type : '';
+    if (t === 'hidden' || t === 'file') continue;
+    if (e.matches('.case') && !e.querySelector('input')) continue;
+    if (e.matches('a[href]') && dansPhrase(e)) continue;
+    const c = t === 'checkbox' || t === 'radio' ? (e.closest('.case') || e.closest('label') || e) : e;
+    if (!vis(c)) continue;
+    const r = c.getBoundingClientRect(), sansMot = !(c.textContent || '').trim() && !c.matches('input, select, textarea');
+    const rangee = c.parentElement && [...c.parentElement.children].filter(x => x.tagName === c.tagName).length >= 6;
+    if (r.height < 43.5 || (sansMot && !rangee && r.width < 43.5)) trop.push(`${nom(c)} ${Math.round(r.width)}×${Math.round(r.height)}`);
+  }
+  const petits = [...document.querySelectorAll('input, select, textarea, .riche')]
+    .filter(e => !e.closest('.tab-cadre') && !['checkbox', 'radio', 'hidden', 'file', 'range', 'color'].includes(e.type) && vis(e) && parseFloat(getComputedStyle(e).fontSize) < 16)
+    .map(e => `${nom(e)} ${getComputedStyle(e).fontSize}`);
+  return { trop: [...new Set(trop)], petits: [...new Set(petits)] };
+};
+// (la fenêtre de la distribution d'une date : Jean ne part pas à Caen, Léa est en renfort régie au Havre, comme dans distribution.mjs)
+const EQUIPES_2 = [{ date_id: 101, personne_id: 2, present: false, fonction: null, note: null }, { date_id: 103, personne_id: 3, present: true, fonction: 'régie', note: null }];
+// ouvre la fenêtre de la distribution de la ligne n du tableur (Entrée sur la case) ; vrai quand elle est là
+const ouvrirDistribution = async (page, n = 2) => {
+  await page.click(`#tab-corps tr[data-l="${n}"] td.c-distribution`); await page.keyboard.press('Enter');
+  return attendre(page, () => document.querySelectorAll('.tab-pop.distribution .dfn-ligne').length >= 2, null, 4000);
+};
+{
+  DB.crescite_equipes.push(...EQUIPES_2);
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { ...TEL, hash: '#/accueil' });
+  await garnirPlanning(ctx);
+  await page.waitForSelector('.ob-barre', { timeout: 15000 });
+  await page.waitForTimeout(400);
+  const ouvrirTout = () => page.evaluate(() => document.querySelectorAll('#vue details').forEach(d => { d.open = true; }));
+  const mesurer = async (nom, hash, attente, avant = null) => {
+    const vu = await aller(page, hash, attente, 15000);
+    if (avant) await avant();
+    await ouvrirTout();
+    await page.waitForTimeout(120);
+    const m = await page.evaluate(MESURE_DOIGT);
+    const n = await page.evaluate(() => document.querySelectorAll('#vue button, #vue summary, #vue select, #vue input, #vue a[href]').length);
+    ok(`2 · a · ${nom} : ${n} commandes, aucune sous 44 px de haut (ni de large, sans mot)${m.trop.length ? ' : ' + m.trop.slice(0, 4).join(' ; ') : ''}`, vu && n > 0 && m.trop.length === 0, JSON.stringify(m.trop));
+    ok(`2 · a · ${nom} : aucun champ sous 16 px de texte${m.petits.length ? ' : ' + m.petits.slice(0, 4).join(' ; ') : ''}`, vu && m.petits.length === 0, JSON.stringify(m.petits));
+    return vu;
+  };
+  await mesurer('#/accueil', '#/accueil', '.tb-tuile');
+  await mesurer('#/representations (la liste, « Plus de filtres » ouvert)', '#/representations', '#l-dates .ligne');
+  await page.screenshot({ path: `${CAPT}/2-dates-filtres.png` });
+  // les deux autres vues de la liste (« Passées », « Toutes ») : le plan les veut mesurées aussi ; on remet « À venir » après
+  for (const [k, nom] of [['passees', 'Passées'], ['toutes', 'Toutes']]) {
+    await mesurer(`#/representations (la liste, vue « ${nom} », « Plus de filtres » ouvert)`, '#/representations', '#l-dates .ligne', async () => {
+      await toucher(page, `[data-f-periode="${k}"]`);
+      await attendre(page, p => document.querySelector(`[data-f-periode="${p}"]`)?.getAttribute('aria-pressed') === 'true', k, 4000);
+      await page.waitForTimeout(250);
+    });
+  }
+  await toucher(page, '[data-f-periode="avenir"]');
+  await page.waitForTimeout(250);
+  await mesurer('#/representations/carte', '#/representations/carte', '.filtres-dates');
+  await mesurer('#/representations/tableur', '#/representations/tableur', '#tab-corps tr[data-l]');
+  await mesurer('#/representations/tableur (la fenêtre de la distribution : Fonction et Note)', '#/representations/tableur', '#tab-corps tr[data-l]', async () => {
+    const la = await ouvrirDistribution(page);
+    ok('2 · a · la fenêtre de la distribution d’une date s’ouvre au toucher, avec ses lignes (Fonction, Note, cases)', la && (await page.$$('.tab-pop.distribution .eq-fonction, .tab-pop.distribution [data-eqd-fonction]')).length >= 2);
+    await page.screenshot({ path: `${CAPT}/2-distribution.png` });
+  });
+  await page.keyboard.press('Escape');
+  await mesurer('#/representations/101', '#/representations/101', '#ed-date .titre-ed h2');
+  await page.screenshot({ path: `${CAPT}/2-fiche-date.png` });
+  await mesurer('#/planning (Équipe, « Filtres » ouvert)', '#/planning', '[data-pl-jour]', async () => {
+    if ((await page.getAttribute('[data-pl-vue="equipe"]', 'aria-pressed')) === 'false') { await toucher(page, '[data-pl-vue="equipe"]'); await page.waitForTimeout(300); }
+    if ((await page.getAttribute('[data-pl="filtres"]', 'aria-expanded')) === 'false') { await toucher(page, '[data-pl="filtres"]'); await page.waitForTimeout(300); }
+  });
+  await page.screenshot({ path: `${CAPT}/2-planning-equipe.png` });
+  await mesurer('#/planning (Mois)', '#/planning', '[data-pl-jour]', async () => { await toucher(page, '[data-pl-vue="mois"]'); await attendre(page, () => document.querySelector('.pl-mois-grille'), null, 6000); await page.waitForTimeout(300); });
+  await mesurer('#/equipe/1', '#/equipe/1', '#ed-personne .titre-ed h2');
+  await mesurer('#/lieux/5', '#/lieux/5', '#ed-lieu .titre-ed h2');
+  await mesurer('#/feuilles', '#/feuilles', '#fr-q');
+  await mesurer('#/feuilles/101', '#/feuilles/101', '#vue .pied-ed, #vue h2');
+  await mesurer('#/diffusion', '#/diffusion', '#vue h1');
+  await mesurer('#/journal', '#/journal', '#j-q');
+
+  // une annonce (la croix) et la feuille de « Plus » (« Installer ») : des commandes qui n'existent qu'un instant
+  await page.evaluate(() => { annoncer('Essai de l’annonce', { action: () => {}, libelle: 'Annuler', delai: 60000 }); });
+  await page.waitForSelector('.annonce .annonce-fermer', { timeout: 4000 });
+  const an = await page.evaluate(() => { const b = document.querySelector('.annonce .annonce-fermer').getBoundingClientRect(), a = document.querySelector('.annonce').getBoundingClientRect(), r = document.querySelector('.annonce [data-tt="retour"]')?.getBoundingClientRect();
+    return { l: Math.round(b.width), h: Math.round(b.height), annonceH: Math.round(a.height), dedans: b.right <= a.right + 14 && b.left >= a.left, annulerH: r ? Math.round(r.height) : 0, annulerL: r ? Math.round(r.width) : 0 }; });
+  ok('2 · a · la croix d’une annonce fait 44 × 44 px, et l’annonce ne grandit pas pour autant (moins de 80 px de haut)', an.l === 44 && an.h === 44 && an.annonceH < 80 && an.dedans, JSON.stringify(an));
+  ok('2 · a · « Annuler » d’une annonce fait 44 px de haut au moins (c’est lui qu’on vise du pouce après une écriture)', an.annulerH >= 44, JSON.stringify(an));
+  // et la mesure générale, annonce à l’écran : aucune commande de l’annonce (ni la croix, ni « Annuler ») sous 44 px
+  const mAn = await page.evaluate(MESURE_DOIGT);
+  ok('2 · a · la mesure générale, une annonce à l’écran : ni « Annuler » ni la croix sous 44 px', !mAn.trop.some(t => /annonce|retour|Annuler|Fermer/.test(t)), JSON.stringify(mAn.trop));
+  await page.screenshot({ path: `${CAPT}/2-annonce.png` });
+  await page.evaluate(() => document.querySelectorAll('.annonce').forEach(a => a.remove()));
+  await toucher(page, '.ob-barre [data-ob="plus"]');
+  await page.waitForSelector('.ob-voile.la .ob-tete-btn', { timeout: 4000 });
+  const inst = await page.evaluate(() => { const b = document.querySelector('.ob-tete-btn').getBoundingClientRect(); return { texte: document.querySelector('.ob-tete-btn').textContent.trim(), h: Math.round(b.height), l: Math.round(b.width) }; });
+  ok('2 · a · « Installer » (dans « Plus ») fait 44 px de haut', inst.h >= 44 && /Installer/.test(inst.texte), JSON.stringify(inst));
+  await page.keyboard.press('Escape');
+
+  // ---- (b) le lieu d'une date passe sur deux lignes au lieu d'être coupé par « … »
+  await aller(page, '#/representations', '#l-dates .ligne');
+  const ou = await page.evaluate(() => {
+    const e = [...document.querySelectorAll('#l-dates .ligne .ou')].find(x => /Théâtre de Caen — Caen \(14\)/.test(x.textContent));
+    if (!e) return null;
+    const s = getComputedStyle(e);
+    return { texte: e.textContent.trim(), coupeH: e.scrollWidth > e.clientWidth + 1, coupeV: e.scrollHeight > e.clientHeight + 1, ellipse: s.textOverflow === 'ellipsis' && s.whiteSpace === 'nowrap', blanc: s.whiteSpace, clamp: s.webkitLineClamp };
+  });
+  ok('2 · b · 390 px : « Théâtre de Caen — Caen (14) » (le lieu d’une date) n’est coupé ni en largeur ni en hauteur, ni mis en « … »', !!ou && !ou.coupeH && !ou.coupeV && !ou.ellipse && ou.blanc === 'normal' && ou.clamp === '2', JSON.stringify(ou));
+  // un lieu très long : deux lignes au plus, la suite coupée (la liste ne s'étire pas)
+  const long = await page.evaluate(() => { const e = document.querySelector('#l-dates .ligne .ou'); const avant = e.textContent; e.textContent = 'Centre culturel intercommunal des Trois Rivières et de la Vallée — Saint-Martin-de-la-Brasque-en-Auge (14)'; const h = e.getBoundingClientRect().height, lh = parseFloat(getComputedStyle(e).lineHeight) || 18; const r = { lignes: Math.round(h / lh), coupe: e.scrollHeight > e.clientHeight + 1 }; e.textContent = avant; return r; });
+  ok('2 · b · un lieu très long tient sur deux lignes au plus, la suite coupée', long.lignes <= 2 && long.coupe, JSON.stringify(long));
+  await page.screenshot({ path: `${CAPT}/2-ligne-lieu.png` });
+
+  // ---- (d) l'aide du clavier sous le tableur disparaît, et reste la cible d'aria-describedby
+  await aller(page, '#/representations/tableur', '#tab-corps tr[data-l]');
+  const aide = await page.evaluate(() => { const a = document.querySelector('#tab-aide'); const d = [...document.querySelectorAll('[aria-describedby]')].filter(x => x.getAttribute('aria-describedby').split(/\s+/).includes('tab-aide')); return a ? { affiche: a.getClientRects().length > 0, texte: a.textContent.trim().length > 10, cibles: d.length } : null; });
+  ok('2 · d · l’aide du clavier sous le tableur n’est plus affichée, mais son texte est là et reste lu par aria-describedby', !!aide && !aide.affiche && aide.texte && aide.cibles >= 1, JSON.stringify(aide));
+  fin('2 · téléphone', erreurs);
+  await ctx.close();
+}
+
+// ---- (c) à 1 440 × 900, et à 800 × 1 000 au doigt, rien n'a bougé : les segments à 36 px, les champs à 38, les boutons du planning à 40
+for (const [largeur, hauteur, etiquette] of [[1440, 900, '1 440 × 900'], [800, 1000, '800 × 1 000 au doigt']]) {
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur, hauteur, tactile: largeur === 800, hash: '#/representations' });
+  await garnirPlanning(ctx);
+  await page.waitForSelector('.filtres-dates', { timeout: 15000 });
+  await page.waitForTimeout(300);
+  await page.evaluate(() => document.querySelectorAll('.f-plus').forEach(d => { d.open = true; }));
+  await page.waitForTimeout(100);
+  const m = await page.evaluate(() => {
+    const css = sel => { const e = document.querySelector(sel); if (!e) return null; const s = getComputedStyle(e); return { min: s.minHeight, taille: s.fontSize, h: Math.round(e.getBoundingClientRect().height) }; };
+    return { actif: document.documentElement.classList.contains('ob-actif'), champ: getComputedStyle(document.documentElement).getPropertyValue('--h-champ').trim(), seg: css('.filtres-dates .seg button'), q: css('#f-q'), saison: css('#f-saison'), du: css('#f-du'), plus: css('.f-plus > summary'),
+      ou: (() => { const e = document.querySelector('#l-dates .ligne .ou'); return e && { blanc: getComputedStyle(e).whiteSpace }; })() };
+  });
+  ok(`2 · c · ${etiquette}, #/representations : ni html.ob-actif, ni --h-champ changé (38 px) ; les segments à 36 px, les champs à 38 px de plancher (la liste déroulante à 44 px au doigt, comme avant) et 15 px de texte, du … au à 34 px, le lieu d’une date sur une ligne`,
+    !m.actif && m.champ === '38px' && m.seg.min === '36px' && m.q.min === '38px' && m.q.taille === '15px' && m.saison.min === (largeur === 800 ? '44px' : '38px') && m.saison.taille === '15px' && m.du.min === '34px' && !!m.ou && m.ou.blanc === 'nowrap', JSON.stringify(m));
+  const fiche = await aller(page, '#/representations/101', '#ed-date .titre-ed h2');
+  await page.evaluate(() => document.querySelectorAll('#vue details').forEach(d => { d.open = true; }));
+  const css = `(sel) => { const e = document.querySelector(sel); if (!e) return null; const s = getComputedStyle(e); return { min: s.minHeight, taille: s.fontSize }; }`;
+  const f = await page.evaluate(`(${css})('.pc-e')`), fc = await page.evaluate(`(${css})('#ed-date .case')`);
+  ok(`2 · c · ${etiquette}, une date : les étapes (.pc-e) et les cases gardent leurs planchers d’avant (pas de 44 px)`,
+    fiche && !!f && !(parseFloat(f.min) >= 44) && !!fc && !(parseFloat(fc.min) >= 44), JSON.stringify([f, fc]));
+  await aller(page, '#/representations/tableur', '#tab-corps tr[data-l]');
+  const la = await ouvrirDistribution(page);
+  const d = await page.evaluate(`(${css})('.tab-pop.distribution .dfn-ligne .eq-fonction')`), dn = await page.evaluate(`(${css})('.tab-pop.distribution .dfn-ligne .eq-note')`), dc = await page.evaluate(`(${css})('.tab-pop.distribution .case')`);
+  ok(`2 · c · ${etiquette}, la fenêtre de la distribution : Fonction et Note gardent leurs 32 px et leurs 13 px de texte, les cases leur hauteur d’avant`,
+    la && !!d && d.min === '32px' && d.taille === '13px' && !!dn && dn.min === '32px' && dn.taille === '13px' && !!dc && !(parseFloat(dc.min) >= 44), JSON.stringify([d, dn, dc]));
+  await page.keyboard.press('Escape');
+  const pl = await aller(page, '#/planning', '[data-pl-jour]', 15000);
+  await page.waitForTimeout(300);
+  const b = await page.evaluate(() => { const hs = sel => [...document.querySelectorAll(sel)].filter(e => e.getClientRects().length).map(e => parseFloat(getComputedStyle(e).minHeight));
+    return { pl_btn: hs('.pl-btn'), vues: hs('.pl-vues button'), rond: [...document.querySelectorAll('.pl-btn.rond')].filter(e => e.getClientRects().length).map(e => Math.round(e.getBoundingClientRect().width)) }; });
+  ok(`2 · c · ${etiquette}, #/planning : les boutons du planning à 40 px de plancher (Équipe / Mois à 34 px), les boutons ronds à 40 px de large`,
+    pl && b.pl_btn.length > 0 && b.pl_btn.every(x => x === 40 || x === 38) && b.vues.length === 2 && b.vues.every(x => x === 34) && b.rond.every(x => x === 40), JSON.stringify(b));
+  if (largeur === 1440) {
+    await aller(page, '#/representations/tableur', '#tab-corps tr[data-l]');
+    const aide = await page.evaluate(() => { const a = document.querySelector('#tab-aide'); return a && a.getClientRects().length > 0; });
+    ok('2 · c · 1 440 × 900, le tableur : l’aide du clavier est toujours là', aide === true);
+  }
+  await page.screenshot({ path: `${CAPT}/2-${largeur}.png` });
+  fin(`2 · ${etiquette}`, erreurs);
+  await ctx.close();
+}
+DB.crescite_equipes = DB.crescite_equipes.filter(x => !EQUIPES_2.some(y => y.date_id === x.date_id && y.personne_id === x.personne_id));
 
 await navigateur.close();
 bilan(CAPT);
