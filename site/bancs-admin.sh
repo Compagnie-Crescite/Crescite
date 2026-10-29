@@ -26,7 +26,7 @@ set -u
 cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit 2
 
 # ---- la liste des bancs (site/<nom>.mjs) : les lots suivants y ajoutent les leurs
-BANCS=(tableau niveau adresses-admin mouvement-admin prefs tableur code-salles icones cadre champs vues-dates theme distribution fenetres acces fenetres-2 carte-travail tableur-colonnes tableur-simple tableur-complet habillage reduit)
+BANCS=(tableau niveau adresses-admin mouvement-admin prefs tableur code-salles icones cadre champs vues-dates theme distribution fenetres acces fenetres-2 carte-travail tableur-colonnes tableur-simple tableur-complet habillage reduit duree-admin duree-site)
 # ---- ceux de l'espace de l'équipe, lancés quand un module partagé change
 BANCS_EQUIPE=(gestes-equipe mouvement-equipe)
 PARTAGES='^admin/(gestes|planning|feuille)\.js$'

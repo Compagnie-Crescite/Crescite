@@ -121,14 +121,14 @@ const DOSSIER = (() => {
     // les conditions d'accueil
     const pr = s.programmer || {}, accueil = s.dossier && D.dossiers && D.dossiers[s.dossier] && D.dossiers[s.dossier].accueil;
     // la fiche technique du dossier reprend déjà la durée, la jauge et l'équipe : on ne les écrit pas deux fois
-    const lignes = (accueil ? [pr.format] : [pr.format, pr.duree || s.duree, pr.jauge, pr.equipe]).filter(Boolean);
+    const lignes = (accueil ? [pr.format] : [pr.format, s.duree, pr.jauge, pr.equipe]).filter(Boolean);
     if (lignes.length || accueil) {
       contenu.push(titreSection(lib.conditionsAccueil || 'Conditions d’accueil', couleur));
       lignes.forEach((x, i) => contenu.push({ text: maj(brut(x)), bold: i === 0 && x === pr.format, margin: [0, 0, 0, 3] }));
       // chaque bloc de la fiche technique (« PLATEAU : », « MATÉRIEL… ») reste d'un seul tenant
       if (accueil) (accueil.blocs || []).forEach(b => contenu.push({ unbreakable: true, stack: [
         ...(b.titre ? [{ text: pt(brut(b.titre)), bold: true, fontSize: 9.5, margin: [0, 8, 0, 2] }] : []),
-        ...(b.lignes || []).map(x => ({ text: morceaux(x), margin: [0, 0, 0, 2] }))] }));
+        ...(b.lignes || []).map(x => ({ text: morceaux(AGENDA.dureeDans(s.duree, x)), margin: [0, 0, 0, 2] }))] }));
       if (lib.conditionsFinancieres) contenu.push({ text: pt(lib.conditionsFinancieres), color: GRIS, margin: [0, 8, 0, 0] });
     }
     // la diffusion
