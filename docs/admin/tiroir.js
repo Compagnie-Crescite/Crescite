@@ -15,13 +15,29 @@
    navigateur referme le dernier, le suivant le rouvre ; l'adresse se recharge et se partage entre administrateurs (la
    page, puis ses tiroirs). Fermer un tiroir à la main revient d'un pas. Le titre de l'onglet nomme le tiroir ouvert ;
    son en-tête, à l'ordinateur, la rubrique de sa fiche en lien (« Lieux › Théâtre de Caen », le fil d'Ariane).
-   TIROIR.ouvrir(href, { viser, depuis })   TIROIR.fermer()   TIROIR.fermerTout()   TIROIR.ouvert()   TIROIR.racine()
+   À l'ordinateur (pointeur précis, 641 px et plus), son bord gauche se tire (FENETRES.poignee, admin/fenetres.js : de 480 px à
+   l'écran moins 80 px, pour que le voile reste cliquable ; double-clic ou Entrée : la taille d'origine) et la largeur se
+   garde avec le compte (la préférence fenetres.tiroir). Un bouton « ⋯ » de l'en-tête (et le clic droit, Maj+F10 : le menu de
+   menus.js) propose « Taille d'origine », « Plus large » (+ 160 px) et « Pleine page ». Quand le tiroir du dessus est plus
+   large que celui qu'il couvre, celui-ci recule d'autant de plus que ses 28 px : recaler() le redit à l'ouverture, à la
+   fermeture et à chaque pas de la poignée. Au téléphone, le tiroir garde sa largeur d'écran (LARGEUR).
+   TIROIR.ouvrir(href, { viser, depuis, apres })   TIROIR.fermer()   TIROIR.fermerTout()   TIROIR.ouvert()   TIROIR.racine()
    TIROIR.redessiner(id)                     TIROIR.peut(href) : ce lien s'ouvrirait-il en tiroir ici ?
    TIROIR.restaurer() (à l'ouverture de l'administration)   TIROIR.surAdresse() (index.html, à chaque changement d'adresse)
-   TIROIR.titre() : le nom du tiroir du haut et sa rubrique, pour le titre de l'onglet */
+   TIROIR.titre() : le nom du tiroir du haut et sa rubrique, pour le titre de l'onglet
+   Les options d'ouvrir : viser (le sélecteur du champ à allumer dans la fiche), depuis (d'où l'on vient : le nœud qui reprend le focus à
+   la fermeture, ou une fonction rappelée alors — quand la page derrière s'est redessinée, l'ancien nœud n'est plus dans le document :
+   la fonction retrouve la case et lui rend le focus), apres (une fonction rappelée après chaque enregistrement de la fiche et à sa
+   fermeture, pour que la page derrière se redessine sans attendre le temps réel : le tableur s'en sert, pour la date ouverte
+   depuis une de ses cases). */
 const TIROIR = (() => {
   const pile = [];
-  const LARGEUR = 'min(780px, 94vw)';
+  const LARGEUR = 'min(780px, 94vw)';     // (la valeur du téléphone ; à l'ordinateur, la largeur est un nombre : defaut() ou la valeur gardée)
+  // --tiroir-largeur ne sert qu'au tiroir : déclarée sans héritage, la tirer ne refait pas le style des centaines d'éléments de la fiche
+  // (trois fois moins de temps par image au bord gauche) ; un navigateur sans CSS.registerProperty la garde comme une variable ordinaire
+  try { CSS.registerProperty({ name: '--tiroir-largeur', syntax: '<length>', inherits: false, initialValue: '760px' }); } catch (e) { /* déjà déclarée, ou non reconnue */ }
+  const FEN = () => (typeof FENETRES !== 'undefined' && FENETRES.actif() ? FENETRES : null);
+  const defaut = () => Math.min(780, Math.round(innerWidth * .94));
   const existe = f => typeof window[f] === 'function';
   // les fiches qui savent s'ouvrir en tiroir : leur adresse, la zone qu'elles attendent, comment les dessiner
   const FICHES = [
@@ -65,28 +81,33 @@ const TIROIR = (() => {
   const voulus = () => { const st = history.state; return st && Array.isArray(st.tiroirs) && st.sur === location.hash ? st.tiroirs.filter(x => typeof x === 'string') : []; };
   const noter = () => { if (typeof noterAdresse === 'function') noterAdresse(); if (typeof majTitreAdmin === 'function') majTitreAdmin(); };
   let ignorerPop = false;
-  function ouvrir(href, { viser: cible = '', depuis = null, histoire = true } = {}) {
+  function ouvrir(href, { viser: cible = '', depuis = null, apres = null, histoire = true } = {}) {
     const x = ficheDe(href); if (!x || !x.f.peut()) { location.hash = href; return null; }
     const { f, id } = x;
     if (typeof noterRecente === 'function') noterRecente(f.href(id));     // (la recherche rapide la proposera, champ vide)
     const haut = pile[pile.length - 1];
     if (haut && haut.genre === f.genre && haut.id === id) { if (cible) { visee = cible; viser(); } return haut; }
     if (!pile.length) document.documentElement.classList.add('tiroir-ouvert');
-    const t = { genre: f.genre, id, f, saleAvant: E.sale, depuis: depuis || document.activeElement, el: null };
+    const t = { genre: f.genre, id, f, saleAvant: E.sale, depuis: depuis || document.activeElement, apres, el: null };
     E.sale = false;
     const voile = document.createElement('div'); voile.className = 'tiroir-voile'; voile.dataset.tiroirFermer = '';
     const el = document.createElement('aside');
     el.className = 'tiroir'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', f.nom);
-    el.style.setProperty('--tiroir-largeur', LARGEUR);
+    el.style.setProperty('--tiroir-largeur', FEN() ? `${FENETRES.taille('tiroir') ?? defaut()}px` : LARGEUR);
     el.innerHTML = `<header class="tiroir-tete"><button type="button" class="btn petit" data-tiroir-fermer title="Fermer (Échap)" aria-label="Fermer">←</button>
-      <span class="tiroir-fil"><span class="tiroir-genre"><span class="tg-nom">${esc(f.nom)}</span>${filDe(f, id)}</span><span class="tiroir-titre"></span></span>
-      <a class="btn petit" data-tiroir-pleine href="${esc((f.pleine || f.href)(id))}" title="Ouvrir à sa place, dans sa rubrique">Pleine page</a>
+      <span class="tiroir-fil"><span class="tiroir-genre etiquette"><span class="tg-nom">${esc(f.nom)}</span>${filDe(f, id)}</span><span class="tiroir-titre"></span></span>
+      <a class="btn petit" data-tiroir-pleine href="${esc((f.pleine || f.href)(id))}" title="Ouvrir à sa place, dans sa rubrique">Pleine page</a>${FEN() ? `
+      <button type="button" class="btn petit" data-gestes-menu aria-haspopup="menu" title="Taille du tiroir"><span aria-hidden="true">⋯</span><span class="sr">Taille du tiroir</span></button>` : ''}
       <button type="button" class="btn petit" data-tiroir-fermer aria-label="Fermer">✕</button></header>
       <div class="tiroir-corps"><section class="editeur" id="${f.zone}"></section></div>`;
     t.el = el; t.voile = voile; t.pousse = histoire;
     pile.push(t);
     document.body.append(voile, el);
-    pile.slice(0, -1).forEach((p, i) => { p.el.style.setProperty('--tiroir-recul', `${(pile.length - 1 - i) * 28}px`); p.el.setAttribute('aria-hidden', 'true'); p.el.inert = true; });
+    // la poignée du bord gauche, juste après « ← » dans l'ordre du focus ; chaque pas de la poignée redit le recul des tiroirs couverts
+    FEN()?.poignee(el, { cle: 'tiroir', axe: 'x', bord: 'gauche', libelle: 'Largeur du tiroir', apres: $('[data-tiroir-fermer]', el), defaut, defautVivant: true,
+      ecrire: v => { el.style.setProperty('--tiroir-largeur', `${v}px`); recaler(); } });
+    pile.slice(0, -1).forEach(p => { p.el.setAttribute('aria-hidden', 'true'); p.el.inert = true; });
+    recaler();
     dessiner(t);
     requestAnimationFrame(() => { el.classList.add('la'); voile.classList.add('la'); });
     if (cible) { visee = cible; viser(); } else requestAnimationFrame(() => $('[data-tiroir-fermer]', el)?.focus({ preventScroll: true }));
@@ -94,6 +115,18 @@ const TIROIR = (() => {
     if (histoire) history.pushState(etat(1), '', urlAvec(liste()));
     noter();
     return t;
+  }
+  // le recul des tiroirs couverts : 28 px par niveau, plus la différence de largeur quand un tiroir qui le recouvre est plus large
+  // (sans quoi son bord disparaîtrait derrière lui : on compte le plus large de ceux du dessus, pas seulement le dernier) ;
+  // toujours écrit en ligne, même à largeurs égales. Un seul tiroir : rien n'est couvert, rien à mesurer.
+  function recaler() {
+    if (pile.length < 2) return;
+    const largeurs = pile.map(p => p.el.offsetWidth);          // (toutes les lectures d'abord, puis les écritures : une seule mise en page)
+    let plus = 0;
+    for (let i = pile.length - 2; i >= 0; i--) {
+      plus = Math.max(plus, largeurs[i + 1]);
+      pile[i].el.style.setProperty('--tiroir-recul', `${(pile.length - 1 - i) * 28 + Math.max(0, plus - largeurs[i])}px`);
+    }
   }
   function dessiner(t) {
     try { t.f.dessiner(t.id); } catch (e) { console.error(e); const z = $(`#${t.f.zone}`, t.el); if (z) z.innerHTML = '<div class="vide bloc">Cette fiche ne s’ouvre pas ici.</div>'; }
@@ -106,7 +139,10 @@ const TIROIR = (() => {
     const t = pile[pile.length - 1]; if (!t) return;
     if (id != null && Number.isFinite(+id)) t.id = +id;
     dessiner(t);
+    rappeler(t);
   }
+  // la page derrière veut savoir que la fiche a changé (apres) ; une erreur de sa part ne touche pas à la fiche
+  const rappeler = t => { try { if (typeof t.apres === 'function') t.apres(); } catch (e) { console.error(e); } };
   // fermer le tiroir du haut ; des modifications pas enregistrées : la question d'abord (une boîte de la charte), et le tiroir
   // se ferme si l'on quitte. histoire : l'historique suit (fermé à la main, on revient du pas que le tiroir avait fait)
   function fermer({ demander = true, histoire = true } = {}) {
@@ -121,10 +157,13 @@ const TIROIR = (() => {
     if (typeof GESTES !== 'undefined' && GESTES.reduit()) retirer(); else setTimeout(retirer, 220);
     E.sale = t.saleAvant;
     const haut = pile[pile.length - 1];
-    if (haut) { haut.el.style.removeProperty('--tiroir-recul'); haut.el.removeAttribute('aria-hidden'); haut.el.inert = false; pile.slice(0, -1).forEach((p, i) => p.el.style.setProperty('--tiroir-recul', `${(pile.length - 1 - i) * 28}px`)); }
+    if (haut) { haut.el.style.removeProperty('--tiroir-recul'); haut.el.removeAttribute('aria-hidden'); haut.el.inert = false; recaler(); }
     else document.documentElement.classList.remove('tiroir-ouvert');
     marquerSale(E.sale);
-    const d = t.depuis; if (d && d.isConnected && typeof d.focus === 'function') d.focus({ preventScroll: true }); else haut?.el.querySelector('[data-tiroir-fermer]')?.focus({ preventScroll: true });
+    rappeler(t);
+    // (depuis est une fonction quand le nœud d'origine n'existera plus à la fermeture : elle rend le focus elle-même, ou rend un nœud)
+    const d = typeof t.depuis === 'function' ? (() => { try { return t.depuis(); } catch (e) { console.error(e); return null; } })() : t.depuis;
+    if (d && d.isConnected && typeof d.focus === 'function') d.focus({ preventScroll: true }); else if (typeof t.depuis !== 'function') haut?.el.querySelector('[data-tiroir-fermer]')?.focus({ preventScroll: true });
     if (histoire) {
       const st = history.state;
       // l'entrée présente est celle que ce tiroir avait ajoutée : on en revient (le précédent du navigateur, sans rien redessiner)
@@ -271,12 +310,12 @@ const TIROIR = (() => {
 .tiroir-voile { position: fixed; inset: 0; z-index: 60; background: rgba(23, 15, 26, 0); transition: background .22s; }
 .tiroir-voile.la { background: rgba(23, 15, 26, .38); }
 .tiroir { position: fixed; top: 0; right: 0; bottom: 0; z-index: 61; width: var(--tiroir-largeur, 760px); max-width: 100vw; display: flex; flex-direction: column; background: var(--fond); color: var(--encre);
-  box-shadow: -18px 0 48px -22px rgba(0, 0, 0, .45); border-left: 1px solid var(--trait); transform: translateX(104%); transition: transform .22s cubic-bezier(.3, .7, .3, 1); }
+  box-shadow: -18px 0 48px -22px rgba(0, 0, 0, .45); border-left: 1px solid var(--trait); transform: translateX(104%); transition: transform .22s cubic-bezier(.2, .8, .2, 1); }
 .tiroir.la { transform: translateX(calc(-1 * var(--tiroir-recul, 0px))); }
 .tiroir[aria-hidden="true"] { filter: brightness(.92); }
 .tiroir-tete { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--carte); border-bottom: 1px solid var(--trait); }
 .tiroir-fil { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.2; }
-.tiroir-genre { font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.tiroir-genre { color: var(--accent); }      /* (sa police : la règle des étiquettes, habillage.js) */
 .tiroir-genre .tg-nom { display: none; }
 .tg-fil { display: flex; flex-wrap: wrap; align-items: center; gap: 0 6px; }
 .tg-fil a { color: var(--accent); text-decoration: none; border-radius: 4px; }

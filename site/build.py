@@ -799,8 +799,8 @@ def build_data():
             extra = {"statut": None, "sousTitre": sous_titres.get(slug), "avec": sp["avec"], "mentions": sp["mentions"],
                      "duree": sp["duree"], "production": sp["production"], "credit": sp["credit"], "medias": sp["medias"],
                      "tournee": {"titre": sp["tournee"]["titre"] or "Actuellement en tournée", "texte": None}, "source": sp["url"]}
-        if slug == "berenice":                              # la durée du dossier 2026 (1h25), plus récente que le site (1h20)
-            extra["duree"] = uv["programmer"]["duree"].replace("Durée", "durée")
+        if uv.get("duree"):                                 # la durée de l'univers (Bérénice : 1h25, celle du dossier 2026, plus récente que le site)
+            extra["duree"] = uv["duree"]
         u = uv["univers"]
         c = u["couleurs"]
         mine = [d for d in dates if d["slug"] == slug]
@@ -1135,10 +1135,10 @@ def admin(dest):
     (dest / "admin" / "vendor").mkdir(parents=True, exist_ok=True)
     fond_carte()
     shutil.copyfile(ROOT / "admin" / "index.html", dest / "admin" / "index.html")
-    # la feuille de route et le planning (communs avec equipe/), l'équipe, la rubrique Planning (propositions de dates), le
-    # tableau de bord
-    for f in ("feuille.js", "equipe.js", "planning.js", "disponibilites.js", "tableau.js", "gestes.js", "menus.js", "corbeille.js", "tiroir.js", "selection.js",
-              "parcours.js", "gardefous.js", "series.js", "modeles.js", "notes.js", "carnet.js", "fond-carte.js", "tournee.js", "mobile.js", "habillage.js",
+    # les préférences du compte, les icônes (admin seulement : l'équipe garde ses tracés), la feuille de route et le planning
+    # (communs avec equipe/), l'équipe, la rubrique Planning (propositions de dates), le tableau de bord, le tableur
+    for f in ("prefs.js", "icones.js", "feuille.js", "equipe.js", "distribution.js", "planning.js", "disponibilites.js", "tableau.js", "tableur.js", "gestes.js", "menus.js",
+              "corbeille.js", "fenetres.js", "tiroir.js", "selection.js", "parcours.js", "gardefous.js", "series.js", "modeles.js", "notes.js", "carnet.js", "fond-carte.js", "tournee.js", "cadre.js", "mobile.js", "habillage.js",
               "manifest.webmanifest", "sw.js"):
         shutil.copyfile(ROOT / "admin" / f, dest / "admin" / f)
     for f in (ROOT / "admin" / "vendor").iterdir():

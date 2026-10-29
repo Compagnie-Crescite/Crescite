@@ -3,7 +3,7 @@
 // L'administration s'ouvre sur une base fictive : une session gardée dans le navigateur, et chaque lecture de table
 // (rest/v1/…) reçoit quelques lignes inventées ; rien ne part vers la vraie base, qui est coupée (les écritures
 // répondent vide). On vérifie les vues qui s'enchaînent, les listes qui arrivent, le pied qui dit l'état, la liste « à
-// compléter » qui se vide, la recherche qui s'ouvre, la connexion qui secoue, les annonces ; puis le mouvement réduit.
+// compléter » qui se vide, la recherche qui s'ouvre, la connexion qui secoue, les annonces ; le repli du menu latéral (aucune tâche > 200 ms à CPU=4) ; puis le mouvement réduit.
 // Sort en erreur si une vérification manque. Demande Playwright et Chromium (PLAYWRIGHT_MODULE, CHROMIUM, comme onglets.mjs).
 import http from 'node:http';
 import fs from 'node:fs';
@@ -132,9 +132,9 @@ fs.mkdirSync(CAPT, { recursive: true });
   await page.click('#ed-date a[href="#/representations"]');
   await page.waitForFunction(() => location.hash === '#/representations', null, { timeout: 8000 });
   await page.waitForTimeout(400);
-  await page.click('.nav a[href="#/spectacles"]');
+  await page.click('nav[aria-label="Rubriques"] a[href="#/spectacles"]');
   await page.waitForFunction(() => location.hash === '#/spectacles' && document.querySelector('.carte-sp'), null, { timeout: 8000 });
-  await page.waitForTimeout(400);
+  await page.waitForFunction(() => !document.documentElement.dataset.sens, null, { timeout: 4000 }).catch(() => {});   // (la transition finie, plutôt qu'un délai à l'aveugle)
   const vt = await page.evaluate(() => window.__vt);
   ok('les vues s\'enchaînent : avant (la fiche), arrière (la liste), fondu (une autre rubrique)', JSON.stringify(vt) === JSON.stringify(['avant', 'arriere', 'fondu']), JSON.stringify(vt));
   ok('… et html[data-sens] est retiré après', await page.evaluate(() => !document.documentElement.dataset.sens));
@@ -206,6 +206,43 @@ fs.mkdirSync(CAPT, { recursive: true });
   await page.waitForTimeout(300);
   ok('?anim=0 · html.still, pas de main.entree, le curseur sans transition', await page.evaluate(() => document.documentElement.classList.contains('still') && !document.querySelector('#vue').classList.contains('entree') && getComputedStyle(document.querySelector('#l-dates .ligne')).transitionDuration.split(',').every(x => x.trim() === '0s')));
   ok('?anim=0 · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' | ').slice(0, 300));
+  await ctx.close();
+}
+
+// ================================================================================ le repli du menu latéral : aucune tâche longue, même sur un processeur quatre fois plus lent
+{
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1440, hash: '#/accueil' });
+  await page.waitForSelector('#menu .nav a');
+  await (await ctx.newCDPSession(page)).send('Emulation.setCPUThrottlingRate', { rate: 4 });
+  await page.waitForTimeout(600);
+  await page.evaluate(() => { window.__longues.length = 0; window.__pret = performance.now(); });
+  // les transitions de la colonne se comptent par leurs événements, posés avant le clic (transitionrun, puis transitionend) :
+  // lire getAnimations() juste après le clic la manquait quand la machine est chargée (pas encore partie, ou déjà finie)
+  const armer = () => page.evaluate(() => {
+    const h = document.documentElement;
+    window.__colonne = { n: 0, fin: null };
+    window.__colonne.fin = new Promise(fini => {
+      const part = e => { if (e.target === h && e.propertyName === '--large-menu') window.__colonne.n++; };
+      const finie = e => { if (e.target === h && e.propertyName === '--large-menu') { h.removeEventListener('transitionrun', part); h.removeEventListener('transitionend', finie); fini(); } };
+      h.addEventListener('transitionrun', part); h.addEventListener('transitionend', finie);
+      setTimeout(fini, 5000);
+    });
+  });
+  const fin = () => page.evaluate(async () => { await window.__colonne.fin; return window.__colonne.n; });
+  await armer();
+  await page.click('.menu-replier');
+  const n1 = await fin();
+  const replie = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--large-menu').trim());
+  await armer();
+  await page.click('.menu-replier');
+  const n2 = await fin();
+  const deplie = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--large-menu').trim());
+  await page.waitForTimeout(300);
+  const longues = await page.evaluate(() => window.__longues);
+  console.log(`tâches longues après un repli, à CPU=4 (ms) : ${JSON.stringify(longues)}`);
+  ok('le menu latéral se replie puis se déplie en animant la colonne (64px, puis 240px)', n1 === 1 && n2 === 1 && replie === '64px' && deplie === '240px', JSON.stringify({ n1, n2, replie, deplie }));
+  ok('aucune tâche > 200 ms après un repli (et un dépli) du menu latéral, à CPU=4', longues.every(d => d < 200), JSON.stringify(longues));
+  ok('repli du menu · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' | ').slice(0, 300));
   await ctx.close();
 }
 

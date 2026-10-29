@@ -4,14 +4,18 @@
    connaît l'état (E), les outils d'index.html, equipe.js et tableau.js.
    - Une date (la liste, le tableau de bord) : ouvrir, la feuille de route, prévenir l'équipe, dupliquer, le tableur,
      confirmer une option, copier le lien, supprimer. Une personne : appeler, écrire, sa fiche. Un lieu : l'itinéraire,
-     appeler son contact, sa fiche. Une feuille : l'ouvrir sur « À compléter », la date. Une demande de devis : écrire,
+     appeler son contact, sa fiche, nouvelle date ici ; une pastille de la carte de tournée y ajoute en tête les dates du lieu, chacune
+     en tiroir. Une feuille : l'ouvrir sur « À compléter », la date. Une demande de devis : écrire,
      appeler, changer son statut sans l'ouvrir. Une piste de diffusion (la carte du Kanban) : l'étape d'avant, d'après,
      relance faite, le courriel, modifier, supprimer ; la carte se glisse aussi d'une colonne à l'autre. Une note de
      frais : valider, refuser, marquer remboursée. Une invitation pro : prolonger de trente jours, copier le lien,
      écrire. Une proposition de dates : la clore. Une séance d'atelier : dupliquer, supprimer. Une ligne du journal :
      revenir, ouvrir la fiche. Une tuile du tableau de bord : ses réglages, la réduire, sa largeur, la déplacer, la
-     masquer, personnaliser ; une action rapide : la retirer. Un spectacle : ses dates, l'avancer, le reculer. Une ligne
-     « à traiter » : la traiter sur place, l'épingler, la reporter ; une ligne du fil : annuler la modification.
+     masquer, personnaliser ; une action rapide : la retirer, la mettre dans le menu latéral ou l'en retirer ; un accès épinglé du
+     menu latéral : l'ouvrir, le retirer, le monter, le descendre. Un spectacle : ses dates, l'avancer, le reculer. Une ligne
+     « à traiter » : la traiter sur place, l'épingler, la reporter ; une ligne du fil : annuler la modification. L'en-tête d'une
+     colonne du tableur : masquer, figer jusqu'ici, ajuster la largeur, avancer, reculer, trier (le jour), les colonnes d'origine
+     (TABLEUR.colonnes.actions, admin/tableur.js).
    - Précédent / suivant dans chaque fiche ouverte à côté de sa liste (dates, personnes, lieux, devis, invitations,
      propositions, ateliers, séances, textes), et dans une feuille de route ou un spectacle : deux boutons dans le titre,
      Alt+↑ et Alt+↓ (GESTES.precSuiv). Les flèches ↑ ↓ passent d'une ligne à l'autre dans toutes les listes. */
@@ -64,7 +68,7 @@
     if (l) xs.push({ libelle: 'Fiche du lieu', detail: l.nom || l.commune, href: `#/lieux/${l.id}` });
     if (typeof MODELES !== 'undefined') xs.push({ libelle: 'Devis, contrat…', detail: 'un document à imprimer', faire: () => MODELES.generer({ date: d, type: 'devis' }), icone: ICO.feuille });
     xs.push({ separateur: true }, { libelle: 'Dupliquer', detail: 'une copie à enregistrer', faire: () => allerEtCliquer(href, '#d-dupliquer'), icone: ICO.dupliquer },
-      { libelle: 'Voir dans le tableur', href: '#/representations/tableur' });
+      { libelle: 'Voir dans le tableur', faire: () => { if (location.hash === '#/representations/tableur') return; (session.dates = session.dates || {}).cible = d.id; location.hash = '#/representations/tableur'; } });   // (la cible, posée sur l'objet des filtres sans le remplacer : le tableur arrive sur la ligne de cette date, cerclée un instant, puis l'oublie ; déjà sur le tableur, rien à poser, personne ne la lirait)
     xs.push(...liens(href));
     xs.push({ separateur: true }, { libelle: 'Supprimer la date', detail: 'avec « Annuler »', danger: true, icone: ICO.poubelle, faire: () => supprimerDate(d) });
     return xs.filter(Boolean);
@@ -147,7 +151,7 @@
     const n = E.dates.filter(d => d.spectacle_id === s.id && aVenirDate(d) && d.statut !== 'annulee').length;
     const bouton = sens => $(`[data-ordre="${s.id}"][data-sens="${sens}"]`);
     return [location.hash === `#/spectacles/${s.slug}` ? null : ouvrirA(`#/spectacles/${s.slug}`, 'Ouvrir la fiche'),
-      { libelle: 'Ses dates', detail: `${n} à venir`, icone: ICO.agenda, faire: () => { session.dates = Object.assign({ spectacle: '', public: '', statut: '', q: '', ouvertes: [] }, session.dates || {}, { spectacle: String(s.id) }); garderFiltres(); location.hash = '#/representations'; } },
+      { libelle: 'Ses dates', detail: `${n} à venir`, icone: ICO.agenda, faire: () => { session.dates = Object.assign({ spectacle: '', public: '', statut: '', q: '' }, session.dates || {}, { spectacle: String(s.id) }); garderFiltres(); location.hash = '#/representations'; } },
       { libelle: 'Nouvelle date', faire: () => { E.dateDepart = Object.assign(nouvelleDate(), { spectacle_id: s.id }); location.hash = '#/representations/nouvelle'; }, icone: ICO.plus },
       bouton(-1) ? { libelle: 'Avancer dans l’ordre', faire: () => bouton(-1).click(), icone: ICO.gauche } : null, bouton(1) ? { libelle: 'Reculer dans l’ordre', faire: () => bouton(1).click(), icone: ICO.droite } : null,
       ...liens(`#/spectacles/${s.slug}`)];
@@ -173,7 +177,19 @@
   function actionsActionRapide(b) {
     const href = b.getAttribute('href'), k = b.dataset.action;
     return [href && href.startsWith('#') ? ouvrirA(href) : null, href ? { libelle: 'Ouvrir dans un nouvel onglet', href: absolu(href), externe: true, icone: ICO.externe } : null,
-      k && typeof TABLEAU !== 'undefined' && TABLEAU.retirerAction ? { libelle: 'Retirer des actions rapides', detail: 'les réglages de la tuile les remettent', faire: () => TABLEAU.retirerAction(k), icone: ICO.moins } : null];
+      k && typeof TABLEAU !== 'undefined' && TABLEAU.retirerAction ? { libelle: 'Retirer des actions rapides', detail: 'les réglages de la tuile les remettent', faire: () => TABLEAU.retirerAction(k), icone: ICO.moins } : null,
+      ...(k && typeof CADRE !== 'undefined' && CADRE.epinglable(k) ? [{ separateur: true }, CADRE.estAuMenu(k)
+        ? { libelle: 'Retirer du menu', detail: 'l’action reste dans la tuile', faire: () => CADRE.retirerDuMenu(k), icone: ICO.moins }
+        : { libelle: 'Mettre dans le menu', detail: 'un accès rapide, sous les rubriques', faire: () => CADRE.mettreAuMenu(k), icone: ICONES.svg('epingle', { taille: 16 }) }] : [])];
+  }
+  // un accès épinglé du menu latéral (cadre.js) : l'ouvrir, l'ouvrir ailleurs, le retirer du menu, le monter, le descendre
+  function actionsEpingle(a) {
+    const k = a.dataset.action, href = a.getAttribute('href'), vus = typeof CADRE !== 'undefined' ? CADRE.epingles() : [], i = vus.indexOf(k);
+    return [href.startsWith('#') ? ouvrirA(href) : { libelle: 'Ouvrir', href, externe: true, icone: ICO.externe, raccourci: 'Entrée' },
+      href.startsWith('#') ? { libelle: 'Ouvrir dans un nouvel onglet', href: absolu(href), externe: true, icone: ICO.externe } : null,
+      { separateur: true }, { libelle: 'Retirer du menu', detail: 'l’action reste dans la tuile', faire: () => CADRE.retirerDuMenu(k), icone: ICO.moins },
+      i > 0 ? { libelle: 'Monter', faire: () => CADRE.deplacer(k, -1), icone: ICO.haut } : null,
+      i >= 0 && i < vus.length - 1 ? { libelle: 'Descendre', faire: () => CADRE.deplacer(k, 1), icone: ICO.bas } : null];
   }
 
   // ===================================================================================================== ce qu'un élément désigne
@@ -235,10 +251,32 @@
   }
   G.menu({ cible: 'a.ligne[href], a.tb-l[href], a.carte-sp[href], .crm-carte[data-prospect-id]', titre: el => titreObjet(objetDe(el)) || (el.dataset.j ? 'Modification' : ''),
     actions: el => { const avant = [...actionsUrgence(el), ...actionsFil(el)]; const o = objetDe(el); if (o) return [...avant, ...actionsObjet(o, el)]; const href = el.getAttribute('href'); return [...avant, ...(href && href.startsWith('#/') ? [ouvrirA(href), ...liens(href)] : [])]; } });
+  // une pastille de la carte de tournée (tournee.js : le clic au pointeur fin, Entrée, le clic droit, l'appui long) : les dates du lieu
+  // qu'elle montre, chacune ouverte en tiroir (tiroir.js lit le lien) sans quitter la carte, puis ce qu'on peut faire du lieu
+  G.menu({ cible: '.tn-pin[data-tn-lieu]', titre: el => lieuTexte(lieu(+el.dataset.tnLieu)) || 'Lieu',
+    actions: el => {
+      const l = lieu(+el.dataset.tnLieu); if (!l) return [];
+      const ds = (el.dataset.dates || '').split(',').map(id => E.dates.find(d => d.id === +id)).filter(Boolean);
+      return [...ds.map(d => ({ libelle: spectacle(d.spectacle_id)?.titre || 'Date', detail: `${jourCourt(d.debut)}${d.statut === 'option' ? ' · option' : ''}`, href: `#/representations/${d.id}`, icone: ICO.agenda })),
+        ds.length ? { separateur: true } : null, ...actionsLieu(l)];
+    } });
   G.menu({ cible: '.journal-ligne', titre: 'Journal', actions: actionsJournal });
+  // l'en-tête d'un tiroir (le clic droit, Maj+F10, ou son bouton « ⋯ ») : sa taille. La commande vient de la poignée du tiroir
+  // (FENETRES.de) : sans poignée (le téléphone, le doigt), il n'y a rien à proposer. « Plus large » ajoute 160 px.
+  function actionsTiroir(tete) {
+    const f = typeof FENETRES !== 'undefined' ? FENETRES.de(tete.closest('.tiroir')) : null;
+    if (!f) return [];
+    const pleine = $('[data-tiroir-pleine]', tete);
+    return [
+      { libelle: 'Taille d’origine', detail: `${f.defaut()} px`, icone: ICO.reglages, faire: () => f.origine({ anime: true }) },
+      { libelle: 'Plus large', detail: '+ 160 px', icone: ICO.plus, faire: () => f.regler(f.lire() + 160, { anime: true }) },
+      pleine ? { libelle: 'Pleine page', detail: 'ouvre la fiche à sa place', icone: ICO.ouvrir, faire: () => pleine.click() } : null];   // (le lien de l'en-tête, qui va à la page : data-tiroir-pleine)
+  }
+  G.menu({ cible: '.tiroir-tete', titre: 'Taille du tiroir', actions: actionsTiroir });
   G.menu({ cible: '.tb-tuile', titre: sec => (typeof TABLEAU !== 'undefined' && TABLEAU.TUILES[sec.dataset.k]?.titre) || 'Tuile',
     actions: (sec, infos) => { const b = infos && infos.x != null ? document.elementFromPoint(infos.x, infos.y) : null; return b && b.closest('.tb-actions .btn') ? actionsActionRapide(b.closest('.tb-actions .btn')) : b && b.closest('a.tb-l') ? [] : actionsTuile(sec); } });
   G.menu({ cible: '.tb-actions .btn', titre: 'Action rapide', actions: actionsActionRapide });
+  G.menu({ cible: '.menu-epingle', titre: a => $('.menu-l', a)?.textContent || 'Accès rapide', actions: actionsEpingle });
   G.menu({ cible: '.tb-sp', titre: el => $('.tb-l-t', el)?.textContent || 'Spectacle', actions: el => { const s = E.spectacles.find(x => `#/spectacles/${x.slug}` === $('a.tb-l-t', el)?.getAttribute('href')); return s ? actionsSpectacle(s, el) : []; } });
   // les flèches dans toutes les listes
   G.fleches(document, 'a.ligne[href], a.tb-l[href], a.carte-sp[href]');
@@ -269,6 +307,10 @@
     if (p && p.etape !== col.dataset.colonne) deplacerProspect(id, col.dataset.colonne);
   });
   document.addEventListener('dragend', () => { $$('.crm-carte[data-glisse]').forEach(c => { c.classList.remove('glisse'); delete c.dataset.glisse; }); $$('.crm-colonne.cible').forEach(x => x.classList.remove('cible')); });
+
+  // ===================================================================================================== l'en-tête d'une colonne du tableur
+  // clic droit, Maj+F10 (les en-têtes ont un focus tournant) ou appui long : ce que TABLEUR.colonnes propose pour cette colonne
+  if (typeof TABLEUR !== 'undefined' && TABLEUR.colonnes) G.menu({ cible: '#tab-tete th', titre: th => th.dataset.l || th.textContent.trim(), actions: th => TABLEUR.colonnes.actions(th.dataset.k) });
 
   // ===================================================================================================== précédent / suivant
   // dans une fiche ouverte à côté de sa liste : la ligne d'avant, celle d'après (dans l'ordre de la liste, filtres compris) ;
@@ -312,16 +354,29 @@
   /* Les raccourcis de l'administration, rangés par contexte, d'après ce qui existe (index.html, gestes.js, tableau.js,
      selection.js, tiroir.js, planning.js) : la touche « ? » hors d'un champ, le bouton « ? » de l'en-tête, « Gestes et
      raccourcis » dans « Plus » au téléphone. Le contexte ouvert (le tableau de bord, une liste, une fiche, le tableur, le
-     planning, la diffusion) vient d'abord, marqué « ici ». Au doigt (un écran tactile), les gestes à la place des touches. */
+     planning, la diffusion) vient d'abord, marqué « ici ». Au doigt (un écran tactile), les gestes à la place des touches.
+     Ce qui se déclare dans le registre RACCOURCIS (index.html) s'y ajoute de lui-même : Alt+M, « G puis une lettre » par rubrique. */
   const CMD = typeof SUR_MAC !== 'undefined' && SUR_MAC ? '⌘' : 'Ctrl';
+  // les raccourcis du registre (RACCOURCIS, index.html : Alt+M, G puis une lettre…) se rangent dans les groupes du même titre
+  // (« Partout »), les autres viennent juste après
+  function avecRegistre(groupes) {
+    const reg = typeof RACCOURCIS !== 'undefined' ? RACCOURCIS.groupes() : [];
+    let apres = 1;
+    reg.forEach(g => {
+      const meme = groupes.find(x => x.titre === g.titre);
+      if (meme) meme.lignes.push(...g.lignes); else groupes.splice(apres++, 0, g);
+    });
+    return groupes;
+  }
   function groupesClavier(h, fiche, liste) {
-    return [
+    return avecRegistre([
       { titre: 'Partout', lignes: [
         { t: [[CMD, 'K']], d: 'Chercher une date, une personne, un lieu, une action' },
         { t: [['?']], d: 'Montrer ces raccourcis' },
         { t: [['Échap']], d: 'Fermer le tiroir, le menu, la recherche, la sélection' },
         { t: [['Maj', 'F10'], ['Menu']], d: 'Les actions de l’élément choisi, comme le clic droit' },
-        { t: [['Tab']], d: 'En tête de page : « Aller au contenu »' }] },
+        { t: [['Tab']], d: 'En tête de page : « Aller au contenu »' },
+        { g: 'Glisser le coin d’une boîte', d: 'En bas à droite de la recherche, du briefing, de cette aide, d’une feuille de modification… : régler sa taille (la poignée se règle aussi aux flèches) ; double-clic : la taille d’origine' }] },
       { titre: 'Une liste', ici: liste, lignes: [
         { t: [['↑'], ['↓']], d: 'La ligne précédente, la suivante (← → aussi)' },
         { t: [['Début'], ['Fin']], d: 'La première ligne, la dernière' },
@@ -331,11 +386,17 @@
       { titre: 'Une fiche', ici: fiche, lignes: [
         { t: [['Alt', '↑'], ['Alt', '↓']], d: 'La fiche précédente, la suivante, dans l’ordre de la liste' },
         { t: [[CMD, 'S']], d: 'Enregistrer' },
-        { t: [['Échap']], d: 'Fermer le tiroir (le dernier ouvert)' }] },
+        { t: [['Échap']], d: 'Fermer le tiroir (le dernier ouvert)' },
+        { g: 'Glisser le bord du tiroir', d: 'Régler sa largeur (la poignée se règle aussi aux flèches, ← →) ; double-clic : la taille d’origine ; « ⋯ » dans son en-tête : plus large, taille d’origine' },
+        { g: 'Glisser le séparateur', d: 'Entre une liste et sa fiche : régler la largeur de la liste, pour toutes les pages' }] },
       { titre: 'Le tableau de bord', ici: h === '#/accueil', lignes: [
         { t: [['J'], ['K']], d: 'La ligne à traiter suivante, la précédente' },
         { t: [['Entrée']], d: 'La traiter sur place' },
         { t: [['Échap']], d: 'Refermer, ou lever le filtre d’un spectacle' }] },
+      { titre: 'Les accès rapides', lignes: [
+        { t: [['Entrée']], d: 'Sur « Créer » : le menu des créations (↑ ↓ pour choisir, Entrée pour créer)' },
+        { t: [['Maj', 'F10'], ['Menu']], d: 'Sur un accès épinglé : l’ouvrir, le retirer du menu, le monter, le descendre' },
+        { t: [[CMD, 'K']], d: 'Sans rien taper : les fiches ouvertes en dernier ; « replier », « vue carte »… : les commandes du menu, avec leur touche' }] },
       { titre: 'La recherche', lignes: [
         { t: [['↑'], ['↓']], d: 'Choisir un résultat' },
         { t: [['Entrée']], d: 'L’ouvrir' },
@@ -346,7 +407,25 @@
         { t: [['Échap']], d: 'Annuler la saisie' },
         { t: [['Suppr']], d: 'Vider la case' },
         { t: [[CMD, 'Z']], d: 'Annuler la dernière écriture' },
-        { t: [[CMD, 'A']], d: 'Tout sélectionner' }] },
+        { t: [[CMD, 'A']], d: 'Tout sélectionner' },
+        { g: '« Simple » · « Complet »', d: 'Les deux boutons de la tête : une ligne par date (six colonnes, les heures en pastilles ; Entrée sur les séances ouvre leur fenêtre : ajouter, retirer, changer une heure) ou une ligne par séance (toutes les colonnes) ; le choix est gardé avec le compte' },
+        { g: 'La ligne vide du bas (Simple)', d: 'Une nouvelle date : écrire son jour, son spectacle et, si l’on veut, son lieu ; elle se crée dès que le jour et le spectacle y sont' },
+        { g: 'Le jour : le petit calendrier', d: 'Entrée sur un jour pose un calendrier sous la case : ← → ↑ ↓ changent de jour, Page ↑ Page ↓ de mois, Entrée écrit, Échap renonce ; on peut aussi taper 5/11, 05-11-2026, 2026/11/05 ou 5 nov 26' },
+        { g: 'Une case refusée, une case ignorée', d: 'La barre sous le cadre dit ce qui n’a pas été enregistré (« Reprendre » rend aux cases leur valeur, « Réessayer » rejoue l’écriture) ; après un collage, les cases non comprises restent en ambre vingt secondes, « Voir » va à la première' },
+        { g: 'Glisser le bord d’un en-tête', d: 'Régler la largeur de la colonne (la poignée se règle aussi aux flèches, ← →) ; double-clic : l’ajuster à son contenu' },
+        { g: 'Clic droit sur un en-tête', d: 'Masquer, figer jusqu’ici, ajuster, avancer, reculer, les colonnes d’origine, en Complet (Maj+F10 sur l’en-tête choisi aux flèches ← →)' },
+        { g: '« Colonnes… » (Complet)', d: 'Montrer ou masquer chaque colonne, changer leur ordre (↑ ↓ ou glisser)' },
+        { g: '« Jeu » (Complet)', d: 'Toutes les colonnes d’un sujet, vides comprises : Site, Tournée, Suivi, Bilan, Diffusion (le montant de cession, avec un cadenas : jamais exporté sans la case « Inclure la diffusion »), ou Tout' },
+        { g: 'L’icône « fiche » en bout de ligne', d: 'Ouvre la date dans le tiroir (Ctrl+Entrée le fait sur le champ de la case active, qui s’allume) ; la grille se met à jour derrière. Une case grisée dit pourquoi, au survol' },
+        { g: 'Une date « période » (Complet)', d: 'Écrire dans une case de séance demande d’abord : ajouter une séance ce jour, ou déplacer le début ; « Détacher cette séance dans sa propre date » est dans le menu d’une ligne (clic droit)' },
+        { g: 'Glisser le bas du cadre', d: 'Régler la hauteur du tableur' }] },
+      { titre: 'La carte', ici: h.startsWith('#/representations/carte'), lignes: [
+        { t: [['Entrée']], d: 'Sur une pastille : ses dates, nouvelle date ici, l’itinéraire, la fiche (le clic, le clic droit aussi)' },
+        { t: [['Maj', 'clic']], d: 'Choisir toutes les dates du lieu, puis agir sur elles' },
+        { t: [['+'], ['−']], d: 'Rapprocher, éloigner' },
+        { t: [['0']], d: 'Toute la France (⌂)' },
+        { t: [['Ctrl', 'molette']], d: 'Rapprocher ou éloigner autour du pointeur (la molette seule, une fois la carte choisie)' },
+        { g: 'Glisser la carte', d: 'Déplacer la vue' }] },
       { titre: 'Le planning', ici: h.startsWith('#/planning'), lignes: [
         { t: [['←'], ['→'], ['↑'], ['↓']], d: 'D’un jour à l’autre dans la grille' },
         { t: [['Page ↑'], ['Page ↓']], d: 'La période précédente, la suivante' },
@@ -356,7 +435,7 @@
         { t: [['↑'], ['↓']], d: 'D’une action à l’autre (Début, Fin aux bouts)' },
         { t: [['Entrée']], d: 'Faire l’action' },
         { t: [['Échap']], d: 'Fermer ; le focus revient où il était' }] },
-    ];
+    ]);
   }
   function groupesDoigt(h) {
     return [

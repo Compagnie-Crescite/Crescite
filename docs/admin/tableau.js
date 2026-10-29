@@ -1,6 +1,6 @@
 'use strict';
 /* Le tableau de bord de l'administration (#/accueil), sa page d'ouverture : ce qui presse et ce qui vient, en un écran,
-   et le geste qui y mène en un clic. Chargé après index.html, equipe.js et disponibilites.js, dont il reprend l'état (E),
+   et le geste qui y mène en un clic. Chargé après index.html, prefs.js, equipe.js et disponibilites.js, dont il reprend l'état (E),
    le client (sb) et les outils (cadre, annoncer, aCompleterAvant, resteFeuille, equipeDeLaDate…).
    - Des tuiles (TUILES), chacune sur ce que l'administration a déjà en mémoire : les actions rapides ; à traiter (les
      demandes de devis à répondre, les relances en retard, les notes de frais à valider, les options à confirmer, les dates
@@ -9,21 +9,26 @@
      chiffres ; qui part bientôt ; la diffusion ; les propositions de dates ; les séances d'atelier ; les dernières
      modifications ; les spectacles ; un mémo. Chaque ligne mène là où l'on agit, le champ visé prenant le focus
      (data-viser). Une tuile dont la base n'a pas les tables (E.ideale, E.sql4, E.sql5, E.equipeInstallee) ne se montre pas.
+   - ACTIONS (les actions rapides possibles : clé, libellé, adresse, condition, externe, nom de l'icône ICONES) est lue aussi par le
+     menu latéral (cadre.js) : les « ＋ » font son menu « Créer », MENU_EPINGLES_DEFAUT dit ce qu'il épingle d'office (la tuile a sa
+     liste à elle, ACTIONS_DEFAUT : chacune son défaut, le menu contextuel des actions fait le pont, « Mettre dans le menu »).
    - Entièrement personnalisable, « Personnaliser » : l'ordre (glisser une tuile par son titre, ou ← →), la taille (une,
-     deux colonnes ou toute la largeur), masquer ou remettre une tuile, la réduire ; les réglages de chaque tuile (⚙ : la
-     période, le nombre de lignes, ce qu'elle suit) ; les colonnes de la grille ; la page d'ouverture de l'administration.
-   - Tout est gardé avec le compte (crescite_preferences, script SQL 6, clé accueil.tableau) : on retrouve son tableau sur
-     tous ses appareils. Sans le script, sur cet appareil (localStorage) ; la disposition de l'appareil passe dans la base
-     à la première ouverture qui suit.
+     deux colonnes ou toute la largeur), la hauteur (une poignée basse, à l'ordinateur : la tuile garde alors cette hauteur au
+     plus et son corps défile ; elle se retient avec la disposition, tuiles[i].hauteur, et voyage avec les vues nommées ; au
+     téléphone et au doigt, la hauteur gardée ne s'applique pas : la tuile y garde la sienne),
+     masquer ou remettre une tuile, la réduire ; les réglages de chaque tuile (⚙ : la période, le nombre de lignes, ce
+     qu'elle suit) ; les colonnes de la grille ; la page d'ouverture de l'administration.
+   - Tout est gardé avec le compte (crescite_preferences, script SQL 6, clé accueil.tableau, par PREFS : prefs.js) : on
+     retrouve son tableau sur tous ses appareils. Sans le script, sur cet appareil ; la disposition de l'appareil passe
+     dans la base à la première ouverture qui suit.
    - Le temps réel de la base redessine les tuiles (rafraichir sur la grille, [data-liste]) ; le journal se relit alors,
      au plus toutes les cinq secondes. */
 const TABLEAU = (() => {
   // ===================================================================================================== état
   const CLE_PREF = 'accueil.tableau', CLE_LOCAL = 'crescite-admin-tableau', VERSION = 1;
-  const T = { conf: null, confDe: undefined, lecture: null, ecriture: Promise.resolve(), prefs: null, minuteur: null,
+  const T = { conf: null, confDe: undefined, lecture: null,
     edition: false, journal: null, journalLu: 0, journalLecture: null, journalDiffere: null, propLecture: null, ouverts: new Set(), glisse: null, memoMinuteur: null,
     filtre: null, voirReportees: false, glisseObjet: null, fileIndex: 0, fileCle: null, vueAuto: '' };
-  const absent = e => !!e && /PGRST202|PGRST205|42883|42P01|Could not find the (function|table)|does not exist|schema cache/i.test(`${e.code || ''} ${e.message || ''}`);
   const uid = () => E.session?.user?.id || null;
 
   // ===================================================================================================== outils
@@ -52,54 +57,54 @@ const TABLEAU = (() => {
     d.nature && d.nature !== 'representations' && `<span class="badge">${esc((NATURES_DATE.find(x => x[0] === d.nature) || [])[1] || d.nature)}</span>`].filter(Boolean).join('');
   // une ligne du tableau : ce qui est à gauche (le jour, un avatar), le titre et son sous-titre, ce qui est à droite
   const ligne = ({ href, viser, couleur, gauche, titre, sous, droite, classe, externe, attrs = '' }) => `<a class="tb-l${gauche ? '' : ' sans-gauche'}${classe ? ` ${classe}` : ''}" href="${esc(href)}"${viser ? ` data-viser="${esc(viser)}"` : ''}${externe ? ' target="_blank" rel="noopener"' : ''}${couleur ? ` style="--c:${esc(couleur)}"` : ''}${attrs ? ` ${attrs}` : ''}>${gauche || ''}<span class="tb-l-corps"><span class="tb-l-t">${titre}</span>${sous ? `<span class="tb-l-s">${sous}</span>` : ''}</span>${droite ? `<span class="tb-l-d">${droite}</span>` : ''}</a>`;
-  const rien = (texte, ok = false) => `<p class="tb-rien${ok ? ' ok' : ''}">${texte}</p>`;
+  // une phrase pour une tuile vide ; hors du « tout est à jour » (vert, nu), la tentacule en filigrane vient avant la phrase
+  const rien = (texte, ok = false) => `${ok ? '' : ICONES.ornementVide}<p class="tb-rien${ok ? ' ok' : ''}">${texte}</p>`;
   const plus = (n, href, texte = 'Tout voir') => (n > 0 ? `<a class="tb-plus" href="${esc(href)}">${n > 1 ? `Et ${n} autres` : 'Et une autre'} · ${texte} →</a>` : '');
-  // l'auteur d'une modification, comme le journal : un administrateur (son nom), une personne de l'équipe qui a modifié
-  // depuis son espace (le quatorzième script : son nom, « équipe »), le compte connecté, sinon un import
-  const nomAdmin = id => {
-    const a = E.admins.find(x => x.user_id === id);
-    if (a?.nom) return a.nom;
-    const f = id ? (E.privees || []).find(x => x.user_id === id) : null, p = f ? personne(f.personne_id) : null;
-    if (p && nomDe(p)) return a ? nomDe(p) : `${nomDe(p)} (équipe)`;
-    return id === uid() ? E.session.user.email : id ? (a ? 'un administrateur' : 'un autre compte') : 'import';
-  };
+  // l'auteur d'une modification : celui du journal (nomAdmin, dans le script principal : un administrateur, une personne de
+  // l'équipe qui a modifié depuis son espace, le compte connecté, sinon un import)
+  const nomAdmin = id => (typeof globalThis.nomAdmin === 'function' ? globalThis.nomAdmin(id) : id ? 'un autre compte' : 'import');
   // le bilan d'une proposition de dates : combien de disponibles, de pas disponibles, de peut-être, sans réponse
   const reponseDe = (jour, pid) => (jour.reponses || []).find(r => String(r.personne_id) === String(pid))?.reponse || 'attente';
   const bilanDe = p => { const n = { oui: 0, non: 0, peut_etre: 0, attente: 0 }; for (const j of p.jours || []) for (const d of p.destinataires || []) n[reponseDe(j, d.personne_id)]++; return n; };
   const bilanHtml = n => [['oui', '✓', 'disponible'], ['non', '✗', 'pas disponible'], ['peut_etre', '?', 'peut-être'], ['attente', '…', 'en attente']]
     .filter(([k]) => n[k]).map(([k, s, t]) => `<span class="dp-r ${k === 'peut_etre' ? 'pe' : k}"><span aria-hidden="true">${s}</span> ${n[k]}<span class="sr"> ${t}</span></span>`).join(' ') || '<span class="compte">personne à prévenir</span>';
+  // l'engrenage, l'éclair et l'entonnoir sont ceux de la bibliothèque (admin/icones.js) ; chevron, poignée et croix, des svg 12 × 12 et 12 × 18, restent ici, hors bibliothèque
   const SVG = {
-    reglages: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+    reglages: ICONES.svg('engrenage', { taille: 16 }),
+    eclair: ICONES.svg('eclair', { taille: 16 }),
+    entonnoir: ICONES.svg('entonnoir', { taille: 14 }),
     chevron: '<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     poignee: '<svg viewBox="0 0 12 18" width="10" height="15" fill="currentColor" aria-hidden="true"><circle cx="3.5" cy="3" r="1.6"/><circle cx="8.5" cy="3" r="1.6"/><circle cx="3.5" cy="9" r="1.6"/><circle cx="8.5" cy="9" r="1.6"/><circle cx="3.5" cy="15" r="1.6"/><circle cx="8.5" cy="15" r="1.6"/></svg>',
     croix: '<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
-    eclair: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>',
-    entonnoir: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg>',
   };
 
   // ===================================================================================================== les tuiles
   const TAILLES = [['p', '1', 'Une colonne'], ['m', '2', 'Deux colonnes'], ['g', '⟷', 'Toute la largeur']];
   const JOURS = [[7, '7 jours'], [14, '14 jours'], [30, '30 jours'], [60, '60 jours'], [90, '90 jours']];
-  // les actions rapides possibles : clé, libellé, adresse (ou action spéciale), quand elle est là
+  // les actions rapides possibles : clé, libellé, adresse (ou action spéciale), quand elle est là, externe (un lien hors de
+  // l'administration), le nom de son icône dans admin/icones.js (le menu latéral, cadre.js, la montre dans « ＋ Créer » et chez les épinglés)
   const ACTIONS = [
-    ['date', '＋ Nouvelle date', '#/representations/nouvelle'],
-    ['proposer', '＋ Proposer des dates', '#/planning/proposer', () => E.equipeInstallee && E.sql5 !== false],
-    ['personne', '＋ Nouvelle fiche', '#/equipe/nouvelle', () => E.equipeInstallee],
-    ['lieu', '＋ Nouveau lieu', '#/lieux/nouveau'],
-    ['seance', '＋ Séance d’atelier', '#/ateliers/seances/nouvelle'],
-    ['invitation', '＋ Inviter une salle', '#/pro/nouvelle', () => E.sql4],
-    ['prospect', '＋ Opportunité de diffusion', 'prospect', () => E.ideale],
-    ['tableur', 'Tableur des séances', '#/representations/tableur'],
-    ['feuilles', 'Feuilles de route', '#/feuilles', () => E.equipeInstallee],
-    ['planning', 'Planning de l’équipe', '#/planning', () => E.equipeInstallee],
-    ['devis', 'Demandes de devis', '#/diffusion/devis', () => E.ideale],
-    ['frais', 'Notes de frais', '#/equipe/frais', () => E.ideale && E.equipeInstallee],
-    ['journal', 'Journal des modifications', '#/journal'],
-    ['site', 'Voir le site ↗', SITE, null, true],
-    ['editer', 'Modifier sur le site ↗', `${SITE}?edition`, null, true],
-    ['recherche', `Rechercher… ${RACCOURCI_RCH}`, 'recherche'],
+    ['date', '＋ Nouvelle date', '#/representations/nouvelle', null, false, 'plus'],
+    ['proposer', '＋ Proposer des dates', '#/planning/proposer', () => E.equipeInstallee && E.sql5 !== false, false, 'calendrier'],
+    ['personne', '＋ Nouvelle fiche', '#/equipe/nouvelle', () => E.equipeInstallee, false, 'personne'],
+    ['lieu', '＋ Nouveau lieu', '#/lieux/nouveau', null, false, 'lieux'],
+    ['seance', '＋ Séance d’atelier', '#/ateliers/seances/nouvelle', null, false, 'ateliers'],
+    ['invitation', '＋ Inviter une salle', '#/pro/nouvelle', () => E.sql4, false, 'mel'],
+    ['prospect', '＋ Opportunité de diffusion', 'prospect', () => E.ideale, false, 'diffusion'],
+    ['tableur', 'Tableur des séances', '#/representations/tableur', null, false, 'vue-tableur'],
+    ['feuilles', 'Feuilles de route', '#/feuilles', () => E.equipeInstallee, false, 'feuille'],
+    ['planning', 'Planning de l’équipe', '#/planning', () => E.equipeInstallee, false, 'planning'],
+    ['devis', 'Demandes de devis', '#/diffusion/devis', () => E.ideale, false, 'presse-papiers'],
+    ['frais', 'Notes de frais', '#/equipe/frais', () => E.ideale && E.equipeInstallee, false, 'euro'],
+    ['journal', 'Journal des modifications', '#/journal', null, false, 'journal'],
+    ['site', 'Voir le site ↗', SITE, null, true, 'externe'],
+    ['editer', 'Modifier sur le site ↗', `${SITE}?edition`, null, true, 'crayon'],
+    ['recherche', `Rechercher… ${RACCOURCI_RCH}`, 'recherche', null, false, 'loupe'],
   ];
   const ACTIONS_DEFAUT = ['date', 'proposer', 'personne', 'lieu', 'seance', 'invitation', 'prospect', 'tableur', 'editer', 'recherche'];
+  // ce que le menu latéral épingle d'office (cadre.js, la clé de préférence menu.epingles) : un raccourci permanent, là où la tuile
+  // « actions » est une page d'ouverture ; jamais les « ＋ » (ils sont dans « ＋ Créer ») ni la recherche (la loupe de l'en-tête)
+  const MENU_EPINGLES_DEFAUT = ['tableur', 'feuilles', 'planning', 'devis', 'frais', 'journal', 'site'];
   // ce qu'il y a à traiter : une catégorie par source, chacune avec ses lignes (tri : la plus urgente d'abord)
   const CATEGORIES = [
     { k: 'devis', titre: 'Demandes de devis à répondre', tout: '#/diffusion/devis', dispo: () => E.ideale,
@@ -363,7 +368,7 @@ const TABLEAU = (() => {
   const dispo = k => !!TUILES[k] && (!TUILES[k].dispo || TUILES[k].dispo());
 
   // ===================================================================================================== la disposition
-  const defauts = () => ({ v: VERSION, modifie: 0, colonnes: 'auto', depart: 'accueil', tuiles: Object.entries(TUILES).map(([k, t]) => ({ k, visible: t.visible !== false, taille: t.taille || 'p', replie: false, reglages: {} })), urgent: { epingles: [], reports: {} }, vues: [], vue: null, manuelLe: 0 });
+  const defauts = () => ({ v: VERSION, modifie: 0, colonnes: 'auto', depart: 'accueil', tuiles: Object.entries(TUILES).map(([k, t]) => ({ k, visible: t.visible !== false, taille: t.taille || 'p', replie: false, hauteur: null, reglages: {} })), urgent: { epingles: [], reports: {} }, vues: [], vue: null, manuelLe: 0 });
   // une disposition lue (de la base, de l'appareil, d'une autre version) remise d'équerre : les tuiles connues dans l'ordre
   // donné, les nouvelles ajoutées à la fin avec leurs défauts
   function normaliser(c) {
@@ -378,12 +383,15 @@ const TABLEAU = (() => {
     for (const x of Array.isArray(c?.tuiles) ? c.tuiles : []) {
       if (!x || !TUILES[x.k] || vues.has(x.k)) continue;
       vues.add(x.k);
-      out.tuiles.push({ k: x.k, visible: x.visible !== false, taille: TAILLES.some(t => t[0] === x.taille) ? x.taille : (TUILES[x.k].taille || 'p'), replie: !!x.replie, reglages: x.reglages && typeof x.reglages === 'object' && !Array.isArray(x.reglages) ? x.reglages : {} });
+      out.tuiles.push({ k: x.k, visible: x.visible !== false, taille: TAILLES.some(t => t[0] === x.taille) ? x.taille : (TUILES[x.k].taille || 'p'), replie: !!x.replie, hauteur: x.hauteur != null && x.hauteur !== '' && Number.isFinite(+x.hauteur) ? Math.min(Math.max(Math.round(+x.hauteur), 160), 1200) : null, reglages: x.reglages && typeof x.reglages === 'object' && !Array.isArray(x.reglages) ? x.reglages : {} });
     }
     d.tuiles.forEach(x => { if (!vues.has(x.k)) out.tuiles.push(x); });
     return out;
   }
-  const conf = () => T.conf || (T.conf = normaliser(local()));
+  // les préférences du compte passent par PREFS (prefs.js) ; si ce module manquait à la page, le repli d'avant : l'appareil seul
+  const PR = () => (typeof PREFS !== 'undefined' ? PREFS : null);
+  const lireConf = () => { const p = PR(); if (!p) return normaliser(local()); p.normaliser(CLE_PREF, normaliser); return p.lire(CLE_PREF, null) || normaliser(null); };
+  const conf = () => T.conf || (T.conf = lireConf());
   const tuile = k => conf().tuiles.find(t => t.k === k);
   // la valeur d'un réglage d'une tuile : celle choisie si elle est permise, sinon la valeur par défaut
   function valeurs(k) {
@@ -400,49 +408,26 @@ const TABLEAU = (() => {
   }
   const local = () => { try { const v = JSON.parse(localStorage.getItem(CLE_LOCAL) || 'null'); return v && typeof v === 'object' ? v : null; } catch { return null; } };
   const garderLocal = c => { try { if (c) localStorage.setItem(CLE_LOCAL, JSON.stringify(c)); else localStorage.removeItem(CLE_LOCAL); } catch { /* navigation privée */ } };
-  const ecrirePref = async c => (await sb.from('crescite_preferences').upsert({ user_id: uid(), cle: CLE_PREF, valeur: c }, { onConflict: 'user_id,cle' })).error;
+  // « avec votre compte » ou « sur cet appareil » : ce que PREFS a trouvé dans la base (sans prefs.js, toujours l'appareil)
+  const surAppareil = () => (PR() ? PR().etat() === 'absent' : true);
   // la disposition du compte, lue une fois par session (chargerTout l'attend : la page d'ouverture en dépend) ; sans le
-  // script 6, celle de l'appareil, qui passe dans la base dès que le script est là
+  // script 6, celle de l'appareil, qui passe dans la base dès que le script est là (PREFS s'en charge)
   function charger() {
     const u = uid();
-    if (T.confDe !== u) Object.assign(T, { confDe: u, conf: null, lecture: null, prefs: null });
-    if (!T.lecture) T.lecture = (async () => {
-      const ici = local();
-      if (!u) { T.conf = normaliser(ici); return; }
-      const { data, error } = await sb.from('crescite_preferences').select('valeur').eq('user_id', u).eq('cle', CLE_PREF).maybeSingle();
-      if (T.confDe !== u) return;
-      if (error) { T.prefs = absent(error) ? 'absent' : 'erreur'; T.conf = normaliser(ici); return; }
-      T.prefs = 'ok';
-      // la base, sauf si l'appareil a une disposition plus récente qu'elle n'a pas reçue (une écriture coupée)
-      if (data && data.valeur && typeof data.valeur === 'object' && !(ici && (Number(ici.modifie) || 0) > (Number(data.valeur.modifie) || 0))) { T.conf = normaliser(data.valeur); garderLocal(null); return; }
-      T.conf = normaliser(ici);
-      if (ici) ecrirePref(T.conf).then(err => { if (!err) garderLocal(null); }, () => {});
-    })().catch(() => { if (!T.conf) T.conf = normaliser(local()); });
+    if (T.confDe !== u) Object.assign(T, { confDe: u, conf: null, lecture: null });
+    if (!T.lecture) T.lecture = (PR() ? PR().charger() : Promise.resolve()).then(() => { if (T.confDe === u) T.conf = lireConf(); }).catch(() => { if (!T.conf) T.conf = normaliser(local()); });
     return T.lecture;
   }
-  // chaque changement s'enregistre, un peu après le dernier geste, dans l'ordre
+  // chaque changement s'enregistre, un peu après le dernier geste, dans l'ordre (PREFS : l'appareil tout de suite, la base 700 ms après)
   function garder(aussitot = false) {
     const c = conf();
     c.modifie = Date.now();
-    garderLocal(c);          // sur l'appareil tout de suite ; la base un peu après le dernier geste
-    clearTimeout(T.minuteur);
-    T.minuteur = setTimeout(ecrireMaintenant, aussitot ? 0 : 700);
+    if (PR()) PR().ecrire(CLE_PREF, c, { aussitot, muet: true });      // (muet : le panneau « Personnaliser » dit déjà où c'est gardé)
+    else garderLocal(c);
+    if (typeof CADRE !== 'undefined') CADRE.perimer();      // (un report, un épinglage, un réglage de la tuile : le badge du menu suit)
   }
-  function ecrireMaintenant() {
-    clearTimeout(T.minuteur); T.minuteur = null;
-    const c = T.conf;
-    if (!c) return;
-    T.ecriture = T.ecriture.then(async () => {
-      if (T.prefs === 'absent' || !uid()) return garderLocal(c);
-      const err = await ecrirePref(c);
-      if (!err) { T.prefs = 'ok'; garderLocal(null); return; }
-      garderLocal(c);
-      if (absent(err)) { T.prefs = 'absent'; return; }
-      erreur(err, 'La disposition du tableau de bord n’est pas enregistrée dans votre compte (elle reste sur cet appareil)');
-    }).catch(() => {});
-  }
-  window.addEventListener('pagehide', () => { if (T.minuteur) ecrireMaintenant(); });
-  const depart = () => `#/${conf().depart === 'representations' ? 'representations' : 'accueil'}`;
+  // (Représentations s'ouvre sur la vue retenue : la liste, le tableur ou la carte, adresseDates() du script principal)
+  const depart = () => (conf().depart === 'representations' ? (typeof adresseDates === 'function' ? adresseDates() : '#/representations') : '#/accueil');
 
   // ===================================================================================================== lire plus
   // le journal : ses dernières lignes, relues au plus toutes les cinq secondes (le temps réel ne porte pas le journal,
@@ -474,12 +459,12 @@ const TABLEAU = (() => {
     }).join('');
   }
   function corpsDe(k) {
-    try { return TUILES[k].corps(valeurs(k)); } catch (e) { console.error(e); return { html: rien('Cette tuile n’a pas pu se dessiner.') }; }
+    try { return TUILES[k].corps(valeurs(k)); } catch (e) { console.error(e); return { html: '<p class="tb-rien">Cette tuile n’a pas pu se dessiner.</p>' }; }
   }
   function badgeDe(c) { return c.n ? `<span class="badge ${c.ok ? 'ok' : 'option'}">${c.n}</span>` : c.ok ? '<span class="badge ok">Rien</span>' : ''; }
   function htmlTuile(t, i, n) {
     const def = TUILES[t.k], c = corpsDe(t.k), lien = def.lien ? def.lien() : null, regl = reglagesDe(t.k), ouvert = T.ouverts.has(t.k);
-    return `<section class="tb-tuile taille-${t.taille}${t.replie ? ' replie' : ''}" data-k="${t.k}" aria-labelledby="tb-t-${t.k}"${T.edition ? ' draggable="true"' : ''}>
+    return `<section class="tb-tuile taille-${t.taille}${t.replie ? ' replie' : ''}" data-k="${t.k}" aria-labelledby="tb-t-${t.k}"${T.edition ? ' draggable="true"' : ''}${t.hauteur ? ` style="--h-tuile:${t.hauteur}px"` : ''}>
       <header class="tb-tete"><h2 id="tb-t-${t.k}">${T.edition ? `<span class="tb-poignee" title="Glisser pour déplacer">${SVG.poignee}</span>` : ''}<span class="tb-ico-t" aria-hidden="true">${ICONES_TUILE[t.k] || ''}</span><span class="tb-titre">${esc(def.titre)}</span><span class="tb-badge">${badgeDe(c)}</span></h2>
         ${lien ? `<a class="tb-lien" href="${esc(lien[0])}" title="Ouvrir : ${esc(lien[1])}" aria-label="Ouvrir : ${esc(lien[1])}"><span class="mot">${esc(lien[1])}</span> →</a>` : ''}
         ${regl.length ? `<button type="button" class="tb-ico" data-tb-reglages aria-expanded="${ouvert}" aria-controls="tb-r-${t.k}" title="Réglages de la tuile" aria-label="Réglages : ${esc(def.titre)}">${SVG.reglages}</button>` : ''}
@@ -498,7 +483,7 @@ const TABLEAU = (() => {
       <span class="tb-pan-g"><span class="lib">À l’ouverture de l’administration</span><span class="seg" role="group" aria-label="Page d’ouverture">${[['accueil', 'Tableau de bord'], ['representations', 'Représentations']].map(([k, l]) => `<button type="button" data-tb-depart="${k}" aria-pressed="${c.depart === k}">${l}</button>`).join('')}</span></span>
       <span class="tb-pan-fin"><button type="button" class="btn petit" id="tb-reinit">Réinitialiser</button><button type="button" class="btn petit principal" id="tb-fini">Terminer</button></span></div>
       <div class="tb-pan-l"><span class="lib">Tuiles masquées</span>${xs.length ? xs.map(t => `<button type="button" class="puce" data-tb-montrer="${t.k}" title="${esc(TUILES[t.k].description)}">＋ ${esc(TUILES[t.k].titre)}</button>`).join('') : '<span class="compte">toutes les tuiles sont affichées</span>'}</div>
-      <p class="aide">Glissez une tuile par son titre pour la déplacer, ou servez-vous des flèches ; chaque tuile se règle (le rouage), se réduit (le chevron), change de largeur (1, 2, ou toute la largeur) ou se masque (la croix). ${T.prefs === 'absent' ? 'La disposition est gardée sur cet appareil.' : 'La disposition est gardée avec votre compte, sur tous vos appareils.'}</p>`;
+      <p class="aide">Glissez une tuile par son titre pour la déplacer, ou servez-vous des flèches ; chaque tuile se règle (le rouage), se réduit (le chevron), change de largeur (1, 2, ou toute la largeur) ou se masque (la croix). ${surAppareil() ? 'La disposition est gardée sur cet appareil.' : 'La disposition est gardée avec votre compte, sur tous vos appareils.'}</p>`;
   }
   function dessiner() {
     const grille = $('#tb-grille');
@@ -513,6 +498,39 @@ const TABLEAU = (() => {
     appliquerFiltre();
     $('#tb-personnaliser')?.setAttribute('aria-pressed', String(T.edition));
     const b = $('#tb-personnaliser'); if (b) b.textContent = T.edition ? 'Terminer' : 'Personnaliser';
+    if (T.edition) equiperHauteurs();
+  }
+  // la hauteur de chaque tuile en « Personnaliser » : une poignée basse, enfant de la tuile (hors de son corps, que le mode rend
+  // inerte), qui écrit --h-tuile pendant le geste et, au relâchement, tuiles[i].hauteur avec la disposition (une écriture). Le corps
+  // défile quand la tuile est plus basse que lui ; plus haute que lui, elle ne grandit pas (c'est une hauteur au plus : le maximum de
+  // la poignée est la hauteur que la tuile aurait sans limite). Pas de poignée à l'écran tactile (FENETRES.poignee répond null).
+  const naturelDe = sec => {
+    let h = sec.offsetHeight - sec.clientHeight;
+    for (const c of sec.children) if (!c.classList.contains('poignee')) h += c.classList.contains('tb-corps') ? c.scrollHeight + c.offsetHeight - c.clientHeight : c.offsetHeight;
+    return Math.ceil(h);
+  };
+  function equiperHauteurs() {
+    if (typeof FENETRES === 'undefined') return;
+    for (const sec of $$('#tb-grille .tb-tuile')) {
+      const k = sec.dataset.k;
+      if (!TUILES[k] || !tuile(k)) continue;
+      FENETRES.poignee(sec, { axe: 'y', bord: 'bas', min: 160, max: () => Math.max(160, naturelDe(sec)), libelle: `Hauteur de la tuile : ${TUILES[k].titre}`,
+        defaut: () => naturelDe(sec),
+        ecrire: v => { sec.style.setProperty('--h-tuile', `${v}px`); },
+        garder: v => {
+          const tu = tuile(k); if (!tu) return;
+          tu.hauteur = v === null ? null : Math.min(Math.max(Math.round(v), 160), 1200); garder();
+          if (v === null) setTimeout(() => { if (!tuile(k)?.hauteur) sec.style.removeProperty('--h-tuile'); }, 300);      // (la remise anime d'abord jusqu'à la hauteur d'origine)
+        } });
+    }
+  }
+  // un geste de poignée en cours (html.redim) : le redessin complet détruirait la poignée tenue ; il se fait une seule fois, au relâchement
+  function apresGeste(f) {
+    const h = document.documentElement;
+    if (!h.classList.contains('redim')) { f(); return; }
+    if (T.apresGeste) return;
+    T.apresGeste = new MutationObserver(() => { if (h.classList.contains('redim')) return; T.apresGeste.disconnect(); T.apresGeste = null; if (location.hash === '#/accueil') f(); });
+    T.apresGeste.observe(h, { attributes: true, attributeFilter: ['class'] });
   }
   // le corps d'une tuile (et son badge) : au temps réel, après un réglage ; le mémo en cours d'écriture n'est pas touché
   function dessinerCorps(k = null) {
@@ -531,14 +549,14 @@ const TABLEAU = (() => {
   function preparer(force = false) {
     for (const t of visibles()) {
       const p = TUILES[t.k].lire ? TUILES[t.k].lire(force) : null;
-      if (p && typeof p.then === 'function') p.then(() => { if (location.hash !== '#/accueil') return; if (!dispo(t.k) || T.edition) dessiner(); else dessinerCorps(); }, () => { if (location.hash === '#/accueil') dessinerCorps(t.k); });
+      if (p && typeof p.then === 'function') p.then(() => { if (location.hash !== '#/accueil') return; if (!dispo(t.k) || T.edition) apresGeste(dessiner); else dessinerCorps(); }, () => { if (location.hash === '#/accueil') dessinerCorps(t.k); });
     }
   }
 
   // ===================================================================================================== le bandeau du jour
   /* En haut du tableau : bonjour, le jour, ce qui attend une décision et la prochaine date, trois chiffres (à traiter, les
      dates sous sept jours, qui part sous quatorze), et une tentacule en filigrane. */
-  const ORNEMENT = '<svg class="tb-salut-orne" viewBox="0 0 260 160" aria-hidden="true" focusable="false"><path d="M-10 150 C 40 150, 70 60, 130 50 C 185 41, 230 70, 232 110 C 234 140, 205 150, 195 132 C 186 116, 206 104, 214 118" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round"/><g fill="currentColor"><circle cx="48" cy="118" r="5"/><circle cx="72" cy="88" r="5"/><circle cx="100" cy="64" r="5"/><circle cx="135" cy="54" r="5"/><circle cx="170" cy="56" r="5"/><circle cx="203" cy="72" r="5"/><circle cx="224" cy="97" r="4.5"/><circle cx="222" cy="128" r="4"/></g></svg>';
+  const ORNEMENT = ICONES.ornement;
   function bandeau(jour) {
     const h = new Date().getHours(), salut = h < 5 || h >= 18 ? 'Bonsoir' : 'Bonjour';
     const nom = (E.admins || []).find(a => a.user_id === uid())?.nom || '', prenom = String(nom).trim().split(/\s+/)[0] || '';
@@ -553,15 +571,10 @@ const TABLEAU = (() => {
       <ul class="tb-salut-chiffres"><li><b>${total}</b><span>à traiter</span></li><li><b>${semaine.length}</b><span>${semaine.length > 1 ? 'dates' : 'date'} sous 7 jours</span></li>${E.equipeInstallee ? `<li><b>${partent.size}</b><span>${partent.size > 1 ? 'partent' : 'part'} sous 14 jours</span></li>` : ''}</ul>${ORNEMENT}</section>`;
   }
   // l'icône de chaque tuile (dans son en-tête)
-  const ic = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
-  const ICONES_TUILE = {
-    actions: ic('<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>'), urgent: ic('<path d="M3 13h5l2 3h4l2-3h5"/><path d="M5 5h14l2 8v6H3v-6z"/>'),
-    avant: ic('<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V2h6v2"/><path d="m9 13 2 2 4-4"/>'), prochaines: ic('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'),
-    chiffres: ic('<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'), equipe: ic('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.5"/><path d="M15.5 14.5a5 5 0 0 1 6 5"/>'),
-    diffusion: ic('<path d="M3 10v4h3l7 4V6l-7 4z"/><path d="M17 9a4 4 0 0 1 0 6"/>'), propositions: ic('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M10.5 14.5a1.7 1.7 0 1 1 2.3 1.6c-.6.3-.8.6-.8 1.2M12 19.5h.01"/>'),
-    ateliers: ic('<path d="M4 4h7a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H4z"/><path d="M20 4h-7a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h8z"/>'), journal: ic('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
-    spectacles: ic('<path d="M4 5h7v6a3.5 3.5 0 0 1-7 0z"/><path d="M13 9h7v6a3.5 3.5 0 0 1-7 0z"/><path d="M6 8h1M9 8h1M15 12h1M18 12h1"/>'), memo: ic('<path d="m4 20 4-1L19 8l-3-3L5 16z"/><path d="m14 7 3 3"/>'),
-  };
+  const ICONES_TUILE = Object.fromEntries(Object.entries({
+    actions: 'eclair', urgent: 'bannette', avant: 'presse-papiers', prochaines: 'calendrier', chiffres: 'histogramme', equipe: 'equipe', diffusion: 'diffusion',
+    propositions: 'calendrier-question', ateliers: 'ateliers', journal: 'horloge', spectacles: 'spectacles', memo: 'crayon',
+  }).map(([tuile, nom]) => [tuile, ICONES.svg(nom)]));   // sans taille : .tb-ico-t svg la donne (habillage.js)
 
   // ===================================================================================================== la vue
   function vue() {
@@ -661,9 +674,9 @@ const TABLEAU = (() => {
         T.edition = false; dessiner(); $('#tb-personnaliser')?.focus();
       } else if (t.matches('[data-tb-action]')) {
         if (t.dataset.tbAction === 'recherche') ouvrirRecherche();
-        else if (t.dataset.tbAction === 'prospect') { window.addEventListener('hashchange', () => requestAnimationFrame(() => $('#b-nouveau-prospect')?.click()), { once: true }); location.hash = '#/diffusion'; }
+        else if (t.dataset.tbAction === 'prospect') CADRE.nouvelleOpportunite();      // (cadre.js : aussi quand on est déjà sur la Diffusion)
       } else if (t.matches('[data-tb-sp]')) {
-        session.dates = Object.assign({ spectacle: '', public: '', statut: '', q: '', ouvertes: [] }, session.dates || {}, { spectacle: t.dataset.tbSp }); garderFiltres(); location.hash = '#/representations';
+        session.dates = Object.assign({ spectacle: '', public: '', statut: '', q: '' }, session.dates || {}, { spectacle: t.dataset.tbSp }); garderFiltres(); location.hash = '#/representations';
       } else if (t.matches('.tb-tel')) {
         e.preventDefault(); location.href = t.dataset.tel;
       }
@@ -688,10 +701,11 @@ const TABLEAU = (() => {
       const etat = $('.tb-memo-etat', e.target.parentNode); if (etat) etat.textContent = 'Enregistrement…';
       garder();
       clearTimeout(T.memoMinuteur);
-      T.memoMinuteur = setTimeout(() => { T.ecriture.then(() => { const x = $('.tb-memo-etat'); if (x) x.textContent = T.prefs === 'absent' ? 'Gardé sur cet appareil' : 'Enregistré'; }); }, 900);
+      T.memoMinuteur = setTimeout(() => { (PR() ? PR().attendre() : Promise.resolve()).then(() => { const x = $('.tb-memo-etat'); if (x) x.textContent = surAppareil() ? 'Gardé sur cet appareil' : 'Enregistré'; }); }, 900);
     });
     // glisser-déposer des tuiles (en personnalisation) : une tuile glissée se pose avant ou après celle qu'on survole
     vueEl.addEventListener('dragstart', e => {
+      if (e.target.closest?.('.poignee')) { e.preventDefault(); return; }      // (la poignée de hauteur d'une tuile : le glisser natif de la tuile ne l'avale pas)
       const sec = e.target.closest?.('.tb-tuile[draggable="true"]');
       if (!sec || !T.edition) return;
       T.glisse = sec.dataset.k; sec.classList.add('glisse');
@@ -721,7 +735,7 @@ const TABLEAU = (() => {
     vueEl.addEventListener('dragend', () => { T.glisse = null; $$('.tb-tuile.glisse, .tb-tuile.cible-avant, .tb-tuile.cible-apres').forEach(x => x.classList.remove('glisse', 'cible-avant', 'cible-apres')); });
   }
   // en quittant la page : la personnalisation se referme, et ce qui n'est pas encore écrit part
-  window.addEventListener('hashchange', () => { if (location.hash !== '#/accueil') { T.edition = false; if (T.minuteur) ecrireMaintenant(); } });
+  window.addEventListener('hashchange', () => { if (location.hash !== '#/accueil') T.edition = false; });
 
   // ===================================================================================================== à traiter : l'ordre, les épingles, les reports
   /* Chaque ligne « à traiter » a une clé (catégorie:identifiant), un poids (ce que coûte le retard : un contrat non signé
@@ -794,9 +808,11 @@ const TABLEAU = (() => {
         { k: 'statut', t: 'choix', seg: true, l: 'Statut', choix: [['confirmee', 'Confirmée'], ['option', 'Toujours en option'], ['reportee', 'Reportée'], ['annulee', 'Annulée']], valeur: 'confirmee' },
         { k: 'visible', t: 'case', l: 'Publiée sur le site', valeur: d.visible !== false, aide: 'Une option ou une date annulée n’y va jamais.' },
       ], ok: 'Enregistrer', enregistrer: async v => {
-        const { error } = await sb.from('crescite_dates').update({ statut: v.statut, visible: !!v.visible && v.statut === 'confirmee' }).eq('id', d.id);
-        if (error) return texteErreur(error);
-        await apresTraiter({ confirmee: 'Date confirmée.', option: 'Toujours en option.', reportee: 'Date reportée.', annulee: 'Date annulée.' }[v.statut], cle); return true;
+        // par le rail de la fiche (ecrireChamps, script principal) : la date entière part au rpc ; la règle du tableau de bord
+        // (publiée seulement si confirmée) reste ici, chez l'appelant
+        const r = await ecrireChamps(d.id, { statut: v.statut, visible: !!v.visible && v.statut === 'confirmee' }, { dire: { confirmee: 'Date confirmée.', option: 'Toujours en option.', reportee: 'Date reportée.', annulee: 'Date annulée.' }[v.statut] });
+        if (!r.ok) return r.phrase;
+        await apresTraiter(null, cle); return true;
       } }); },
     heures: (id, cle) => { const d = dateDe(id), Gf = G(); if (!d || !Gf) return;
       const reps = E.reps.filter(r => r.date_id === d.id).sort((a, b) => (a.jour + h5(a.heure)).localeCompare(b.jour + h5(b.heure))).map(r => ({ id: r.id, jour: r.jour, heure: h5(r.heure), fin: h5(r.fin), public: r.public || 'tout_public', annulee: !!r.annulee, note: r.note || '' }));
@@ -806,31 +822,33 @@ const TABLEAU = (() => {
           champs: [{ k: 'jour', t: 'date', l: 'Jour', requis: true }, { k: 'heure', t: 'heure', l: 'Heure' }, { k: 'fin', t: 'heure', l: 'Fin' },
             ...(sco ? [{ k: 'public', t: 'choix', l: 'Public', choix: [['tout_public', 'Tout public'], ['scolaire', 'Scolaire'], ['autre', 'Autre']] }] : []), { k: 'note', t: 'texte', l: 'Précision', ph: 'complet, audiodécrite…' }, { k: 'annulee', t: 'case', l: 'Annulée' }] },
       ], note: 'L’équipe de la date est prévenue des horaires changés.', enregistrer: async v => {
-        const avant = new Map(reps.map(r => [String(r.id), r])), gardes = new Set(), requetes = [];
+        // toutes les séances de la date partent d'un coup, par le rail de la fiche (ecrireChamps) : la ligne du journal est
+        // écrite pour chaque séance, même inchangée (le script SQL de l'enregistrement en une fois y mettra bon ordre) ;
+        // le lien de billetterie d'une séance, absent de cette feuille, est gardé
+        const avant = new Map(E.reps.filter(r => r.date_id === d.id).map(r => [String(r.id), r]));
+        const seances = [];
         for (const r of v.reps || []) {
           if (!r.jour) return 'Un jour pour chaque séance.';
-          const l = { jour: r.jour, heure: r.heure || null, fin: r.fin || null, public: r.public || (sco ? 'scolaire' : 'tout_public'), annulee: !!r.annulee, note: (r.note || '').trim() || null };
-          if (r.id && avant.has(String(r.id))) { gardes.add(String(r.id)); const a = avant.get(String(r.id));
-            if (a.jour !== l.jour || a.heure !== (l.heure || '') || a.fin !== (l.fin || '') || a.public !== l.public || a.annulee !== l.annulee || (a.note || '') !== (l.note || '')) requetes.push(() => sb.from('crescite_representations').update(l).eq('id', Number(r.id))); }
-          else requetes.push(() => sb.from('crescite_representations').insert({ ...l, date_id: d.id }));
+          const a = r.id && avant.get(String(r.id));
+          seances.push({ ...(a ? { id: a.id } : {}), jour: r.jour, heure: r.heure || '', fin: r.fin || '', public: r.public || (sco ? 'scolaire' : 'tout_public'), annulee: !!r.annulee, lien: a?.lien || '', note: (r.note || '').trim() });
         }
-        const retirees = reps.filter(r => !gardes.has(String(r.id))).map(r => Number(r.id));
-        if (retirees.length) requetes.push(() => sb.from('crescite_representations').delete().in('id', retirees));
-        for (const q of requetes) { const { error } = await q(); if (error) return texteErreur(error); }
-        await apresTraiter('Horaires enregistrés.', cle); return true;
+        const res = await ecrireChamps(d.id, { representations: seances }, { dire: 'Horaires enregistrés.' });
+        if (!res.ok) return res.phrase;
+        await apresTraiter(null, cle); return true;
       } }); },
     contrats: (id, cle) => { const d = dateDe(id), Gf = G(); if (!d || !Gf) return;
       const su = E.suivis.find(s => s.date_id === d.id) || {};
       Gf.formulaire({ titre: 'Le contrat', sousTitre: titreDateLong(d), champs: [
         { k: 'contrat', t: 'choix', seg: true, l: 'Contrat', choix: [['', '—'], ['à envoyer', 'À envoyer'], ['envoyé', 'Envoyé'], ['signé', 'Signé']], valeur: (su.contrat || '').trim() },
         { k: 'organisateur', t: 'texte', l: 'Organisateur', valeur: su.organisateur || '' }, { k: 'contact', t: 'texte', l: 'Contact', valeur: su.contact || '', ph: 'nom, téléphone, courriel' },
-        { k: 'montant_cession', t: 'nombre', l: 'Montant de cession (€)', valeur: su.montant_cession ?? '', min: 0, pas: 0.01 },
+        (c => ({ k: 'montant_cession', t: 'nombre', l: c.l, valeur: su.montant_cession ?? '', min: c.min, max: c.max, pas: c.pas }))(champDate('montant')),   // (le champ du schéma de la date : libellé, bornes, centime)
         { k: 'notes', t: 'long', l: 'Notes', valeur: su.notes || '', lignes: 2 },
       ], enregistrer: async v => {
-        const ligne = { date_id: d.id, contrat: v.contrat || null, organisateur: v.organisateur.trim() || null, contact: v.contact.trim() || null, notes: v.notes.trim() || null, ...(v.montant_cession == null || v.montant_cession === '' ? {} : { montant_cession: Number(v.montant_cession) }) };
-        const { error } = await sb.from('crescite_dates_suivi').upsert(ligne, { onConflict: 'date_id' });
-        if (error) return texteErreur(error);
-        await apresTraiter(v.contrat === 'signé' ? 'Contrat signé : la date quitte « à traiter ».' : 'Suivi enregistré.', cle); return true;
+        // par le rail de la fiche (ecrireChamps) : le suivi entier, montant compris (effacé quand le champ est vidé)
+        const r = await ecrireChamps(d.id, { suivi: { contrat: v.contrat || '', organisateur: (v.organisateur || '').trim(), contact: (v.contact || '').trim(), notes: (v.notes || '').trim(), montant_cession: v.montant_cession } },
+          { dire: v.contrat === 'signé' ? 'Contrat signé : la date quitte « à traiter ».' : 'Suivi enregistré.' });
+        if (!r.ok) return r.phrase;
+        await apresTraiter(null, cle); return true;
       } }); },
     feuilles: (id, cle) => { const d = dateDe(id), Gf = G(); if (!d || !Gf) return;
       const f = E.feuilles.find(x => x.date_id === d.id), peutComposer = typeof composerPour === 'function' && typeof FEUILLE !== 'undefined';
@@ -1290,13 +1308,14 @@ const TABLEAU = (() => {
 .tb-grille[data-colonnes="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .tb-grille[data-colonnes="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .tb-grille[data-colonnes="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.tb-tuile { display: flex; flex-direction: column; min-width: 0; background: var(--carte); border: 1px solid var(--trait); border-radius: var(--rayon); box-shadow: var(--ombre); container-type: inline-size; }
+.tb-tuile { position: relative; display: flex; flex-direction: column; min-width: 0; background: var(--carte); border: 1px solid var(--trait); border-radius: var(--rayon); box-shadow: var(--ombre); container-type: inline-size; }
 .tb-tuile.taille-m { grid-column: span 2; }
+@media (min-width: 641px) and (pointer: fine) { .tb-tuile { max-height: var(--h-tuile, none); } }      /* (la hauteur réglée à l'ordinateur ne touche pas le téléphone ni le doigt) */
 .tb-tuile.taille-g { grid-column: 1 / -1; }
 @media (max-width: 760px) { .tb-grille, .tb-grille[data-colonnes] { grid-template-columns: minmax(0, 1fr); } .tb-tuile.taille-m, .tb-tuile.taille-g { grid-column: auto; } }
 @media (min-width: 761px) and (max-width: 1100px) { .tb-grille[data-colonnes="3"], .tb-grille[data-colonnes="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .tb-vide { grid-column: 1 / -1; text-align: center; color: var(--gris); }
-.tb-tete { display: flex; align-items: center; gap: 4px; padding: 10px 8px 9px 14px; border-bottom: 1px solid var(--trait); }
+.tb-tete { display: flex; align-items: center; gap: 4px; padding: var(--pas, 10px) 8px calc(var(--pas, 10px) - 1px) 14px; border-bottom: 1px solid var(--trait); }
 .tb-tete h2 { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; margin: 0 4px 0 0; font-size: 15px; line-height: 1.25; }
 .tb-tete h2 .tb-titre { min-width: 0; overflow-wrap: anywhere; }
 .tb-tete .badge { font-size: 11px; }
@@ -1305,12 +1324,13 @@ const TABLEAU = (() => {
 .tb-lien:hover { background: var(--doux); }
 @container (max-width: 430px) { .tb-lien .mot { display: none; } .tb-lien { padding: 2px 4px; } }
 .tb-ico { display: inline-grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 1px solid transparent; border-radius: 7px; background: none; color: var(--gris); cursor: pointer; font-weight: 700; }
-.tb-ico:hover, .tb-ico[aria-expanded="true"] { background: var(--doux); color: var(--encre); }
-.tb-ico[disabled] { opacity: .35; cursor: default; background: none; }
+.tb-ico[aria-expanded="true"] { background: var(--doux); color: var(--encre); }      /* (survol, pressé, désactivé, occupé : le jeu d'états, habillage.js) */
+/* à la souris, 32 px (la rangée d'outils d'une tuile ne tient pas en 44 px) ; au doigt, 44 px (habillage.js) */
+@media (min-width: 641px) and (pointer: fine) { .tb-ico { width: 32px; height: 32px; } }
 .tb-replier svg { transition: transform .15s; }
 .tb-tuile.replie .tb-replier svg { transform: rotate(-90deg); }
 .tb-tuile.replie .tb-corps, .tb-tuile.replie .tb-reglages { display: none; }
-.tb-corps { display: grid; gap: 6px; padding: 10px 12px 12px; }
+.tb-corps { display: grid; gap: 6px; padding: 10px 12px 12px; overflow: auto; min-height: 0; }
 .tb-reglages { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; padding: 10px 14px; background: var(--doux); border-bottom: 1px solid var(--trait); font-size: 13.5px; }
 .tb-reglages[hidden] { display: none; }
 .tb-reglages label { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--gris); }
@@ -1338,7 +1358,7 @@ const TABLEAU = (() => {
 .tb-rien.ok { color: var(--ok); font-weight: 600; }
 .tb-note { margin: 2px 2px 0; font-size: 12.5px; color: var(--gris); }
 .tb-cat { display: grid; gap: 5px; }
-.tb-cat h3 { display: flex; align-items: center; gap: 8px; margin: 6px 2px 0; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--gris); }
+.tb-cat h3 { display: flex; align-items: center; gap: 8px; margin: 6px 2px 0; color: var(--gris); }      /* (sa police : la règle des étiquettes, habillage.js) */
 .tb-cat:first-child h3 { margin-top: 0; }
 .tb-cat h3 a { color: inherit; text-decoration: none; }
 .tb-cat h3 a:hover { text-decoration: underline; }
@@ -1388,6 +1408,9 @@ const TABLEAU = (() => {
 .tb-grille.edition .tb-tete { cursor: grab; }
 .tb-grille.edition .tb-tete:active { cursor: grabbing; }
 .tb-grille.edition .tb-corps { pointer-events: none; opacity: .75; }
+html.redim .tb-grille.edition .tb-corps { opacity: 1; }
+.tb-tuile > .poignee-bas { bottom: 0; }      /* (collée au bas de la tuile, et non à cheval sur son bord) */
+.tb-tuile.replie > .poignee { display: none; }
 .tb-tuile.glisse { opacity: .4; }
 .tb-tuile.cible-avant { box-shadow: -5px 0 0 var(--accent); }
 .tb-tuile.cible-apres { box-shadow: 5px 0 0 var(--accent); }
@@ -1471,7 +1494,7 @@ dialog.tb-brief::backdrop { background: rgba(23, 15, 26, .4); }
 .tb-brief-sous { margin: 10px 0 0; color: var(--gris); }
 .tb-brief-dates { list-style: none; padding: 0 !important; display: grid; gap: 8px; }
 .tb-brief-dates li { padding: 8px 12px; border-radius: 9px; background: var(--doux); border-left: 3px solid var(--c, var(--trait)); }
-@media print { html.tb-impression body > :not(#tb-brief) { display: none !important; } html.tb-impression dialog.tb-brief { position: static; border: 0; box-shadow: none; max-height: none; width: auto; } html.tb-impression .tb-brief-boutons { display: none; } html.tb-impression .tb-brief-corps { overflow: visible; } }
+@media print { html.tb-impression body > :not(#tb-brief) { display: none !important; } html.tb-impression dialog.tb-brief { position: static; border: 0; box-shadow: none; max-height: none !important; width: auto !important; height: auto !important; overflow: visible !important; } html.tb-impression dialog.tb-brief > .tb-brief-boite { height: auto; max-height: none; } html.tb-impression .tb-brief-boutons { display: none; } html.tb-impression .tb-brief-corps { overflow: visible; } }
 @media (prefers-reduced-motion: reduce) { .tb-replier svg { transition: none; } }
 </style>`);
 
@@ -1482,7 +1505,7 @@ dialog.tb-brief::backdrop { background: rgba(23, 15, 26, .4); }
     t.reglages.actions = valeurs('actions').actions.filter(x => x !== k);
     garder(); dessinerCorps('actions'); annoncerSr('Action retirée.');
   }
-  return { vue, charger, depart, TUILES, conf, normaliser, retirerAction, lienJournal, ACTIONS, CATEGORIES, urgences, traiter, epingler, reporter, REPORTS, vues: vuesDe, appliquerVue, formVue, ouvrirBriefing, briefing, texteBriefing, chercherMois, annulerJournal, recente, filtrer };
+  return { vue, charger, depart, TUILES, conf, normaliser, retirerAction, lienJournal, ACTIONS, MENU_EPINGLES_DEFAUT, CATEGORIES, urgences, traiter, epingler, reporter, REPORTS, vues: vuesDe, appliquerVue, formVue, ouvrirBriefing, briefing, texteBriefing, chercherMois, annulerJournal, recente, filtrer };
 })();
 // la route de la rubrique (admin/index.html)
 function vueTableau() { return TABLEAU.vue(); }
