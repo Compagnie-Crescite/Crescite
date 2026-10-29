@@ -3524,6 +3524,7 @@ function editeurDate(id, depart = null) {
       <div class="champ"><label for="c-source">${L('chiffres-source')}</label><input type="text" id="c-source" value="${esc(F.chiffres?.source ?? '')}" placeholder="${A('chiffres-source')}"></div></div>` : ''}
     ${pied(id ? 'Tout est enregistré' : 'Nouvelle date', `${id ? `${boutonFeuille(id)}${boutonPrevenir(id)}<button type="button" class="btn" id="d-dupliquer">Dupliquer</button><button type="button" class="btn danger" id="d-suppr">Supprimer</button>` : ''}`, { replier: true, marque: id && E.equipeInstallee ? resteFeuille(id, 'nombre') : '' })}`;
   suivrePied($('.pied-ed', zone));
+  if (d0 && typeof MOBILE !== 'undefined' && MOBILE.actif()) MOBILE.route(zone, 'date', d0);   // (au téléphone : Itinéraire, Feuille de route, Prévenir l'équipe, Confirmer, sous le titre)
   const etatPublic = () => { const ps = new Set(F.representations.filter(r => r.jour).map(r => r.public)); return ps.size > 1 ? 'mixte' : ps.size ? [...ps][0] : F.public; };
   const titre = () => { const s = spectacle(+F.spectacle_id); $('#ed-titre').textContent = id ? `${s?.titre || ''} · ${jourCourt(F.debut)}` : 'Nouvelle date'; };
   const apercu = () => {
@@ -4368,6 +4369,7 @@ function editeurLieu(id) {
     ${l0 ? `<div class="bloc"><h3>Fusionner</h3><p class="aide">Ce lieu fait doublon ? Ses ${nb} date${nb > 1 ? 's' : ''} et ses séances passent sur le lieu choisi, puis il disparaît.</p><div id="li-fusion"></div></div>` : ''}
     ${pied(l0 ? 'Tout est enregistré' : 'Nouveau lieu', l0 ? `<button type="button" class="btn danger" id="li-suppr"${nb ? ' disabled title="Ce lieu a des dates : fusionnez-le plutôt"' : ''}>Supprimer</button>` : '', { replier: piedReplie() })}`;
   suivrePied($('.pied-ed', zone));
+  if (l0 && typeof MOBILE !== 'undefined' && MOBILE.actif()) MOBILE.route(zone, 'lieu', l0);   // (au téléphone : Itinéraire, Appeler le contact, Copier l'adresse, sous le titre)
   relier($('#li-f'), F, SPEC_LIEU); relier($('#li-s'), G, SPEC_LIEU_SUIVI);
   if (l0 && typeof NOTES !== 'undefined') NOTES.bloc($('#li-notes', zone), 'crescite_lieux', id, { titre: 'Notes internes' });
   if (l0 && typeof CARNET !== 'undefined') CARNET.bloc($('#li-carnet', zone), id);

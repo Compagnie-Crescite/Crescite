@@ -56,7 +56,7 @@ node site/fenetres-2.mjs           # les fenêtres qui restent : le détail du p
 node site/carte-travail.mjs        # la carte de tournée comme vue de travail : le menu des pastilles, le survol, Maj+clic, le zoom, « Voir sur la carte » (après le build)
 node site/habillage.mjs            # l'habillage final : le jeu d'états des commandes, l'étiquette, les vides, « mouvement réduit », les pages d'essai, le jour relu (après le build)
 node site/reduit.mjs               # la passe « moins d'animations » : quatre gestes au clavier, aucune animation, les valeurs finales déjà en place (après le build)
-node site/telephone.mjs            # l'administration au téléphone (390 × 844) : le bas de l'écran dégagé, les fiches en plein écran, le « + », les pieds, la feuille de « Plus », tout au doigt, l'essentiel d'abord, la feuille de route lisible et la carte sur les dates (après le build)
+node site/telephone.mjs            # l'administration au téléphone (390 × 844) : le bas de l'écran dégagé, les fiches en plein écran, le « + », les pieds, la feuille de « Plus », tout au doigt, l'essentiel d'abord, la feuille de route lisible et la carte sur les dates, une date et un lieu qui s'ouvrent sur la route (après le build)
 node site/planche.mjs              # la planche de relecture, à la demande (trois minutes au calme, six sous charge) : les captures en vraies polices et planche.html, dans site/dist/shots-planche/ (après le build)
 bash site/bancs-admin.sh           # le build, puis tous les bancs de l'administration l'un après l'autre ; --tout y joint
                                    # ceux de l'espace de l'équipe (sinon, seulement si gestes.js, planning.js ou feuille.js changent) ;
@@ -447,7 +447,7 @@ compte du projet inscrit dans `crescite_admins`.
     tiroir, la largeur des listes, le mode du tableur) déjà en place tout de suite puis 50 ms plus tard : l'immobilité est une
     arrivée instantanée, pas une absence d'arrivée. Une contre-épreuve, sans « moins d'animations », montre qu'avec les animations permises
     le menu et le tiroir glissent bien. Captures dans `site/dist/shots-reduit/`.
-  - *Le téléphone.* `node site/telephone.mjs` (189 vérifications, environ une minute et demie, 390 × 844 au doigt ; le
+  - *Le téléphone.* `node site/telephone.mjs` (225 vérifications, environ une minute et demie, 390 × 844 au doigt ; le
     banc du plan `admin/TELEPHONE.md`, une section par lot) : le lot 1 mesure que les fiches (date, personne, lieu, et
     six autres rubriques) commencent à 140 px du haut au plus, leur tête invisible mais son titre lu des lecteurs
     d'écran et hors de portée de Tab ; que le « + » est caché dans une feuille de route, un spectacle et le tableur, et
@@ -492,8 +492,17 @@ compte du projet inscrit dans `crescite_admins`.
     dates » (les pastilles couvrent 59 % de la largeur de la carte, 21 % avant), que « Toute la France » l'éteint le
     temps de la session, qu'elle s'ouvre de même depuis la liste des dates, que rien n'est écrit dans le compte ; et, à
     1 440 × 900, que la feuille s'ouvre en page A4 avec sa barre collée (et que l'accueil d'une feuille pas encore
-    composée dit toujours « cliquez dessus »), et la carte sur toute la France. Captures dans
-    `site/dist/shots-telephone/`.
+    composée dit toujours « cliquez dessus »), et la carte sur toute la France. Le lot 5 mesure qu'une date ouverte a,
+    juste sous son titre et dans le premier écran, ses boutons de route (Itinéraire, qui mène à google.com/maps/dir,
+    Feuille de route avec son état, Prévenir l'équipe…, de 44 × 44 px au moins, aux libellés entiers ; Confirmer la
+    date… en plus pour une option, qui vise le statut sans rien écrire), que depuis l'onglet Dates il faut trois
+    touchers pour prévenir l'équipe (Dates, la date, Prévenir) au lieu de cinq, sans défiler, que la rangée se redit
+    quand une feuille est publiée entre-temps, et qu'un changement qui n'y change rien ne la refait pas (le bouton
+    touché garde son focus) ; qu'un lieu a Itinéraire, Appeler le contact (un lien `tel:` à 175 px du haut, 1 311 avant)
+    et Copier l'adresse (elle est dans le presse-papiers), ou « Contact à renseigner » quand le suivi n'en a pas ; que
+    l'appui long sur une date ou sur un lieu ne propose plus « Ouvrir dans un nouvel onglet » ni « Copier le lien » ;
+    que rien ne bouge sous « moins d'animations » ; et, à 1 440 × 900, que ni une date ni un lieu n'a de rangée et que
+    le clic droit garde ces deux entrées. Captures dans `site/dist/shots-telephone/`.
   - *La planche de relecture.* `node site/planche.mjs` (environ trois minutes au calme, jusqu'à six sous charge, à la demande :
     ce n'est pas un banc qui garde le code, la chaîne ordinaire ne le lance pas ; `bash site/bancs-admin.sh --planche` le lance à la fin de la chaîne)
     photographie dix pages de l'administration (le tableau de bord, la liste des dates, le tableur en Simple, en Complet et en
@@ -705,11 +714,16 @@ compte du projet inscrit dans `crescite_admins`.
     (« Vue de l'équipe » : du vrai texte, à la taille du téléphone, et non la page A4 réduite) ; « Page A4 » reste à un
     toucher, et c'est là seulement que paraissent les outils de mise en page, qui ne restent plus collés en haut de
     l'écran ; l'aide dit « touchez ». La carte de la tournée s'ouvre « Autour des dates » (le temps de la session :
-    « Toute la France » l'éteint). L'administration **s'installe sur le téléphone** comme l'espace de l'équipe
-    (`admin/manifest.webmanifest`, `admin/sw.js`, ses icônes) : « Installer », en tête de « Plus », donne l'invite du
-    navigateur, ou sur l'iPhone la marche à suivre dans Safari ; installée, elle s'ouvre en plein écran (« Admin
-    Crescite »). Son service passe toujours d'abord par le réseau (elle écrit dans la base) et ne garde la page et ses
-    scripts que pour s'ouvrir hors connexion ; il ne garde jamais rien de la base.
+    « Toute la France » l'éteint). Une date et un lieu s'ouvrent sur la route : sous le titre de la fiche, de gros
+    boutons de 44 px, les mêmes que ceux de l'appui long (une date : Itinéraire, Feuille de route et son état, Prévenir
+    l'équipe…, et Confirmer la date… quand c'est une option ; un lieu : Itinéraire, Appeler le contact, Copier
+    l'adresse), tirés de `window.MENUS` (`admin/menus.js`) par `MOBILE.route` ; le reste de la fiche suit, inchangé, et
+    rien ne s'écrit de plus. L'appui long ne propose plus, au téléphone, « Ouvrir dans un nouvel onglet » ni « Copier le
+    lien ». L'administration **s'installe sur le téléphone** comme l'espace de l'équipe (`admin/manifest.webmanifest`,
+    `admin/sw.js`, ses icônes) : « Installer », en tête de « Plus », donne l'invite du navigateur, ou sur l'iPhone la
+    marche à suivre dans Safari ; installée, elle s'ouvre en plein écran (« Admin Crescite »). Son service passe
+    toujours d'abord par le réseau (elle écrit dans la base) et ne garde la page et ses scripts que pour s'ouvrir hors
+    connexion ; il ne garde jamais rien de la base.
   - **Les notes internes** (`admin/notes.js`, le quinzième script `supabase/migrations/20261103_crescite_notes.sql`) :
     un fil sur chaque date, lieu, personne et piste ; `@Prénom Nom` mentionne quelqu'un de l'équipe (l'autocomplétion
     propose les fiches) et la base le prévient dans son espace ; épingler, modifier, supprimer avec « Annuler » ; une
@@ -942,7 +956,8 @@ compte du projet inscrit dans `crescite_admins`.
   fait) : un **clic droit**, un **appui long** (au doigt, avec une courte vibration) ou **Maj+F10** sur une ligne, une
   carte ou une tuile ouvrent ce qu'on peut en faire sans ouvrir la fiche, près du pointeur à l'ordinateur, en feuille
   depuis le bas au téléphone (↑ ↓ Entrée Échap au clavier). Une date : ouvrir, confirmer une option, la feuille de route,
-  prévenir l'équipe, l'itinéraire, la fiche du lieu, dupliquer, le tableur, copier le lien, supprimer. Une personne :
+  prévenir l'équipe, l'itinéraire, la fiche du lieu, dupliquer, le tableur, copier le lien, supprimer (au téléphone, sans « Ouvrir dans
+  un nouvel onglet » ni « Copier le lien » : ces deux-là sont celles du clic droit). Une personne :
   appeler, écrire, copier le téléphone. Un lieu : l'itinéraire, appeler ou écrire au contact, une nouvelle date ici. Une
   feuille : compléter, composer, la date. Une demande de devis : écrire, appeler, **changer son statut sans l'ouvrir**. Une
   piste de diffusion : l'étape d'avant ou d'après, **relance faite aujourd'hui**, reporter la relance, le courriel,

@@ -16,6 +16,8 @@
      « à traiter » : la traiter sur place, l'épingler, la reporter ; une ligne du fil : annuler la modification. L'en-tête d'une
      colonne du tableur : masquer, figer jusqu'ici, ajuster la largeur, avancer, reculer, trier (le jour), les colonnes d'origine
      (TABLEUR.colonnes.actions, admin/tableur.js).
+   - Au téléphone (MOBILE.actif()), ni « Ouvrir dans un nouvel onglet » ni « Copier le lien » (liens) ; et les actions d'une date
+     et d'un lieu (window.MENUS) font la rangée « sur la route » sous le titre de leur fiche (MOBILE.route, admin/mobile.js).
    - Précédent / suivant dans chaque fiche ouverte à côté de sa liste (dates, personnes, lieux, devis, invitations,
      propositions, ateliers, séances, textes), et dans une feuille de route ou un spectacle : deux boutons dans le titre,
      Alt+↑ et Alt+↓ (GESTES.precSuiv). Les flèches ↑ ↓ passent d'une ligne à l'autre dans toutes les listes. */
@@ -32,7 +34,8 @@
   const ecrireA = (texte, qui) => { const j = melDe(texte); return j ? { libelle: `Écrire${qui ? ` à ${qui}` : ''}`, detail: j.t, href: j.href, icone: ICO.mel } : null; };
   const itineraire = l => { const q = [l.nom, l.adresse, l.commune].filter(Boolean).join(', '); return q ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(q)}` : ''; };
   const ouvrirA = (href, libelle = 'Ouvrir') => ({ libelle, href, icone: ICO.ouvrir, raccourci: 'Entrée' });
-  const liens = href => [{ separateur: true }, { libelle: 'Ouvrir dans un nouvel onglet', href: absolu(href), externe: true, icone: ICO.externe }, { libelle: 'Copier le lien', faire: () => copier(absolu(href), 'Le lien'), icone: ICO.copier }];
+  // (au téléphone, ni « Ouvrir dans un nouvel onglet » ni « Copier le lien » : on n'y a pas d'onglets, et une adresse qu'on ne tape pas ne se copie pas)
+  const liens = href => (typeof MOBILE !== 'undefined' && MOBILE.actif() ? [] : [{ separateur: true }, { libelle: 'Ouvrir dans un nouvel onglet', href: absolu(href), externe: true, icone: ICO.externe }, { libelle: 'Copier le lien', faire: () => copier(absolu(href), 'Le lien'), icone: ICO.copier }]);
   // aller à une page, puis cliquer un de ses boutons une fois qu'elle est là (Dupliquer, Prévenir l'équipe, Supprimer…)
   function allerEtCliquer(href, sel, viserAvant = '') {
     const essayer = n => { const b = $(sel); if (b) { b.click(); return; } if (n > 0) requestAnimationFrame(() => essayer(n - 1)); };
@@ -464,6 +467,8 @@
     G.aide({ titre: doigt ? 'Gestes et raccourcis' : 'Raccourcis clavier', intro: doigt ? 'Au doigt, dans l’administration :' : '', groupes: doigt ? groupesDoigt(h) : groupesClavier(h, fiche, liste && h !== '#/accueil'), rendre });
   }
   window.ouvrirAide = ouvrirAide;
+  // les actions d'une date et d'un lieu, pour la rangée « sur la route » des fiches du téléphone (MOBILE.route, admin/mobile.js)
+  window.MENUS = { date: actionsDate, lieu: actionsLieu };
   document.addEventListener('keydown', e => { if (G.toucheAide(e) && typeof E !== 'undefined' && E.pret) { e.preventDefault(); ouvrirAide(); } });
   document.addEventListener('click', e => { if (e.target.closest?.('[data-aide]')) { e.preventDefault(); ouvrirAide(); } });
 

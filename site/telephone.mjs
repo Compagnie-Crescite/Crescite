@@ -31,6 +31,14 @@
 //   outils, non collés ; une saisie en A4 se retrouve dans la vue de l'équipe et au retour ; l'aide dit « touchez » ; (b) la carte
 //   s'ouvre « Autour des dates » (les pastilles couvrent la moitié du cadre et plus), « Toute la France » l'éteint pour la session ;
 //   (c) à 1 440 × 900, la feuille s'ouvre en page A4 avec sa barre collée, la carte sur la France ; rien n'est écrit dans le compte.
+// 5 · une date et un lieu s'ouvrent sur la route (admin/menus.js : MENUS ; admin/mobile.js : MOBILE.route ; index.html : editeurDate, editeurLieu) :
+//   (a) #/representations/101 : la rangée « sur la route » est sous le titre, dans le premier écran, avec Itinéraire (google.com/maps/dir),
+//   Feuille de route (et son état) et Prévenir l'équipe…, chacun d'au moins 44 × 44 ; toucher « Prévenir » ouvre le panneau de #d-prevenir
+//   (rangé dans « Plus » du pied replié) ; depuis l'onglet Dates, Dates, la date, Prévenir : 3 touchers, sans défilement ; une option y
+//   ajoute « Confirmer la date… » en quatrième, qui vise le statut sans rien écrire ; une feuille publiée entre-temps se redit ; (b) #/lieux/5 :
+//   « Appeler le contact » est un lien tel: avant 844 px, « Copier l'adresse » écrit dans le presse-papiers, un lieu sans contact montre
+//   « Contact à renseigner » ; (c) l'appui long sur une date ou un lieu n'a plus « Ouvrir dans un nouvel onglet » ni « Copier le lien » ; (d) sous
+//   « moins d'animations », rien ne bouge ; (e) à 1 440 × 900, aucune rangée, et le clic droit garde ces deux entrées.
 // Les captures vont dans site/dist/shots-telephone/ (jamais commitées). Sort en erreur si une vérification manque.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -868,6 +876,156 @@ DB.crescite_equipes = DB.crescite_equipes.filter(x => !EQUIPES_2.some(y => y.dat
   fin('4 · 1 440 × 900', bureau.erreurs);
   await bureau.ctx.close();
   DB.crescite_feuilles[0].contenu = avantContenu;
+}
+
+// ================================================================================ 5 · une date et un lieu s'ouvrent sur la route
+{
+  DB.crescite_preferences = [];
+  const depuis = ECRITURES.length;
+  const ecrites = () => ECRITURES.slice(depuis).map(r => r.cle);
+  // la rangée : ses boutons (libellé, lien ou bouton, taille), sa place dans l'écran, le titre au-dessus
+  const ROUTE = () => {
+    const r = document.querySelector('.ob-route'), t = document.querySelector('#ed-titre') || document.querySelector('.titre-ed h2');
+    if (!r) return { visible: false, haut: 0, bas: 0, sousTitre: false, apresTitre: false, boutons: [] };   // (pas de rangée : les vérifications le disent, au lieu de s'arrêter)
+    const rr = r.getBoundingClientRect(), tt = t?.getBoundingClientRect();
+    return { visible: r.checkVisibility(), haut: Math.round(rr.top), bas: Math.round(rr.bottom), sousTitre: !!tt && rr.top >= tt.bottom - 1, apresTitre: r.previousElementSibling?.classList.contains('titre-ed') === true,
+      boutons: [...r.children].map(b => { const k = b.getBoundingClientRect(); return { texte: (b.querySelector('span')?.firstChild?.textContent || b.textContent).trim(), detail: b.querySelector('small')?.textContent || '', lien: b.tagName === 'A', href: b.getAttribute('href') || '',
+        l: Math.round(k.width), h: Math.round(k.height), bas: Math.round(k.bottom), coupe: b.scrollWidth > b.clientWidth + 1 || b.scrollHeight > b.clientHeight + 1 }; }) };
+  };
+  const appuiLong = async (page, sel) => {
+    const el = await page.$(sel); await el.scrollIntoViewIfNeeded();
+    const r = await el.boundingBox(), cdp = await page.context().newCDPSession(page);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: r.x + 40, y: r.y + r.height / 2 }] });
+    await page.waitForTimeout(650);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await cdp.detach();
+    await page.waitForSelector('.gm .gm-boite', { timeout: 3000 }).catch(() => {});
+    return page.$$eval('.gm .gm-boite [role="menuitem"]', xs => xs.map(x => x.textContent.trim().replace(/\s+/g, ' ')));
+  };
+  const tel = await ouvrir(navigateur, { ...TEL, hash: '#/accueil' });
+  await tel.page.waitForSelector('.ob-barre', { timeout: 15000 });
+  await tel.page.waitForTimeout(400);
+
+  // ---- (a) la date : trois touchers depuis l'onglet Dates
+  let touchers = 0;
+  const toucherCompte = async sel => { touchers++; return toucher(tel.page, sel); };
+  ok('5 · a · toucher n° 1 : l’onglet Dates', await toucherCompte('.ob-barre [data-ob="representations"]') && await attendre(tel.page, () => location.hash === '#/representations' && document.querySelector('#l-dates a.ligne[href="#/representations/101"]'), null, 8000));
+  await tel.page.waitForTimeout(300);
+  ok('5 · a · toucher n° 2 : la date (Bérénice, Caen) est dans le premier écran de la liste, sans défilement', await tel.page.evaluate(() => { const r = document.querySelector('#l-dates a.ligne[href="#/representations/101"]').getBoundingClientRect(); return r.bottom <= innerHeight - 64 && scrollY === 0; })
+    && await toucherCompte('#l-dates a.ligne[href="#/representations/101"]') && await attendre(tel.page, () => location.hash === '#/representations/101' && document.querySelector('#ed-titre') && document.querySelector('.ob-route button, .ob-route a'), null, 8000));
+  await tel.page.waitForTimeout(500);
+  const r = await tel.page.evaluate(ROUTE);
+  const noms = r ? r.boutons.map(b => b.texte) : [];
+  ok('5 · a · #/representations/101 : la rangée « sur la route » est là, juste après le titre, visible', !!r && r.visible && r.sousTitre && r.apresTitre, JSON.stringify(r && { visible: r.visible, sousTitre: r.sousTitre, apresTitre: r.apresTitre }));
+  ok('5 · a · elle est dans le premier écran (elle finit avant 844 px, au-dessus de la barre du bas)', !!r && r.bas <= 844 - 64 && r.boutons.every(b => b.bas <= 844 - 64), JSON.stringify(r && { haut: r.haut, bas: r.bas }));
+  ok('5 · a · trois boutons, dans l’ordre : Itinéraire, Feuille de route, Prévenir l’équipe… (une date confirmée n’a pas « Confirmer »)', noms.length === 3 && /^Itinéraire$/.test(noms[0]) && /^Feuille de route$/.test(noms[1]) && /^Prévenir l.équipe/.test(noms[2]), JSON.stringify(noms));
+  ok('5 · a · Itinéraire est un lien vers google.com/maps/dir, qui s’ouvre à part ; Feuille de route mène à #/feuilles/101', !!r && r.boutons[0]?.lien && /^https:\/\/www\.google\.com\/maps\/dir\//.test(r.boutons[0].href) && r.boutons[1]?.lien && r.boutons[1].href === '#/feuilles/101'
+    && await tel.page.$eval('.ob-route a[href^="https://www.google.com"]', a => a.target === '_blank' && /noopener/.test(a.rel)), JSON.stringify(r?.boutons.map(b => b.href)));
+  ok('5 · a · Feuille de route dit son état (brouillon)', /brouillon/.test(r?.boutons[1]?.detail || ''), r?.boutons[1]?.detail);
+  ok('5 · a · chaque bouton fait au moins 44 × 44 et son libellé n’est pas coupé', !!r && r.boutons.length > 0 && r.boutons.every(b => b.h >= 44 && b.l >= 44 && !b.coupe), JSON.stringify(r?.boutons.map(b => [b.l, b.h, b.coupe])));
+  ok('5 · a · ni « Ouvrir », ni « Fiche du lieu », ni « Devis », ni « Dupliquer », ni « Supprimer » dans la rangée', !noms.some(n => /^(Ouvrir|Fiche du lieu|Devis|Dupliquer|Supprimer|Voir dans)/.test(n)), JSON.stringify(noms));
+  await tel.page.screenshot({ path: `${CAPT}/5-date-route.png` });
+  // toucher n° 3 : Prévenir l'équipe… (le bouton de la fiche est rangé dans « Plus » du pied, masqué : le panneau s'ouvre quand même)
+  const cache = await tel.page.evaluate(() => { const b = document.querySelector('#d-prevenir'); return !b || !b.checkVisibility(); });
+  const y0 = await tel.page.evaluate(() => scrollY);
+  ok('5 · a · toucher n° 3 : « Prévenir l’équipe… » ouvre le panneau de #d-prevenir (le bouton du pied, lui, est masqué dans « Plus »)', await toucherCompte('.ob-route button:has-text("Prévenir")') && await attendre(tel.page, () => document.querySelector('#d-prevenir-zone'), null, 6000) && cache, `masque=${cache}`);
+  // (récapitulatif des trois vérifications numérotées ci-dessus : le décompte est celui du banc, seule la page non défilée se mesure)
+  ok('5 · a · récapitulatif : Dates, la date, Prévenir, soit trois touchers au lieu de cinq, et la page n’a pas été défilée avant le dernier', touchers === 3 && y0 === 0, `${touchers} toucher(s), défilement ${y0}`);
+  ok('5 · a · le panneau « Prévenir l’équipe » est affiché (titre, message, Envoyer) et rien n’est écrit', await tel.page.evaluate(() => !!document.querySelector('#d-prevenir-zone #pv-texte') && document.querySelector('#d-prevenir-zone').checkVisibility()) && ecrites().length === 0, ecrites().join());
+  await tel.page.screenshot({ path: `${CAPT}/5-date-prevenir.png` });
+  await tel.page.tap('#pv-annuler').catch(() => {});
+  // la rangée se redit quand la fiche se redessine : une feuille publiée entre-temps (le temps réel ne vient jamais dans la base fictive : on l'appelle)
+  await tel.page.evaluate(() => changement('crescite_feuilles', { eventType: 'UPDATE', new: { id: 1, date_id: 101, titre: 'Caen', contenu: {}, statut: 'publiee', version: 2, publiee_le: new Date().toISOString() } }));
+  ok('5 · a · une feuille publiée entre-temps : la rangée de la fiche ouverte dit « publiée v2 »', await attendre(tel.page, () => /publiée v2/.test(document.querySelector('.ob-route')?.textContent || ''), null, 3000), (await tel.page.evaluate(ROUTE))?.boutons[1]?.detail);
+  await tel.page.evaluate(() => changement('crescite_feuilles', { eventType: 'UPDATE', new: { id: 1, date_id: 101, titre: 'Caen', contenu: {}, statut: 'brouillon', version: 1, publiee_le: null } }));
+  // un changement reçu sans effet sur la rangée ne la refait pas : le bouton touché garde son nœud et son focus
+  await attendre(tel.page, () => /brouillon/.test(document.querySelector('.ob-route')?.textContent || ''), null, 3000);
+  await tel.page.evaluate(() => { const b = document.querySelector('.ob-route button'); b.dataset.marque = '1'; b.focus(); });
+  await tel.page.evaluate(() => changement('crescite_feuilles', { eventType: 'UPDATE', new: { id: 1, date_id: 101, titre: 'Caen', contenu: {}, statut: 'brouillon', version: 1, publiee_le: null } }));
+  await tel.page.waitForTimeout(300);
+  ok('5 · a · un changement reçu qui ne change rien à la rangée ne la refait pas : le bouton focalisé reste le même, avec son focus', await tel.page.evaluate(() => document.activeElement === document.querySelector('.ob-route button') && document.activeElement.dataset.marque === '1'),
+    await tel.page.evaluate(() => `${document.activeElement?.tagName}.${document.activeElement?.className} marque=${document.activeElement?.dataset?.marque}`));
+
+  // ---- (a bis) une option : « Confirmer la date… » est le quatrième, et vise le statut sans l'écrire ; sans feuille : « à composer »
+  const opt = await ouvrir(navigateur, { ...TEL, hash: '#/representations/105' });
+  await attendre(opt.page, () => document.querySelector('.ob-route a, .ob-route button'), null, 8000);
+  await opt.page.waitForTimeout(400);
+  const ro = await opt.page.evaluate(ROUTE), nomsO = ro.boutons.map(b => b.texte);
+  ok('5 · a · #/representations/105 (une option à venir) : quatre boutons, Confirmer la date… en dernier', nomsO.length === 4 && /^Itinéraire$/.test(nomsO[0]) && /^Feuille de route$/.test(nomsO[1]) && /^Prévenir/.test(nomsO[2]) && /^Confirmer la date/.test(nomsO[3]), JSON.stringify(nomsO));
+  ok('5 · a · sans feuille, Feuille de route dit « à composer » ; chaque bouton fait 44 px au moins, aucun n’est coupé', /à composer/.test(ro.boutons[1]?.detail || '') && ro.boutons.length > 0 && ro.boutons.every(b => b.h >= 44 && !b.coupe), JSON.stringify(ro.boutons.map(b => [b.texte, b.detail, b.h])));
+  await opt.page.screenshot({ path: `${CAPT}/5-option-route.png` });
+  const avantStatut = await opt.page.$eval('[data-statut="confirmee"]', b => b.getAttribute('aria-pressed'));
+  ok('5 · a · toucher « Confirmer la date… » : le bouton « Confirmée » du statut est visé (focus, dans l’écran), sans rien écrire ni changer le statut', await toucher(opt.page, '.ob-route button:has-text("Confirmer")')
+    && await attendre(opt.page, () => document.activeElement?.matches('[data-statut="confirmee"]'), null, 4000)
+    && await opt.page.$eval('[data-statut="confirmee"]', b => { const r = b.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight && b.getAttribute('aria-pressed') === 'false'; }) && avantStatut === 'false' && ecrites().length === 0, `avant=${avantStatut} ecritures=${ecrites().join()}`);
+  fin('5 · a bis · option', opt.erreurs);
+  await opt.ctx.close();
+
+  // ---- (b) le lieu
+  const li = await ouvrir(navigateur, { ...TEL, hash: '#/lieux/5' });
+  await li.ctx.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: new URL(li.page.url()).origin }).catch(() => {});
+  await attendre(li.page, () => document.querySelector('.ob-route a, .ob-route button'), null, 8000);
+  await li.page.waitForTimeout(400);
+  const rl = await li.page.evaluate(ROUTE), nomsL = rl.boutons.map(b => b.texte);
+  ok('5 · b · #/lieux/5 : la rangée est sous le titre, trois boutons : Itinéraire, Appeler le contact, Copier l’adresse', rl.visible && rl.apresTitre && nomsL.length === 3 && /^Itinéraire$/.test(nomsL[0]) && /^Appeler le contact$/.test(nomsL[1]) && /^Copier l.adresse$/.test(nomsL[2]), JSON.stringify(nomsL));
+  ok('5 · b · « Appeler le contact » est un lien tel: (le numéro de la régie), avant 844 px (il était à 1 311)', !!rl.boutons[1]?.lien && /^tel:\+?[\d\s]+/.test(rl.boutons[1].href) && /02\s?31/.test(rl.boutons[1].detail + rl.boutons[1].href) && rl.boutons[1].bas <= 844 - 64, JSON.stringify(rl.boutons[1]));
+  ok('5 · b · Itinéraire pointe sur l’adresse du lieu ; tous les boutons font 44 px au moins et ne sont pas coupés', /maps\/dir.*Caen/.test(decodeURIComponent(rl.boutons[0]?.href || '')) && rl.boutons.length > 0 && rl.boutons.every(b => b.h >= 44 && b.l >= 44 && !b.coupe), JSON.stringify(rl.boutons.map(b => [b.l, b.h, b.coupe])));
+  await li.page.screenshot({ path: `${CAPT}/5-lieu-route.png` });
+  ok('5 · b · « Copier l’adresse » écrit l’adresse dans le presse-papiers', await toucher(li.page, '.ob-route button:has-text("Copier")') && await attendre(li.page, () => /copié/.test(document.querySelector('#annonces')?.textContent || ''), null, 4000)
+    && await li.page.evaluate(() => navigator.clipboard.readText()).then(t => t === 'Théâtre de Caen, 135 boulevard du Maréchal-Leclerc, Caen', () => false));
+  ok('5 · b · le reste de la fiche suit, inchangé (le champ de l’adresse, le suivi, le pied)', await li.page.evaluate(() => !!document.querySelector('#li-f [data-chemin="adresse"]') && !!document.querySelector('#li-s [data-chemin="contact"]') && !!document.querySelector('.pied-ed')));
+  ok('5 · b · rien n’est écrit', ecrites().length === 0, ecrites().join());
+  // un lieu sans contact de suivi : « Contact à renseigner » (il vise le champ, comme l'appui long)
+  await aller(li.page, '#/lieux/8', '#ed-lieu #li-f', 15000);
+  await attendre(li.page, () => document.querySelector('.ob-route a, .ob-route button'), null, 4000);
+  const rs = await li.page.evaluate(ROUTE);
+  ok('5 · b · un lieu sans contact (#/lieux/8) : « Contact à renseigner » prend la place d’« Appeler le contact », et vise le champ du contact', rs.boutons.some(b => /^Contact à renseigner$/.test(b.texte) && !b.lien) && await toucher(li.page, '.ob-route button:has-text("Contact à renseigner")')
+    && await attendre(li.page, () => document.activeElement?.matches('[data-chemin="contact"]'), null, 4000), JSON.stringify(rs.boutons.map(b => b.texte)));
+  // l'appui long sur un lieu : plus d'onglet ni de lien copié non plus
+  await aller(li.page, '#/lieux', '#vue a.ligne[href="#/lieux/5"]', 15000);
+  const menuL = await appuiLong(li.page, '#vue a.ligne[href="#/lieux/5"]');
+  ok('5 · c · l’appui long sur un lieu ouvre sa feuille d’actions (Itinéraire, Copier l’adresse…), sans « Ouvrir dans un nouvel onglet » ni « Copier le lien »', menuL.length > 2 && menuL.some(x => /^Itinéraire/.test(x)) && menuL.some(x => /^Copier l.adresse/.test(x))
+    && !menuL.some(x => /nouvel onglet|Copier le lien/.test(x)), JSON.stringify(menuL));
+  fin('5 · b · lieu sans contact', li.erreurs);
+  await li.ctx.close();
+
+  // ---- (c) l'appui long sur une date : plus d'onglet ni de lien copié
+  await aller(tel.page, '#/representations', '#l-dates a.ligne[href="#/representations/101"]', 15000);
+  const menu = await appuiLong(tel.page, '#l-dates a.ligne[href="#/representations/101"]');
+  ok('5 · c · l’appui long sur une date ouvre sa feuille d’actions (Ouvrir la date, Itinéraire, Prévenir…), sans « Ouvrir dans un nouvel onglet » ni « Copier le lien »', menu.length > 4 && menu.some(x => /^Ouvrir la date/.test(x)) && menu.some(x => /^Itinéraire/.test(x)) && menu.some(x => /^Prévenir/.test(x))
+    && !menu.some(x => /nouvel onglet|Copier le lien/.test(x)), JSON.stringify(menu));
+  ok('5 · c · elle garde « Supprimer la date » en dernier', /^Supprimer la date/.test(menu[menu.length - 1] || ''), JSON.stringify(menu.slice(-2)));
+  await tel.page.screenshot({ path: `${CAPT}/5-appui-long.png` });
+  fin('5 · a et c · date, appui long', tel.erreurs);
+  await tel.ctx.close();
+
+  // ---- (d) « moins d'animations » : rien ne bouge
+  const red = await ouvrir(navigateur, { ...TEL, hash: '#/representations/101', reduit: true });
+  await attendre(red.page, () => document.querySelector('.ob-route a, .ob-route button'), null, 8000);
+  await red.page.waitForTimeout(600);
+  const anims = () => red.page.evaluate(() => document.getAnimations().filter(a => a.playState === 'running').map(a => `${a.effect?.target?.className || a.effect?.target?.tagName}:${a.animationName || a.transitionProperty || ''}`));
+  ok('5 · d · « moins d’animations » : la fiche s’ouvre sur la route sans aucune animation en cours', (await anims()).length === 0 && await red.page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches), JSON.stringify(await anims()));
+  await toucher(red.page, '.ob-route button:has-text("Prévenir")');
+  await red.page.waitForTimeout(500);
+  ok('5 · d · et toucher « Prévenir l’équipe… » n’en lance pas non plus', await red.page.evaluate(() => !!document.querySelector('#d-prevenir-zone')) && (await anims()).length === 0, JSON.stringify(await anims()));
+  await red.ctx.close();
+
+  // ---- (e) à 1 440 × 900 : aucune rangée, et le clic droit garde ses entrées
+  const bureau = await ouvrir(navigateur, { largeur: 1440, hauteur: 900, hash: '#/representations/101' });
+  await bureau.page.waitForSelector('#ed-titre', { timeout: 15000 });
+  await bureau.page.waitForTimeout(400);
+  const nD = await bureau.page.evaluate(() => document.querySelectorAll('.ob-route').length);
+  await aller(bureau.page, '#/lieux/5', '#ed-lieu #li-f', 15000);
+  const nL = await bureau.page.evaluate(() => document.querySelectorAll('.ob-route').length);
+  ok('5 · e · 1 440 × 900 : ni la fiche d’une date ni celle d’un lieu n’a de rangée « sur la route »', nD === 0 && nL === 0, `date=${nD} lieu=${nL}`);
+  await aller(bureau.page, '#/representations', '#l-dates a.ligne[href="#/representations/101"]', 15000);
+  await bureau.page.click('#l-dates a.ligne[href="#/representations/101"]', { button: 'right' });
+  await bureau.page.waitForSelector('.gm .gm-boite', { timeout: 3000 }).catch(() => {});
+  const menuB = await bureau.page.$$eval('.gm .gm-boite [role="menuitem"]', xs => xs.map(x => x.textContent.trim().replace(/\s+/g, ' ')));
+  ok('5 · e · le menu du clic droit garde « Ouvrir dans un nouvel onglet » et « Copier le lien »', menuB.some(x => /Ouvrir dans un nouvel onglet/.test(x)) && menuB.some(x => /Copier le lien/.test(x)), JSON.stringify(menuB));
+  ok('5 · e · rien n’est écrit dans le compte', !ecrites().some(k => /^(accueil|representations)\./.test(k)), ecrites().join());
+  fin('5 · e · 1 440 × 900', bureau.erreurs);
+  await bureau.ctx.close();
 }
 
 await navigateur.close();

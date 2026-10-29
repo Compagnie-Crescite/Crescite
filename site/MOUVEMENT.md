@@ -55,6 +55,12 @@ la page A4 (et inversement) sans transition, comme avant à l'ordinateur ; la ba
 pas, elle est posée dans le flux ; la carte s'ouvre recadrée autour des dates comme elle s'ouvre toujours, d'un seul dessin sans
 glissement, et « Toute la France » garde le glissement de 220 ms d'avant (immobile sous « moins d'animations »).
 
+La rangée « sur la route » (Itinéraire, Feuille de route, Prévenir l'équipe… sous le titre d'une date ; Itinéraire, Appeler le contact,
+Copier l'adresse sous celui d'un lieu) n'ajoute aucune animation : elle est posée avec la fiche, qui garde sa transition « avant » (celle de
+`mouvement-admin.mjs`), et se redit sur place quand une feuille est publiée, sans fondu ; ses boutons n'ont pas de transition, et le
+panneau « Prévenir l'équipe » garde l'entrée qu'il avait. Immobile sous « moins d'animations » et `?anim=0` (le banc compte les animations
+en cours : aucune).
+
 Les accès rapides du menu latéral n'ajoutent rien au vocabulaire : un accès épinglé qui arrive (« Mettre dans le menu ») saute
 en ressort (`ad-pop`, 450 ms, par la classe `.pop`, ôtée à la fin de l'animation) ; une fiche récente qui apparaît dans
 « Récents » se pose (`ad-arrive`, 300 ms, le doux, par `.ad-neuf`) ; le menu « Créer » est un menu de `GESTES`, il paraît en
@@ -135,7 +141,7 @@ python3 site/build.py        # d'abord : site/dist/equipe et site/dist/admin
 node site/mouvement-equipe.mjs        # l'espace de l'équipe, hors ligne, sur une saison fictive (51 vérifications)
 node site/mouvement-admin.mjs         # l'administration, sur une base fictive (34 vérifications)
 node site/reduit.mjs                  # l'immobilité de l'administration sous « moins d'animations » : quatre gestes au clavier (24 vérifications)
-node site/telephone.mjs               # l'administration au téléphone : dont la feuille de « Plus » (200 ms, le doux ; immobile sous « moins d'animations ») (189 vérifications)
+node site/telephone.mjs               # l'administration au téléphone : dont la feuille de « Plus » (200 ms, le doux ; immobile sous « moins d'animations ») (225 vérifications)
 CPU=4 node site/mouvement-equipe.mjs  # la même chose sur un téléphone quatre fois plus lent (le budget du contrat)
 bash site/bancs-admin.sh              # le build, puis tous les bancs de l'administration, dont mouvement-admin.mjs
 ```

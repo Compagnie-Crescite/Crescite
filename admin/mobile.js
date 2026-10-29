@@ -10,7 +10,9 @@
    (manifest.webmanifest, sw.js, enregistré ici : l'invite du navigateur, ou la marche à suivre sur l'iPhone ; l'ordinateur
    peut l'installer aussi, depuis son navigateur). Rien d'autre ne change à l'ordinateur. Ses icônes viennent de la
    bibliothèque (admin/icones.js, ICONES.svg). Chargé après tiroir.js et corbeille.js.
-   MOBILE.feuille(titre, items)   MOBILE.actif() */
+   Les fiches d'une date et d'un lieu s'ouvrent sur la route : sous leur titre, de gros boutons (Itinéraire, Feuille de route, Prévenir
+   l'équipe, Confirmer ; Itinéraire, Appeler le contact, Copier l'adresse), tirés des actions de l'appui long (MENUS, menus.js).
+   MOBILE.feuille(titre, items)   MOBILE.route(zone, genre, x)   MOBILE.actif() */
 const MOBILE = (() => {
   const MQ = '(max-width: 640px)';
   const actif = () => typeof matchMedia === 'function' && matchMedia(MQ).matches;
@@ -120,6 +122,45 @@ const MOBILE = (() => {
       { libelle: 'Une séance d’atelier', href: '#/ateliers/seances/nouvelle' },
     ], null, ouvreur);
   }
+  // « Sur la route » : sous le titre d'une date ou d'un lieu, une grille de quatre boutons au plus (44 px, libellés entiers), les mêmes que
+  // ceux de l'appui long (MENUS.date, MENUS.lieu : menus.js), dans l'ordre de la décision 5 du plan ; ni séparateurs, ni « danger », ni
+  // « Ouvrir… », « Fiche du lieu », « Devis… » ou « Dupliquer » : seuls les rangs ci-dessous passent. Les actions gardent leur `faire`
+  // (« Prévenir l'équipe… » clique #d-prevenir, « Confirmer la date… » vise le statut) : aucune écriture ne s'ajoute ici.
+  const RANGS = {
+    date: [/^Itinéraire$/, /^Feuille de route$/, /^Prévenir l.équipe/, /^Confirmer la date/],
+    lieu: [/^(Itinéraire|Adresse à renseigner)$/, /^(Appeler le contact|Contact à renseigner)$/, /^Copier l.adresse$/],
+  };
+  const AVEC_DETAIL = /^(Feuille de route|Appeler le contact)$/;   // l'état de la feuille, le numéro : ce qu'on veut lire avant de toucher
+  const routes = new WeakMap();   // la rangée → ses actions, tenues à jour quand la fiche change
+  const cles = new WeakMap();    // la rangée → le HTML qu'elle montre, pour ne la refaire que s'il change
+  const objetDe = (genre, id) => (genre === 'date' ? E.dates.find(d => d.id === id) : E.lieux.find(l => l.id === id));
+  function dessinerRoute(el, genre, x) {
+    const rang = a => RANGS[genre].findIndex(re => re.test(a.libelle));
+    const xs = MENUS[genre](x).filter(a => a && !a.separateur && !a.danger && rang(a) >= 0).sort((a, b) => rang(a) - rang(b)).slice(0, 4);
+    routes.set(el, xs);
+    const html = xs.map((a, i) => {
+      const corps = `${a.icone || ''}<span>${esc(a.libelle)}${AVEC_DETAIL.test(a.libelle) && a.detail ? `<small>${esc(a.detail)}</small>` : ''}</span>`;
+      return a.href ? `<a href="${esc(a.href)}" data-ob-r="${i}"${a.externe ? ' target="_blank" rel="noopener"' : ''}>${corps}</a>` : `<button type="button" data-ob-r="${i}">${corps}</button>`;
+    }).join('');
+    el.hidden = !xs.length;
+    // inchangée, elle n'est pas refaite : un bouton touché garde son focus (la comparaison est faite avec le texte écrit ici, pas avec
+    // `innerHTML`, que le navigateur resérialise autrement)
+    if (cles.get(el) !== html) { el.innerHTML = html; cles.set(el, html); }
+  }
+  function route(zone, genre, x) {
+    const titre = zone && $('.titre-ed', zone);
+    if (!titre || !x || !actif() || typeof MENUS === 'undefined' || !MENUS[genre]) return;
+    let el = $('.ob-route', zone);
+    if (!el) {
+      el = document.createElement('div'); el.className = 'ob-route'; el.setAttribute('role', 'group'); el.setAttribute('aria-label', 'Sur la route');
+      el.addEventListener('click', e => { const b = e.target.closest('[data-ob-r]'), a = b && routes.get(el)?.[+b.dataset.obR]; if (a && a.faire) { e.preventDefault(); a.faire(); } });
+      titre.after(el);
+    }
+    el.dataset.obGenre = genre; el.dataset.obId = x.id;
+    dessinerRoute(el, genre, x);
+  }
+  // une feuille publiée, un contact changé ailleurs : la rangée de la fiche ouverte se redit (elle est calculée à l'ouverture)
+  if (typeof APRES_CHANGEMENT !== 'undefined') APRES_CHANGEMENT.push(() => $$('.ob-route[data-ob-genre]').forEach(el => { const x = objetDe(el.dataset.obGenre, +el.dataset.obId); if (x && actif() && typeof MENUS !== 'undefined') dessinerRoute(el, el.dataset.obGenre, x); }));
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && feuilleOuverte) { e.preventDefault(); fermerFeuille(); } });
   window.addEventListener('hashchange', () => { fermerFeuille(false); setTimeout(poser, 0); });
   if (typeof matchMedia === 'function') matchMedia(MQ).addEventListener('change', poser);
@@ -196,6 +237,14 @@ const MOBILE = (() => {
   html.ob-actif .crm-kpi { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   html.ob-actif .crm-kpi-boite { padding: 10px; }
   html.ob-actif .crm-kpi-boite b { font-size: 18px; overflow-wrap: anywhere; }
+  /* sur la route : sous le titre d'une date ou d'un lieu, deux colonnes de boutons de 44 px (le dernier, seul, prend la largeur) */
+  html.ob-actif .ob-route { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: -4px 0 14px; }
+  html.ob-actif .ob-route[hidden] { display: none; }
+  html.ob-actif .ob-route > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+  html.ob-actif .ob-route > * { box-sizing: border-box; display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 44px; padding: 8px 12px; border: 0; border-radius: 12px; background: var(--doux); color: var(--encre); text-decoration: none; font: inherit; font-size: 14px; font-weight: 700; line-height: 1.25; text-align: left; overflow-wrap: anywhere; cursor: pointer; }
+  html.ob-actif .ob-route > :is(:hover, :focus-visible) { background: var(--accent-doux); }
+  html.ob-actif .ob-route svg { flex: none; width: 20px; height: 20px; }
+  html.ob-actif .ob-route small { display: block; font-weight: 500; font-size: 12.5px; color: var(--gris); }
   .ob-barre { position: fixed; left: 0; right: 0; bottom: 0; z-index: 48; display: grid; grid-template-columns: repeat(5, 1fr); padding: 4px 4px calc(4px + env(safe-area-inset-bottom, 0px)); background: color-mix(in srgb, var(--carte) 94%, transparent); backdrop-filter: blur(10px); border-top: 1px solid var(--trait); }
   .ob-barre a, .ob-barre button { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px 4px; border: 0; border-radius: 12px; background: none; color: var(--gris); text-decoration: none; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; }
   .ob-barre [aria-current="page"] { color: var(--accent); background: var(--accent-doux); }
@@ -226,8 +275,9 @@ const MOBILE = (() => {
 .ob-texte p { margin: 0 0 8px; }
 .ob-texte ol { margin: 0; padding-left: 22px; }
 .ob-texte li { margin: 6px 0; }
+.ob-route { display: none; }   /* (la rangée n'est posée qu'au téléphone ; si l'écran s'élargit, elle s'efface) */
 @media (prefers-reduced-motion: reduce) { .ob-voile, .ob-feuille { transition: none; } }`;
   document.head.append(style);
   setTimeout(poser, 0);
-  return { feuille, actif, poser };
+  return { feuille, route, actif, poser };
 })();
