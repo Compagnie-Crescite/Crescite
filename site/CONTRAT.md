@@ -274,10 +274,7 @@ Un directeur de salle vient chercher trois choses : à qui parler, un dossier à
   - `D.site.programmation.contact` = `{nom, role, email, telephone}` (l'administratrice ; `telephone` peut être null) ;
   - `D.documents` = `[{spectacle: slug, type: 'dossier'|'fiche_technique'|'plan'|'texte'|'autre', titre, url, pour:
     'pros'|'scolaires'}]` : les fichiers déposés par l'administration (vide pour l'instant, prévois-le quand même) ;
-  - `DOSSIER.telecharger(slug)` (outil commun `dossier.js`) compose et télécharge le dossier PDF du spectacle,
-    toujours à jour (couverture, présentation, distribution, conditions d'accueil et fiche technique, diffusion,
-    production, contact). Rend une promesse ; quelques centaines de millisecondes ;
-  - les libellés `contactDiffusion`, `dossierPdf`, `aTelecharger`, `conditionsFinancieres`, `ficheTechniqueSurDemande`,
+  - les libellés `contactDiffusion`, `dossierSurDemande`, `aTelecharger`, `conditionsFinancieres`, `ficheTechniqueSurDemande`,
     `documentsScolaires`, `objetProgrammation` (et ceux qui existaient : `ficheTechnique`, `conditionsAccueil`…).
 - **Le contact diffusion** (`L.contactDiffusion`) : le nom, le rôle, le courriel en lien
   `mailto:<email>?subject=<L.objetProgrammation>` (sur un spectacle : `<L.objetProgrammation> – <titre>`), le téléphone en
@@ -287,9 +284,12 @@ Un directeur de salle vient chercher trois choses : à qui parler, un dossier à
   la page programmer : bien visible dans le premier écran de `#/programmer` (près du titre), dans ton style (bouton,
   carte, bandeau…), et repris, compact, sur l'onglet programmer de chaque spectacle. « Écrire à la compagnie » peut
   rester plus bas.
-- **Le dossier du spectacle (PDF)** : un `<button type="button" data-dossier="<slug>">` avec `L.dossierPdf`, qui appelle
-  `DOSSIER.telecharger(slug)`. Pendant la composition : `aria-busy="true"`, bouton désactivé, une animation dans ton
-  style (les tentacules s'en mêlent volontiers) ; en cas d'échec, l'animation s'arrête et le bouton redevient actif.
+- **Le dossier du spectacle** : un seul par spectacle, celui que l'administration a déposé (demande du client, 29 octobre
+  2026 : « Il faut que ce soit le dossier qui est paramétré par l'administratrice », d'après le Drive de la compagnie, où
+  chaque spectacle a son « Dossier <SPECTACLE> 2026 »). C'est le document `type === 'dossier'` du spectacle pour les pros,
+  titré « Dossier du spectacle 2026 » : un `<a data-dossier="<slug>" href="<url>" target="_blank">` à son titre, qu'« À
+  télécharger » ne répète pas. Le site ne compose plus de dossier : sans document déposé, `L.dossierSurDemande` en lien
+  `mailto:` vers le contact (objet `<L.dossierSurDemande> – <titre>`), avec le même `data-dossier`.
   Sur `#/programmer` : un par spectacle (dans sa fiche) ; sur l'onglet programmer : en tête, avec la bande-annonce.
 - **La fiche technique** (onglet programmer) : Bérénice comme aujourd'hui (les blocs de `D.dossiers.berenice.accueil`) ; un
   document `type === 'fiche_technique'` du spectacle (pour les pros) en lien ; sinon `L.ficheTechniqueSurDemande` en lien
@@ -300,11 +300,17 @@ Un directeur de salle vient chercher trois choses : à qui parler, un dossier à
 - **Établissement** : sur l'onglet établissement d'un spectacle, ses documents `pour === 'scolaires'` en liens sous
   `L.documentsScolaires` (à côté du dossier scolaire de Bérénice, inchangé).
 - Rien d'inventé, aucun prix (jamais de montant de cession). Le vérificateur attend, sur `#/programmer`, le nom du contact,
-  `L.contactDiffusion`, `L.dossierPdf`, `L.conditionsFinancieres`, un lien `mailto:` visible et au moins un
-  `[data-dossier]` ; sur l'onglet programmer de Bérénice, `[data-dossier="berenice"]`, dont il essaie le
-  téléchargement ; sur chaque onglet programmer, un lien visible vers chacun des documents pros du spectacle ; sur
+  `L.contactDiffusion`, `L.dossierSurDemande` (tant qu'un spectacle n'a pas de dossier déposé), `L.conditionsFinancieres`, un lien `mailto:` visible et au moins un
+  `[data-dossier]` ; sur l'onglet programmer de Bérénice, `[data-dossier="berenice"]`, dont il vérifie le lien (le PDF
+  déposé, sinon le courriel) ; sur chaque onglet programmer, un lien visible vers chacun des documents pros du spectacle ; sur
   celui de Cléophène, le titre de sa fiche technique ; sur celui de Macbeth (sans fiche), `L.ficheTechniqueSurDemande`.
   `D.documents` a maintenant 15 vrais documents (dossiers de diffusion, fiches techniques, dossiers scolaires).
+
+- **La convention des établissements** (« Je représente un établissement scolaire ») : son texte est celui de
+  l'administration (demande du client, 29 octobre 2026), `D.site.convention` = `{titre, parties, articles: [{titre,
+  texte}], fin, signatureEtablissement, signatureCompagnie}` (base : `crescite_textes`, clé `convention` ; sinon le texte
+  de départ, `data/convention.json`). Le PDF n'écrit rien d'autre ; `{{etablissement}}`, `{{ville}}`, `{{chef}}`,
+  `{{spectacle}}`, `{{classes}}`, `{{ateliers}}` y prennent ce que l'établissement a saisi.
 
 ## Règle 14 : un spectacle sans action culturelle (demande du client)
 « Supprime pour l'instant l'action culturelle autour de Cassandre. POUR L'INSTANT ELLE n'est pas construite. »

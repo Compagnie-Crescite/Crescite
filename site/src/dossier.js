@@ -1,7 +1,9 @@
-/* Le dossier d'un spectacle, en PDF, composé à la demande depuis les données du site (D) : pour les programmateurs et
-   les directeurs de salle. Toujours à jour avec la base, sans fichier à refaire. build.py l'ajoute aux outils communs ;
+/* Le dossier d'un spectacle, en PDF, composé à la demande depuis les données du site (D). Le site ne le propose plus
+   (29 octobre 2026) : le dossier d'un spectacle est celui que l'administration dépose. Reste DOSSIER.charger, qui charge
+   pdfmake pour la convention des établissements. build.py l'ajoute aux outils communs ;
    pdfmake (admin/vendor/, publié avec le site) n'est chargé qu'au premier clic.
 
+   DOSSIER.charger()           charge pdfmake (une fois) ; rend une promesse
    DOSSIER.telecharger(slug)   compose le PDF du spectacle et le télécharge (« dossier-<slug>.pdf ») ; rend une promesse
    DOSSIER.pdf(slug)           la même chose, rendue en Blob
    DOSSIER.vendor              le dossier de pdfmake (par défaut admin/vendor/, à côté des maquettes)
@@ -182,6 +184,6 @@ const DOSSIER = (() => {
     setTimeout(() => URL.revokeObjectURL(url), 60000);
     return blob;
   }
-  const api = { telecharger, pdf, definition, vendor: 'admin/vendor/' };
+  const api = { charger, telecharger, pdf, definition, vendor: 'admin/vendor/' };
   return api;
 })();
