@@ -94,6 +94,8 @@ const TOURNEE = (() => {
 
   function vue(f = session.dates) {
     if (!F) { cadre('representations', `<div class="tete"><h1>Représentations</h1>${choixVueDates('carte')}</div><div class="vide bloc">Le fond de carte manque (admin/fond-carte.js : site/build.py l’écrit).</div>`); return; }
+    // (au téléphone, la carte s'ouvre resserrée autour des dates, le temps de la session : à tester avant etatVue, qui remplit serre: false)
+    if (typeof MOBILE !== 'undefined' && MOBILE.actif() && session.vues?.carte?.serre === undefined) etatVue('carte').serre = true;
     const v = etatVue('carte'), voulu = visee && Date.now() - visee.t < 4000 ? visee.id : null;
     visee = null; v.vb = null; actif = false; anim = null;     // (la carte s'ouvre recadrée : « Autour des dates » ou toute la France)
     const zoomBtn = (k, nom, touche, icone) => `<button type="button" class="tn-zb" data-tn-zoom="${k}" title="${esc(nom)} (${touche})">${icone}<span class="sr">${esc(nom)}</span></button>`;

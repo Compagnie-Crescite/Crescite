@@ -2677,19 +2677,26 @@ function relier(racine, F, specs, onChange = () => {}) {
 }
 // le pied d'un éditeur : l'état, les autres actions, « Enregistrer ». replier : quand tout ne tient pas sur une rangée (au
 // téléphone, dans une colonne étroite), les autres actions passent dans un menu « Plus » (l'état, Plus, Enregistrer) ;
-// marque : ce que « Plus » montre de son menu (le compte « à compléter » de la feuille). Voir ajusterPied et menuPlus
+// marque : ce que « Plus » montre de son menu (le compte « à compléter » de la feuille). Voir ajusterPied et menusPlus
+// (chaque pied a son menu, avec son propre id : une date ouverte en tiroir au-dessus d'une fiche a deux pieds à la fois)
+let numeroPied = 0;
 function pied(etatTexte = 'Tout est enregistré', boutons = '', { replier = false, marque = '' } = {}) {
-  const plus = replier && boutons;
-  return `<div class="pied-ed${plus ? ' a-plus' : ''}"><span class="etat-ed">${esc(etatTexte)}</span>${plus ? `<span class="pied-menu"><button type="button" class="btn pied-plus" aria-expanded="false" aria-controls="pied-autres">Plus${marque}<svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><span class="pied-autres" id="pied-autres" role="group" aria-label="Autres actions">${boutons}</span></span>` : boutons}<button type="button" class="btn principal" data-enregistrer>Enregistrer</button></div>`;
+  const plus = replier && boutons, idMenu = 'pied-autres-' + (++numeroPied);
+  return `<div class="pied-ed${plus ? ' a-plus' : ''}"><span class="etat-ed">${esc(etatTexte)}</span>${plus ? `<span class="pied-menu"><button type="button" class="btn pied-plus" aria-expanded="false" aria-controls="${idMenu}">Plus${marque}<svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><span class="pied-autres" id="${idMenu}" role="group" aria-label="Autres actions">${boutons}</span></span>` : boutons}<button type="button" class="btn principal" data-enregistrer>Enregistrer</button></div>`;
 }
+// (au téléphone, tous les pieds de fiche se replient dès qu'« Enregistrer » ne tient plus sur la rangée de l'état ; à l'ordinateur, rien ne change)
+const piedReplie = () => typeof MOBILE !== 'undefined' && MOBILE.actif();
 // replié ou non : déployé, « Enregistrer » (le dernier) passe-t-il sous l'état (le premier) ? Mesuré quand la largeur du
 // pied change (ResizeObserver), quand l'état ou un bouton change de texte (marquerSale, majACompleter)
 function ajusterPied(pied = $('.pied-ed.a-plus')) {
   if (!pied || !pied.isConnected || !pied.classList.contains('a-plus')) return;
-  fermerPlus();
+  fermerPlus(false, pied);
   pied.classList.remove('replie');
   const etat = $('.etat-ed', pied), der = $('[data-enregistrer]', pied);
-  if (etat && der && der.getBoundingClientRect().top >= etat.getBoundingClientRect().bottom) pied.classList.add('replie');
+  // (au téléphone, un état qui passe sur deux lignes — « Tout est / enregistré » — vaut aussi un repli : « Supprimer » ne reste pas
+  // collé à « Enregistrer » ; à l'ordinateur, seul « Enregistrer » sous l'état compte, comme avant)
+  const deux = () => piedReplie() && etat.getBoundingClientRect().height > 1.8 * parseFloat(getComputedStyle(etat).fontSize);
+  if (etat && der && (der.getBoundingClientRect().top >= etat.getBoundingClientRect().bottom || deux())) pied.classList.add('replie');
 }
 function suivrePied(pied) {
   if (!pied || typeof ResizeObserver === 'undefined') return ajusterPied(pied);
@@ -2712,35 +2719,38 @@ function suivrePied(pied) {
 }
 // le menu « Plus » (pied replié) : son bouton l'ouvre (le focus sur la première action), ↑ ↓ Début Fin entre les actions,
 // Échap le ferme et rend le focus au bouton ; une action choisie, un clic ou le focus ailleurs le ferment aussi
-const menuPlus = () => $('#pied-autres');
-function fermerPlus(rendre = false) {
-  const m = menuPlus();
-  if (!m || !m.classList.contains('ouvert')) return;
-  m.classList.remove('ouvert');
-  const b = $('.pied-plus');
-  b?.setAttribute('aria-expanded', 'false');
-  if (rendre) b?.focus();
+// (chaque pied touche SON menu : le pied du tiroir et celui de la fiche du dessous peuvent exister ensemble)
+const menusPlus = (racine = document) => $$('.pied-autres.ouvert', racine);
+function fermerPlus(rendre = false, racine = document, sauf = null) {
+  menusPlus(racine).forEach(m => {
+    if (m === sauf) return;
+    m.classList.remove('ouvert');
+    const b = $('.pied-plus', m.closest('.pied-menu'));
+    b?.setAttribute('aria-expanded', 'false');
+    if (rendre) b?.focus();
+  });
 }
 document.addEventListener('click', e => {
-  const b = e.target.closest('.pied-plus'), m = menuPlus();
+  const b = e.target.closest('.pied-plus'), m = b && $('.pied-autres', b.closest('.pied-menu'));
   if (b && m) {
-    if (m.classList.contains('ouvert')) return fermerPlus();
+    if (m.classList.contains('ouvert')) return fermerPlus(false, b.closest('.pied-menu'));
+    fermerPlus(false, document, m);
     m.classList.add('ouvert'); b.setAttribute('aria-expanded', 'true');
     $('.btn:not([disabled])', m)?.focus();
     return;
   }
-  if (m && (!m.contains(e.target) || e.target.closest('.btn'))) fermerPlus();
+  menusPlus().forEach(o => { if (!o.contains(e.target) || e.target.closest('.btn')) fermerPlus(false, o.parentElement); });
 });
 document.addEventListener('keydown', e => {
-  const m = menuPlus();
-  if (!m || !m.classList.contains('ouvert')) return;
-  if (e.key === 'Escape') { e.preventDefault(); fermerPlus(true); return; }
+  const m = menusPlus().find(o => o.parentElement.contains(document.activeElement)) || menusPlus()[0];
+  if (!m) return;
+  if (e.key === 'Escape') { e.preventDefault(); fermerPlus(true, m.parentElement); return; }
   const xs = $$('.btn:not([disabled])', m), i = xs.indexOf(document.activeElement);
   if (i < 0) return;
   if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); xs[(i + (e.key === 'ArrowDown' ? 1 : -1) + xs.length) % xs.length].focus(); }
   else if (e.key === 'Home' || e.key === 'End') { e.preventDefault(); xs[e.key === 'Home' ? 0 : xs.length - 1].focus(); }
 });
-document.addEventListener('focusin', e => { if (!e.target.closest?.('.pied-menu')) fermerPlus(); });
+document.addEventListener('focusin', e => { menusPlus().forEach(o => { if (!o.parentElement.contains(e.target)) fermerPlus(false, o.parentElement); }); });
 const choixSpectacles = (vide = null) => [...(vide ? [['', vide]] : []), ...E.spectacles.slice().sort((a, b) => (b.page - a.page) || a.ordre - b.ordre).map(s => [String(s.id), s.titre + (s.page ? '' : ' (ancien)')])];
 
 // ===================================================================================================== lieux : choisir ou créer
@@ -2874,6 +2884,10 @@ const dansPeriode = (d, periode) => periode === 'toutes' || (periode === 'passee
 // la recherche de la liste et de la carte (q : déjà passé par norm()) ; le tableur cherche plus large (notes, équipe…)
 function dateCherchee(d, q) { const s = spectacle(d.spectacle_id), l = lieu(d.lieu_id), su = E.suivis.find(x => x.date_id === d.id) || {}; return norm(`${s?.titre} ${l?.nom} ${l?.commune} ${d.intitule || ''} ${su.organisateur || ''} ${su.contact || ''}`).includes(q); }
 const filtresActifs = f => Object.entries(DEFAUTS_DATES).some(([k, d]) => String(f[k] ?? d) !== String(d));
+// Au téléphone (moins de 641 px) la recherche reste seule visible ; tout le reste de la barre tient derrière « Filtres », qui dit
+// combien de filtres sont posés (la recherche n'y compte pas : elle est sous les yeux) et s'ouvre d'office quand il y en a.
+const nbFiltresPoses = f => Object.entries(DEFAUTS_DATES).filter(([k, d]) => k !== 'q' && String(f[k] ?? d) !== String(d)).length;
+const resumeTel = f => { const n = nbFiltresPoses(f); return `Filtres${n ? ` <span class="badge">${n}</span>` : ''}`; };
 const resumePlus = f => { const n = FILTRES_PLUS.filter(k => f[k]).length; return `Plus de filtres${n ? ` <span class="badge">${n}</span>` : ''}`; };
 // la barre de filtres des trois vues : la recherche, la période, la saison, le statut, le public, les puces des spectacles
 // (elles servent de légende), « Plus de filtres » (nature, département, contrat, du … au), le compte (#f-compte : chaque vue y
@@ -2884,9 +2898,10 @@ function filtresDates(f, { vue = 'liste', aDroite = '' } = {}) {
   const saisons = [...new Set([...E.dates.map(d => d.saison), f.saison].filter(Boolean))].sort().reverse();
   const deps = [...new Set(E.dates.map(d => lieu(d.lieu_id)?.departement).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), 'fr', { numeric: true }));
   const opt = (xs, v) => xs.map(([k, l]) => `<option value="${esc(k)}"${v === k ? ' selected' : ''}>${esc(l)}</option>`).join('');
+  const tel = typeof MOBILE !== 'undefined' && MOBILE.actif();
   return `<div class="filtres filtres-dates" role="search" aria-label="Filtrer les représentations">
     <input type="search" id="f-q" placeholder="${vue === 'tableur' ? 'Chercher un lieu, une personne, une note' : 'Chercher un lieu, une commune, un spectacle'}" value="${esc(f.q)}" aria-label="Chercher">
-    <span class="seg" role="group" aria-label="Période">${[['avenir', 'À venir'], ['passees', 'Passées'], ['toutes', 'Toutes']].map(([k, l]) => `<button type="button" data-f-periode="${k}" aria-pressed="${f.periode === k}">${l}</button>`).join('')}</span>
+    ${tel ? `<details class="f-tel"${nbFiltresPoses(f) ? ' open' : ''}><summary>${resumeTel(f)}</summary><div class="f-tel-corps">` : ''}<span class="seg" role="group" aria-label="Période">${[['avenir', 'À venir'], ['passees', 'Passées'], ['toutes', 'Toutes']].map(([k, l]) => `<button type="button" data-f-periode="${k}" aria-pressed="${f.periode === k}">${l}</button>`).join('')}</span>
     <select id="f-saison" aria-label="Saison"><option value="">Toutes les saisons</option>${opt(saisons.map(s => [s, `Saison ${s}`]), f.saison)}</select>
     <select id="f-statut" aria-label="Statut"><option value="">Tous statuts</option>${opt([['option', 'Options'], ['confirmee', 'Confirmées'], ['annulee', 'Annulées'], ['reportee', 'Reportées'], ['masquee', 'Masquées']], f.statut)}</select>
     <select id="f-public" aria-label="Public"><option value="">Tous publics</option>${opt([['tout_public', 'Tout public'], ['scolaire', 'Scolaire']], f.public)}</select>
@@ -2896,8 +2911,9 @@ function filtresDates(f, { vue = 'liste', aDroite = '' } = {}) {
       <select id="f-dep" aria-label="Département"><option value="">Tous départements</option>${opt(deps.map(k => [k, k]), f.dep)}</select>
       <select id="f-contrat" aria-label="Contrat"><option value="">Tous contrats</option>${opt([['aucun', 'Sans contrat'], ['à envoyer', 'À envoyer'], ['envoyé', 'Envoyé'], ['signé', 'Signé']], f.contrat)}</select>
       <span class="f-periode"><label>du <input type="date" id="f-du" value="${esc(f.du)}"></label><label>au <input type="date" id="f-au" value="${esc(f.au)}"></label></span></div></details>
-    <span class="compte" id="f-compte"${vue === 'tableur' ? ' hidden' : ''}></span>
-    ${aDroite ? `<span class="f-propre">${aDroite}</span>` : ''}</div>`;
+    ${tel ? `${aDroite ? `<span class="f-propre">${aDroite}</span>` : ''}</div></details>
+    <span class="compte" id="f-compte"${vue === 'tableur' ? ' hidden' : ''}></span></div>` : `<span class="compte" id="f-compte"${vue === 'tableur' ? ' hidden' : ''}></span>
+    ${aDroite ? `<span class="f-propre">${aDroite}</span>` : ''}</div>`}`;
 }
 // les contrôles reprennent ce que dit f (« Effacer les filtres », un filtre relâché pour montrer une ligne, un ajout du tableur)
 filtresDates.refleter = f => {
@@ -2906,14 +2922,17 @@ filtresDates.refleter = f => {
   $$('[data-f-periode]', barre).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.fPeriode === f.periode)));
   $$('[data-sp]', barre).forEach(b => b.setAttribute('aria-pressed', String(String(f.spectacle) === b.dataset.sp)));
   const r = $('.f-plus summary', barre); if (r) r.innerHTML = resumePlus(f);
+  filtresDates.compter(f);
 };
+// le compte sur « Filtres » (au téléphone seulement : ailleurs, la barre n'a pas ce bouton)
+filtresDates.compter = f => { const t = $('.f-tel > summary'); if (t) t.innerHTML = resumeTel(f); };
 // relie les contrôles de la barre, une fois par vue dessinée : maj redessine la vue (et garde les filtres : garderFiltres)
 let BARRE_DATES = null;
 function brancherFiltresDates(f, maj) {
   const barre = $('.filtres-dates'); if (!barre) return;
   BARRE_DATES = { f, maj };
   $('#f-q', barre).addEventListener('input', e => { f.q = e.target.value; maj(); });
-  ['saison', 'statut', 'public', 'nature', 'dep', 'contrat', 'du', 'au'].forEach(k => $(`#f-${k}`, barre).addEventListener('change', e => { f[k] = e.target.value; if (FILTRES_PLUS.includes(k)) filtresDates.refleter(f); maj(); }));
+  ['saison', 'statut', 'public', 'nature', 'dep', 'contrat', 'du', 'au'].forEach(k => $(`#f-${k}`, barre).addEventListener('change', e => { f[k] = e.target.value; if (FILTRES_PLUS.includes(k)) filtresDates.refleter(f); else filtresDates.compter(f); maj(); }));
   $$('[data-f-periode]', barre).forEach(b => b.addEventListener('click', () => { f.periode = b.dataset.fPeriode; filtresDates.refleter(f); maj(); }));
   $$('[data-sp]', barre).forEach(b => b.addEventListener('click', () => { f.spectacle = String(f.spectacle) === b.dataset.sp ? '' : b.dataset.sp; filtresDates.refleter(f); maj(); }));
 }
@@ -3005,14 +3024,20 @@ function vueDates(param) {
    vide à mesure. Les options, les dates annulées ou reportées n'y sont pas. */
 const JOURS_AVANT = [30, 60, 90];
 // (gardés par PREFS, clé representations.avant : avec le compte, ou sur l'appareil tant que le script 6 manque ; sans prefs.js dans la page, l'appareil seul)
+// Au téléphone (moins de 641 px), le bloc est fermé d'office et n'écrit rien dans le compte : son ouverture et sa fenêtre de jours
+// vivent le temps de la session (E.avantTel, E.avantJoursTel) ; la préférence de l'ordinateur n'est pas écrite (sa fenêtre de jours sert de départ).
+const avantTelephone = () => typeof MOBILE !== 'undefined' && MOBILE.actif();
 const reglagesAvant = () => {
   let r = {};
   if (typeof PREFS !== 'undefined') r = PREFS.lire('representations.avant', {});
   else { try { r = JSON.parse(localStorage.getItem('crescite-admin-avant') || '{}'); } catch { r = {}; } }
   if (!r || typeof r !== 'object' || Array.isArray(r)) r = {};
-  return { ouvert: r.ouvert !== false, jours: JOURS_AVANT.includes(r.jours) ? r.jours : 60 };
+  const jours = JOURS_AVANT.includes(r.jours) ? r.jours : 60;
+  if (avantTelephone()) return { ouvert: E.avantTel === true, jours: JOURS_AVANT.includes(E.avantJoursTel) ? E.avantJoursTel : jours };
+  return { ouvert: r.ouvert !== false, jours };
 };
 const garderAvant = r => {
+  if (avantTelephone()) { E.avantTel = r.ouvert === true; E.avantJoursTel = r.jours; return; }      // (le téléphone n'écrit aucune préférence du compte)
   if (typeof PREFS !== 'undefined') PREFS.ecrire('representations.avant', r, { aussitot: true });
   else { try { localStorage.setItem('crescite-admin-avant', JSON.stringify(r)); } catch { /* navigation privée */ } }
 };
@@ -3083,6 +3108,49 @@ function relierAvant(el) {
   el.addEventListener('toggle', e => { if (e.target.matches('details.avant') && e.target.open !== reglagesAvant().ouvert) garderAvant({ ...reglagesAvant(), ouvert: e.target.open }); }, true);   // (le navigateur dit « toggle » aussi au premier dessin d'un panneau ouvert : rien à garder)
   el.addEventListener('change', e => { if (e.target.id !== 'avant-jours') return; garderAvant({ ...reglagesAvant(), jours: +e.target.value }); dessinerAvant(el); $('#avant-jours', el)?.focus(); });
 }
+// de quoi retrouver, une fois #vue redessinée, la commande qui avait le focus : son id, sinon le résumé de son details (« Filtres »,
+// « À compléter avant la tournée », d'après les classes du details), sinon son lien ou son premier attribut data- (un segment de
+// période), dans la même tuile du tableau de bord ; null : rien de sûr (le focus repartira du haut, comme avant)
+function repereFocus(a = document.activeElement) {
+  if (!a || a === document.body || !$('#vue')?.contains(a)) return null;
+  if (a.id) return `#${CSS.escape(a.id)}`;
+  const p = a.parentElement;
+  if (a.localName === 'summary' && p?.localName === 'details' && p.classList.length) return `details.${[...p.classList].map(c => CSS.escape(c)).join('.')} > summary`;
+  const x = [...a.attributes].find(t => t.name === 'href' || (t.name.startsWith('data-') && t.value));
+  if (!x) return null;
+  const tuile = a.parentElement?.closest('[data-k]');
+  return `${tuile ? `[data-k="${CSS.escape(tuile.dataset.k)}"] ` : ''}${a.localName}[${x.name}="${CSS.escape(x.value)}"]`;
+}
+// le téléphone qui tourne (la fenêtre passe le seuil des 640 px) : la barre de filtres et « À compléter avant la tournée » n'ont pas la
+// même forme au téléphone et à l'ordinateur ; la page des dates se redessine sur place (même adresse : ni fondu ni glissement), et la
+// commande qui avait le focus le retrouve (repereFocus : la recherche avec sa sélection, on continue de taper ; « Filtres », un segment
+// de période). Elle ne se redessine pas si une saisie est en cours, ni quand le focus est dans le tableur (une case : elle le garde) ;
+// elle se refera à la navigation suivante. Sous un tiroir ouvert, elle attend sa fermeture (le focus revenu au lien qui l'a ouvert),
+// et ne se redessine alors que si la fenêtre est restée de l'autre côté du seuil.
+let datesAuRetour = null;     // (le côté du seuil où la page est dessinée, quand un tiroir ouvert a retenu son redessin)
+function redessinerDates() {
+  if (saisieEnCours()) return;
+  const a = document.activeElement;
+  if (a && a.closest && a.closest('#tab-zone') && $('#vue')?.contains(a)) return;
+  let sel = null;
+  try { if (typeof a?.selectionStart === 'number') sel = [a.selectionStart, a.selectionEnd, a.selectionDirection]; } catch (e) { /* un champ sans sélection */ }
+  const rep = repereFocus(a);
+  router();
+  const b = rep && $(rep, $('#vue'));
+  if (!b) return;
+  b.focus();
+  if (sel) try { b.setSelectionRange(...sel); } catch (e) { /* idem */ }
+}
+if (typeof matchMedia === 'function') matchMedia('(max-width: 640px)').addEventListener('change', e => {
+  if (!E.pret || !$('#vue .filtres-dates')) return;
+  if (typeof TIROIR !== 'undefined' && TIROIR.ouvert()) { if (datesAuRetour === null) datesAuRetour = !e.matches; return; }
+  redessinerDates();
+});
+document.addEventListener('tiroir-ferme', () => {
+  const avant = datesAuRetour; datesAuRetour = null;
+  if (avant === null || avant === matchMedia('(max-width: 640px)').matches || !E.pret || !$('#vue .filtres-dates') || location.hash !== E.hashVue) return;
+  redessinerDates();
+});
 // les badges d'une date (statut, site, public, nature) et les points de son parcours : les mêmes dans la liste, sur la carte de
 // tournée (tournee.js) et partout où une date se résume en une ligne
 function badgesDate(d) {
@@ -3496,6 +3564,7 @@ function editeurDate(id, depart = null) {
       <div class="champ"><label for="c-source">${L('chiffres-source')}</label><input type="text" id="c-source" value="${esc(F.chiffres?.source ?? '')}" placeholder="${A('chiffres-source')}"></div></div>` : ''}
     ${pied(id ? 'Tout est enregistré' : 'Nouvelle date', `${id ? `${boutonFeuille(id)}${boutonPrevenir(id)}<button type="button" class="btn" id="d-dupliquer">Dupliquer</button><button type="button" class="btn danger" id="d-suppr">Supprimer</button>` : ''}`, { replier: true, marque: id && E.equipeInstallee ? resteFeuille(id, 'nombre') : '' })}`;
   suivrePied($('.pied-ed', zone));
+  if (d0 && typeof MOBILE !== 'undefined' && MOBILE.actif()) MOBILE.route(zone, 'date', d0);   // (au téléphone : Itinéraire, Feuille de route, Prévenir l'équipe, Confirmer, sous le titre)
   const etatPublic = () => { const ps = new Set(F.representations.filter(r => r.jour).map(r => r.public)); return ps.size > 1 ? 'mixte' : ps.size ? [...ps][0] : F.public; };
   const titre = () => { const s = spectacle(+F.spectacle_id); $('#ed-titre').textContent = id ? `${s?.titre || ''} · ${jourCourt(F.debut)}` : 'Nouvelle date'; };
   const apercu = () => {
@@ -4176,7 +4245,8 @@ function editeurAtelier(id) {
   nChamp = 0;
   zone.innerHTML = `<div class="titre-ed"><a class="btn petit" data-tt="retour" href="#/ateliers/catalogue">←</a><h2>${esc(F.titre || 'Nouvel atelier')}</h2></div><div class="bloc">
     <div class="champ"><label for="a-sp">Spectacle</label><select id="a-sp">${choixSpectacles('Aucun').map(([v, t]) => `<option value="${v}"${String(F.spectacle_id ?? '') === v ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></div>
-    ${SPEC_ATELIER.map(c => champ(c, F)).join('')}</div>${pied(a0 ? 'Tout est enregistré' : 'Nouvel atelier', a0 ? '<button type="button" class="btn danger" id="a-suppr">Supprimer</button>' : '')}`;
+    ${SPEC_ATELIER.map(c => champ(c, F)).join('')}</div>${pied(a0 ? 'Tout est enregistré' : 'Nouvel atelier', a0 ? '<button type="button" class="btn danger" id="a-suppr">Supprimer</button>' : '', { replier: piedReplie() })}`;
+  suivrePied($('.pied-ed', zone));
   relier(zone, F, SPEC_ATELIER);
   $('#a-sp').addEventListener('change', e => { F.spectacle_id = e.target.value ? +e.target.value : null; marquerSale(); });
   $('#a-suppr')?.addEventListener('click', () => CORBEILLE.ligne({ table: 'crescite_ateliers', ligne: a0, quoi: `Atelier supprimé : ${a0.titre}. Les séances déjà notées le gardent sans lien.`, retabli: 'Atelier rétabli.',
@@ -4241,7 +4311,8 @@ function editeurSeance(id, depart = null) {
       <div class="champ"><label for="se-st">Statut</label><select id="se-st">${[['option', 'Option'], ['prevue', 'Prévue'], ['realisee', 'Réalisée'], ['annulee', 'Annulée']].map(([k, l]) => `<option value="${k}"${F.statut === k ? ' selected' : ''}>${l}</option>`).join('')}</select></div></div>
       <div class="champ"><label for="se-date">Représentation liée</label><select id="se-date"><option value="">—</option>${datesProches().map(d => `<option value="${d.id}"${F.date_id === d.id ? ' selected' : ''}>${esc(jourCourt(d.debut))} · ${esc(lieuTexte(lieu(d.lieu_id)) || d.intitule || '')}</option>`).join('')}</select></div>
       <div class="champ"><label for="se-notes">Notes</label><textarea id="se-notes">${esc(F.notes || '')}</textarea></div></div>
-    ${pied(s0 ? 'Tout est enregistré' : 'Nouvelle séance', s0 ? '<button type="button" class="btn" id="se-dup">Dupliquer</button><button type="button" class="btn danger" id="se-suppr">Supprimer</button>' : '')}`;
+    ${pied(s0 ? 'Tout est enregistré' : 'Nouvelle séance', s0 ? '<button type="button" class="btn" id="se-dup">Dupliquer</button><button type="button" class="btn danger" id="se-suppr">Supprimer</button>' : '', { replier: piedReplie() })}`;
+  suivrePied($('.pied-ed', zone));
   comboLieu(zone, 'se-lieu', F.lieu_id, idl => { F.lieu_id = idl; marquerSale(); }, { etablissement: true });
   const lien = { 'se-at': ['atelier_id', v => v ? +v : null], 'se-sp': ['spectacle_id', v => v ? +v : null], 'se-jour': ['jour', v => v], 'se-hd': ['heure_debut', v => v], 'se-hf': ['heure_fin', v => v],
     'se-classe': ['classe', v => v], 'se-niv': ['niveau', v => v], 'se-nb': ['nb_eleves', v => v === '' ? null : +v], 'se-int': ['intervenants', v => v], 'se-disp': ['dispositif', v => v],
@@ -4345,7 +4416,9 @@ function editeurLieu(id) {
     <div class="bloc" id="li-s"><h3>Suivi interne <span class="aide" style="font-weight:400">— jamais publié</span></h3>${SPEC_LIEU_SUIVI.map(c => champ(c, G)).join('')}</div>
     ${l0 && typeof CARNET !== 'undefined' ? '<div class="bloc" id="li-carnet"></div>' : ''}${l0 ? datesDuLieu(id) : ''}${l0 && typeof NOTES !== 'undefined' ? '<div class="bloc" id="li-notes"></div>' : ''}
     ${l0 ? `<div class="bloc"><h3>Fusionner</h3><p class="aide">Ce lieu fait doublon ? Ses ${nb} date${nb > 1 ? 's' : ''} et ses séances passent sur le lieu choisi, puis il disparaît.</p><div id="li-fusion"></div></div>` : ''}
-    ${pied(l0 ? 'Tout est enregistré' : 'Nouveau lieu', l0 ? `<button type="button" class="btn danger" id="li-suppr"${nb ? ' disabled title="Ce lieu a des dates : fusionnez-le plutôt"' : ''}>Supprimer</button>` : '')}`;
+    ${pied(l0 ? 'Tout est enregistré' : 'Nouveau lieu', l0 ? `<button type="button" class="btn danger" id="li-suppr"${nb ? ' disabled title="Ce lieu a des dates : fusionnez-le plutôt"' : ''}>Supprimer</button>` : '', { replier: piedReplie() })}`;
+  suivrePied($('.pied-ed', zone));
+  if (l0 && typeof MOBILE !== 'undefined' && MOBILE.actif()) MOBILE.route(zone, 'lieu', l0);   // (au téléphone : Itinéraire, Appeler le contact, Copier l'adresse, sous le titre)
   relier($('#li-f'), F, SPEC_LIEU); relier($('#li-s'), G, SPEC_LIEU_SUIVI);
   if (l0 && typeof NOTES !== 'undefined') NOTES.bloc($('#li-notes', zone), 'crescite_lieux', id, { titre: 'Notes internes' });
   if (l0 && typeof CARNET !== 'undefined') CARNET.bloc($('#li-carnet', zone), id);
@@ -4956,7 +5029,8 @@ function editeurDevis(id) {
     <div class="bloc" id="dv-suite"></div>
     ${typeof MODELES !== 'undefined' ? '<div class="bloc" id="dv-documents"></div>' : ''}
     <div class="bloc" id="dv-suivi"><h3>Le suivi <span class="aide" style="font-weight:400">— jamais montré au programmateur</span></h3>${SPEC.map(c => champ(c, F)).join('')}</div>
-    ${pied('Tout est enregistré', '<button type="button" class="btn danger" id="dv-suppr">Supprimer</button>')}`;
+    ${pied('Tout est enregistré', '<button type="button" class="btn danger" id="dv-suppr">Supprimer</button>', { replier: piedReplie() })}`;
+  suivrePied($('.pied-ed', zone));
   relier($('#dv-suivi', zone), F, SPEC);
   // la suite d'une demande, d'un geste : la piste de diffusion qu'elle devient, la fiche de son lieu, le devis (modeles.js)
   const piste = () => (d0.prospect_id ? (E.prospects || []).find(p => p.id === d0.prospect_id) : null);

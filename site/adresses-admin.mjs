@@ -308,6 +308,8 @@ const adresse = page => page.evaluate(() => location.search + location.hash);
 // ================================================================================ les listes vides disent pourquoi
 for (const [largeur, hauteur, nom] of [[1440, 900, 'bureau'], [390, 844, 'téléphone']]) {
   const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur, hauteur, hash: '#/representations' });
+  await page.waitForSelector('#f-statut', { state: 'attached', timeout: 15000 });
+  if (await page.$('.f-tel:not([open])')) await page.click('.f-tel > summary');      // (au téléphone, les listes sont derrière « Filtres » : on le touche d'abord, s'il est fermé)
   await page.waitForSelector('#f-statut', { timeout: 15000 });
   await page.selectOption('#f-statut', 'annulee');
   await page.click('#vue [data-sp="1"]');

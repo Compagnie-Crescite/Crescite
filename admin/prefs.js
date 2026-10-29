@@ -41,8 +41,9 @@
      crescite-admin-avant ne sont effacées qu'une fois la valeur dans la base. Tant que la table manque (état « absent »),
      planning.masques continue d'être lue et écrite dans crescite-planning-masques, que partage l'espace de l'équipe
      (même origine), et la migration se rejoue à chaque chargement.
-   - Entre onglets : un BroadcastChannel « crescite-prefs » dit { compte, cle } ; l'autre onglet relit son miroir et
-     prévient ses abonnés, jamais pendant une saisie (il attend la fin).
+   - Entre onglets : un BroadcastChannel « crescite-prefs » dit { compte, cle, valeur } ; l'autre onglet prend la valeur du
+     message (son miroir, qu'un autre processus écrit, peut ne pas l'avoir encore : il y relirait l'ancienne) et prévient
+     ses abonnés, jamais pendant une saisie (il attend la fin).
    - Une seule annonce, par session : « Gardé avec votre compte » ou « Gardé sur cet appareil », au premier réglage d'un
      module qui ne le dit pas déjà (le tableau de bord le dit dans son panneau : il écrit muet).
    - Sans compte (E.session absente), rien n'est demandé à la base : seul le miroir « crescite-prefs:anonyme » sert.
@@ -99,14 +100,15 @@ const PREFS = (() => {
     return () => { P.abonnes[cle] = (P.abonnes[cle] || []).filter(f => f !== fn); };
   }
   function normaliser(cle, fn) { P.normaliseurs[cle] = fn; }
-  function diffuser(cle) { try { P.canal?.postMessage({ uid: uid(), cle }); } catch { /* canal fermé */ } }
+  function diffuser(cle, valeur) { try { P.canal?.postMessage({ uid: uid(), cle, valeur }); } catch { /* canal fermé, ou une valeur qui ne se copie pas */ } }
   if (typeof BroadcastChannel !== 'undefined') {
     try {
       P.canal = new BroadcastChannel('crescite-prefs');
       P.canal.onmessage = e => {
         const m = e.data;
         if (!m || m.uid !== uid() || typeof m.cle !== 'string') return;
-        const v = miroir().valeurs[m.cle];
+        // (la valeur vient avec le message : le miroir de cet onglet n'a pas toujours encore reçu l'écriture de l'autre)
+        const v = m.valeur !== undefined ? m.valeur : miroir().valeurs[m.cle];
         if (v !== undefined) P.valeurs[m.cle] = v;
         prevenir(m.cle);
       };
@@ -183,7 +185,7 @@ const PREFS = (() => {
       changerMiroir(m => { m.valeurs[cle] = valeur; if (u && !m.attente.includes(cle)) m.attente.push(cle); });
       planifier(cle, aussitot);
     }
-    diffuser(cle);
+    diffuser(cle, valeur);
     if (!muet) dire();
   }
   function planifier(cle, aussitot) {

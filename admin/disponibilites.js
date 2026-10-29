@@ -167,7 +167,8 @@ const DISPONIBILITES = (() => {
       <p class="aide dp-note">Les motifs des indisponibilités ne se lisent qu’ici et dans l’espace de la personne. Choisissez un jour (ou une case d’une personne) pour le proposer.</p>`);
     parties();
     const st = session.planning || {};
-    const vueP = st.vue === 'mois' ? 'mois' : 'equipe', jour = estJour(st.jour) ? st.jour : AUJ, semaines = [4, 6, 8].includes(+st.semaines) ? +st.semaines : 6;
+    // (au téléphone, le planning s'ouvre sur le mois tant que la session n'a pas choisi sa vue ; l'ordinateur garde sa règle)
+    const vueP = st.vue === 'mois' || (!st.vue && typeof MOBILE !== 'undefined' && MOBILE.actif()) ? 'mois' : 'equipe', jour = estJour(st.jour) ? st.jour : AUJ, semaines = [4, 6, 8].includes(+st.semaines) ? +st.semaines : 6;
     const per = PLN().periode(vueP, jour, semaines);
     // une période déjà lue s'affiche tout de suite, si l'on sait déjà qui est masqué (sinon, elle se relit avec la liste)
     let pl = null, masquesPoses = DP.masques !== undefined && DP.masquesDe === (E.session?.user?.id || null);

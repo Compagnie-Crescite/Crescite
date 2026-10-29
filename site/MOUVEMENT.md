@@ -18,6 +18,7 @@ Quatre durées, trois courbes, et rien qui bouge sans raison.
 | Suivre le doigt ou le pointeur (le retour, une notification, tirer pour rafraîchir, le bord d'une fenêtre qu'on tire) | le temps du geste, puis 180 à 300 ms ; la remise d'une fenêtre à sa taille d'origine, 220 ms | linéaire sous le doigt ou le pointeur (une mise à jour par image, jamais un transform), le doux pour revenir | `brancherRetour`, `brancherGlisserNotif`, `brancherTirer`, `FENETRES.poignee` |
 | Passer d'une vue à l'autre | 220 à 300 ms | le doux, par les View Transitions | `changerVue`, `changerVueAdmin` |
 | Replier le menu latéral (la colonne passe de 240 à 64 px, ou l'inverse) | 220 ms ; les libellés en 120 ms d'opacité | le doux, par la propriété déclarée `--large-menu` (`@property`) : la grille et l'aside la lisent, le contenu suit | `--large-menu` (`html`) |
+| Monter la feuille du téléphone (« Plus », « Créer » : la feuille monte du bas, le voile fonce ; au retrait, elle redescend et il s'éclaircit dans le même temps) | 200 ms | le doux (`cubic-bezier(.2, .8, .2, 1)`), la même courbe que le tiroir (qui dure 220 ms) ; le voile change sur la même durée et la même courbe | `.ob-feuille`, `.ob-voile` (mobile.js) |
 | Zoomer la carte de tournée (+ − ⌂, Ctrl+molette, « Voir sur la carte ») | 220 ms | le doux : une animation sans cible donne la progression déjà adoucie, un `setAttribute('viewBox')` par image la suit (le glisser au pointeur, lui, suit le pointeur sans durée) | `animerCadre` (tournee.js) |
 | Allumer une pastille de la carte (le survol d'une étape, le focus) | 450 ms | le ressort, sur ses deux cercles (`scale(1.15)`, `transform-box: fill-box`), jamais sur le `<g>` qui porte son `translate` | `.tn-pin.allume` |
 | Viser une ligne (le champ qu'un lien vise, la ligne que « Voir dans le tableur » ouvre) | 1,6 s | `ease-out` | `visee`, `visee-ligne` |
@@ -41,6 +42,25 @@ bouge pas du tout sous « moins d'animations » ; le changement de thème (nuit,
 transition de couleur ne se lance (`html.bascule` les coupe le temps d'un recalcul de style : un fondu sur toute la page
 coûterait cher), et seule l'icône choisie saute (`pop`, le ressort, 450 ms) ; les badges (« 12 » à traiter) sont posés sans mouvement, la pastille
 change de chiffre sans rouler (`cadre.mjs` en vérifie le calcul : aucune tâche de plus de 200 ms à `CPU=4`).
+
+L'essentiel d'abord du téléphone (tableau de bord, Dates, filtres) n'ajoute aucune animation : « Filtres » et « À compléter avant la
+tournée » sont des `<details>` comme les autres, et le contenu d'un pli qu'on ouvre garde le fondu de 220 ms que la règle
+`details[open]` (`ad-paraitre`) donne déjà à tous les plis (à chaque dessin d'un « Filtres » ouvert d'office aussi), immobile sous
+« moins d'animations » ; un téléphone
+qu'on tourne (la fenêtre passe le seuil des 640 px) redessine le tableau de bord ou la page des dates sur place, sans rejouer l'entrée
+de la page (`entree` ôtée) ni passer par une transition de vue (même adresse : `sensVue` rend `aucun`).
+
+La feuille de route lisible et la carte resserrée du téléphone n'ajoutent aucune animation : la « Vue de l'équipe » prend la place de
+la page A4 (et inversement) sans transition, comme avant à l'ordinateur ; la barre d'outils qui ne colle plus au téléphone ne glisse
+pas, elle est posée dans le flux ; la carte s'ouvre recadrée autour des dates comme elle s'ouvre toujours, d'un seul dessin sans
+glissement, et « Toute la France » garde le glissement de 220 ms d'avant (immobile sous « moins d'animations »).
+
+La rangée « sur la route » (Itinéraire, Feuille de route, Prévenir l'équipe… sous le titre d'une date ; Itinéraire, Appeler le contact,
+Copier l'adresse sous celui d'un lieu) n'ajoute aucune animation : elle est posée avec la fiche, qui garde sa transition « avant » (celle de
+`mouvement-admin.mjs`), et se redit sur place quand une feuille est publiée, sans fondu ; ses boutons n'ont pas de transition, et le
+panneau « Prévenir l'équipe » garde l'entrée qu'il avait. Immobile sous « moins d'animations » et sous `?anim=0` (`html.still`) : le banc
+du téléphone (5 · d) compte les transitions et les animations à leur départ, de la liste à la fiche puis à « Prévenir l'équipe… », et n'en
+trouve aucune dans les deux cas ; sa contre-épreuve, sans l'un ni l'autre, en trouve.
 
 Les accès rapides du menu latéral n'ajoutent rien au vocabulaire : un accès épinglé qui arrive (« Mettre dans le menu ») saute
 en ressort (`ad-pop`, 450 ms, par la classe `.pop`, ôtée à la fin de l'animation) ; une fiche récente qui apparaît dans
@@ -122,6 +142,7 @@ python3 site/build.py        # d'abord : site/dist/equipe et site/dist/admin
 node site/mouvement-equipe.mjs        # l'espace de l'équipe, hors ligne, sur une saison fictive (51 vérifications)
 node site/mouvement-admin.mjs         # l'administration, sur une base fictive (34 vérifications)
 node site/reduit.mjs                  # l'immobilité de l'administration sous « moins d'animations » : quatre gestes au clavier (24 vérifications)
+node site/telephone.mjs               # l'administration au téléphone : dont la feuille de « Plus » (200 ms, le doux ; immobile sous « moins d'animations ») (226 vérifications)
 CPU=4 node site/mouvement-equipe.mjs  # la même chose sur un téléphone quatre fois plus lent (le budget du contrat)
 bash site/bancs-admin.sh              # le build, puis tous les bancs de l'administration, dont mouvement-admin.mjs
 ```

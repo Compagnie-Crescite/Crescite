@@ -482,6 +482,7 @@ const variable = (page, sel, nom) => page.$eval(sel, (e, n) => getComputedStyle(
   const telA = await ouvrir(navigateur, { largeur: 390, hauteur: 900, hash: '#/feuilles/102', tactile: true });
   await telA.page.waitForSelector('#fr-composer', { timeout: 15000 });
   await telA.page.click('#fr-composer');
+  await telA.page.click('[data-fr-vue="page"]');     // (au téléphone, la feuille s'ouvre en « Vue de l'équipe » : on passe en page A4 avant)
   await telA.page.waitForSelector('.a4-doc', { timeout: 8000 });
   await telA.page.waitForTimeout(1200);
   const za = await telA.page.evaluate(() => { const b = document.querySelector('.a4-bureau'), g = document.querySelector('.a4-zoom'); return { transform: document.querySelector('.a4-pile').style.transform, defile: b.scrollWidth > b.clientWidth + 2, groupe: getComputedStyle(g).display }; });

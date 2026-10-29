@@ -25,6 +25,7 @@
    TIROIR.redessiner(id)                     TIROIR.peut(href) : ce lien s'ouvrirait-il en tiroir ici ?
    TIROIR.restaurer() (à l'ouverture de l'administration)   TIROIR.surAdresse() (index.html, à chaque changement d'adresse)
    TIROIR.titre() : le nom du tiroir du haut et sa rubrique, pour le titre de l'onglet
+   Le dernier tiroir fermé (le focus rendu), l'évènement « tiroir-ferme » part sur document.
    Les options d'ouvrir : viser (le sélecteur du champ à allumer dans la fiche), depuis (d'où l'on vient : le nœud qui reprend le focus à
    la fermeture, ou une fonction rappelée alors — quand la page derrière s'est redessinée, l'ancien nœud n'est plus dans le document :
    la fonction retrouve la case et lui rend le focus), apres (une fonction rappelée après chaque enregistrement de la fiche et à sa
@@ -171,6 +172,8 @@ const TIROIR = (() => {
       else history.replaceState(etat(), '', urlAvec(liste()));
     }
     noter();
+    // (le dernier fermé, le focus rendu : la page qui a retenu un redessin sous le tiroir, le téléphone qui a tourné, le fait maintenant)
+    if (!pile.length) document.dispatchEvent(new Event('tiroir-ferme'));
     return true;
   }
   function fermerTout({ demander = false, histoire = true } = {}) { while (pile.length) { if (!fermer({ demander, histoire })) return false; } return true; }
@@ -297,7 +300,8 @@ const TIROIR = (() => {
   });
   document.addEventListener('click', e => { const b = e.target.closest('[data-tiroir-fermer]'); if (b) { e.preventDefault(); fermer(); } });
   document.addEventListener('keydown', e => {
-    if (e.key !== 'Escape' || !pile.length) return;
+    // (un Échap déjà traité, le menu « Plus » d'un pied qui se referme, ne ferme pas le tiroir en plus)
+    if (e.key !== 'Escape' || !pile.length || e.defaultPrevented) return;
     if (document.querySelector('.gf, .gm, dialog[open]') || (typeof GESTES !== 'undefined' && GESTES.ouvert())) return;
     const t = e.target; if (t && t.matches && t.matches('input, textarea, select, [contenteditable="true"]') && t.closest('.tiroir') && t.value && t.type === 'search') return;
     e.preventDefault(); fermer();
