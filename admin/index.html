@@ -3968,7 +3968,7 @@ const SPEC_SPECTACLE = {
     { k: 'creation', t: 'texte', l: 'Création', ph: 'création 2024' },
     { k: 'statut', t: 'texte', l: 'Statut', ph: 'En création', aide: 'Vide si le spectacle tourne.' },
     { k: 'genre', t: 'texte', l: 'Genre' },
-    { k: 'duree', t: 'texte', l: 'Durée', ph: 'durée : 1h30' },
+    { k: 'duree', t: 'texte', l: 'Durée du spectacle', ph: '1h15', aide: 'Le seul endroit où la durée s’écrit : le site (page du spectacle, « Programmer », dossier), l’agenda, les feuilles de route et les contrats la reprennent d’ici. « 1h15 », « 75 min » : à l’enregistrement, elle s’écrit « durée : 1h15 ».' },
     { k: 'publie', t: 'case', l: 'Publié sur le site' },
     { k: 'page', t: 'case', l: 'A sa page sur le site', aide: 'Décoché : le spectacle n’apparaît que dans les saisons passées.' },
     { k: 'en_tournee', t: 'case', l: 'Dans le bandeau « EN TOURNÉE » de l’accueil' },
@@ -4024,7 +4024,7 @@ const SPEC_SPECTACLE = {
   'Programmer': [
     { k: 'programmer.representations', t: 'texte', l: 'Nombre de représentations', ph: '779 représentations au 31 juillet 2026' },
     { k: 'programmer.format', t: 'texte', l: 'Format', ph: 'SPECTACLE IN SITU' },
-    { k: 'programmer.duree', t: 'texte', l: 'Durée' }, { k: 'programmer.jauge', t: 'texte', l: 'Jauge' }, { k: 'programmer.equipe', t: 'texte', l: 'Équipe en tournée' },
+    { k: 'programmer.jauge', t: 'texte', l: 'Jauge' }, { k: 'programmer.equipe', t: 'texte', l: 'Équipe en tournée' },
     { k: 'programmer.lieux', t: 'long', l: 'Lieux de diffusion', lignes: 5 },
     { k: 'programmer.actualite', t: 'texte', l: 'Actualité' },
     { k: 'programmer.equipeCreation', t: 'lignes', l: 'Équipe de création' },
@@ -4154,6 +4154,8 @@ function editeurSpectacle(slug) {
     if (F.video && !(F.video.url || '').trim()) F.video = null;
     if (F.avec && !texteSeul(F.avec.valeur).trim()) F.avec = null;
     if (F.tournee && !(F.tournee.titre || '').trim() && !(F.tournee.texte || '').trim()) F.tournee = null;
+    F.duree = AGENDA.dureeCanon(F.duree) || null;                  // la durée n'a qu'un champ : l'ancienne « Programmer > Durée » est retirée
+    if (F.programmer) delete F.programmer.duree;
     const champs = Object.keys(F).filter(k => !['id', 'modifie_le', 'modifie_par'].includes(k) && JSON.stringify(F[k]) !== JSON.stringify(s0[k] ?? null));
     if (!champs.length) { marquerSale(false); return annoncer('Rien à enregistrer.'); }
     if (champs.includes('slug') && !/^[a-z0-9-]+$/.test(F.slug)) return annoncer('L’identifiant ne prend que des minuscules, des chiffres et des tirets.', { erreur: true });
@@ -4165,6 +4167,13 @@ function editeurSpectacle(slug) {
     marquerSale(false);
     annoncer(data.publie ? 'Enregistré : la page du spectacle est à jour.' : 'Enregistré (le spectacle n’est pas publié).');
     bravo();
+  });
+  // la durée se réécrit en quittant le champ (« 1h15 » → « durée : 1h15 »)
+  zone.addEventListener('focusout', e => {
+    const el = e.target;
+    if (el.dataset?.chemin !== 'duree') return;
+    const v = AGENDA.dureeCanon(el.value);
+    if (v !== el.value) { el.value = v; ecrire(F, 'duree', v); marquerSale(); }
   });
   zone.addEventListener('input', e => { if (e.target.dataset.legende !== undefined) { F.photos[+e.target.dataset.legende].legende = e.target.value; marquerSale(); } });
   // les droits de chaque photo : son crédit, ce qu'on peut en faire, à quelles conditions

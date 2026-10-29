@@ -218,9 +218,9 @@ const DONNEES = (() => {
         creditPhotos: s.credit_photos || s.credit, creditDossier: s.credit_dossier,
         // une action culturelle vide ou « masquee » (pas encore construite) n'est pas publiée : null (règle 14 du contrat)
         actionCulturelle: s.action_culturelle && Object.keys(s.action_culturelle).length && !s.action_culturelle.masquee ? s.action_culturelle : null,
-        programmer: s.programmer || {},
+        programmer: (({ duree, ...reste }) => reste)(s.programmer || {}),   // (la durée n'a qu'un champ, `duree` du spectacle ; l'ancien programmer.duree est ignoré)
         dossier: s.dossier ? s.dossier.replace(/^dossier:/, '') : null,
-        statut: s.statut, sousTitre: s.sous_titre, avec: s.avec, mentions: s.mentions || [], duree: s.duree,
+        statut: s.statut, sousTitre: s.sous_titre, avec: s.avec, mentions: s.mentions || [], duree: AGENDA.dureeCanon(s.duree) || null,
         production: s.production || [], credit: s.credit, medias: s.medias || [], tournee: s.tournee || {}, source: s.source,
         genre: s.genre, cadre: s.cadre, extraits: s.extraits || [], equipe: equipeDe(s),
       };

@@ -13,7 +13,7 @@
 #      tuple de site/build.py : sans cette vérification, docs/admin serait cassé sans qu'aucun banc ne rougisse
 #      (le remède : ajouter le nom du module au tuple de la fonction admin(dest), puis python3 site/build.py --pages) ;
 #   3. les bancs de la liste BANCS, dans cet ordre, l'un après l'autre (le banc du mouvement mesure des durées : jamais
-#      en parallèle ; le dernier, telephone, est le banc du plan admin/TELEPHONE.md, une section par lot). Un banc rouge
+#      en parallèle ; telephone est le banc du plan admin/TELEPHONE.md, une section par lot). Un banc rouge
 #      est relancé une fois ; s'il rougit encore, la chaîne s'arrête. Un banc listé mais absent est rouge ;
 #   4. les bancs de l'espace de l'équipe (BANCS_EQUIPE), quand le diff contre BASE touche admin/gestes.js,
 #      admin/planning.js ou admin/feuille.js — modules que l'équipe partage — ou toujours avec --tout ;
@@ -26,7 +26,7 @@ set -u
 cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit 2
 
 # ---- la liste des bancs (site/<nom>.mjs) : les lots suivants y ajoutent les leurs
-BANCS=(tableau niveau adresses-admin mouvement-admin prefs tableur code-salles icones cadre champs vues-dates theme distribution fenetres acces fenetres-2 carte-travail tableur-colonnes tableur-simple tableur-complet habillage reduit telephone)
+BANCS=(tableau niveau adresses-admin mouvement-admin prefs tableur code-salles icones cadre champs vues-dates theme distribution fenetres acces fenetres-2 carte-travail tableur-colonnes tableur-simple tableur-complet habillage reduit telephone duree-admin duree-site)
 # ---- ceux de l'espace de l'équipe, lancés quand un module partagé change
 BANCS_EQUIPE=(gestes-equipe mouvement-equipe)
 PARTAGES='^admin/(gestes|planning|feuille)\.js$'

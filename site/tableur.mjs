@@ -317,6 +317,16 @@ const jjmmaaaa = iso => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4
   const [xl] = await Promise.all([page.waitForEvent('download', { timeout: 8000 }), page.click('#tab-export [data-export="xlsx"]')]);
   const octets = fs.readFileSync(await xl.path());
   ok('7 · l’export Excel est un classeur .xlsx (une archive zip : « PK », workbook.xml, la feuille Représentations)', /\.xlsx$/.test(xl.suggestedFilename()) && octets.slice(0, 2).toString() === 'PK' && octets.includes('xl/workbook.xml') && octets.includes('Représentations'), xl.suggestedFilename());
+  // Google Sheets : le tableau part dans le presse-papiers et une fenêtre reste là pour dire où le coller (la feuille s'ouvre vide)
+  await ctx.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.evaluate(() => { window.__ouverts = []; window.open = u => (window.__ouverts.push(String(u)), null); });
+  await page.click('#tab-exporter'); await page.click('#tab-export [data-export="sheets"]');
+  await page.waitForSelector('#tab-gs-titre', { timeout: 5000 });
+  const presse = await page.evaluate(() => navigator.clipboard.readText());
+  ok('7 · « Google Sheets » copie le tableau (en-tête, tabulations) et ouvre une fenêtre qui dit où le coller', /^Jour\tSpectacle\tHeure/.test(presse) && presse.split('\n').length > 2 && /A1/.test(await texte(page, 'dialog[aria-labelledby="tab-gs-titre"]')), presse.slice(0, 80));
+  ok('7 · … rien ne s’ouvre avant le clic, puis « Ouvrir une feuille Google vierge » ouvre sheets.new', (await page.evaluate(() => window.__ouverts.length)) === 0 && (await page.click('#tab-gs-ouvrir'), (await page.evaluate(() => window.__ouverts)).join() === 'https://sheets.new'));
+  await page.click('#tab-gs-fermer');
+  ok('7 · … Fermer retire la fenêtre', !(await page.$('#tab-gs-titre')));
   ok('7 · aucune erreur de script (import, export)', erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();
 }

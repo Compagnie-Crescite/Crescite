@@ -44,6 +44,8 @@ node site/tableur.mjs              # le tableur des représentations en Complet 
 node site/tableur-colonnes.mjs     # les colonnes du tableur à la carte : largeur, ordre, masquées, figées, hauteur (après le build)
 node site/tableur-complet.mjs      # le tableur Complet, chaque champ atteignable : les jeux, la diffusion, Ctrl+Entrée, la période, « Détacher », l'import (après le build)
 node site/tableur-simple.mjs       # le tableur Simple, une ligne par date : les modes, les séances, la ligne vide, le temps réel, les états d'une case, la barre d'état, le calendrier, le collage, le budget (après le build)
+node site/duree-admin.mjs          # la durée d'un spectacle dans l'administration : un seul champ (Général), réécrit « durée : 1h15 », programmer.duree retiré à l'enregistrement (après le build)
+node site/duree-site.mjs           # la durée sur le site : espace pro > Programmer, page du spectacle, dossier scolaire (couverture, texte, fiche technique) reprennent le champ du spectacle (après le build)
 node site/icones.mjs               # la bibliothèque d'icônes de l'administration et ses consommateurs, dans Chromium (après le build)
 node site/cadre.mjs                # la coque, le menu latéral, ses raccourcis et ses badges, dans Chromium, sur la même base fictive (après le build)
 node site/champs.mjs               # la fiche d'une date : le schéma de ses champs, le rail d'écriture, les puces, la jauge (après le build)
@@ -86,18 +88,18 @@ contact), plus Cassandres, création 2027, **le dossier scolaire de Bérénice**
 son action culturelle** (`data/univers-spectacles.json`, repris des pages d'adrienvada.fr et du dossier artistique
 2027-2028) ; s'ajoutent seulement la **carte des tournées** (`site/src/carte.js`) et quelques intitulés de rubrique
 (`D.site.libelles`). Il **s'ouvre sur le logo en grand** (`site/src/intro.js`) : au clic, à la molette ou en glissant
-vers le bas, ses tentacules ondulent, il grossit et le site apparaît à travers lui. D'ici là, la pieuvre joue avec le
-pointeur : elle le regarde, une de ses queues s'allonge jusqu'à lui et s'y enroule quand il s'arrête de son côté, elle
-sursaute quand il fonce sur elle ; on peut l'attraper et la tirer (lâchée assez loin, ou d'un coup sec, elle part ; sinon
-elle revient d'un ressort), et une lampe la suit derrière elle. Au départ, ses tentacules se déplient vers les spectacles
-pendant que leurs racines rejoignent la tête (plus de nœud au-dessus du corps), et la pieuvre de l'accueil continue le
-jeu : elle regarde la souris, sursaute, la lampe la suit, et une tentacule tendue se laisse tirer (au doigt, après un
-appui tenu), puis revient tenir son titre d'un ressort. Quand chaque titre est tenu, de nouvelles tentacules poussent de
+vers le bas, ses tentacules ondulent, il grossit et le site apparaît à travers lui. D'ici là, la pieuvre vit d'elle-même :
+elle ne suit pas le pointeur (le jeu d'avant, qui la faisait regarder, sursauter, se laisser tirer, une lampe derrière
+elle, coûtait trop d'images aux appareils modestes). Au départ, ses tentacules se déplient vers les spectacles pendant
+que leurs racines rejoignent la tête (plus de nœud au-dessus du corps), et la pieuvre de l'accueil prend le relais ; un
+clic sur un titre ouvre sa page (au doigt, un premier toucher le montre, sa photo derrière, le second l'ouvre). Quand
+chaque titre est tenu, de nouvelles tentacules poussent de
 sa tête et refont le logo de la compagnie autour d'elle, « crescite » dessous, sobrement (la couronne) : au loin, pâle,
-sous la pieuvre et ses tentacules colorées, qui portent une ombre douce et flottent au premier plan. En haut de
+sous la pieuvre et ses tentacules colorées, au premier plan. En haut de
 l'accueil, pas de barre : seulement « crescite », au-dessus de la pieuvre, qui devient « Compagnie Crescite » dans la
 barre quand on descend (il s'efface pendant qu'elle déplie son nom) ; la loupe n'est que dans cette barre, et le bouton
-pause ne paraît qu'au clavier. « crescite » flotte ; on caresse la pieuvre d'un clic sur lui ou sur sa tête : elle
+pause ne paraît qu'au clavier. « crescite » flotte à peine, ses lettres se balançant chacune à son tour ; on caresse la
+pieuvre d'un clic sur lui (c'est sa seule réaction) : elle
 tremble, la couronne et le mot avec elle, de l'une de quatre façons au hasard (la gelée, le câlin, le ronron, le bond de
 joie), et la poursuite la trouve, comme au théâtre (un faisceau de lumière chaude descend sur elle, puis s'éteint) ;
 caressée encore, elle en redemande. La page de chaque spectacle prend son
@@ -1310,7 +1312,7 @@ Bérénice dans le stockage privé. L'import n'écrase jamais le travail de l'ad
 **L'administration** gagne trois choses :
 - **Équipe** : les fiches (publiques, coordonnées, accès, notes), et les documents de toute la compagnie ; la liste
   trouve aussi les fiches « Sans téléphone », à compléter.
-- **Dans chaque spectacle** : la distribution, le déroulé type d'une journée de représentation et les documents. **Dans
+- **Dans chaque spectacle** : la distribution, le déroulé type d'une journée de représentation (avec des étapes la veille ou le lendemain : trajet, installation technique, démontage, à l'heure écrite) et les documents. **Dans
   la distribution**, « Ajouter quelqu'un de la troupe » (ou « Ajouter au jeu », « à la technique »… sous chaque catégorie)
   ouvre toute la troupe, à chercher par nom, métier ou spectacle, ceux dont le métier va avec la catégorie en tête : un
   geste ajoute, la fenêtre reste ouverte pour en ajouter d'autres, une personne sans fiche se crée au vol. C'est la même

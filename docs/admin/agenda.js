@@ -91,5 +91,29 @@ const AGENDA = (() => {
     return [{ texte, lien: date.lien || null }];
   }
 
-  return { MOIS, SEMAINE, MOIS_COURTS, iso, saisonDe, jourTexte, heureTexte, court, liste, quand, ou, ligne, chez, precisions };
+  // ---- la durée d'un spectacle : un seul champ (« Durée » de sa fiche dans l'administration, colonne duree), écrit de la
+  // même façon partout. dureeMinutes lit ce qu'on a tapé (« 1h15 », « 1 h 15 », « durée : 1h15 », « 75 », « 55 minutes ») ;
+  // dureeCanon le réécrit comme la base le garde (« durée : 1h15 », « durée : 55 minutes ») ; un texte qu'elle ne comprend
+  // pas reste tel quel
+  const dureeMinutes = t => {
+    const s = String(t == null ? '' : t).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/^\s*duree\s*:?\s*/, '').trim();
+    let m = /^(\d+)\s*(?:h|heures?)\s*(\d{1,2})?\s*(?:min(?:ute)?s?|mn)?$/.exec(s);
+    if (m) return +m[1] * 60 + (+m[2] || 0);
+    m = /^(\d+)\s*(?:min(?:ute)?s?|mn)?$/.exec(s);
+    return m && +m[1] > 0 ? +m[1] : null;
+  };
+  const dureeCourte = n => n < 60 ? `${n} minutes` : `${Math.floor(n / 60)}h${n % 60 ? String(n % 60).padStart(2, '0') : ''}`;
+  const dureeCanon = t => { const n = dureeMinutes(t), v = String(t == null ? '' : t).trim(); return n ? `durée : ${dureeCourte(n)}` : v; };
+
+  // la durée dans un texte du dossier scolaire (HTML) : « {{duree}} » la dit ; les textes écrits avant ce champ
+  // (« Durée : <strong>1h25</strong> », « d'une durée de 1 h 25 ») la suivent aussi. duree : le champ du spectacle
+  const dureeDans = (duree, h) => {
+    const n = dureeMinutes(duree); if (!n) return h;
+    const court = dureeCourte(n), lisible = n < 60 ? court : `${Math.floor(n / 60)} h${n % 60 ? ` ${String(n % 60).padStart(2, '0')}` : ''}`;
+    return String(h).replace(/\{\{duree\}\}/g, court)
+      .replace(/^(Durée\s*:\s*<strong>)(?:\d+\s*h(?:\s*\d{1,2})?|\d+\s*min(?:utes)?)(<\/strong>\s*)$/i, (_, a, z) => a + court + z)
+      .replace(/(durée de\s+)\d+\s*h(?:\s*\d{1,2})?/i, (_, a) => a + lisible);
+  };
+
+  return { MOIS, SEMAINE, MOIS_COURTS, iso, saisonDe, jourTexte, heureTexte, court, liste, quand, ou, ligne, chez, precisions, dureeMinutes, dureeCourte, dureeCanon, dureeDans };
 })();
