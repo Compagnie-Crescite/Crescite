@@ -799,8 +799,8 @@ def build_data():
             extra = {"statut": None, "sousTitre": sous_titres.get(slug), "avec": sp["avec"], "mentions": sp["mentions"],
                      "duree": sp["duree"], "production": sp["production"], "credit": sp["credit"], "medias": sp["medias"],
                      "tournee": {"titre": sp["tournee"]["titre"] or "Actuellement en tournée", "texte": None}, "source": sp["url"]}
-        if slug == "berenice":                              # la durée du dossier 2026 (1h25), plus récente que le site (1h20)
-            extra["duree"] = uv["programmer"]["duree"].replace("Durée", "durée")
+        if uv.get("duree"):                                 # la durée de l'univers (Bérénice : 1h25, celle du dossier 2026, plus récente que le site)
+            extra["duree"] = uv["duree"]
         u = uv["univers"]
         c = u["couleurs"]
         mine = [d for d in dates if d["slug"] == slug]

@@ -4560,7 +4560,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   function ficheProg(s) {
     const P = s.programmer || {}, href = lienSp(s.slug, 'programmer'), docs = autresDocsPros(s);
     const faits = [s.statut && `<li${edS(s, 'statut')}>${esc(s.statut)}</li>`,
-      P.duree ? `<li${edS(s, 'programmer', 'duree')}>${esc(P.duree)}</li>` : s.duree && `<li${edS(s, 'duree')}>${esc(s.duree)}</li>`,
+      s.duree && `<li${edS(s, 'duree')}>${esc(s.duree)}</li>`,
       P.format && `<li><span class="k">${esc(L.format)}</span><span${edS(s, 'programmer', 'format')}>${esc(P.format)}</span></li>`,
       P.jauge && `<li${edS(s, 'programmer', 'jauge')}>${esc(P.jauge)}</li>`, P.equipe && `<li${edS(s, 'programmer', 'equipe')}>${esc(P.equipe)}</li>`].filter(Boolean);
     const fiche = [...(s.fiche || []).map((f, i) => `<li>${f.libelle ? `<span class="f-k"${edS(s, 'fiche', i, 'libelle')}>${esc(f.libelle)}</span> ` : ''}<span${edS(s, 'fiche', i, 'valeur')}>${f.valeur}</span></li>`),
@@ -4594,7 +4594,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   function recapProg() {
     const cols = [['format', L.format], ['duree', L.duree], ['jauge', L.jauge], ['public', L.public], ['representations', L.representations]];
     const val = (s, k) => { const P = s.programmer || {};
-      return k === 'format' ? P.format : k === 'duree' ? sansEtiquette(P.duree || s.duree, L.duree) : k === 'jauge' ? sansEtiquette(P.jauge, L.jauge)
+      return k === 'format' ? P.format : k === 'duree' ? sansEtiquette(s.duree, L.duree) : k === 'jauge' ? sansEtiquette(P.jauge, L.jauge)
         : k === 'public' ? (s.actionCulturelle || {}).public : P.representations; };
     const html = (k, v) => { if (!v) return ''; const m = k === 'representations' && String(v).match(/^(\d[\d  ]*?)(\s+\D[\s\S]*)$/); return m ? `<b>${esc(m[1])}</b>${esc(m[2])}` : esc(v); };
     const titre = s => `<button type="button" class="rec-a" data-va="fp-${esc(s.slug)}">${esc(s.titre)}</button>${s.statut ? ` <span class="rec-tag">${esc(s.statut)}</span>` : ''}`;
@@ -5995,7 +5995,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   const programmables = () => D.shows.filter(s => !fini(s));
   const accueilSp = s => { if (!s) return '';
     const P = s.programmer || {}, fts = docsDe(s, 'pros').filter(x => x.type === 'fiche_technique'), href = mailPrg(`${L.ficheTechnique} – ${s.titre}`);
-    const faits = [P.format, P.duree || s.duree, P.jauge, P.equipe].filter(Boolean);
+    const faits = [P.format, s.duree, P.jauge, P.equipe].filter(Boolean);
     return `<h3 class="simu-verdict-titre">${esc(L.conditionsAccueil)}</h3>${faits.length ? `<ul class="simu-faits">${faits.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
       <ul class="simu-docs">${fts.length ? fts.map(x => `<li>${PDF}${lienDoc(x)}</li>`).join('') : `<li>${PDF}${href ? `<a href="${esc(href)}">${esc(L.ficheTechniqueSurDemande)}</a>` : `<span>${esc(L.ficheTechniqueSurDemande)}</span>`}</li>`}</ul>`; };
   function initSimulateurPro() {
@@ -8418,18 +8418,22 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     else h += distribution(s, chap, 'etablissement');
     return h + appel(s, 'etablissement');
   }
+  // (la durée du spectacle dans les textes du dossier scolaire : AGENDA.dureeDans)
+  const dureeDossier = (s, h) => AGENDA.dureeDans(s && s.duree, h);
   // le dossier scolaire, à la charte de la compagnie : pourquoi, programmes, présentation, consignes, ateliers, accueil
   function dossier(s, chap, B) {
     const dk = `dossiers.${s.dossier}`, edD = (...k) => ed([dk, ...k].join('.'));
-    const photo = id => (s.photos || []).find(p => p.id === id), paras = (Ls, k) => (Ls || []).map((p, j) => bloc(p, `${k}.${j}`)).join('');
-    const [dureeMot, ...dureeReste] = String(B.duree || '').split(' ');
+    const photo = id => (s.photos || []).find(p => p.id === id), paras = (Ls, k) => (Ls || []).map((p, j) => bloc(dureeDossier(s, p), `${k}.${j}`)).join('');
+    // la durée de la couverture est celle du spectacle (le champ « Durée » de sa fiche), pas une copie dans le dossier
+    const nDuree = AGENDA.dureeMinutes(s.duree), edDuree = s.duree ? edS(s, 'duree') : edD('duree');
+    const [dureeMot, ...dureeReste] = String(nDuree ? `Durée : ${AGENDA.dureeCourte(nDuree)}` : s.duree || B.duree || '').split(' ');
     const musique = photo('d-musique'), ateliersPh = (s.photos || []).filter(p => p.atelier);
     const pres = ['synopsis', 'adaptation', 'espace', 'alexandrin'].filter(k => B[k]);
     let h = chapitre(chap, 'dossier', L.dossierScolaire, `<div class="wrap">
         ${titreChap(esc(L.dossierScolaire))}
         <div class="dos-couv"><div class="dos-couv-fond" aria-hidden="true"><img src="${D.photos[s.slug]}" alt=""></div>
           <p class="dos-type"${edD('type')}>${esc(B.type)}</p><p class="dos-titre"${edD('titre')}>${esc(B.titre)}</p><p class="dos-auteur"${edD('auteur')}>${esc(B.auteur)}</p><p class="dos-creation"${edD('creation')}>${esc(B.creation)}</p>
-          <p class="dos-duree"${edD('duree')}><span>${esc(dureeMot)}</span> <span>${esc(dureeReste.join(' '))}</span></p><p class="dos-format"${edD('format')}>${esc(B.format)}</p><p class="dos-public"${edD('public')}>${esc(B.public)}</p></div>
+          <p class="dos-duree"${edDuree}><span>${esc(dureeMot)}</span> <span>${esc(dureeReste.join(' '))}</span></p><p class="dos-format"${edD('format')}>${esc(B.format)}</p><p class="dos-public"${edD('public')}>${esc(B.public)}</p></div>
         <div class="dos-grille">
           <div class="boite"><dl class="dos-fiche">${(B.fiche || []).map(([k, v], i) => `<div><dt${edD('fiche', i, 0)}>${esc(k)}</dt><dd${edD('fiche', i, 1)}>${esc(v)}</dd></div>`).join('')}</dl></div>
           <div class="boite dos-prod">${(B.production || []).map((l, i) => `<p${edD('production', i)}>${esc(l)}</p>`).join('')}${B.partenaires ? `<p${edD('partenaires')}>${esc(B.partenaires)}</p>` : ''}</div>
@@ -8466,7 +8470,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     return chapitre(chap, id, nom, `<div class="wrap">
         ${titreChap(`<span${ea('titre')}>${esc(AC.titre)}</span>`)}
         <div class="dos-accueil">
-          <div class="boite"><p class="dos-fiche-t"${ea('fiche')}>${esc(AC.fiche)}</p>${AC.blocs.map((b, i) => `${b.titre ? `<h3 class="dos-h4"${ea('blocs', i, 'titre')}>${esc(b.titre)}</h3>` : ''}<ul>${b.lignes.map((l, j) => `<li${ea('blocs', i, 'lignes', j)}>${l}</li>`).join('')}</ul>`).join('')}</div>
+          <div class="boite"><p class="dos-fiche-t"${ea('fiche')}>${esc(AC.fiche)}</p>${AC.blocs.map((b, i) => `${b.titre ? `<h3 class="dos-h4"${ea('blocs', i, 'titre')}>${esc(b.titre)}</h3>` : ''}<ul>${b.lignes.map((l, j) => `<li${ea('blocs', i, 'lignes', j)}>${dureeDossier(s, l)}</li>`).join('')}</ul>`).join('')}</div>
           <div>${AC.alerte ? `<p class="dos-alerte">${ALERTE}<span${ea('alerte')}>${AC.alerte}</span></p>` : ''}${fig(s, imp)}${imp && s.creditDossier ? `<p class="u-credit" style="margin-top:10px"${edS(s, 'creditDossier')}>${esc(s.creditDossier)}</p>` : ''}</div>
         </div>${apres}
       </div>`);

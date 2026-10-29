@@ -44,6 +44,8 @@ node site/tableur.mjs              # le tableur des représentations en Complet 
 node site/tableur-colonnes.mjs     # les colonnes du tableur à la carte : largeur, ordre, masquées, figées, hauteur (après le build)
 node site/tableur-complet.mjs      # le tableur Complet, chaque champ atteignable : les jeux, la diffusion, Ctrl+Entrée, la période, « Détacher », l'import (après le build)
 node site/tableur-simple.mjs       # le tableur Simple, une ligne par date : les modes, les séances, la ligne vide, le temps réel, les états d'une case, la barre d'état, le calendrier, le collage, le budget (après le build)
+node site/duree-admin.mjs          # la durée d'un spectacle dans l'administration : un seul champ (Général), réécrit « durée : 1h15 », programmer.duree retiré à l'enregistrement (après le build)
+node site/duree-site.mjs           # la durée sur le site : espace pro > Programmer, page du spectacle, dossier scolaire (couverture, texte, fiche technique) reprennent le champ du spectacle (après le build)
 node site/icones.mjs               # la bibliothèque d'icônes de l'administration et ses consommateurs, dans Chromium (après le build)
 node site/cadre.mjs                # la coque, le menu latéral, ses raccourcis et ses badges, dans Chromium, sur la même base fictive (après le build)
 node site/documents-admin.mjs      # les documents : la sorte d'un document public, les pages qu'il nomme, les noms du Drive, les dossiers de tous les spectacles (après le build)
