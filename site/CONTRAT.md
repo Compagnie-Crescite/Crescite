@@ -63,7 +63,7 @@ Lance `python3 site/build.py mNN` puis lis `site/dist/data.json` pour les valeur
     lieux|null (la liste des lieux de diffusion, longue : repliable), ficheTechnique?: true (Bérénice), actualite?
     (L'imaginaire forcé), equipeCreation? (Cassandres)}`.
   - `dossier` : 'berenice' ou null → `D.dossiers.berenice`.
-  - Bérénice : `duree` vaut désormais « durée : 1h25 » (dossier 2026).
+  - Bérénice : `duree` vaut désormais « durée : 1h15 » (dossier 2026).
 - `D.dossiers.berenice` (NOUVEAU) : le dossier scolaire, sans prix ni contact : `titre, auteur, creation, type, duree, format,
   public, cession.formule, fiche, production, partenaires, pourquoi {titre, sections [{titre, texte}]}, programmes {titre,
   niveaux [{niveau, lignes [{matiere, intitule, objectif}]}]} (un tableau), synopsis {titre, chapeau, paragraphes},
