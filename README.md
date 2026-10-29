@@ -87,18 +87,18 @@ contact), plus Cassandres, création 2027, **le dossier scolaire de Bérénice**
 son action culturelle** (`data/univers-spectacles.json`, repris des pages d'adrienvada.fr et du dossier artistique
 2027-2028) ; s'ajoutent seulement la **carte des tournées** (`site/src/carte.js`) et quelques intitulés de rubrique
 (`D.site.libelles`). Il **s'ouvre sur le logo en grand** (`site/src/intro.js`) : au clic, à la molette ou en glissant
-vers le bas, ses tentacules ondulent, il grossit et le site apparaît à travers lui. D'ici là, la pieuvre joue avec le
-pointeur : elle le regarde, une de ses queues s'allonge jusqu'à lui et s'y enroule quand il s'arrête de son côté, elle
-sursaute quand il fonce sur elle ; on peut l'attraper et la tirer (lâchée assez loin, ou d'un coup sec, elle part ; sinon
-elle revient d'un ressort), et une lampe la suit derrière elle. Au départ, ses tentacules se déplient vers les spectacles
-pendant que leurs racines rejoignent la tête (plus de nœud au-dessus du corps), et la pieuvre de l'accueil continue le
-jeu : elle regarde la souris, sursaute, la lampe la suit, et une tentacule tendue se laisse tirer (au doigt, après un
-appui tenu), puis revient tenir son titre d'un ressort. Quand chaque titre est tenu, de nouvelles tentacules poussent de
+vers le bas, ses tentacules ondulent, il grossit et le site apparaît à travers lui. D'ici là, la pieuvre vit d'elle-même :
+elle ne suit pas le pointeur (le jeu d'avant, qui la faisait regarder, sursauter, se laisser tirer, une lampe derrière
+elle, coûtait trop d'images aux appareils modestes). Au départ, ses tentacules se déplient vers les spectacles pendant
+que leurs racines rejoignent la tête (plus de nœud au-dessus du corps), et la pieuvre de l'accueil prend le relais ; un
+clic sur un titre ouvre sa page (au doigt, un premier toucher le montre, sa photo derrière, le second l'ouvre). Quand
+chaque titre est tenu, de nouvelles tentacules poussent de
 sa tête et refont le logo de la compagnie autour d'elle, « crescite » dessous, sobrement (la couronne) : au loin, pâle,
-sous la pieuvre et ses tentacules colorées, qui portent une ombre douce et flottent au premier plan. En haut de
+sous la pieuvre et ses tentacules colorées, au premier plan. En haut de
 l'accueil, pas de barre : seulement « crescite », au-dessus de la pieuvre, qui devient « Compagnie Crescite » dans la
 barre quand on descend (il s'efface pendant qu'elle déplie son nom) ; la loupe n'est que dans cette barre, et le bouton
-pause ne paraît qu'au clavier. « crescite » flotte ; on caresse la pieuvre d'un clic sur lui ou sur sa tête : elle
+pause ne paraît qu'au clavier. « crescite » flotte à peine, ses lettres se balançant chacune à son tour ; on caresse la
+pieuvre d'un clic sur lui (c'est sa seule réaction) : elle
 tremble, la couronne et le mot avec elle, de l'une de quatre façons au hasard (la gelée, le câlin, le ronron, le bond de
 joie), et la poursuite la trouve, comme au théâtre (un faisceau de lumière chaude descend sur elle, puis s'éteint) ;
 caressée encore, elle en redemande. La page de chaque spectacle prend son
