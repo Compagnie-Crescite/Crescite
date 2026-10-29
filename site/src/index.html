@@ -866,13 +866,6 @@ html:not(.ed-actif) .ct-tel.vide { display: none; }
 .ct-prg.compact .ct-liens, .ct-prg.compact .ct-cond { margin-top: 0 !important; }
 .ct-prg.compact .ct-cond { margin-left: auto !important; }
 .dos-bt { position: relative; overflow: hidden; }
-.dos-bt .onde { position: absolute; left: 16px; right: 16px; bottom: 2px; width: calc(100% - 32px); height: 8px; opacity: 0; overflow: visible; }
-.dos-bt .onde path { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-dasharray: 1 1; stroke-dashoffset: 1; vector-effect: non-scaling-stroke; }
-.dos-bt[aria-busy="true"] { cursor: progress; }
-.dos-bt[aria-busy="true"] .onde { opacity: 1; }
-.dos-bt[aria-busy="true"] .onde path { animation: onde-dos 1.15s ease-in-out infinite; }
-@keyframes onde-dos { 0% { stroke-dashoffset: 1; } 55% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -1; } }
-@media (prefers-reduced-motion: reduce) { .dos-bt[aria-busy="true"] .onde path { animation: none; stroke-dashoffset: 0; } }
 .u-faits-liens { display: flex; flex-wrap: wrap; gap: 8px; }
 .u-docs { list-style: none; display: grid; gap: 10px; margin: 0; padding: 0; }
 .u-docs li { display: flex; align-items: center; gap: 10px; }
@@ -4490,7 +4483,6 @@ html.still .sc-image { transition: opacity .35s ease !important; }
 
   /* ---------- « Je souhaite programmer » : ce qu'il faut à un programmateur (règle 13), relu dans D à chaque rendu ---------- */
   const PDF = '<svg class="fleche" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg>';
-  const ONDE = '<svg class="onde" viewBox="0 0 120 10" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path pathLength="1" d="M2 6C22 1 38 1 54 5S86 10 100 5C108 2 116 3 118 6"/></svg>';
   const contactPrg = () => ((D.site || {}).programmation || {}).contact || null;
   const mailPrg = objet => { const c = contactPrg(); return c && c.email ? `mailto:${c.email}?subject=${encodeURIComponent(objet)}` : ''; };
   // l'objet d'un courriel à la compagnie dit d'où l'on écrit : d'un spectacle, son entrée et son titre (« Programmation –
@@ -4516,26 +4508,18 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       <p class="ct-cond">${esc(L.conditionsFinancieres)}</p>
     </aside>`;
   }
-  // le dossier du spectacle : un seul par spectacle. Celui de la compagnie d'abord, le PDF déposé par l'administration (le
-  // « Dossier <SPECTACLE> 2026 » du Drive, titré « Dossier du spectacle 2026 »), en lien ; sans lui, celui que le site compose
-  // à la demande (dossier.js) : pendant ce temps le bouton est occupé (aria-busy), puis il redevient actif. L'un comme
-  // l'autre porte data-dossier="<slug>"
-  const OCCUPES = new Set();
+  // le dossier du spectacle : un seul par spectacle, celui que l'administration a déposé (le « Dossier <SPECTACLE> 2026 »
+  // du Drive, titré « Dossier du spectacle 2026 »), en lien vers son PDF. Le site n'en compose plus aucun : sans dossier
+  // déposé, « Dossier sur demande » écrit au contact diffusion (comme la fiche technique). L'un comme l'autre porte
+  // data-dossier="<slug>"
   const dossierDepose = s => docsDe(s, 'pros').find(x => x.type === 'dossier') || null;
-  const dossierBouton = (slug, cls = 'bu') => { const d = bySlug[slug] && dossierDepose(bySlug[slug]);
-    return d ? `<a class="${cls} dos-bt" data-dossier="${esc(slug)}" href="${esc(d.url)}" target="_blank" rel="noopener">${PDF}<span>${esc(d.titre)}</span>${DEHORS()}</a>`
-      : `<button type="button" class="${cls} dos-bt" data-dossier="${esc(slug)}"${OCCUPES.has(slug) ? ' aria-busy="true" disabled' : ''}>${PDF}<span>${esc(L.dossierPdf)}</span>${ONDE}</button>`; };
-  // les documents des programmateurs d'un spectacle, moins son dossier quand il est déjà là, en bouton
+  const dossierBouton = (slug, cls = 'bu') => { const s = bySlug[slug], d = s && dossierDepose(s);
+    if (d) return `<a class="${cls} dos-bt" data-dossier="${esc(slug)}" href="${esc(d.url)}" target="_blank" rel="noopener">${PDF}<span>${esc(d.titre)}</span>${DEHORS()}</a>`;
+    const href = mailPrg(`${L.dossierSurDemande} – ${s ? s.titre : ''}`);
+    return href ? `<a class="${cls} dos-bt" data-dossier="${esc(slug)}" href="${esc(href)}">${PDF}<span>${esc(L.dossierSurDemande)}</span></a>`
+      : `<span class="${cls} dos-bt" data-dossier="${esc(slug)}">${PDF}<span>${esc(L.dossierSurDemande)}</span></span>`; };
+  // les documents des programmateurs d'un spectacle, moins son dossier, déjà là en bouton
   const autresDocsPros = s => { const d = dossierDepose(s); return docsDe(s, 'pros').filter(x => x !== d); };
-  const occuper = (slug, oui) => $$(`button[data-dossier="${slug}"]`).forEach(b => { b.disabled = oui; if (oui) b.setAttribute('aria-busy', 'true'); else b.removeAttribute('aria-busy'); });
-  document.addEventListener('click', e => {
-    const b = e.target.closest('button[data-dossier]'); if (!b || typeof DOSSIER === 'undefined') return;
-    const slug = b.dataset.dossier; if (OCCUPES.has(slug)) return;
-    OCCUPES.add(slug); occuper(slug, true);
-    // (prêt : une ventouse se pose sur le bouton, à sa couleur)
-    DOSSIER.telecharger(slug).then(() => { const c = $(`[data-dossier="${slug}"]`), p = centreDe(c); if (p) ventouse(p.x, p.y, c); })
-      .catch(() => { /* échec : le bouton redevient actif */ }).finally(() => { OCCUPES.delete(slug); occuper(slug, false); });
-  });
   // un spectacle sans action culturelle (Cassandres, pour l'instant) n'a pas d'onglet établissement (règle 14)
   const entreeSp = (slug, entree) => entree === 'etablissement' && !(bySlug[slug] && bySlug[slug].actionCulturelle) ? 'voir' : entree;
   const titreDate = (d, entree) => bySlug[d.slug] ? `<a class="t" href="${lienSp(d.slug, entree)}">${esc(d.titre)}</a>` : `<span class="t">${esc(d.titre)}</span>`;

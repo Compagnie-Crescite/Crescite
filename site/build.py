@@ -455,7 +455,7 @@ LIBELLES = {
     # réservés, qui demandent une connexion
     "epChapo": "Programmer un spectacle, le faire venir dans un établissement scolaire, ou retrouver votre espace réservé.",
     "epPages": "Programmer ou faire venir un spectacle", "epReserves": "Espaces réservés", "epConnexion": "Avec connexion",
-    "contactDiffusion": "Contact diffusion", "dossierPdf": "Dossier du spectacle (PDF)", "aTelecharger": "À télécharger",
+    "contactDiffusion": "Contact diffusion", "dossierSurDemande": "Dossier sur demande", "aTelecharger": "À télécharger",
     "conditionsFinancieres": "Conditions financières sur demande", "ficheTechniqueSurDemande": "Fiche technique sur demande",
     "documentsScolaires": "Documents pour les enseignants", "objetProgrammation": "Programmation",
     # le catalogue d'un regard, avant les fiches de « Je souhaite programmer » : son titre (un tableau, une ligne par spectacle)

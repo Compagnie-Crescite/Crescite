@@ -84,7 +84,7 @@ await page.waitForSelector('.recap-docs', { timeout: 10000 }).catch(() => {});
 const ligne = slug => page.$$eval('.recap-docs tbody tr', (xs, s) => { const r = xs.find(x => x.querySelector(`a[href="#/spectacles/${s}"]`)); return r ? [...r.children].map(c => c.textContent.trim()) : null; }, slug);
 const lb = await ligne('berenice'), lf = await ligne('la-folle-idee');
 ok('« Les dossiers des spectacles » : Bérénice a son dossier du spectacle, son dossier scolaire, sa fiche technique', !!lb && /Dossier du spectacle 2026/.test(lb[1]) && /Dossier scolaire 2026/.test(lb[2]) && /Fiche technique et plan/.test(lb[3]), JSON.stringify(lb));
-ok('… et un spectacle sans dossier déposé dit que le site compose le sien', !!lf && /Composé par le site/.test(lf[1]) && /Sans action culturelle/.test(lf[2]) && /Sur demande/.test(lf[3]), JSON.stringify(lf));
+ok('… et un spectacle sans dossier déposé dit qu’il est à déposer', !!lf && /À déposer/.test(lf[1]) && /Sans action culturelle/.test(lf[2]) && /Sur demande/.test(lf[3]), JSON.stringify(lf));
 ok('un nom du récapitulatif mène à l’onglet Documents du spectacle', await page.$eval('.recap-docs tbody tr a[href="#/spectacles/berenice"]', a => a.dataset.ongletSp === 'Documents').catch(() => false));
 await page.waitForTimeout(900);
 await page.screenshot({ path: path.join(CAPT, 'recapitulatif.png'), fullPage: true });

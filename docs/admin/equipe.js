@@ -1011,7 +1011,7 @@ function recapDocuments() {
     const dossiers = pub.filter(d => d.type === 'dossier' && estPros(d)), sco = pub.filter(d => d.type === 'dossier' && estScolaires(d)), fts = pub.filter(d => d.type === 'fiche_technique');
     const n = (xs, mot) => xs.length ? `<a ${vers(s)}>${xs.length} ${mot}${xs.length > 1 ? 's' : ''}</a>` : '<span class="vide">—</span>';
     return `<tr><th scope="row"><a ${vers(s)}>${esc(s.titre.split(' – ')[0])}</a>${enLigne ? '' : ' <span class="badge masquee">Sans page</span>'}</th>
-      <td>${titres(s, dossiers, `<span class="manque" title="Le site propose le dossier qu’il compose depuis la page du spectacle">Composé par le site</span>`)}</td>
+      <td>${titres(s, dossiers, `<span class="manque" title="Le site écrit « Dossier sur demande » : à déposer depuis le Drive">À déposer</span>`)}</td>
       <td>${titres(s, sco, tournee && ac ? '<span class="vide">—</span>' : '<span class="vide" title="Pas d’onglet « Établissement scolaire » sur sa page">Sans action culturelle</span>')}</td>
       <td>${titres(s, fts, '<span class="vide" title="Le site écrit « sur demande »">Sur demande</span>')}</td>
       <td>${n(ds.filter(estSalles), 'fichier')}</td><td>${n(ds.filter(d => !estPublic(d) && !estSalles(d)), 'document')}</td></tr>`;
@@ -1052,7 +1052,7 @@ function documentsEditeur(z, s) {
     const xs = docs(), ps = publics(), ss = salles();
     z.innerHTML = `${avecPublics() ? `<h4 class="docs-titre">Sur le site : dossiers et fiches techniques <span class="badge">publics</span></h4>
       <p class="aide">Comme dans le Drive de la compagnie : le <b>dossier du spectacle</b> (« Dossier ${esc(s ? s.titre.split(' – ')[0].toUpperCase() : 'SPECTACLE')} 2026 », en création ou en tournée) pour les programmateurs, le <b>dossier scolaire</b> (« … sco 26-27 ») pour les enseignants, et les fiches techniques. La sorte choisie décide des pages ; chaque document les nomme sous son titre.</p>
-      ${ps.length ? `<div class="docs">${ps.map((d, i) => ligne(d, i, ps.length)).join('')}</div>` : '<p class="aide">Aucun document public : le site propose alors le dossier composé à partir de la page du spectacle.</p>'}
+      ${ps.length ? `<div class="docs">${ps.map((d, i) => ligne(d, i, ps.length)).join('')}</div>` : '<p class="aide">Aucun document public : le site écrit « Dossier sur demande » et « Fiche technique sur demande », un lien vers le courriel du contact diffusion.</p>'}
       <div class="docs-ajout"><label class="btn" tabindex="0" role="button">＋ Envoyer un PDF du Drive<input type="file" data-doc-fichier-public accept=".pdf,application/pdf" hidden></label><button type="button" class="btn" data-doc-lien-public>＋ Coller un lien public</button></div>
       ${boiteLien('public')}
       <p class="aide">PDF de 25 Mo au plus, rangés dans le stockage public du site. Le nom du fichier du Drive suffit à reconnaître sa sorte et à lui donner son titre (« Dossier du spectacle 2026 », « Dossier scolaire 2026-2027 », « Fiche technique ») : vérifiez-les une fois envoyé.</p>` : ''}
