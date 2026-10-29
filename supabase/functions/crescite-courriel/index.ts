@@ -40,7 +40,7 @@
 // secrets des fonctions (Edge Functions → Secrets). L'expéditeur : COURRIEL_EXPEDITEUR (contact@crescite.fr par défaut),
 // à faire vérifier par le service. Sans clé, rien ne part : c'est noté « non_configure » (la proposition, l'alerte),
 // l'administration écrit elle-même aux destinataires d'une proposition, et le passage du matin reprend les confirmations
-// d'alertes dès qu'une clé existe. SITE_URL : l'adresse du site (https://adrienvada.fr/Crescite).
+// d'alertes dès qu'une clé existe. SITE_URL : l'adresse du site (https://crescite.pages.dev).
 //
 // Déploiement : Edge Functions → Deploy a new function → Via Editor, nom « crescite-courriel », coller ce fichier,
 // décocher « Verify JWT » (la base l'appelle avec son seul jeton, la page de réponse sans compte), Deploy.
@@ -51,7 +51,7 @@ const BREVO = Deno.env.get('BREVO_API_KEY');
 const RESEND = Deno.env.get('RESEND_API_KEY');
 const EXPEDITEUR = Deno.env.get('COURRIEL_EXPEDITEUR') || 'contact@crescite.fr';
 const NOM = 'Compagnie Crescite';
-const SITE = (Deno.env.get('SITE_URL') || 'https://adrienvada.fr/Crescite').replace(/\/$/, '');
+const SITE = (Deno.env.get('SITE_URL') || 'https://crescite.pages.dev').replace(/\/$/, '');
 // les pages du site où mènent les courriels d'alerte : les dates et les spectacles (son index ; l'ancienne adresse,
 // synthese.html, y mène aussi)
 const PAGES = `${SITE}/`;
