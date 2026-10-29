@@ -43,7 +43,7 @@ import ICAL from 'npm:ical.js@2.2.1';
 const sql = postgres(Deno.env.get('SUPABASE_DB_URL')!, { prepare: false, max: 4 });
 const SUPABASE_URL = (Deno.env.get('SUPABASE_URL') || '').replace(/\/$/, '');
 const ANON = Deno.env.get('SUPABASE_ANON_KEY') || '';
-const SITE = (Deno.env.get('SITE_URL') || 'https://adrienvada.fr/Crescite').replace(/\/$/, '');
+const SITE = (Deno.env.get('SITE_URL') || 'https://crescite.pages.dev').replace(/\/$/, '');
 const ZONE = 'Europe/Paris';
 const JOUR = 86_400_000;
 const AVANT = 30, APRES = 400;                 // la fenêtre lue : de J-30 à J+400
@@ -398,7 +398,7 @@ export async function telecharger(adresse: string, f: typeof fetch = fetch): Pro
       let r: Response;
       try {
         r = await f(u.href, { redirect: 'manual', signal: ctrl.signal,
-          headers: { accept: 'text/calendar, text/plain;q=0.8, */*;q=0.5', 'user-agent': 'Crescite-agenda/1.0 (+https://adrienvada.fr/Crescite)' } });
+          headers: { accept: 'text/calendar, text/plain;q=0.8, */*;q=0.5', 'user-agent': 'Crescite-agenda/1.0 (+https://crescite.pages.dev)' } });
       } catch (e) {
         if (ctrl.signal.aborted) throw new ErreurAgenda('L’agenda n’a pas répondu en 15 secondes : la prochaine lecture réessaiera.');
         throw new ErreurAgenda(`L’agenda est injoignable (${String((e as Error)?.message || e).slice(0, 80)}).`);

@@ -55,7 +55,7 @@ const jetonBase = (await db.query(`select valeur from public.crescite_secrets wh
 ok(pid > 0 && jours.length === 2 && dest?.jeton?.length >= 32 && jetonBase, 'une proposition de deux jours, une clé par destinataire');
 
 // la fonction, chargée comme Supabase la lance : ses variables, son serveur, son accès à la base, l'envoi par Brevo
-const ENV = { SUPABASE_DB_URL: 'postgres://local', SUPABASE_URL: 'https://fwjgyfzcbcmfyfkhhtuh.supabase.co', SITE_URL: 'https://adrienvada.fr/Crescite/', BREVO_API_KEY: 'essai' };
+const ENV = { SUPABASE_DB_URL: 'postgres://local', SUPABASE_URL: 'https://fwjgyfzcbcmfyfkhhtuh.supabase.co', SITE_URL: 'https://crescite.pages.dev/', BREVO_API_KEY: 'essai' };
 let servir;
 globalThis.Deno = { env: { get: k => ENV[k] }, serve: h => { servir = h; } };
 globalThis.__postgres = () => (parts, ...vals) => db.query(parts.reduce((q, s, i) => q + s + (i < vals.length ? `$${i + 1}` : ''), ''), vals).then(r => r.rows);
@@ -84,7 +84,7 @@ const envoi = await appel('POST', { destinataire_id: dest.id }, { 'x-crescite-je
 ok(envoi.status === 200 && (await envoi.json()).statut === 'envoye' && envoyes.length === 1, 'avec le jeton de la base, le courriel part par Brevo');
 const c = envoyes[0].corps;
 ok(c.to[0].email === 'adrien@x' && c.sender.email === 'contact@crescite.fr' && envoyes[0].cle === 'essai', 'à Adrien, de contact@crescite.fr');
-const page = `https://adrienvada.fr/Crescite/reponse/?r=${dest.jeton}`;
+const page = `https://crescite.pages.dev/reponse/?r=${dest.jeton}`;
 ok(c.htmlContent.includes(`${page}&amp;j=${jours[0]}&amp;c=oui`) && c.htmlContent.includes(`${page}&amp;j=${jours[1]}&amp;c=peut_etre`),
   'chaque réponse du courriel mène à la page de réponse du site, le jour et le choix dans l’adresse');
 ok(c.textContent.includes(`${page}&j=${jours[0]}`) && !c.htmlContent.includes('functions/v1') && !c.textContent.includes('functions/v1'),

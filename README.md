@@ -306,9 +306,9 @@ culturelles : ni budget, ni salaire, ni contact). Rien n'y parle de l'action cul
 
 ## Base de données
 
-La base de la compagnie vit dans le projet Supabase du site adrienvada.fr (décision d'Adrien, octobre 2026). Tout ce qui
-lui appartient porte le préfixe `crescite_` : rien ne touche aux tables du site personnel, et le jour où la compagnie
-aura son propre projet, tout ce qui commence par `crescite_` s'y déplace tel quel.
+La base de la compagnie vit dans son propre projet Supabase (`fwjgyfzcbcmfyfkhhtuh`), séparé de celui du site personnel
+d'Adrien (adrienvada.fr). Elle y a d'abord été hébergée (octobre 2026), puis a été recopiée dans son projet à elle ; tout ce
+qui lui appartient garde le préfixe `crescite_`.
 
 | Table | Ce qu'elle contient |
 | --- | --- |
@@ -1167,7 +1167,8 @@ sur PostgreSQL (`supabase/tests/` : `npm install`, puis `node base.mjs`, `node e
 écrit les colonnes d'une date dans `champs-date.json`, que `site/champs.mjs` compare au schéma de la date ; l'enregistrement d'une
 date en une seule fois, avec le vingt-quatrième script, a les siens : `node enregistrer3.mjs`). Le script se termine par
 une vérification : les tables du projet, hors compagnie, qu'un compte connecté pourrait lire. Les comptes de ce projet
-sont aussi ceux du site adrienvada.fr.
+étaient aussi, à l'origine, ceux du site adrienvada.fr (projet partagé jusqu'au 26 octobre 2026) ; la compagnie a désormais
+le sien.
 
 **Remplir.** `python3 supabase/equipe.py` importe `data/equipe.json` : les 39 personnes et la distribution de chaque
 spectacle, d'après les fiches de crescite.fr ; la distribution de Cassandres (le dossier artistique, non publiée tant que
@@ -1415,7 +1416,7 @@ Drive se recopie, puis on relance le script, ou on la dépose dans l'administrat
 **Les comptes.** Les inscriptions libres sont fermées sur le projet : un compte se crée dans Supabase (Authentication →
 Users → Add user, avec l'adresse saisie dans la fiche). À la première connexion, il se rattache tout seul à la fiche de
 même adresse. Pour que « Recevoir un lien de connexion » et « Mot de passe oublié » reviennent sur l'espace de l'équipe,
-ajouter `https://adrienvada.fr/Crescite/**` aux Redirect URLs (Authentication → URL Configuration) et configurer un serveur d'envoi de courriels
+ajouter les adresses du site aux Redirect URLs (`https://crescite.pages.dev/**`, `https://compagnie-crescite.github.io/Crescite/**`, et `https://crescite.fr/**` à la bascule du domaine) (Authentication → URL Configuration) et configurer un serveur d'envoi de courriels
 (Authentication → Emails) ; sans lui, Supabase n'écrit qu'aux membres de l'équipe du projet, et peu par heure.
 
 **L'espace des salles.** Le quatrième script, `supabase/migrations/20261023_crescite_pro.sql`, ouvre aux
@@ -1763,7 +1764,7 @@ montant de cession et ses droits ; les chiffres et l'équipe dans la transaction
 2, et le vingt-quatrième relancé qui remet 3).
 
 **Écrire dans la base.** `python3 supabase/ecrire.py` est le seul outil par lequel Claude modifie la base quand on le lui
-demande : les tables `crescite_` et les stockages de la compagnie seulement (les tables d'adrienvada.fr restent hors
-d'atteinte), jamais sans filtre, avec un mode `--essai`. `effacer <stockage> <chemin>` efface un fichier d'un stockage de la compagnie. `lot <fichier.json>` applique une liste d'opérations dans l'ordre et s'arrête à la première erreur ;
+demande : les tables `crescite_` et les stockages de la compagnie seulement (rien d'autre ne passe par lui, et le projet
+d'adrienvada.fr n'est jamais visé), jamais sans filtre, avec un mode `--essai`. `effacer <stockage> <chemin>` efface un fichier d'un stockage de la compagnie. `lot <fichier.json>` applique une liste d'opérations dans l'ordre et s'arrête à la première erreur ;
 une ligne ajoutée se reprend dans les suivantes par « @nom.id ». La règle qui l'y autorise est dans `.claude/settings.json`.
 Les scripts SQL et le déploiement des fonctions restent à faire dans Supabase.

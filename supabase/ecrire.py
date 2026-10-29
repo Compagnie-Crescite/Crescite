@@ -1,7 +1,7 @@
 """Écrire dans la base de la compagnie, et seulement là : les tables crescite_… et les stockages de la compagnie.
 
 C'est l'outil par lequel Claude met à jour la base quand on le lui demande (une distribution, une photo, une date) ; la
-règle qui l'y autorise est dans .claude/settings.json. Les tables personnelles du projet (celles d'adrienvada.fr) sont
+règle qui l'y autorise est dans .claude/settings.json. Les tables qui ne commencent pas par crescite_ sont
 hors d'atteinte, et rien ne se modifie ni ne se retire sans filtre.
 
     python3 supabase/ecrire.py modifier <table> "<filtre>" '<json>'          modifier des lignes
