@@ -12,6 +12,7 @@
  },
  "spectacles": {
   "berenice": {
+   "duree": "durée : 1h25",
    "univers": {
     "nom": "L’arène",
     "source": "dossier",
@@ -153,7 +154,6 @@
    },
    "programmer": {
     "format": "SPECTACLE IN SITU",
-    "duree": "Durée : 1h25",
     "jauge": "Jauge par représentation : 100 à 120 places",
     "equipe": "Effectifs de l’équipe (repas et hébergement) : 5 personnes",
     "representations": "67 représentations au 31 juillet 2026",
@@ -275,7 +275,6 @@
    },
    "programmer": {
     "format": null,
-    "duree": "durée : 1h30",
     "representations": "16 représentations au 31 juillet 2026",
     "lieux": "Théâtre l'Etincelle à Rouen, L'Athanor à Guérande, et la Scène Conventionnée le Rayon Vert de Saint-Valéry-en-Caux"
    }
@@ -352,7 +351,6 @@
    },
    "programmer": {
     "format": null,
-    "duree": "durée : 55 minutes",
     "representations": "492 représentations au 31 juillet 2026",
     "lieux": "L'Athanor à Guérande, centre culturel de Sarzeau, Espace Culturel de Méricourt, Festival Curieux Printemps à Rouen, centre culturel d'Amfreville La Mivoie, + collèges normands.",
     "actualite": "re-création automne 2026 pour Avignon 2027"
@@ -425,7 +423,6 @@
    },
    "programmer": {
     "format": null,
-    "duree": "durée : 1h10",
     "representations": "779 représentations au 31 juillet 2026",
     "lieux": "Festival Off d’Avignon, Théâtre National de Bruxelles – Festival Propulse + tournée dans les centres culturels de Wallonie, Festival Komidi à La Réunion, Le Kef en Tunisie, Festivals Région en Scène et Le Chaînon Manquant à Laval, L'Echandole à Yverdon-les-Bain en Suisse, CDN Normandie-Rouen, Scène Nationale Evreux-Louviers, Scène conventionnée La Barcarolle de Saint-Omer, Le Safran à Amiens, Théâtre Durance à Châteaux-Arnoux, Quai des Arts à Argentan, Archipel de Granville, Théâtre de La Renaissance à Mondeville, Le Jardin de Verre à Cholet, SN61 Alençon, L'Athanor à Guérande, La Méridienne à Luneville, Château d'Hardelot, Théâtre les 3 Chênes à Loiron, Les 400 coups à Mantes-La-Jolie, Ville de Pessac, Le Trait d'Union à Neufchâteau, Scènes et Ciné à Istres, Théâtre Fontblanche à Vitrolles, Scène 55 à Mougins, Maison du Peuple à Millau, L'Astrolabe de Figeac, MJC Rodez, Juliobona à Lillebonne, Espace Culturel F. Mitterrand à Canteleu, Espace culturel d'Avranches, L'Eclat à Pont-Audemer, Atelier à Spectacle à Vernouillet, Théâtre du Château à Eu, Le Forum de Falaise, Le Point d'Eau à Ostwald, Centre André Malraux d'Hazebrouck, Le Sillon de Petit-Couronne, Espace de Retz à Machecoul, Théâtre de Cordemais, Rumilly, Théâtre Beaumarchais à Amboise, Centre des Arts de Concarneau, Centre culturel de Cahors, Théâtre de Pornichet, L'Escapade à Hénin-Beaumont, Théâtre La Gare à Méricourt, Espace Vikings à Yvetot, Théâtre en Seine à Duclair, Festival VivaCité à Sotteville-lès-Rouen, Festival le Curieux Printemps à Rouen, Festival Saint-Valéry-sur-Somme, Festival de Flers, Festival de Saint-Romain de Colbosc, + collèges et lycées normands."
    }
@@ -501,7 +498,6 @@
    },
    "programmer": {
     "format": null,
-    "duree": "durée : 1h10",
     "representations": "176 représentations au 31 juillet 2026",
     "lieux": "Festival Off d’Avignon (Présence Pasteur), Théâtre les 3 Chênes à Loiron, Théâtre du Chevalet à Noyon, L'Athanor à Guérande, La Ferme de Bel Ebat de Guyancourt, Les 400 Coups à Mantes-la-Ville, Juliobona à Lillebonne, L'Archipel de Granville, Ville de Flamanville, Le Moulin à Louviers, La Maison de la Culture de Gauchy, Ville de Grand-Quevilly, Le Sillon à Petit-Couronne + collèges et lycées de Normandie, d'Île-de-France et du Centre Val de Loire."
    }
@@ -577,7 +573,6 @@
    },
    "programmer": {
     "format": null,
-    "duree": null,
     "representations": "13 représentations jusqu'en mars 2023",
     "lieux": "CDN Normandie-Rouen, Scène conventionnée La Barcarolle de Saint-Omer, DSN Scène Nationale de Dieppe, Archipel de Granville, Le Forum de Falaise, Théâtre Charles Dullin de Grand-Quevilly, Juliobona à Lillebonne."
    }
@@ -643,7 +638,6 @@
    },
    "programmer": {
     "format": null,
-    "duree": "durée : 1h40",
     "representations": "40 représentations jusqu'en mai 2019",
     "lieux": "CDN Normandie-Rouen, Scène Nationale Evreux-Louviers, Scène conventionnée La Barcarolle de Saint-Omer, Le Safran à Amiens, Théâtre Durance à Châteaux-Arnoux, Quai des Arts à Argentan, Théâtre du Cloître à Bellac, Archipel de Granville, L'Arsenal à Val-de-Reuil, Théâtre de La Renaissance à Mondeville, Espace Vikings à Yvetot, Théâtre des Docks à Corbie, Théâtre en Seine à Duclair, Espace culturel Oissel, Espace Culturel F. Mitterrand à Canteleu, Espace culturel d'Avranches, L'Eclat à Pont-Audemer, Théâtre du Château à Eu, Le Forum de Falaise, Le Point d'Eau à Ostwald, Juliobona à Lillebonne, La Glacerie à Cherbourg, Château d'Hardelot, Théâtre les 3 Chênes à Loiron, Théâtre Charles Dullin de Grand-Quevilly."
    }
@@ -759,7 +753,6 @@
    },
    "programmer": {
     "format": null,
-    "duree": null,
     "representations": null,
     "lieux": null,
     "equipeCreation": [

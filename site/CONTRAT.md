@@ -59,11 +59,16 @@ Lance `python3 site/build.py mNN` puis lis `site/dist/data.json` pour les valeur
     Cyrano « Jumelage – résidence d’artistes » ; La Folle Idée « Ateliers » ; Cléophène « Ateliers parcours du spectateur » ;
     Cassandres « Lieux d’enseignement agronomique » (statut « En création ») ; Macbeth : `aCompleter` (rien dans les sources :
     affiche le libellé `D.site.libelles.aCompleter`, n'invente rien).
-  - `programmer` : `{format|null, duree|null, jauge?, equipe?, representations|null (« 779 représentations au 31 juillet 2026 »),
+  - `programmer` : `{format|null, jauge?, equipe?, representations|null (« 779 représentations au 31 juillet 2026 »),
     lieux|null (la liste des lieux de diffusion, longue : repliable), ficheTechnique?: true (Bérénice), actualite?
     (L'imaginaire forcé), equipeCreation? (Cassandres)}`.
   - `dossier` : 'berenice' ou null → `D.dossiers.berenice`.
-  - Bérénice : `duree` vaut désormais « durée : 1h25 » (dossier 2026).
+  - `duree` est le seul champ de la durée d'un spectacle (administration, Général > « Durée du spectacle » ; colonne `duree`,
+    écrite « durée : 1h15 » ou « durée : 55 minutes »). Tout le site la reprend de là : le catalogue et la fiche « Programmer »,
+    la page du spectacle, la demande de proposition, le PDF, le dossier scolaire (couverture, fiche technique, et le texte
+    « d'une durée de … » ou `{{duree}}`), l'agenda `.ics`, les feuilles de route, les modèles de contrat. L'ancien
+    `programmer.duree` n'existe plus : le site l'ignore, l'administration le retire à l'enregistrement.
+  - Bérénice : `duree` vaut « durée : 1h25 » dans l'instantané du dépôt (dossier 2026) ; la base fait foi.
 - `D.dossiers.berenice` (NOUVEAU) : le dossier scolaire, sans prix ni contact : `titre, auteur, creation, type, duree, format,
   public, cession.formule, fiche, production, partenaires, pourquoi {titre, sections [{titre, texte}]}, programmes {titre,
   niveaux [{niveau, lignes [{matiere, intitule, objectif}]}]} (un tableau), synopsis {titre, chapeau, paragraphes},
