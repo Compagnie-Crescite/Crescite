@@ -66,7 +66,7 @@
    signale les remplaçants posés à la main : une fusion, la ligne d'une date visée qui porte une fonction ou une note n'est jamais
    écrasée. « ＋ Séance » (Complet) : une date du même
    spectacle au même lieu qui touche ce jour (le même ou un voisin) la reçoit, sinon une date se crée ; le tableur dit ce
-   qu'il a fait. En Simple, c'est « ＋ Date », qui crée toujours une date neuve. Exporter : Excel (.xlsx écrit ici, sans bibliothèque), CSV, Google Sheets (le tableau copié, à coller
+   qu'il a fait. En Simple, c'est « ＋ Date », qui crée toujours une date neuve. Exporter : Excel (.xlsx écrit ici, sans bibliothèque), CSV, Google Sheets (le tableau copié, une fenêtre guide vers sheets.new, à coller
    dans sheets.new). « Importer » : des lignes copiées d'Excel deviennent des séances, après un aperçu.
    Au clavier : flèches, Entrée ou F2 (ou taper directement) pour écrire, Échap, Tab, Maj+flèches pour choisir des
    cases, Ctrl+C / Ctrl+V comme dans un tableur, Suppr pour vider, Ctrl+Z pour annuler, Ctrl+Suppr pour supprimer la
@@ -494,7 +494,7 @@ const TABLEUR = (() => {
       <button type="button" class="btn" id="tab-importer">Importer</button>
       <span class="tab-menu"><button type="button" class="btn" id="tab-exporter" aria-haspopup="true" aria-expanded="false" aria-controls="tab-export">Exporter</button>
         <span class="tab-export" id="tab-export" role="group" aria-label="Exporter" hidden>${E.ideale ? `<label class="case tab-export-conf"${modeSimple() ? ' hidden' : ''} title="Le montant de cession et l’étape de la piste ne sortent du tableur que si vous cochez cette case (elle se décoche à chaque fois)"><input type="checkbox" id="tab-export-conf"> Inclure la diffusion (confidentiel)</label>` : ''}<button type="button" class="btn" data-export="xlsx">Excel (.xlsx)</button><button type="button" class="btn" data-export="sheets">Google Sheets</button><button type="button" class="btn" data-export="csv">CSV</button>
-        <span class="aide">Google Sheets : le tableau est copié, une feuille vierge s’ouvre (sheets.new) ; collez-le (Ctrl+V). Ou importez-y le fichier Excel.</span></span></span>
+        <span class="aide">Google Sheets : le tableau est copié, une fenêtre vous guide vers une feuille vierge (sheets.new) où le coller (Ctrl+V). Ou importez-y le fichier Excel.</span></span></span>
       <label class="tab-jeu"${modeSimple() ? ' hidden' : ''} title="Un jeu de colonnes : toutes celles d’un sujet, vides comprises"><span>Jeu</span><select id="tab-jeu" aria-label="Jeu de colonnes"><option value="">Disposition d’origine</option>${JEUX.map(j => `<option value="${j.k}">${j.l}</option>`).join('')}</select></label>
       <button type="button" class="btn" id="tab-colonnes" aria-haspopup="dialog" aria-expanded="false"${modeSimple() ? ' hidden' : ''}>Colonnes…</button></span></div>
     ${filtresDates(f, { vue: 'tableur', aDroite: `<label class="case tab-vides"${modeSimple() ? ' hidden' : ''}><input type="checkbox" id="tab-vides"${reglages().vides ? ' checked' : ''}> Colonnes vides</label>` })}
@@ -2290,9 +2290,35 @@ const TABLEUR = (() => {
     }
     const tsv = [t.entetes, ...t.lignes.map(l => l.map(c => texteCase(c, '\t')))].map(l => l.map(v => cellTsv(String(v))).join('\t')).join('\n');
     const ok = await copierTexte(tsv);
-    if (!ok) return etat('La copie n’a pas pu se faire : exportez plutôt en Excel, puis importez le fichier dans Google Sheets.', 'erreur');
-    window.open('https://sheets.new', '_blank', 'noopener');
-    etat(`Tableau copié (${n}${t.exclues.length ? `, sans la diffusion : ${t.exclues.join(', ').toLowerCase()}` : ''}) : dans la feuille Google qui s’ouvre, collez-le (Ctrl+V).`, 'ok');
+    etat(ok ? `Tableau copié (${n}${t.exclues.length ? `, sans la diffusion : ${t.exclues.join(', ').toLowerCase()}` : ''}).` : 'La copie n’a pas pu se faire automatiquement.', ok ? 'ok' : 'erreur');
+    guideSheets({ tsv, ok, n, t });
+  }
+  // Google Sheets ne reçoit rien tout seul : le tableau part dans le presse-papiers, et la feuille vierge reste vide tant qu'on n'y colle
+  // pas. Une phrase de la barre d'état passait inaperçue (la feuille s'ouvrait dans un autre onglet) : une fenêtre reste là, dit où coller,
+  // ouvre la feuille elle-même (un clic de l'utilisateur, jamais bloqué comme un onglet ouvert après l'attente de la copie), recopie, ou
+  // donne l'Excel. Si la copie a échoué, le texte est là, tout sélectionné.
+  function guideSheets({ tsv, ok, n, t }) {
+    const dlg = document.createElement('dialog');
+    dlg.className = 'tab-dialogue';
+    dlg.setAttribute('aria-labelledby', 'tab-gs-titre');
+    dlg.innerHTML = `<div class="tab-dialogue-boite"><h2 id="tab-gs-titre">Vers Google Sheets</h2>
+      <p class="aide" id="tab-gs-copie" role="status">${ok ? `<b>Le tableau est copié (${esc(n)}, ${esc(pl(t.entetes.length, 'colonne'))}).</b>` : '<b>La copie automatique a été refusée par le navigateur.</b> Le texte ci-dessous est à copier à la main (Ctrl+C).'}</p>
+      ${ok ? '' : `<textarea id="tab-gs-texte" rows="5" readonly spellcheck="false" aria-label="Le tableau, à copier"></textarea>`}
+      <ol class="aide"><li>Ouvrez une feuille Google vierge.</li><li>Cliquez dans la case <b>A1</b>, puis collez : <kbd>Ctrl V</kbd> (<kbd>⌘ V</kbd> sur Mac).</li></ol>
+      <p class="aide">La feuille s’ouvre vide : Google Sheets n’a aucun moyen de recevoir le tableau sans ce collage. Pour garder les vraies dates et les colonnes figées, téléchargez l’Excel et importez-le dans Google Sheets (Fichier › Importer › Téléverser).</p>
+      <div class="fm-boutons"><button type="button" class="btn principal" id="tab-gs-ouvrir">Ouvrir une feuille Google vierge</button><button type="button" class="btn" id="tab-gs-recopier">Copier le tableau</button><button type="button" class="btn" id="tab-gs-xlsx">Télécharger l’Excel</button><button type="button" class="btn" id="tab-gs-fermer">Fermer</button></div></div>`;
+    document.body.append(dlg);
+    const z = $('#tab-gs-texte', dlg); if (z) z.value = tsv;
+    $('#tab-gs-ouvrir', dlg).addEventListener('click', () => { window.open('https://sheets.new', '_blank', 'noopener'); });
+    $('#tab-gs-recopier', dlg).addEventListener('click', async () => {
+      const bon = await copierTexte(tsv);
+      $('#tab-gs-copie', dlg).innerHTML = bon ? '<b>Tableau copié.</b> Collez-le dans la case A1 de la feuille.' : '<b>La copie a été refusée.</b> Copiez le texte à la main.';
+    });
+    $('#tab-gs-xlsx', dlg).addEventListener('click', () => { telecharger(xlsx(t), nomFichier('xlsx')); });
+    $('#tab-gs-fermer', dlg).addEventListener('click', () => dlg.close());
+    dlg.addEventListener('close', () => dlg.remove());
+    dlg.showModal();
+    if (z) { z.focus(); z.select(); } else $('#tab-gs-ouvrir', dlg).focus();
   }
 
   // ———— un .xlsx sans bibliothèque : un classeur d'une feuille (en-tête en gras, figée, filtrable ; jours et heures en
