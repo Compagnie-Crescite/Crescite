@@ -2,8 +2,10 @@
 /* L'équipe dans l'administration. Chargé après le script principal d'index.html, dont il utilise l'état (E), le client
    (sb) et les outils (cadre, champ, relier, pied, annoncer, optimiser, envoyerPhoto…), et après feuille.js (FEUILLE).
    - la rubrique Équipe : une fiche par personne (fiche publique, coordonnées jamais publiées, accès à son espace, notes
-     de suivi, ses spectacles et ses prochaines dates) et les documents de toute la compagnie ;
-   - dans chaque spectacle : la distribution, le déroulé type d'une journée de représentation, les documents ;
+     de suivi, ses spectacles et ses prochaines dates), et ses documents : les dossiers de tous les spectacles d'un coup
+     d'œil (recapDocuments), puis ceux de toute la compagnie ;
+   - dans chaque spectacle : la distribution, le déroulé type d'une journée de représentation, les documents (chacun
+     d'une sorte, qui dit sur quelles pages il se montre : pagesDoc) ;
    - dans chaque date : son équipe (la distribution « en tournée », moins qui ne part pas, plus remplaçants et renforts),
      avec le téléphone de chacun (« téléphone ? » mène à sa fiche) ;
    - la rubrique Feuilles de route : composer depuis la base, compléter bloc par bloc, publier pour l'équipe, PDF ;
@@ -158,14 +160,14 @@ function vueEquipe(param) {
   const tete = `<div class="tete"><h1>Équipe</h1><div class="seg" role="group" aria-label="Partie">
     <button type="button" data-eq-partie="" aria-pressed="${!docs && !frais}">Personnes</button>
     ${E.ideale ? `<button type="button" data-eq-partie="frais" aria-pressed="${frais}">Notes de frais</button>` : ''}
-    <button type="button" data-eq-partie="documents" aria-pressed="${docs}">Documents de la compagnie</button>
+    <button type="button" data-eq-partie="documents" aria-pressed="${docs}">Documents</button>
   </div>
     ${docs || frais || !E.equipeInstallee ? '' : '<a class="btn principal" href="#/equipe/nouvelle">＋ Nouvelle fiche</a>'}</div>`;
   const parties = () => $$('[data-eq-partie]').forEach(b => b.addEventListener('click', () => { location.hash = '#/equipe' + (b.dataset.eqPartie ? '/' + b.dataset.eqPartie : ''); }));
   if (!E.equipeInstallee) { cadre('equipe', tete + equipeAbsente()); parties(); return; }
   if (frais) { vueEquipeFrais(tete, parties); return; }
   if (docs) {
-    cadre('equipe', `${tete}<div class="bloc eq-docs-compagnie"><h3>Documents de toute la compagnie</h3><p class="aide">Pour toute l’équipe, quel que soit le spectacle : charte d’accueil, livret, contacts utiles… Les documents d’un spectacle (le texte, le dossier, la fiche technique) se rangent dans son onglet Documents.</p><div id="docs-compagnie"></div></div>`);
+    cadre('equipe', `${tete}${recapDocuments()}<div class="bloc eq-docs-compagnie"><h3>Documents de toute la compagnie</h3><p class="aide">Pour toute l’équipe, quel que soit le spectacle : charte d’accueil, livret, contacts utiles… Les documents d’un spectacle (le texte, le dossier, la fiche technique) se rangent dans son onglet Documents.</p><div id="docs-compagnie"></div></div>`);
     parties(); documentsEditeur($('#docs-compagnie'), null); return;
   }
   const f = session.equipe = Object.assign({ q: '', categorie: '' }, session.equipe || {});
@@ -449,7 +451,7 @@ function ongletEquipe(onglet, zone, F, s0) {
   if (onglet === 'Distribution') ongletDistribution(z, s0);
   else if (onglet === 'Déroulé type') ongletDeroule(z, F);
   else if (onglet === 'Matériel') ongletMateriel(z, s0);
-  else { z.innerHTML = `<div class="bloc"><h3>${E.sql3 || E.sql4 ? 'Documents' : 'Documents de l’équipe'}</h3><p class="aide">Le texte, le dossier, la fiche technique… pour l’équipe du spectacle, dans son espace et ses feuilles de route ; « Administration seulement » les garde ici. Chaque changement est enregistré aussitôt.</p><div id="docs-sp"></div></div>`; documentsEditeur($('#docs-sp', z), s0); }
+  else { z.innerHTML = `<div class="bloc"><h3>${E.sql3 || E.sql4 ? 'Documents' : 'Documents de l’équipe'}</h3><p class="aide">${E.sql3 ? 'Ce que le site montre (le dossier du spectacle, le dossier scolaire, les fiches techniques), ce que reçoivent les salles invitées, et ce qui reste dans l’équipe (le texte, les plans…). Sous chaque document : les pages où il se montre. ' : 'Le texte, le dossier, la fiche technique… pour l’équipe du spectacle, dans son espace et ses feuilles de route ; « Administration seulement » les garde ici. '}Chaque changement est enregistré aussitôt. <a href="#/equipe/documents">Les dossiers de tous les spectacles</a></p><div id="docs-sp"></div></div>`; documentsEditeur($('#docs-sp', z), s0); }
 }
 
 // ———— la distribution, des deux côtés : l'onglet Distribution d'un spectacle et la fiche d'une personne (« Ses spectacles »)
@@ -920,22 +922,105 @@ function ongletDeroule(z, F) {
 // « crescite », sous documents/<spectacle>/ : le site les propose en téléchargement (troisième script SQL). Ceux de
 // l'équipe restent privés, dans « crescite-equipe ». Ceux des salles (quatrième script SQL) aussi, dans « crescite-pro »
 // sous <spectacle>/ : seul l'espace pro (pro/) les ouvre, aux salles invitées, par un lien d'une heure.
-const POUR_PUBLIC = [
-  ['pros', 'Pour les programmateurs'],
-  ['scolaires', 'Pour les établissements scolaires'],
-  ['tous', 'Pour les deux (programmateurs et scolaires)'],
-];
 const estPros = d => d.pour === 'pros' || d.pour === 'tous' || d.pour === 'pros_scolaires';
 const estScolaires = d => d.pour === 'scolaires' || d.pour === 'tous' || d.pour === 'pros_scolaires';
 const estPublic = d => estPros(d) || estScolaires(d);
 const estSalles = d => d.pour === 'salles';
 const stockageDe = d => estSalles(d) ? 'crescite-pro' : estPublic(d) ? 'crescite' : 'crescite-equipe';
+// Ce qu'est un document public, d'un seul choix : sa sorte (type et public à la fois), qui dit où le site le montre. Les
+// noms sont ceux du Drive de la compagnie (CRESCITE SPECTACLES) : chaque spectacle y a son « Dossier <SPECTACLE> 2026 »,
+// le dossier du spectacle (en création ou en tournée, c'est le même), et parfois son « Dossier <SPECTACLE> sco 26-27 », le
+// dossier scolaire ; à côté, ses fiches techniques (« FT … »)
+const SORTES_PUBLIQUES = [
+  ['dossier', 'pros', 'Dossier du spectacle'],
+  ['dossier', 'scolaires', 'Dossier scolaire'],
+  ['dossier', 'tous', 'Dossier commun (programmateurs et enseignants)'],
+  ['fiche_technique', 'pros', 'Fiche technique'],
+  ['plan', 'pros', 'Plan'],
+  ['autre', 'pros', 'Autre document pour les programmateurs'],
+  ['autre', 'scolaires', 'Autre document pour les enseignants'],
+];
+const POUR_MOTS = { pros: 'pour les programmateurs', scolaires: 'pour les enseignants', tous: 'pour les programmateurs et les enseignants' };
+const pourNet = d => d.pour === 'pros_scolaires' ? 'tous' : d.pour;
+const sorteDe = d => `${d.type}|${pourNet(d)}`;
+const nomSorte = d => (SORTES_PUBLIQUES.find(([t, p]) => t === d.type && p === pourNet(d)) || [, , `${(TYPES_DOC.find(([k]) => k === d.type) || [, 'Document'])[1]} ${POUR_MOTS[pourNet(d)] || ''}`.trim()])[2];
+// la sorte et le titre d'un fichier, d'après son nom dans le Drive : « Dossier CLEOPHENE 2026 » (le dossier du spectacle),
+// « Dossier MON ROYAUME sco 26-27 », « Dossier BÉRÉNICE scolaire 2026 » (le dossier scolaire), « FT Cléophène », « fiche
+// technique … » (la fiche technique), « Fiche de renseignements … », « Plan … ». Le titre suit les mêmes mots pour tous les
+// spectacles : « Dossier du spectacle 2026 », « Dossier scolaire 2026-2027 », « Fiche technique »
+const saisonDuNom = n => { const m = n.match(/\b(20\d\d)\s*[-–_]\s*(20\d\d)\b/) || n.match(/\b(\d\d)\s*[-–_]\s*(\d\d)\b/), a = n.match(/\b(20\d\d)\b/);
+  return m ? `${m[1].length === 2 ? '20' + m[1] : m[1]}-${m[2].length === 2 ? '20' + m[2] : m[2]}` : a ? a[1] : ''; };
+function devinerDoc(nom) {
+  const n = nom.replace(/[-_]+/g, ' '), saison = saisonDuNom(nom), avec = t => saison ? `${t} ${saison}` : t;
+  if (/\bdossier\b/i.test(n) && /\bsco\b|scolaire|p[ée]dagog|enseignant/i.test(n)) return { type: 'dossier', pour: 'scolaires', titre: avec('Dossier scolaire') };
+  if (/\bdossier\b/i.test(n)) return { type: 'dossier', pour: 'pros', titre: avec('Dossier du spectacle') };
+  if (/^\s*FT\b|fiche.?tech|\brider\b/i.test(n)) return { type: 'fiche_technique', pour: 'pros', titre: /l[ée]g[èe]re/i.test(n) ? 'Fiche technique, version légère' : 'Fiche technique' };
+  if (/renseignement/i.test(n)) return { type: 'autre', pour: 'equipe', titre: 'Fiche de renseignements (pour les lieux)' };
+  if (/\bplans?\b|implantation/i.test(n)) return { type: 'plan', pour: 'pros', titre: null };
+  if (/texte|script|brochure|pi[eè]ce/i.test(n)) return { type: 'texte', pour: 'equipe', titre: null };
+  return { type: 'autre', pour: /\bsco\b|scolaire|p[ée]dagog|enseignant/i.test(n) ? 'scolaires' : 'pros', titre: null };
+}
+// Où un document se montre, page par page (avec son adresse quand elle existe), et pourquoi il ne se montre pas : ce que
+// l'administration écrit à côté de chaque document. Le site lit les documents publics des spectacles publiés (site/src) ;
+// l'espace des salles (pro/) ceux des salles et ceux des programmateurs, pour les spectacles qu'une invitation ouvre ;
+// l'espace de l'équipe (equipe/) ceux de l'équipe et les documents publics de ses spectacles, et les feuilles de route ceux
+// de l'équipe
+function pagesDoc(d, s) {
+  const nom = s ? s.titre.split(' – ')[0] : '', sp = s ? `${SITE}#/spectacle/${encodeURIComponent(s.slug)}` : '';
+  if (d.pour === 'administration') return { pages: [], rien: 'Nulle part : il reste dans l’administration.' };
+  if (estSalles(d)) return { pages: [{ t: 'Espace des salles, pour les salles invitées', href: '#/pro' }] };
+  if (!estPublic(d)) return { pages: s ? [{ t: `Espace de l’équipe de ${nom}` }, { t: 'Ses feuilles de route' }] : [{ t: 'Espace de l’équipe, pour toute la compagnie' }, { t: 'Les feuilles de route' }] };
+  if (!s) return { pages: [], rien: 'Nulle part : le site ne montre que les documents d’un spectacle.' };
+  const pages = [], manques = [], enLigne = s.page && s.publie;
+  const tournee = !!(s.en_tournee || s.statut);            // un spectacle qui ne tourne plus n'a qu'une page, sans onglets
+  const ac = s.action_culturelle && Object.keys(s.action_culturelle).length && !s.action_culturelle.masquee;
+  if (!enLigne) manques.push(`${nom} n’a pas de page publiée sur le site.`);
+  if (enLigne && estPros(d)) {
+    pages.push({ t: `« Je souhaite programmer », fiche de ${nom}`, href: `${SITE}#/espace-pro/programmer` });
+    if (tournee) pages.push({ t: `${nom} › Programmer${d.type === 'fiche_technique' ? ', rubriques « Fiche technique » et « À télécharger »' : ', rubrique « À télécharger »'}`, href: `${sp}/programmer` });
+    if (d.type === 'fiche_technique') pages.push({ t: '« Je souhaite programmer », demande de proposition', href: `${SITE}#/espace-pro/programmer` });
+  }
+  if (enLigne && estScolaires(d)) {
+    if (tournee && ac) pages.push({ t: `${nom} › Établissement scolaire, rubrique « Documents pour les enseignants »`, href: `${sp}/etablissement` });
+    else manques.push(tournee ? `${nom} n’a pas d’onglet « Établissement scolaire » (son action culturelle est masquée ou vide) : les enseignants ne le voient pas.` : `${nom} ne tourne plus : sa page n’a pas d’onglet « Établissement scolaire ».`);
+  }
+  if (estPros(d)) pages.push({ t: 'Espace des salles, si une invitation ouvre ce spectacle', href: '#/pro' });
+  pages.push({ t: `Espace de l’équipe de ${nom}` });
+  return { pages, rien: manques.join(' ') };
+}
+const pagesHTML = (d, s) => { const { pages, rien } = pagesDoc(d, s);
+  return `<p class="doc-ou"><span class="k">Affiché sur</span>${pages.length ? `<span class="doc-pages">${pages.map(p => p.href ? `<a href="${esc(p.href)}"${p.href.startsWith('#') ? '' : ' target="_blank" rel="noopener"'}>${esc(p.t)}${p.href.startsWith('#') ? '' : ' ↗'}</a>` : `<span>${esc(p.t)}</span>`).join('')}</span>` : ''}${rien ? `<span class="doc-rien">${esc(rien)}</span>` : ''}</p>`; };
 const urlPublique = chemin => sb.storage.from('crescite').getPublicUrl(chemin).data.publicUrl;
 const PARTAGE_JOURS = 30;
 // ce que « crescite-pro » accepte (le type vient de l'extension : un ZIP n'a pas le même type sous Windows)
 const MIMES_SALLES = { pdf: 'application/pdf', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', mp4: 'video/mp4', zip: 'application/zip' };
 const MO_SALLES = 50;
 let nDocsEditeurs = 0;
+// tous les spectacles d'un coup d'œil : leur dossier du spectacle, leur dossier scolaire, leurs fiches techniques (ce que
+// le site montre), et ce qu'ont les salles et l'équipe. Chaque case mène à l'onglet Documents du spectacle
+function recapDocuments() {
+  if (!E.sql3) return '';
+  const sps = E.spectacles.filter(s => (s.page && s.publie) || E.documents.some(d => d.spectacle_id === s.id)).sort((a, b) => (b.page - a.page) || a.ordre - b.ordre);
+  if (!sps.length) return '';
+  const vers = s => `href="#/spectacles/${esc(s.slug)}" data-onglet-sp="Documents"`;
+  const titres = (s, xs, vide) => xs.length ? `<ul>${xs.map(d => `<li><a ${vers(s)} title="${esc(nomSorte(d))}">${esc(d.titre)}</a></li>`).join('')}</ul>` : vide;
+  const lignes = sps.map(s => {
+    const ds = E.documents.filter(d => d.spectacle_id === s.id).sort((a, b) => a.ordre - b.ordre || a.id - b.id);
+    const pub = ds.filter(estPublic), enLigne = s.page && s.publie, tournee = !!(s.en_tournee || s.statut);
+    const ac = s.action_culturelle && Object.keys(s.action_culturelle).length && !s.action_culturelle.masquee;
+    const dossiers = pub.filter(d => d.type === 'dossier' && estPros(d)), sco = pub.filter(d => d.type === 'dossier' && estScolaires(d)), fts = pub.filter(d => d.type === 'fiche_technique');
+    const n = (xs, mot) => xs.length ? `<a ${vers(s)}>${xs.length} ${mot}${xs.length > 1 ? 's' : ''}</a>` : '<span class="vide">—</span>';
+    return `<tr><th scope="row"><a ${vers(s)}>${esc(s.titre.split(' – ')[0])}</a>${enLigne ? '' : ' <span class="badge masquee">Sans page</span>'}</th>
+      <td>${titres(s, dossiers, `<span class="manque" title="Le site propose le dossier qu’il compose depuis la page du spectacle">Composé par le site</span>`)}</td>
+      <td>${titres(s, sco, tournee && ac ? '<span class="vide">—</span>' : '<span class="vide" title="Pas d’onglet « Établissement scolaire » sur sa page">Sans action culturelle</span>')}</td>
+      <td>${titres(s, fts, '<span class="vide" title="Le site écrit « sur demande »">Sur demande</span>')}</td>
+      <td>${n(ds.filter(estSalles), 'fichier')}</td><td>${n(ds.filter(d => !estPublic(d) && !estSalles(d)), 'document')}</td></tr>`;
+  }).join('');
+  return `<div class="bloc eq-docs-recap"><h3>Les dossiers des spectacles</h3>
+    <p class="aide">Un dossier du spectacle (pour les programmateurs) et, s’il a une action culturelle, un dossier scolaire (pour les enseignants), comme dans le Drive de la compagnie ; ce que le site, les salles invitées et l’équipe en voient. Chaque nom mène à l’onglet Documents du spectacle, où chaque document dit sur quelles pages il se montre.</p>
+    <div class="recap-docs-zone"><table class="recap-docs"><thead><tr><th scope="col">Spectacle</th><th scope="col">Dossier du spectacle</th><th scope="col">Dossier scolaire</th><th scope="col">Fiche technique</th><th scope="col">Salles invitées</th><th scope="col">Équipe</th></tr></thead>
+    <tbody>${lignes}</tbody></table></div></div>`;
+}
 function documentsEditeur(z, s) {
   const dossier = s ? s.slug : 'compagnie';
   const tous = () => E.documents.filter(d => (s ? d.spectacle_id === s.id : d.spectacle_id == null)).sort((a, b) => a.ordre - b.ordre || a.id - b.id);
@@ -948,33 +1033,40 @@ function documentsEditeur(z, s) {
     : estPublic(d)
       ? '.pdf,application/pdf'
       : '.pdf,.odt,.docx,.txt,image/*';
-  const ligne = (d, i, n) => `<div class="doc-l" data-doc="${d.id}"><select data-dk="type" aria-label="Type">${TYPES_DOC.map(([k, l]) => `<option value="${k}"${d.type === k ? ' selected' : ''}>${l}</option>`).join('')}</select>
+  // un document public : sa sorte, d'un seul choix (elle décide où le site le montre) ; une sorte que la liste n'a pas
+  // (un texte pour les programmateurs…) y garde sa place
+  const choixSorte = d => { const xs = SORTES_PUBLIQUES.map(([t, p, l]) => [`${t}|${p}`, l]); if (!xs.some(([k]) => k === sorteDe(d))) xs.push([sorteDe(d), nomSorte(d)]);
+    return `<select data-dk="sorte" aria-label="Sorte de document">${xs.map(([k, l]) => `<option value="${k}"${k === sorteDe(d) ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>`; };
+  const ligne = (d, i, n) => `<div class="doc-l${estPublic(d) ? ' pub' : ''}" data-doc="${d.id}">${estPublic(d) ? choixSorte(d) : `<select data-dk="type" aria-label="Type">${TYPES_DOC.map(([k, l]) => `<option value="${k}"${d.type === k ? ' selected' : ''}>${l}</option>`).join('')}</select>`}
     <span class="doc-titre"><input type="text" data-dk="titre" value="${esc(d.titre)}" aria-label="Titre du document"><small>${d.fichier ? `Fichier : ${esc(d.fichier.split('/').pop())}` : `Lien : ${esc(hote(d.url))}`}</small></span>
-    ${estSalles(d) ? '<span class="doc-pour" title="Seules les salles invitées le voient, dans l’espace pro">Salles invitées</span>' : `<select data-dk="pour" aria-label="Pour qui">${(estPublic(d) ? POUR_PUBLIC : [['equipe', 'Pour l’équipe'], ['administration', 'Administration seulement']]).map(([k, l]) => `<option value="${k}"${(d.pour === k || (k === 'tous' && d.pour === 'pros_scolaires')) ? ' selected' : ''}>${l}</option>`).join('')}</select>`}
-    <span class="dist-outils"><button type="button" class="btn petit" data-doc-ouvrir>Ouvrir</button><label class="btn petit" tabindex="0" role="button" title="Mettre à jour ce document (écrase la version précédente)">Remplacer<input type="file" data-doc-remplacer accept="${acceptDe(d)}" hidden></label>${estSalles(d) ? '' : estPublic(d) ? '<button type="button" class="btn petit" data-doc-copier title="Copier l’adresse publique du document">Copier le lien</button>' : d.fichier ? `<button type="button" class="btn petit" data-doc-partager title="Copier une adresse à envoyer, valable ${PARTAGE_JOURS} jours (une fiche technique pour un lieu, par exemple)">Lien ${PARTAGE_JOURS} jours</button>` : ''}<button type="button" class="btn petit" data-doc-dm="-1" title="Monter" aria-label="Monter"${i ? '' : ' disabled'}>↑</button><button type="button" class="btn petit" data-doc-dm="1" title="Descendre" aria-label="Descendre"${i < n - 1 ? '' : ' disabled'}>↓</button><button type="button" class="btn petit danger" data-doc-suppr title="Supprimer" aria-label="Supprimer ce document">✕</button></span></div>`;
+    ${estPublic(d) ? '' : estSalles(d) ? '<span class="doc-pour" title="Seules les salles invitées le voient, dans l’espace pro">Salles invitées</span>' : `<select data-dk="pour" aria-label="Pour qui">${[['equipe', 'Pour l’équipe'], ['administration', 'Administration seulement']].map(([k, l]) => `<option value="${k}"${d.pour === k ? ' selected' : ''}>${l}</option>`).join('')}</select>`}
+    <span class="dist-outils"><button type="button" class="btn petit" data-doc-ouvrir>Ouvrir</button><label class="btn petit" tabindex="0" role="button" title="Mettre à jour ce document (écrase la version précédente)">Remplacer<input type="file" data-doc-remplacer accept="${acceptDe(d)}" hidden></label>${estSalles(d) ? '' : estPublic(d) ? '<button type="button" class="btn petit" data-doc-copier title="Copier l’adresse publique du document">Copier le lien</button>' : d.fichier ? `<button type="button" class="btn petit" data-doc-partager title="Copier une adresse à envoyer, valable ${PARTAGE_JOURS} jours (une fiche technique pour un lieu, par exemple)">Lien ${PARTAGE_JOURS} jours</button>` : ''}<button type="button" class="btn petit" data-doc-dm="-1" title="Monter" aria-label="Monter"${i ? '' : ' disabled'}>↑</button><button type="button" class="btn petit" data-doc-dm="1" title="Descendre" aria-label="Descendre"${i < n - 1 ? '' : ' disabled'}>↓</button><button type="button" class="btn petit danger" data-doc-suppr title="Supprimer" aria-label="Supprimer ce document">✕</button></span>${pagesHTML(d, s)}</div>`;
   // la boîte d'un lien à ajouter, pour l'équipe, pour le public (programmateurs) ou pour les salles invitées
   const uid = ++nDocsEditeurs;
   const boiteLien = genre => `<div class="item doc-lien" data-genre="${genre}" hidden><div class="rangee"><div class="champ"><label for="doc-url-${uid}-${genre}">Adresse du lien</label><input type="url" id="doc-url-${uid}-${genre}" data-doc-url placeholder="https://…"></div><div class="champ"><label for="doc-titre-${uid}-${genre}">Titre${genre === 'salles' ? ' (celui que la salle voit)' : ''}</label><input type="text" id="doc-titre-${uid}-${genre}" data-doc-titre placeholder="${{ equipe: 'Le texte sur Wikisource', public: 'Le dossier de diffusion', salles: 'La captation intégrale' }[genre]}"></div></div>
         <div class="fm-boutons" style="margin:0 0 10px"><button type="button" class="btn principal petit" data-doc-lien-ok>Ajouter le lien</button><button type="button" class="btn petit" data-doc-lien-non>Annuler</button></div></div>`;
+  // dans l'ordre où l'on s'en sert : ce que le site montre (les dossiers, les fiches techniques), ce que les salles invitées
+  // reçoivent, puis ce qui reste dans l'équipe. Chaque document dit, sous son titre, sur quelles pages il se montre
+  const avecPublics = () => E.sql3 && (s || publics().length);
   const dessiner = () => {
     const xs = docs(), ps = publics(), ss = salles();
-    z.innerHTML = `${E.sql3 || avecSalles ? '<h4 class="docs-titre">Pour l’équipe</h4>' : ''}${xs.length ? `<div class="docs">${xs.map((d, i) => ligne(d, i, xs.length)).join('')}</div>` : '<p class="aide">Aucun document.</p>'}
-      <div class="docs-ajout"><label class="btn" tabindex="0" role="button">＋ Envoyer un fichier<input type="file" data-doc-fichier accept=".pdf,.odt,.docx,.txt,image/*" hidden></label><button type="button" class="btn" data-doc-lien>＋ Coller un lien</button></div>
-      ${boiteLien('equipe')}
-      <p class="aide">Fichiers : PDF, image, texte, ODT ou DOCX, 50 Mo au plus. Ils restent privés : on les ouvre par un lien signé, valable une heure. « Lien ${PARTAGE_JOURS} jours » copie une adresse à envoyer hors de l’équipe (une fiche technique pour un lieu).</p>
-      ${E.sql3 ? `<h4 class="docs-titre">Pour les programmateurs et les établissements scolaires <span class="badge">publics</span></h4>
-      <p class="aide">Ils se téléchargent sur le site : ceux des programmateurs dans « Je souhaite programmer », ceux des établissements dans « Je représente un établissement scolaire ».</p>
-      ${ps.length ? `<div class="docs">${ps.map((d, i) => ligne(d, i, ps.length)).join('')}</div>` : '<p class="aide">Aucun document public.</p>'}
-      <div class="docs-ajout"><label class="btn" tabindex="0" role="button">＋ Envoyer un PDF public<input type="file" data-doc-fichier-public accept=".pdf,application/pdf" hidden></label><button type="button" class="btn" data-doc-lien-public>＋ Coller un lien public</button></div>
+    z.innerHTML = `${avecPublics() ? `<h4 class="docs-titre">Sur le site : dossiers et fiches techniques <span class="badge">publics</span></h4>
+      <p class="aide">Comme dans le Drive de la compagnie : le <b>dossier du spectacle</b> (« Dossier ${esc(s ? s.titre.split(' – ')[0].toUpperCase() : 'SPECTACLE')} 2026 », en création ou en tournée) pour les programmateurs, le <b>dossier scolaire</b> (« … sco 26-27 ») pour les enseignants, et les fiches techniques. La sorte choisie décide des pages ; chaque document les nomme sous son titre.</p>
+      ${ps.length ? `<div class="docs">${ps.map((d, i) => ligne(d, i, ps.length)).join('')}</div>` : '<p class="aide">Aucun document public : le site propose alors le dossier composé à partir de la page du spectacle.</p>'}
+      <div class="docs-ajout"><label class="btn" tabindex="0" role="button">＋ Envoyer un PDF du Drive<input type="file" data-doc-fichier-public accept=".pdf,application/pdf" hidden></label><button type="button" class="btn" data-doc-lien-public>＋ Coller un lien public</button></div>
       ${boiteLien('public')}
-      <p class="aide">PDF de 25 Mo au plus, rangés dans le stockage public du site.</p>` : ''}
+      <p class="aide">PDF de 25 Mo au plus, rangés dans le stockage public du site. Le nom du fichier du Drive suffit à reconnaître sa sorte et à lui donner son titre (« Dossier du spectacle 2026 », « Dossier scolaire 2026-2027 », « Fiche technique ») : vérifiez-les une fois envoyé.</p>` : ''}
       ${avecSalles ? `<h4 class="docs-titre">Réservé aux salles (sur invitation) <span class="badge">privés</span></h4>
       <p class="aide">Captations, photos en haute définition, fiche technique détaillée : seules les salles invitées les voient, dans l’espace pro (rubrique <a href="#/pro">Espace pro</a>), avec les dossiers et fiches techniques des programmateurs.</p>
       ${ss.length ? `<div class="docs">${ss.map((d, i) => ligne(d, i, ss.length)).join('')}</div>` : '<p class="aide">Aucun document réservé aux salles.</p>'}
       <div class="docs-ajout"><label class="btn" tabindex="0" role="button">＋ Déposer un fichier<input type="file" data-doc-fichier-salles accept=".pdf,.jpg,.jpeg,.png,.webp,.mp4,.zip,application/pdf,image/jpeg,image/png,image/webp,video/mp4,application/zip" hidden></label><button type="button" class="btn" data-doc-lien-salles>＋ Ajouter un lien (une captation)</button></div>
       <p class="aide docs-envoi" data-envoi-salles role="status" hidden></p>
       ${boiteLien('salles')}
-      <p class="aide">PDF, image (JPEG, PNG, WebP), vidéo MP4 ou ZIP, ${MO_SALLES} Mo au plus, dans un stockage privé. Une captation plus lourde se partage en lien : Vimeo, YouTube non répertorié, Drive…</p>` : ''}`;
+      <p class="aide">PDF, image (JPEG, PNG, WebP), vidéo MP4 ou ZIP, ${MO_SALLES} Mo au plus, dans un stockage privé. Une captation plus lourde se partage en lien : Vimeo, YouTube non répertorié, Drive…</p>` : ''}
+      ${avecPublics() || avecSalles ? `<h4 class="docs-titre">Pour l’équipe <span class="badge">privés</span></h4>` : ''}${xs.length ? `<div class="docs">${xs.map((d, i) => ligne(d, i, xs.length)).join('')}</div>` : '<p class="aide">Aucun document.</p>'}
+      <div class="docs-ajout"><label class="btn" tabindex="0" role="button">＋ Envoyer un fichier<input type="file" data-doc-fichier accept=".pdf,.odt,.docx,.txt,image/*" hidden></label><button type="button" class="btn" data-doc-lien>＋ Coller un lien</button></div>
+      ${boiteLien('equipe')}
+      <p class="aide">Fichiers : PDF, image, texte, ODT ou DOCX, 50 Mo au plus. Ils restent privés : on les ouvre par un lien signé, valable une heure. « Lien ${PARTAGE_JOURS} jours » copie une adresse à envoyer hors de l’équipe (une fiche technique pour un lieu).</p>`;
   };
   const renumeroter = async xs => {
     const changes = xs.map((x, i) => [x, (i + 1) * 10]).filter(([x, o]) => x.ordre !== o);
@@ -983,7 +1075,6 @@ function documentsEditeur(z, s) {
     changes.forEach(([x, o]) => { x.ordre = o; });
   };
   const ordreSuivant = (xs = docs()) => Math.max(0, ...xs.map(d => d.ordre || 0)) + 10;
-  const typeDe = n => /dossier/i.test(n) ? 'dossier' : /fiche.?tech|technique|rider/i.test(n) ? 'fiche_technique' : /\bplans?\b|implantation/i.test(n) ? 'plan' : /texte|script|brochure|pi[eè]ce/i.test(n) ? 'texte' : 'autre';
   const titreDe = n => { const t = n.replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim(); return t ? t[0].toUpperCase() + t.slice(1) : 'Document'; };
   // le titre d'un fichier des salles : l'espace pro choisit son icône sur le titre (une vidéo, des photos), qui le dit donc
   const titreSalles = (n, ext) => {
@@ -1062,7 +1153,8 @@ function documentsEditeur(z, s) {
       annoncer(`Envoi de « ${f.name} »…`);
       const { error } = await sb.storage.from('crescite').upload(chemin, f, { contentType: 'application/pdf', upsert: false, cacheControl: '3600' });
       if (error) return erreur(error, /mime|type/i.test(error.message || '') ? 'Le stockage public n’accepte pas encore les PDF (troisième script SQL)' : 'Envoi impossible');
-      try { await inserer({ spectacle_id: s ? s.id : null, type: typeDe(base), titre: titreDe(base), fichier: chemin, pour: /scolaire|p[ée]dagog/i.test(base) ? 'scolaires' : 'pros', ordre: ordreSuivant() }); annoncer('Document public ajouté : vérifiez son titre et pour qui il est.'); }
+      const g = devinerDoc(base), pour = g.pour === 'scolaires' ? 'scolaires' : 'pros';
+      try { const x = await inserer({ spectacle_id: s ? s.id : null, type: g.type, titre: g.titre || titreDe(base), fichier: chemin, pour, ordre: ordreSuivant(publics()) }); annoncer(`Document public ajouté, comme ${nomSorte(x).toLowerCase()} : vérifiez sa sorte et son titre.`); }
       catch (err) { await sb.storage.from('crescite').remove([chemin]); erreur(err, 'Document non enregistré'); }
       return;
     }
@@ -1080,7 +1172,7 @@ function documentsEditeur(z, s) {
         const m = `${error.message || ''} ${error.statusCode || ''}`;
         return erreur(error, /size|large|exceed|413/i.test(m) ? `Fichier refusé par le stockage (${MO_SALLES} Mo au plus)` : /mime|type/i.test(m) ? 'Le stockage des salles n’accepte pas ce type de fichier' : 'Envoi impossible');
       }
-      try { await inserer({ spectacle_id: s.id, type: typeDe(base), titre: titreSalles(base, ext), fichier: chemin, pour: 'salles', ordre: ordreSuivant(salles()) }); annoncer('Fichier déposé : vérifiez son titre, c’est celui que la salle voit.'); }
+      try { await inserer({ spectacle_id: s.id, type: devinerDoc(base).type, titre: titreSalles(base, ext), fichier: chemin, pour: 'salles', ordre: ordreSuivant(salles()) }); annoncer('Fichier déposé : vérifiez son titre, c’est celui que la salle voit.'); }
       catch (err) { if (envoi) envoi.hidden = true; await sb.storage.from('crescite-pro').remove([chemin]); erreur(err, 'Document non enregistré'); }
       return;
     }
@@ -1093,12 +1185,21 @@ function documentsEditeur(z, s) {
       annoncer(`Envoi de « ${f.name} »…`);
       const { error } = await sb.storage.from('crescite-equipe').upload(chemin, f, { contentType: type, upsert: false });
       if (error) return erreur(error, 'Envoi impossible');
-      try { await inserer({ spectacle_id: s ? s.id : null, type: typeDe(base), titre: titreDe(base), fichier: chemin, pour: 'equipe', ordre: ordreSuivant() }); annoncer('Document ajouté : vérifiez son titre et son type.'); }
+      const g = devinerDoc(base);
+      try { await inserer({ spectacle_id: s ? s.id : null, type: g.type, titre: g.titre || titreDe(base), fichier: chemin, pour: 'equipe', ordre: ordreSuivant() }); annoncer('Document ajouté : vérifiez son titre et son type.'); }
       catch (err) { await sb.storage.from('crescite-equipe').remove([chemin]); erreur(err, 'Document non enregistré'); }
       return;
     }
     const l = t.closest('[data-doc]'); if (!l || !t.dataset.dk) return;
     const d = E.documents.find(x => x.id === +l.dataset.doc); if (!d) return;
+    if (t.dataset.dk === 'sorte') {
+      const [type, pour] = t.value.split('|');
+      const { data, error } = await sb.from('crescite_documents').update({ type, pour }).eq('id', d.id).select().single();
+      if (error) { t.value = sorteDe(d); return erreur(error); }
+      remplacerLigne(E.documents, data); dessiner();
+      const { pages, rien } = pagesDoc(data, s);
+      return annoncer(`${nomSorte(data)} : ${pages.length ? `affiché sur ${pages.length} page${pages.length > 1 ? 's' : ''}` : 'affiché nulle part'}.${rien ? ' ' + rien : ''}`);
+    }
     const v = t.value.trim();
     if (t.dataset.dk === 'titre' && !v) { t.value = d.titre; return annoncer('Un document a besoin d’un titre.', { erreur: true }); }
     const { data, error } = await sb.from('crescite_documents').update({ [t.dataset.dk]: v }).eq('id', d.id).select().single();
@@ -1118,8 +1219,9 @@ function documentsEditeur(z, s) {
       if (!/^https?:\/\//i.test(url)) return annoncer('Collez une adresse qui commence par https://', { erreur: true });
       // la salle ne voit que le titre : pour elle, il en faut un
       if (genre === 'salles' && !titre) { $('[data-doc-titre]', boite).focus(); return annoncer('Donnez un titre au lien : c’est ce que la salle voit (« La captation intégrale »).', { erreur: true }); }
-      const pour = { equipe: 'equipe', public: 'pros', salles: 'salles' }[genre];
-      try { await inserer({ spectacle_id: s ? s.id : null, type: /wikisource|texte/i.test(url + titre) ? 'texte' : /fiche.?tech/i.test(url + titre) ? 'fiche_technique' : /dossier/i.test(url + titre) ? 'dossier' : 'autre', titre: titre || hote(url), url, pour, ordre: ordreSuivant(genre === 'salles' ? salles() : docs()) }); annoncer({ equipe: 'Lien ajouté.', public: 'Lien public ajouté.', salles: 'Lien ajouté : les salles invitées le trouvent dans l’espace pro.' }[genre]); }
+      const g = devinerDoc(titre || url), type = /wikisource/i.test(url) ? 'texte' : g.type;
+      const pour = genre === 'public' ? (g.pour === 'scolaires' ? 'scolaires' : 'pros') : genre;
+      try { await inserer({ spectacle_id: s ? s.id : null, type, titre: titre || hote(url), url, pour, ordre: ordreSuivant(genre === 'salles' ? salles() : genre === 'public' ? publics() : docs()) }); annoncer({ equipe: 'Lien ajouté.', public: 'Lien public ajouté.', salles: 'Lien ajouté : les salles invitées le trouvent dans l’espace pro.' }[genre]); }
       catch (err) { erreur(err, 'Lien non ajouté'); }
       return;
     }
@@ -3741,6 +3843,21 @@ fieldset.champ > legend { padding: 0; margin-bottom: 6px; font-weight: 650; font
 .pro-docs li .compte { flex: 1 1 auto; }
 .pro-docs li a { margin-left: auto; font-weight: 600; font-size: 13.5px; }
 .doc-pour { font-size: 13px; font-weight: 650; color: var(--gris); padding: 0 4px; }
+.recap-docs-zone { overflow-x: auto; }
+.recap-docs { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.recap-docs th, .recap-docs td { text-align: left; vertical-align: top; padding: 7px 10px; border-bottom: 1px solid var(--trait); }
+.recap-docs thead th { font-size: 12px; color: var(--gris); font-weight: 800; white-space: nowrap; }
+.recap-docs tbody th { font-weight: 750; white-space: nowrap; }
+.recap-docs ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; }
+.recap-docs .vide { color: var(--gris); }
+.recap-docs .manque { color: var(--option); font-weight: 650; }
+.doc-l.pub { grid-template-columns: minmax(170px, 240px) minmax(0, 1fr) auto; }
+.doc-ou { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 0; font-size: 12.5px; color: var(--gris); }
+.doc-ou .k { font-weight: 800; color: var(--encre); }
+.doc-pages { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.doc-pages > * + *::before { content: '·'; display: inline-block; margin-right: 12px; color: var(--gris); }
+.doc-rien { color: var(--alerte); font-weight: 650; }
+@media (max-width: 900px) { .doc-l.pub { grid-template-columns: minmax(0, 1fr); } .doc-l.pub .doc-titre { grid-row: auto; } }
 .docs-envoi { margin: 0 0 10px; font-weight: 600; }
 @media (max-width: 520px) { .pro-journal li { grid-template-columns: 1fr; gap: 0; } .pro-duree input[type=date] { flex: 1 1 100%; } }
 </style>`);

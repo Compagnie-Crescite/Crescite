@@ -282,8 +282,12 @@ Un directeur de salle vient chercher trois choses : à qui parler, un dossier à
   la page programmer : bien visible dans le premier écran de `#/programmer` (près du titre), dans ton style (bouton,
   carte, bandeau…), et repris, compact, sur l'onglet programmer de chaque spectacle. « Écrire à la compagnie » peut
   rester plus bas.
-- **Le dossier du spectacle (PDF)** : un `<button type="button" data-dossier="<slug>">` avec `L.dossierPdf`, qui appelle
-  `DOSSIER.telecharger(slug)`. Pendant la composition : `aria-busy="true"`, bouton désactivé, une animation dans ton
+- **Le dossier du spectacle** : un seul par spectacle (demande du client, 29 octobre 2026 : « Uniformise "dossiers de
+  création" et "dossiers du spectacle" », d'après le Drive de la compagnie, où chaque spectacle a son « Dossier <SPECTACLE>
+  2026 »). Le dossier déposé par l'administration (document `type === 'dossier'` pour les pros, titré « Dossier du
+  spectacle 2026 ») passe d'abord : un `<a data-dossier="<slug>" href="<url>" target="_blank">` à son titre, qu'« À
+  télécharger » ne répète pas. Sans lui, celui que le site compose : un `<button type="button" data-dossier="<slug>">` avec
+  `L.dossierPdf`, qui appelle `DOSSIER.telecharger(slug)`. Pendant la composition : `aria-busy="true"`, bouton désactivé, une animation dans ton
   style (les tentacules s'en mêlent volontiers) ; en cas d'échec, l'animation s'arrête et le bouton redevient actif.
   Sur `#/programmer` : un par spectacle (dans sa fiche) ; sur l'onglet programmer : en tête, avec la bande-annonce.
 - **La fiche technique** (onglet programmer) : Bérénice comme aujourd'hui (les blocs de `D.dossiers.berenice.accueil`) ; un
@@ -296,8 +300,8 @@ Un directeur de salle vient chercher trois choses : à qui parler, un dossier à
   `L.documentsScolaires` (à côté du dossier scolaire de Bérénice, inchangé).
 - Rien d'inventé, aucun prix (jamais de montant de cession). Le vérificateur attend, sur `#/programmer`, le nom du contact,
   `L.contactDiffusion`, `L.dossierPdf`, `L.conditionsFinancieres`, un lien `mailto:` visible et au moins un
-  `[data-dossier]` ; sur l'onglet programmer de Bérénice, `[data-dossier="berenice"]`, dont il essaie le
-  téléchargement ; sur chaque onglet programmer, un lien visible vers chacun des documents pros du spectacle ; sur
+  `[data-dossier]` ; sur l'onglet programmer de Bérénice, `[data-dossier="berenice"]`, dont il vérifie le lien (le PDF
+  déposé) ou essaie le téléchargement (le dossier composé) ; sur chaque onglet programmer, un lien visible vers chacun des documents pros du spectacle ; sur
   celui de Cléophène, le titre de sa fiche technique ; sur celui de Macbeth (sans fiche), `L.ficheTechniqueSurDemande`.
   `D.documents` a maintenant 15 vrais documents (dossiers de diffusion, fiches techniques, dossiers scolaires).
 

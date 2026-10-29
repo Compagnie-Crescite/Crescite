@@ -59,7 +59,7 @@ const VUES = [
   // programmer (règles 13 et 21) : le contact diffusion, le dossier PDF, les conditions financières sur demande ; aucune date
   // tout public (elles sont dans les saisons)
   ['pro-programmer', '#/espace-pro/programmer', D => [D.site.entrees.find(e => e.cle === 'programmer').texte, D.shows.find(s => s.slug === 'mon-royaume').programmer.representations,
-    D.site.programmation.contact.nom, D.site.libelles.contactDiffusion, D.site.libelles.dossierPdf, D.site.libelles.conditionsFinancieres],
+    D.site.programmation.contact.nom, D.site.libelles.contactDiffusion, D.shows.some(s => !(D.documents || []).find(d => d.spectacle === s.slug && d.type === 'dossier' && ['pros', 'tous', 'pros_scolaires'].includes(d.pour) && d.url)) ? D.site.libelles.dossierPdf : null, D.site.libelles.conditionsFinancieres],
     D => D.dates.filter(d => !d.scolaire).map(d => ((d.details || [])[0] || {}).texte).filter(t => t && t.length > 30).slice(0, 2)],
   // établissement : Macbeth « à compléter », rien de l'action culturelle masquée de Cassandres (règle 14)
   ['pro-etablissement', '#/espace-pro/etablissement', D => [D.site.entrees.find(e => e.cle === 'etablissement').texte, 'afin de participer à « l’école du spectateur »',
@@ -69,11 +69,12 @@ const VUES = [
     D.shows.some(s => s.actionCulturelle && !s.actionCulturelle.type) ? D.site.libelles.aCompleter : null],
     () => ['Lieux d’enseignement agronomique', 'Notre première intuition à ce stade du travail']],
   ['berenice-voir', '#/spectacle/berenice/voir', D => ['Rome, an 79.']],
-  ['berenice-programmer', '#/spectacle/berenice/programmer', D => ['100 à 120 places', D.site.libelles.dossierPdf, D.site.programmation.contact.email]],
+  // (le dossier du spectacle, règle 13 : le titre de celui que la compagnie a déposé, sinon le libellé de celui que le site compose)
+  ['berenice-programmer', '#/spectacle/berenice/programmer', D => ['100 à 120 places', ((D.documents || []).find(d => d.spectacle === 'berenice' && d.type === 'dossier' && ['pros', 'tous', 'pros_scolaires'].includes(d.pour) && d.url) || {}).titre || D.site.libelles.dossierPdf, D.site.programmation.contact.email]],
   // une fiche technique déposée (document) se lit en lien ; sans fiche (Cassandres, en création), « Fiche technique sur demande »
-  ['cleophene-programmer', '#/spectacle/cleophene/programmer', D => [D.site.libelles.dossierPdf,
+  ['cleophene-programmer', '#/spectacle/cleophene/programmer', D => [((D.documents || []).find(d => d.spectacle === 'cleophene' && d.type === 'dossier' && ['pros', 'tous', 'pros_scolaires'].includes(d.pour) && d.url) || {}).titre || D.site.libelles.dossierPdf,
     ...D.documents.filter(d => d.spectacle === 'cleophene' && d.pour === 'pros').map(d => d.titre)]],
-  ['cassandres-programmer', '#/spectacle/cassandres/programmer', D => [D.site.libelles.dossierPdf,
+  ['cassandres-programmer', '#/spectacle/cassandres/programmer', D => [((D.documents || []).find(d => d.spectacle === 'cassandres' && d.type === 'dossier' && ['pros', 'tous', 'pros_scolaires'].includes(d.pour) && d.url) || {}).titre || D.site.libelles.dossierPdf,
     D.documents.some(d => d.spectacle === 'cassandres' && d.type === 'fiche_technique') ? null : D.site.libelles.ficheTechniqueSurDemande]],
   ['berenice-etablissement', '#/spectacle/berenice/etablissement', D => ['Atelier de préparation', 'À partir de la seconde']],
   ['cleophene-etablissement', '#/spectacle/cleophene/etablissement', D => ['parcours du spectateur']],
@@ -1001,14 +1002,19 @@ const visite = async (n, tag, vp, mobile, partie) => {
           }
         }
         if (FRISES[vue] && etat.frises < FRISES[vue]) log.push(`${tag} ${vue} : ${etat.frises} frise(s) chronologique(s) (.frise[data-frise]) au lieu d'au moins ${FRISES[vue]} (règle 15 D)`);
-        if (vue === 'pro-programmer' && !etat.dossiers.length) log.push(`${tag} ${vue} : aucun bouton [data-dossier] (dossier PDF, règle 13)`);
+        if (vue === 'pro-programmer' && !etat.dossiers.length) log.push(`${tag} ${vue} : aucun dossier [data-dossier] (règle 13)`);
         if (vue === 'pro-programmer' && !etat.mailto) log.push(`${tag} ${vue} : aucun lien mailto: visible vers le contact diffusion (règle 13)`);
         const slugVue = (/^#\/spectacle\/([^/]+)\/programmer$/.exec(hash) || [])[1];
-        if (slugVue && !etat.dossiers.includes(slugVue)) log.push(`${tag} ${vue} : pas de bouton [data-dossier="${slugVue}"] (règle 13)`);
+        if (slugVue && !etat.dossiers.includes(slugVue)) log.push(`${tag} ${vue} : pas de dossier [data-dossier="${slugVue}"] (règle 13)`);
         // les documents des pros du spectacle, en liens
         if (slugVue && etat.liensDocs < D_DOCS(slugVue)) log.push(`${tag} ${vue} : ${etat.liensDocs} lien(s) vers les documents du spectacle sur ${D_DOCS(slugVue)} (règle 13)`);
-        // le dossier PDF se compose et se télécharge (une fois par maquette)
-        if (vue === 'berenice-programmer' && tag === 'tab' && etat.dossiers.includes('berenice')) {
+        // le dossier de Bérénice : celui de la compagnie, en lien vers son PDF ; sinon celui du site, qui se compose et se
+        // télécharge (une fois par maquette)
+        const depose = vue === 'berenice-programmer' && tag === 'tab' && await page.evaluate(() => [...document.querySelectorAll('a[data-dossier="berenice"]')].filter(e => e.getClientRects().length).map(e => e.href));
+        if (depose && depose.length) {
+          const url = await page.evaluate(() => ((D.documents || []).find(d => d.spectacle === 'berenice' && d.type === 'dossier' && ['pros', 'tous', 'pros_scolaires'].includes(d.pour)) || {}).url);
+          if (!depose.every(h => h === url)) log.push(`${tag} ${vue} : le lien du dossier ne mène pas au PDF déposé (${depose.join(', ')})`);
+        } else if (vue === 'berenice-programmer' && tag === 'tab' && etat.dossiers.includes('berenice')) {
           const dl = page.waitForEvent('download', { timeout: 20000 }).catch(() => null);
           await page.evaluate(() => { const b = [...document.querySelectorAll('[data-dossier="berenice"]')].find(e => e.getClientRects().length); b.scrollIntoView({ block: 'center' }); b.click(); });
           const f = await dl;

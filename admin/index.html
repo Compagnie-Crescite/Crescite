@@ -2369,7 +2369,7 @@ function indexRch() {
     ['#/representations/carte', 'Carte de tournée', 'Représentations', typeof TOURNEE !== 'undefined' ? toucheRch('vue.carte') : null, 'vue'],
     E.equipeInstallee && E.sql5 !== false ? ['#/planning/propositions', 'Propositions', 'Planning'] : null,
     ['#/ateliers/seances', 'Séances', 'Ateliers'], ['#/ateliers/catalogue', 'Ateliers proposés', 'Ateliers'],
-    E.equipeInstallee ? ['#/equipe/documents', 'Documents de la compagnie', 'Équipe'] : null,
+    E.equipeInstallee ? ['#/equipe/documents', 'Documents : les dossiers des spectacles, ceux de la compagnie', 'Équipe'] : null,
     E.ideale && E.alertesInstallees ? ['#/diffusion/alertes', 'Alertes de tournée', 'Diffusion CRM'] : null]
     .filter(Boolean).forEach(([href, titre, rub, touche, plus]) => mettre({ type: 'Rubrique', titre, sous: rub, href, ordre: .5, touche }, plus || ''));
   mettre({ type: 'Compte', titre: 'Mot de passe', sous: E.session?.user?.email || '', faire: () => $('#b-mdp')?.click() }, 'changer réglages');
@@ -2386,7 +2386,7 @@ function indexRch() {
   (E.ateliers || []).forEach(a => mettre({ type: 'Atelier', titre: a.titre || 'Atelier', sous: [spectacle(a.spectacle_id)?.titre, a.public, a.publie ? '' : 'non publié'].filter(Boolean).join(' · '), href: `#/ateliers/catalogue/${a.id}`, couleur: couleurSp(spectacle(a.spectacle_id)) }));
   if (E.sql4 && typeof etatAcces === 'function') (E.acces || []).forEach(a => mettre({ type: 'Invitation', titre: a.nom || 'Invitation', sous: [a.contact, etatAcces(a).texte].filter(Boolean).join(' · '), href: `#/pro/${a.id}`, passages: passagesRch([['Courriel', a.courriel]]) }, 'espace pro salle'));
   (E.documents || []).forEach(d => { const sp = d.spectacle_id ? spectacle(d.spectacle_id) : null;
-    mettre({ type: 'Document', titre: d.titre || 'Document', sous: sp ? sp.titre : 'Documents de la compagnie', couleur: sp ? couleurSp(sp) : '', href: sp ? `#/spectacles/${sp.slug}` : '#/equipe/documents', ordre: 1,
+    mettre({ type: 'Document', titre: d.titre || 'Document', sous: sp ? (typeof estPublic === 'function' && estPublic(d) ? `${sp.titre} · ${nomSorte(d)}` : sp.titre) : 'Documents de la compagnie', couleur: sp ? couleurSp(sp) : '', href: sp ? `#/spectacles/${sp.slug}` : '#/equipe/documents', ordre: 1,
       faire: sp ? () => { try { sessionStorage.setItem('crescite-onglet-sp', 'Documents'); } catch (e) { /* navigation privée */ } location.hash = `#/spectacles/${sp.slug}`; } : null }); });
   return xs;
 }

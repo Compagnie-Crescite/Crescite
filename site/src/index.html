@@ -4516,12 +4516,20 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       <p class="ct-cond">${esc(L.conditionsFinancieres)}</p>
     </aside>`;
   }
-  // le dossier du spectacle en PDF, composé à la demande (dossier.js) : pendant ce temps le bouton est occupé (aria-busy), puis il redevient actif
+  // le dossier du spectacle : un seul par spectacle. Celui de la compagnie d'abord, le PDF déposé par l'administration (le
+  // « Dossier <SPECTACLE> 2026 » du Drive, titré « Dossier du spectacle 2026 »), en lien ; sans lui, celui que le site compose
+  // à la demande (dossier.js) : pendant ce temps le bouton est occupé (aria-busy), puis il redevient actif. L'un comme
+  // l'autre porte data-dossier="<slug>"
   const OCCUPES = new Set();
-  const dossierBouton = (slug, cls = 'bu') => `<button type="button" class="${cls} dos-bt" data-dossier="${esc(slug)}"${OCCUPES.has(slug) ? ' aria-busy="true" disabled' : ''}>${PDF}<span>${esc(L.dossierPdf)}</span>${ONDE}</button>`;
-  const occuper = (slug, oui) => $$(`[data-dossier="${slug}"]`).forEach(b => { b.disabled = oui; if (oui) b.setAttribute('aria-busy', 'true'); else b.removeAttribute('aria-busy'); });
+  const dossierDepose = s => docsDe(s, 'pros').find(x => x.type === 'dossier') || null;
+  const dossierBouton = (slug, cls = 'bu') => { const d = bySlug[slug] && dossierDepose(bySlug[slug]);
+    return d ? `<a class="${cls} dos-bt" data-dossier="${esc(slug)}" href="${esc(d.url)}" target="_blank" rel="noopener">${PDF}<span>${esc(d.titre)}</span>${DEHORS()}</a>`
+      : `<button type="button" class="${cls} dos-bt" data-dossier="${esc(slug)}"${OCCUPES.has(slug) ? ' aria-busy="true" disabled' : ''}>${PDF}<span>${esc(L.dossierPdf)}</span>${ONDE}</button>`; };
+  // les documents des programmateurs d'un spectacle, moins son dossier quand il est déjà là, en bouton
+  const autresDocsPros = s => { const d = dossierDepose(s); return docsDe(s, 'pros').filter(x => x !== d); };
+  const occuper = (slug, oui) => $$(`button[data-dossier="${slug}"]`).forEach(b => { b.disabled = oui; if (oui) b.setAttribute('aria-busy', 'true'); else b.removeAttribute('aria-busy'); });
   document.addEventListener('click', e => {
-    const b = e.target.closest('[data-dossier]'); if (!b || typeof DOSSIER === 'undefined') return;
+    const b = e.target.closest('button[data-dossier]'); if (!b || typeof DOSSIER === 'undefined') return;
     const slug = b.dataset.dossier; if (OCCUPES.has(slug)) return;
     OCCUPES.add(slug); occuper(slug, true);
     // (prêt : une ventouse se pose sur le bouton, à sa couleur)
@@ -4550,7 +4558,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   // équipe) ; son actualité, son équipe de création ; sa fiche ; sa diffusion saison par saison ; ses lieux de diffusion
   // (repliés) ; ses documents pour les pros ; son dossier PDF, sa page, sa bande-annonce
   function ficheProg(s) {
-    const P = s.programmer || {}, href = lienSp(s.slug, 'programmer'), docs = docsDe(s, 'pros');
+    const P = s.programmer || {}, href = lienSp(s.slug, 'programmer'), docs = autresDocsPros(s);
     const faits = [s.statut && `<li${edS(s, 'statut')}>${esc(s.statut)}</li>`,
       P.duree ? `<li${edS(s, 'programmer', 'duree')}>${esc(P.duree)}</li>` : s.duree && `<li${edS(s, 'duree')}>${esc(s.duree)}</li>`,
       P.format && `<li><span class="k">${esc(L.format)}</span><span${edS(s, 'programmer', 'format')}>${esc(P.format)}</span></li>`,
@@ -8389,7 +8397,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         <ul class="u-docs">${fts.length ? fts.map(x => `<li>${PDF}${lienDoc(x)}</li>`).join('') : `<li>${PDF}${href ? `<a href="${esc(href)}">${esc(L.ficheTechniqueSurDemande)}</a>` : `<span>${esc(L.ficheTechniqueSurDemande)}</span>`}</li>`}</ul></div>`);
     }
     h += chapitre(chap, 'telecharger', L.aTelecharger, `<div class="wrap">${titreChap(esc(L.aTelecharger))}
-      <ul class="u-docs"><li>${dossierBouton(s.slug, 'bu')}</li>${docsDe(s, 'pros').map(x => `<li>${PDF}${lienDoc(x)}</li>`).join('')}</ul></div>`);
+      <ul class="u-docs"><li>${dossierBouton(s.slug, 'bu')}</li>${autresDocsPros(s).map(x => `<li>${PDF}${lienDoc(x)}</li>`).join('')}</ul></div>`);
     return h + appel(s, 'programmer');
   }
   function ongletEtablissement(s, chap) {

@@ -46,6 +46,7 @@ node site/tableur-complet.mjs      # le tableur Complet, chaque champ atteignabl
 node site/tableur-simple.mjs       # le tableur Simple, une ligne par date : les modes, les séances, la ligne vide, le temps réel, les états d'une case, la barre d'état, le calendrier, le collage, le budget (après le build)
 node site/icones.mjs               # la bibliothèque d'icônes de l'administration et ses consommateurs, dans Chromium (après le build)
 node site/cadre.mjs                # la coque, le menu latéral, ses raccourcis et ses badges, dans Chromium, sur la même base fictive (après le build)
+node site/documents-admin.mjs      # les documents : la sorte d'un document public, les pages qu'il nomme, les noms du Drive, les dossiers de tous les spectacles (après le build)
 node site/champs.mjs               # la fiche d'une date : le schéma de ses champs, le rail d'écriture, les puces, la jauge (après le build)
 node site/vues-dates.mjs           # les trois vues de Représentations (pilule, filtres communs, ligne visée), dans Chromium (après le build)
 node site/theme.mjs                # le thème (nuit, jour, appareil) et la densité, dans Chromium, sur la même base fictive (après le build)
